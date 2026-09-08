@@ -33,9 +33,20 @@ jobs:
       - run: npm run typecheck
       - run: npm run build
       - run: npm run contract:check
-      - run: npm test
-      - run: npm run preview -- --build-only
       - run: npx --no-install playwright install --with-deps chromium
+      - run: npm test -- --reporter=default --reporter=json --outputFile=test-results/unit.json
+      - name: Report regression evidence
+        if: ${{ always() }}
+        run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          if (fs.existsSync('test-results/unit.json')) {
+            const r=JSON.parse(fs.readFileSync('test-results/unit.json','utf8'));
+            console.log('::notice title=Unit and contract totals::'+JSON.stringify({passed:r.numPassedTests,failed:r.numFailedTests,pending:r.numPendingTests}));
+            for(const suite of r.testResults || []) for(const a of suite.assertionResults || []) if(a.status==='failed') console.log('::error title=Regression failed::'+a.fullName.replace(/[%\r\n]/g,' '));
+          }
+          JS
+      - run: npm run preview -- --build-only
       - run: npm run test:render
       - name: Report browser counts
         if: ${{ always() }}

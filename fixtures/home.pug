@@ -1,0 +1,73 @@
+doctype html
+html(lang='en')
+  head
+    meta(charset='utf-8')
+    meta(name='viewport' content='width=device-width, initial-scale=1')
+    title FCD publication layout simulation
+    style!= css
+  body.is-home-lead
+    a.skip-link(href='#content') Skip to content
+    header.site-header
+      .container.header-row
+        a.brand(href='/')
+          span.brand-monogram(aria-hidden='true') FCD
+          span.brand-name Fast Cyber Defense
+            small Security publication
+        .header-actions
+          button#theme-toggle.js-control(type='button' hidden aria-label='Switch color theme') Theme
+          button#menu-toggle.js-control(type='button' hidden aria-controls='primary-navigation' aria-expanded='false') Menu
+      nav#primary-navigation.container.primary-navigation(aria-label='Primary')
+        a(href='/search') Latest
+        a(href='#topics') Topics
+        a(href='https://fastcyberdefense.com/') Company website
+        form#site-search.search-form(action='/search' method='get' role='search')
+          label.sr-only(for='search-query') Search articles
+          input#search-query(type='search' name='q' placeholder='Search security insights')
+          button(type='submit') Search blog
+    main#content.container(tabindex='-1')
+      block heading
+        header.publication-heading
+          p.eyebrow Fast Cyber Defense Blog
+          h1 Security knowledge. Practical defense.
+          p.standfirst Research, threat insights, and guidance for stronger security.
+      nav#topics.topic-navigation(aria-label='Article topics')
+        a.topic-pill(href='/search/label/Cloud') Cloud Security
+        a.topic-pill(href='/search/label/Research') Research
+      .fcd-layout
+        .publication-stream
+          block stream
+            p#filter-status.filter-status(role='status' hidden)
+            .blog-posts
+              each title, i in ['Hardening cloud access without slowing your team down', 'What a useful incident response checklist actually includes', 'A practical guide to investigating long and unusual authentication chains', 'Making vulnerability remediation measurable']
+                article.post-card(data-filter-card='true')
+                  .card-content
+                    .post-labels
+                      a(href='/search/label/Cloud') Cloud Security
+                    h2.post-title
+                      a(href='/article')= title
+                    p.post-excerpt Synthetic test fixture: security guidance with long titles, labels and text. This content is not shipped as Blogger posts.
+                    .byline
+                      span Fixture author
+                      time(datetime='2026-09-08') September 8, 2026
+        aside.sidebar(aria-label='Publication sidebar')
+          section.sidebar-panel
+            h2 Recent Posts
+            ol#recent-posts.recent-list(data-feed='/feeds/posts/default')
+            p#recent-status Small updates. Lasting insight.
+            a(href='/search') Browse latest articles
+          section.sidebar-panel
+            h2 Follow the research
+            p Get publications in your feed reader.
+            a(href='/feeds/posts/default') Subscribe via Atom
+    footer.site-footer
+      .container.footer-grid
+        div
+          p.brand-name Fast Cyber Defense
+          p Quick to Act, Strong to Protect.
+        nav(aria-label='Company and publication')
+          a(href='https://fastcyberdefense.com/') Company website
+          a(href='/feeds/posts/default') Publication feed
+          a(href='#content') Back to content
+      .container.footer-note Simulation fixture, not Blogger-rendered output or production editorial content.
+    p#fcd-status.sr-only(role='status' aria-live='polite')
+    script!= script

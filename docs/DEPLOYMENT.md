@@ -1,12 +1,22 @@
-# Staging before production
+# Blogger staging and release gate
 
-1. Select a successful Actions run and record source SHA, artifact checksum and outstanding gates.
-2. Export the existing Blogger XML, content and Layout configuration before changing any live theme.
-3. Upload dist/theme.xml to a separate staging Blogger blog using Theme > Restore, then save in Blogger.
-4. Check the theme-build metadata matches the artifact's source commit. Configure Header1/Blog1/topics/sidebar widgets without cosmetic ID changes.
-5. Check actual home, post, label, search, archive, static, error and pagination views. Include native comments, feeds and theme-JS-disabled content.
-6. Run staging browser/a11y and performance checks through Actions; human screen-reader testing remains separate. The initial deploy:check is only a homepage smoke gate, not the full suite.
-7. Ask for production replacement approval only after import/render and other release gates pass.
-8. Restore the saved XML and widget configuration if rollback is needed.
+Foundation verification is not production deployment. Keep main and the production blog untouched until separately approved.
 
-No production theme, post content, main website or DNS is modified by source CI. Missing staging URL or expected build is BLOCKED, not a pass.
+1. Select a successful check on the exact PR/source commit. Record artifact ID, source stamp and checksum. Check unit/browser reports and XML/source consistency, not just an old green badge.
+2. Export the existing Blogger theme XML and post content; record all Layout widget settings. Store the backup outside public repository history.
+3. Seed a separate staging Blogger blog with representative populated, empty/error, technical-table, code, labels and pagination cases. Use non-sensitive data, not upstream personal posts.
+4. Upload the generated `dist/theme.xml` using Theme > Restore, save through Blogger and inspect the resulting `meta[name="theme-build"]`. Native import/save evidence must be recorded; no Blogger theme-upload API is assumed.
+5. Configure Header1, Blog1, labels/sidebar without cosmetic identity changes. Verify actual homepage/post/label/free-text search/archive/static/error/paginated output, native comments (threaded and unthreaded), feeds and Layout editor behavior.
+6. Run staging automation from GitHub Actions. The current `npm run deploy:check` requires `STAGING_URL`, `EXPECTED_THEME_BUILD`, and installed pinned Chromium (`npx --no-install playwright install --with-deps chromium`). It checks exact unique stamp, visible populated publication DOM, usable links and response/destination bounds. It deliberately rejects empty staging unless seeded; it is a smoke check, not a complete page-type acceptance suite.
+7. Run actual imported-page browser/a11y/performance checks through Actions before release. Fixtures model native wrappers and share markup but cannot prove Blogger expression evaluation or Google-generated DOM. Human screen-reader/inclusive review and 400% browser zoom remain separate evidence gaps until performed.
+8. Request production theme replacement approval only after all release gates pass. If needed, restore the exported theme and recorded widget settings as rollback.
+
+## Table authoring
+
+The foundation contains oversized tables with CSS even when theme JS is disabled. Provide caption and header scope. Add `tabindex="0"` and an informative accessible name to a wide table, or author a named focusable scroll region, for no-JS keyboard access across browsers that do not focus scroll containers automatically. The enhancement supplies a labeled wrapper when JS works. Preserve native table semantics.
+
+## Artifact maintenance
+
+Generated XML must come from Actions, not manual edits. CI normalizes only `theme-build` for checked-in/source comparison; any other mismatch blocks acceptance. A branch-limited artifact transfer may be used for an approved source change, but its writer must be removed before accepting the final head. Normal CI stays read-only. Never label a run successful when only the artifact upload succeeded.
+
+No DNS change, article publication, main-site modification or production import is part of initialization/hardening. Missing staging or human evidence is pending/blocked, not passed.

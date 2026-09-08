@@ -1,54 +1,51 @@
 # Fast Cyber Defense Blog
 
-A modular cybersecurity publication theme for Google Blogger **Layouts V3 / Widget Version 2**. Development is on `feat/fcd-blogger-foundation`; main and production are unchanged. The repository foundation is implemented, but the full publication milestone and Blogger import/render validation remain incomplete.
+An **unreleased development foundation** for Google Blogger Layouts V3 / Widget Version 2, on PR #1 (`feat/fcd-blogger-foundation`). Main and production remain unchanged until separately authorized. Advanced publication features are explicitly deferred to the next milestone.
 
-## Build
+## Build and preview
 
-Use Node **24.20.0** from `.nvmrc` with npm 11 or newer. The npm-generated `package-lock.json` is committed.
+Node **24.20.0** (`.nvmrc`), npm 11+, committed npm-generated lockfile.
 
 ```sh
 npm ci
 npm run build
+npm run preview
 ```
 
-The build compiles Pug + SCSS + bundled TypeScript into `dist/theme.xml`. No React, Vue, backend or database is needed. The checked-in XML is the verified initial artifact with its original source build stamp; rebuild or select the newest successful Actions artifact when making subsequent changes. Do not manually edit generated XML.
+Pug + SCSS + bundled TypeScript compile into `dist/theme.xml`, with no frontend framework, server or database. Do not hand-edit XML. The checked-in artifact preserves the build stamp of the Actions revision that generated it; CI compares its content with a fresh build while normalizing only that stamp. Select the latest successful Actions artifact for a new deployment candidate.
 
-## Verification policy
+Preview: localhost:4173, with `/`, `/article`, `/paged`, `/empty`, `/error`. These use shared production presentation and modeled native wrappers with synthetic data. **They are not Blogger-rendered pages or an expression interpreter.**
 
-All project automation is executed in GitHub Actions. PRs run against their exact head commit with read-only repository permissions and pinned action revisions. There is no remaining lockfile/bootstrap writer, production secret or deployment job.
+## Foundation scope
 
-Gates: clean npm installation, TypeScript, build, XML/V3 contracts, Vitest, generated browser fixtures, Chromium Playwright responsive/interaction/axe tests and dependency audit. Reports, screenshots, traces on failure and XML are uploaded as `fcd-evidence-<source-sha>` for 14 days.
+Native V3/V2 identities and dispatch, initial FCD light/dark tokens/header/cards/article/sidebar/footer, native labels/search/pagination, safe Recent Posts, inline loaded-card search, keyboard navigation, TOC, copy actions, reading time on posts, metadata and CSS-contained technical content. The narrow-screen masthead and search can wrap at enlarged text sizes.
 
-[First complete successful Actions run](https://github.com/thefastcyberdefense/google-blogger/actions/runs/34245507747) tested source `9aa3c57bbbdec38568a20d1eeeb25ae68f2dc166` after lockfile initialization. Later commits need their own checks; this is not a claim that all future revisions pass.
+Wide tables scroll locally before JavaScript. Enhancement adds a labeled, focusable scroll wrapper. For authors who need reliable no-JS keyboard access across browsers, use `<table tabindex="0" aria-label="Scrollable evidence matrix">`, a meaningful `<caption>`, and `<th scope="col">` headers. Do not strip native table semantics or rely on global overflow hiding.
 
-## Preview and source layout
+## Required verification
 
-`npm run preview` serves localhost:4173; `/` and `/article` are explicitly labeled simulation fixtures. The browser suite uses those fixtures with the real compiled stylesheet/script bundle. It **does not evaluate Blogger expressions** and is not live-site proof.
+All automated project verification runs in **GitHub Actions**, never in the editing sandbox. PRs test their exact head with pinned actions and read-only permissions. No production secrets or deployment jobs are included.
 
-`src/theme.pug` is the XML shell; `src/defaultmarkups/` and `src/widgets/` define native rendering; `src/partials/` handles metadata; `src/styles/` and `src/scripts/` are modular enhancements. `tools/`, `tests/`, `fixtures/` and `docs/` contain verification and operational material.
+Gates: clean install, strict TypeScript, build, XML/native-render contracts, unit/contract tests with negative controls, shared markup parity, Chromium responsive/interaction/axe tests, dependency audit and generated artifact consistency. A stale XML gate remains a failure even if earlier tests passed.
 
-## Implemented foundation
+The browser matrix covers 11 widths and both themes, five simulated page states, JS-disabled core rendering, open navigation/TOC, no-result announcements, clipboard success/denial, storage failure, reduced motion, skip-link focus, local keyboard scrolling and 200% text scaling. Accessibility tests retain table/column-header role assertions. This is not human screen-reader coverage, 400% browser zoom verification or complete WCAG conformance.
 
-FCD light/dark design tokens, responsive masthead, non-modal mobile menu, native-label topics, lead/latest card styling, native single-article content, Recent Posts via bounded safe feed parsing, inline loaded-card filtering with native full-blog search submit, theme toggle, TOC, reading time on posts, code-copy controls, scrollable tables/code, basic native SEO plus JSON-LD, sidebar/archive and company footer.
+[PR #1 and current acceptance evidence](https://github.com/thefastcyberdefense/google-blogger/pull/1). Trust the check on the exact latest head, not an old count. Artifacts contain regenerated XML, screenshots, axe reports, unit JSON and Playwright JSON/HTML reports (14-day retention).
 
-Ledger reuse is architectural, not a renamed UI: V3 root/dispatch, Blog1/labels/pagination expressions and compiler conventions. Raw HTML cache hydration, personal identities, analytics and publishing scripts were not ported. See [upstream audit](docs/UPSTREAM-AUDIT.md).
+## Native contract boundaries
 
-## Still required
+`tools/validate-xml.py` protects the actual FCD shell/widget/include/data boundaries. Mutation tests remove or corrupt skin, native body/metadata/comment/pagination calls, widget placement/locking, root version and unique identities to prove failures are detected. Passing means static contract preservation, not validated native Blogger semantics. The inherited native comments and widgets still need staging tests.
 
-Real Blogger import/save and all page-type/native-comment checks; broader native widget overrides/contracts; separate lead-plus-secondary editorial area; cover duplication handling; card reading time; syntax highlighting; rendered Mermaid; related-label articles; complete page-type SEO/performance budgets; and human accessibility evaluation. Do not call this production-ready or the entire initial milestone done.
+## Before production
 
-## Blogger deployment
+See [deployment guide](docs/DEPLOYMENT.md). Export existing theme/content and widget configuration, import/save to a separate staging Blogger blog, verify the exact stamp and real page types/comments/feeds/widgets. Production replacement needs separate approval. Rollback restores saved XML/widgets. The owner waived the inaccessible old live-blog audit, not future import/render validation.
 
-Export existing theme/content and record widget settings. Upload an Actions-generated XML to a **separate staging blog** via Theme > Restore, save it and verify the `theme-build` stamp. Configure Header1/Blog1/topics/sidebar without cosmetic ID changes. Test actual home/article/label/search/archive/static/error/pagination, comments, feeds, navigation and no-theme-JS content. Production replacement requires separate approval; rollback restores the saved XML/widgets. See [deployment guide](docs/DEPLOYMENT.md).
+## Next milestone and remaining gates
 
-The live FCD blog audit was waived; future import/render validation was not.
+Mermaid, syntax highlighting, related-label articles, separate lead/secondary editorial composition, cover handling, card reading time, deeper SEO/widget contracts, performance budgets and final polish remain next-milestone work. Actual Blogger import/render, full page-type/native functionality and human accessibility remain release gates. Foundation completion does not imply those are done.
 
-## Development skills
+## Development and provenance
 
-**FCD Superpowers** and **FCD Accessibility Reviewer** are saved in ClickUp. They are project-specific development/review skills, not installed CLI plugins or autonomous background agents. See `AGENTS.md` and the [project plan](docs/PROJECT-PLAN.md).
+See [project plan](docs/PROJECT-PLAN.md), [design system](docs/DESIGN-SYSTEM.md), [audit](docs/UPSTREAM-AUDIT.md), `AGENTS.md` and LICENSE. Ledger engine reference: 692a82463cb8d0869a6f5e7c946ecc757cacb7e2, with owner-confirmed reuse. FCD's company site is the brand/business source of truth. Personal Ledger identity, analytics and publishing automation were not copied.
 
-Suggested read-only skill evaluation prompts: “Review FCD initialization against its CI evidence”; “Audit the FCD mobile search accessibility plan.” These evaluations have not been run against a baseline agent.
-
-## Provenance
-
-Ledger reference: `692a82463cb8d0869a6f5e7c946ecc757cacb7e2`; owner confirmed reuse permission. Preserve LICENSE notices. Corporate brand/business source: https://fastcyberdefense.com/. Only verified root business links are used until exact routes are audited.
+FCD Superpowers and FCD Accessibility Reviewer are approved ClickUp skills, not CLI plugins or continuously running agents. Suggested read-only evaluations: “Review FCD foundation against the latest Actions evidence” and “Identify remaining actual-Blogger and human accessibility gates.” Skill baseline evaluations remain unexecuted.

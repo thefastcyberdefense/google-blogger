@@ -32,6 +32,17 @@ block stream
               tr
                 td Audit trail
                 td Events identify actor and resource.
+          table#wide-table(tabindex='0' aria-label='Scrollable incident evidence matrix')
+            caption Incident evidence across twelve systems
+            thead
+              tr
+                each column in Array.from({length:12},(_,i)=>i+1)
+                  th(scope='col')= 'System ' + column
+            tbody
+              each row in ['Authentication','Authorization','Network events']
+                tr
+                  each column in Array.from({length:12},(_,i)=>i+1)
+                    td= row + ' evidence ' + column
           p
             a(href='https://fastcyberdefense.com/')= 'https://fastcyberdefense.com/' + 'long-path-'.repeat(20)
           blockquote Evidence matters more than a green badge.

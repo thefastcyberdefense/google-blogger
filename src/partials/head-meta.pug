@@ -1,0 +1,19 @@
+//- all-head-content owns canonical, base OpenGraph and description. Verify rendered uniqueness on staging.
+meta(property='og:site_name' expr:content='data:blog.title.escaped')/
+meta(property='og:type' expr:content='data:view.isPost ? "article" : "website"')/
+meta(name='twitter:card' expr:content='data:view.featuredImage ? "summary_large_image" : "summary"')/
+meta(name='twitter:title' expr:content='data:view.title.escaped')/
+b:if(cond='data:view.description')
+  meta(name='twitter:description' expr:content='data:view.description.escaped')/
+b:if(cond='data:view.featuredImage')
+  meta(name='twitter:image' expr:content='data:view.featuredImage')/
+b:if(cond='data:view.isHomepage')
+  script(type='application/ld+json').
+    {"@context":"https://schema.org","@type":"WebSite","name":"<data:blog.title.jsonEscaped/>","url":"<data:blog.canonicalHomepageUrl.jsonEscaped/>","publisher":{"@type":"Organization","name":"Fast Cyber Defense","url":"https://fastcyberdefense.com/"}}
+b:if(cond='data:view.isPost')
+  b:with(value='data:widgets.Blog.first.posts.first' var='post')
+    meta(property='article:published_time' expr:content='data:post.date.iso8601')/
+    script(type='application/ld+json').
+      {"@context":"https://schema.org","@type":"BlogPosting","headline":"<data:post.title.jsonEscaped/>","mainEntityOfPage":"<data:view.url.canonical.jsonEscaped/>","datePublished":"<data:post.date.iso8601.jsonEscaped/>","author":{"@type":"Person","name":"<data:post.author.name.jsonEscaped/>"},"publisher":{"@type":"Organization","name":"Fast Cyber Defense","url":"https://fastcyberdefense.com/"}<b:if cond='data:post.lastUpdated'>,"dateModified":"<data:post.lastUpdated.iso8601.jsonEscaped/>"</b:if><b:if cond='data:view.featuredImage'>,"image":"<data:view.featuredImage.jsonEscaped/>"</b:if>}
+    script(type='application/ld+json').
+      {"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Fast Cyber Defense Blog","item":"<data:blog.canonicalHomepageUrl.jsonEscaped/>"},{"@type":"ListItem","position":2,"name":"<data:post.title.jsonEscaped/>","item":"<data:view.url.canonical.jsonEscaped/>"}]}

@@ -1,0 +1,27 @@
+//- Blog1 and native delegation retain Ledger V3 architecture; presentation is FCD-specific.
+b:section(id='page_body' class='main' name='Posts' showaddelement='false')
+  b:widget(id='Blog1' type='Blog' title='Blog Posts' version='2' locked='true')
+    b:includable(id='main')
+      b:if(cond='data:posts.any and not data:view.isError')
+        b:if(cond='data:view.isMultipleItems')
+          p#filter-status.filter-status(role='status' hidden='hidden')
+        b:include(name='super.main')/
+      b:if(cond='not data:posts.any or data:view.isError')
+        b:include(name='noContentPlaceholder')/
+    b:includable(id='noContentPlaceholder')
+      section.empty-state
+        h2 No articles to show
+        p Try another search or explore the latest publications.
+        a(expr:href='data:blog.homepageUrl') Visit the publication
+    b:includable(id='postCommentsAndAd' var='post')
+      b:include(name='post' data='post')/
+      b:if(cond='data:view.isSingleItem')
+        b:include(name='commentPicker' data='post')/
+    include blog-post.pug
+    include blog-comments.pug
+    include blog-archive.pug
+    b:includable(id='postMeta' var='post')
+    b:includable(id='inlineAd')
+    b:includable(id='postJumpLink')
+    b:includable(id='postShareButtons')
+    b:includable(id='postFooterAuthorProfile')

@@ -1,0 +1,12 @@
+const url = process.env.STAGING_URL;
+const expected = process.env.EXPECTED_THEME_BUILD;
+if (!url || !expected) throw new Error('BLOCKED: STAGING_URL and EXPECTED_THEME_BUILD are required; no deployment claims are permitted');
+const target = new URL(url);
+if (target.protocol !== 'https:') throw new Error('HTTPS staging is required');
+const response = await fetch(target, { signal: AbortSignal.timeout(15000) });
+if (!response.ok) throw new Error(`Staging returned HTTP ${response.status}`);
+const html = await response.text();
+if (!html.includes(expected)) throw new Error('STALE: expected build is not deployed');
+if (!html.includes('post-title')) throw new Error('No expected article markup found');
+console.log('Homepage build smoke check only; full Blogger page-type/import and accessibility validation remains required.');
+export {};

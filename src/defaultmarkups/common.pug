@@ -1,0 +1,10 @@
+//- Adapted from Ledger 692a82463cb8d0869a6f5e7c946ecc757cacb7e2; see LICENSE.
+b:defaultmarkup(type='Common')
+  b:includable(id='widgetTitle')
+    b:if(cond='data:widget.title')
+      h2.widget-title
+        b:eval(expr='data:widget.title')/
+  b:includable(id='widget-title')
+    b:include(name='widgetTitle')/
+  b:includable(id='widgetNotAvailableInPreview')
+    b:include(name='super.widgetNotAvailableInPreview')/

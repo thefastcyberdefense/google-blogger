@@ -1,0 +1,5 @@
+//- Preserve Blogger's native threaded/non-threaded selector instead of inventing a comment service.
+//- Unlike Ledger's explicit copies, delegate this surface to the native template engine.
+//- Actual threaded and unthreaded staging verification is mandatory for this adaptation.
+b:includable(id='commentPicker' var='post')
+  b:include(name='super.commentPicker' data='post')/

@@ -1,0 +1,9 @@
+//- Native engine delegation adapted from Ledger 692a82463cb8d0869a6f5e7c946ecc757cacb7e2.
+b:defaultmarkup(type='Blog')
+  b:includable(id='main')
+    b:with(value='3' var='maxNumAds')
+      b:with(value='data:widgets.AdSense count (w => true)' var='numDesktopAds')
+        b:with(value='data:widgets.AdSense count (w => w.sectionId != "ads")' var='numMobileAds')
+          b:with(value='data:widgets.FeaturedPost filter (w => w.sectionId == "page_body") map (w => w.postId)' var='featuredPostIds')
+            b:with(value='data:view.isHomepage ? data:posts filter (post => post.id not in data:featuredPostIds) : data:posts' var='posts')
+              b:include(name='super.main')/

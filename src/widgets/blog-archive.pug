@@ -1,0 +1,8 @@
+//- Retain native cursor URLs without Ledger's inaccurate absolute page-number assumptions.
+b:includable(id='postPagination')
+  b:if(cond='data:newerPageUrl or data:olderPageUrl')
+    nav.pagination(aria-label='Article pages')
+      b:if(cond='data:newerPageUrl')
+        a.blog-pager-newer-link(expr:href='data:newerPageUrl' rel='prev') Newer articles
+      b:if(cond='data:olderPageUrl')
+        a.blog-pager-older-link(expr:href='data:olderPageUrl' rel='next') Older articles

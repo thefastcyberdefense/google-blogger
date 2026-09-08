@@ -3,7 +3,7 @@
 <html b:css="false" b:defaultwidgetversion="2" b:layoutsVersion="3" b:responsive="true" b:templateUrl="indie.xml" b:templateVersion="0.0.0" expr:dir="data:blog.languageDirection" expr:lang="data:blog.locale" xmlns="http://www.w3.org/1999/xhtml" xmlns:b="http://www.google.com/2005/gml/b" xmlns:data="http://www.google.com/2005/gml/data" xmlns:expr="http://www.google.com/2005/gml/expr">
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
-    <meta name="theme-build" content="0.1.0+9aa3c57bbbdec38568a20d1eeeb25ae68f2dc166"/>
+    <meta name="theme-build" content="0.1.0+677a596283ac20d3c15f689ec4236fdd8c4987a1"/>
     <meta name="color-scheme" content="light dark"/>
     <title><data:view.title.escaped/></title>
     <b:include data="blog" name="all-head-content"/>
@@ -79,26 +79,27 @@
   <body>
     <b:class cond="data:view.isSingleItem" name="is-single"/>
     <b:class cond="data:view.isHomepage and not data:newerPageUrl" name="is-home-lead"/><a class="skip-link" href="#content">Skip to content</a>
-    <header class="site-header">
-      <div class="container header-row">
-        <b:section class="header" id="header" name="Brand" showaddelement="false">
-          <b:widget id="Header1" type="Header" title="Fast Cyber Defense" version="2" locked="true">
-            <b:includable id="main"><a class="brand" expr:href="data:blog.homepageUrl" aria-label="Fast Cyber Defense Blog homepage"><span class="brand-monogram" aria-hidden="true">FCD</span><span class="brand-name">Fast Cyber Defense<small>Security publication</small></span></a></b:includable>
-          </b:widget>
-        </b:section>
-        <div class="header-actions">
-          <button class="js-control" id="theme-toggle" type="button" hidden="hidden" aria-label="Switch color theme">Theme</button>
-          <button class="js-control" id="menu-toggle" type="button" hidden="hidden" aria-controls="primary-navigation" aria-expanded="false">Menu</button>
-        </div>
-      </div>
-      <nav class="container primary-navigation" id="primary-navigation" aria-label="Primary"><a expr:href="data:blog.homepageUrl path &quot;search&quot;">Latest</a><a href="#topics">Topics</a><a href="https://fastcyberdefense.com/">Company website</a>
-        <form class="search-form" id="site-search" expr:action="data:blog.searchUrl" method="get" role="search">
-          <label class="sr-only" for="search-query">Search articles</label>
-          <input id="search-query" type="search" name="q" placeholder="Search security insights" autocomplete="off"/>
-          <button type="submit">Search blog</button>
-        </form>
-      </nav>
-    </header>
+        <header class="site-header">
+          <div class="container header-row">
+            <b:section class="header" id="header" name="Brand" showaddelement="false">
+              <b:widget id="Header1" type="Header" title="Fast Cyber Defense" version="2" locked="true">
+                <b:includable id="main"><a class="brand" expr:href="data:blog.homepageUrl" aria-label="Fast Cyber Defense Blog homepage"><span class="brand-monogram" aria-hidden="true">FCD</span><span class="brand-name">Fast Cyber Defense<small>Security publication</small></span></a>
+                </b:includable>
+              </b:widget>
+            </b:section>
+            <div class="header-actions">
+              <button class="js-control" id="theme-toggle" type="button" hidden="hidden" aria-label="Switch color theme">Theme</button>
+              <button class="js-control" id="menu-toggle" type="button" hidden="hidden" aria-controls="primary-navigation" aria-expanded="false">Menu</button>
+            </div>
+          </div>
+          <nav class="container primary-navigation" id="primary-navigation" aria-label="Primary"><a expr:href="data:blog.homepageUrl path &quot;search&quot;">Latest</a><a href="#topics">Topics</a><a href="https://fastcyberdefense.com/">Company website</a>
+            <form class="search-form" id="site-search" expr:action="data:blog.searchUrl" method="get" role="search">
+              <label class="sr-only" for="search-query">Search articles</label>
+              <input id="search-query" type="search" name="q" placeholder="Search security insights" autocomplete="off"/>
+              <button type="submit">Search blog</button>
+            </form>
+          </nav>
+        </header>
     <main class="container" id="content" tabindex="-1">
       <b:if cond="not data:view.isSingleItem">
         <header class="publication-heading">
@@ -153,73 +154,114 @@
               </b:includable>
               <b:includable id="post" var="post">
                 <b:if cond="data:view.isSingleItem">
-                  <article class="article-view">
-                    <header class="article-header">
-                      <b:include name="fcdLabels" data="post"/>
-                      <h1 class="post-title">
-                        <b:eval expr="data:post.title"/>
-                      </h1>
-                      <b:include name="fcdByline" data="post"/>
-                      <b:if cond="data:view.description">
-                        <p class="standfirst">
-                          <b:eval expr="data:view.description"/>
-                        </p>
-                      </b:if>
-                    </header>
-                    <div class="post-body" id="article-body">
-                      <b:eval expr="data:post.body"/>
-                    </div>
-                    <b:if cond="data:view.isPost">
-                      <div class="share-actions" aria-label="Share article">
-                        <button class="js-control" id="copy-link" type="button" hidden="hidden">Copy article link</button><a expr:href="&quot;https://www.linkedin.com/sharing/share-offsite/&quot; params {url: data:post.url.canonical}" target="_blank" rel="noopener noreferrer">Share on LinkedIn</a>
-                      </div>
-                      <aside class="article-cta">
-                        <h2>Need help securing your organization?</h2>
-                        <p>Put knowledge into practice with Fast Cyber Defense.</p><a href="https://fastcyberdefense.com/">Explore FCD services</a>
-                      </aside>
-                    </b:if>
-                  </article>
+                      <article class="article-view">
+                        <header class="article-header">
+                              <b:if cond="data:post.labels">
+                                <div class="post-labels">
+                                  <b:loop values="data:post.labels" var="label" index="li">
+                                    <b:if cond="data:view.isSingleItem or data:li &lt; 2"><a expr:href="data:label.url" rel="tag">
+                                        <b:eval expr="data:label.name"/></a></b:if>
+                                  </b:loop>
+                                </div>
+                              </b:if>
+                          <h1 class="post-title">
+                            <b:eval expr="data:post.title"/>
+                          </h1>
+                              <div class="byline">
+                                <b:if cond="data:post.author.name"><span>
+                                    <b:eval expr="data:post.author.name"/></span></b:if>
+                                <b:if cond="data:post.date">
+                                  <time expr:datetime="data:post.date.iso8601">
+                                    <b:eval expr="data:post.date"/>
+                                  </time>
+                                </b:if>
+                                <b:if cond="data:view.isPost and data:post.lastUpdated"><span>Updated
+                                    <time expr:datetime="data:post.lastUpdated.iso8601">
+                                      <b:eval expr="data:post.lastUpdated"/>
+                                    </time></span></b:if>
+                                <b:if cond="data:view.isPost"><span id="reading-time" hidden="hidden"></span></b:if>
+                              </div>
+                          <b:if cond="data:view.description">
+                            <p class="standfirst">
+                              <b:eval expr="data:view.description"/>
+                            </p>
+                          </b:if>
+                        </header>
+                        <div class="post-body" id="article-body">
+                          <b:eval expr="data:post.body"/>
+                        </div>
+                        <b:if cond="data:view.isPost">
+                              <div class="share-actions" aria-label="Share article">
+                                <button class="js-control" id="copy-link" type="button" hidden="hidden">Copy article link</button><a expr:href="&quot;https://www.linkedin.com/sharing/share-offsite/&quot; params {url: data:post.url.canonical}" target="_blank" rel="noopener noreferrer">Share on LinkedIn</a>
+                              </div>
+                              <aside class="article-cta">
+                                <h2>Need help securing your organization?</h2>
+                                <p>Put knowledge into practice with Fast Cyber Defense.</p><a href="https://fastcyberdefense.com/">Explore FCD services</a>
+                              </aside>
+                        </b:if>
+                      </article>
                 </b:if>
                 <b:if cond="not data:view.isSingleItem">
-                  <article class="post-card" data-filter-card="true">
-                    <b:if cond="data:post.featuredImage"><a class="card-image" expr:href="data:post.url" aria-hidden="true" tabindex="-1"><img expr:src="resizeImage(data:post.featuredImage, 800, &quot;16:9&quot;)" expr:srcset="resizeImage(data:post.featuredImage, 400, &quot;16:9&quot;) + &quot; 400w, &quot; + resizeImage(data:post.featuredImage, 800, &quot;16:9&quot;) + &quot; 800w&quot;" sizes="(max-width: 639px) 100vw, (max-width: 1023px) 50vw, 40vw" width="800" height="450" alt="" decoding="async" loading="lazy"/></a></b:if>
-                    <div class="card-content">
-                      <b:include name="fcdLabels" data="post"/>
-                      <h2 class="post-title"><a expr:href="data:post.url">
-                          <b:eval expr="data:post.title"/></a></h2>
-                      <p class="post-excerpt">
-                        <b:eval expr="snippet(data:post.snippets.long, {length: 180, links: false, linebreaks: false, ellipsis: true})"/>
-                      </p>
-                      <b:include name="fcdByline" data="post"/>
-                    </div>
-                  </article>
+                      <article class="post-card" data-filter-card="true">
+                        <b:if cond="data:post.featuredImage"><a class="card-image" expr:href="data:post.url" aria-hidden="true" tabindex="-1"><img expr:src="resizeImage(data:post.featuredImage, 800, &quot;16:9&quot;)" expr:srcset="resizeImage(data:post.featuredImage, 400, &quot;16:9&quot;) + &quot; 400w, &quot; + resizeImage(data:post.featuredImage, 800, &quot;16:9&quot;) + &quot; 800w&quot;" sizes="(max-width: 639px) 100vw, (max-width: 1023px) 50vw, 40vw" width="800" height="450" alt="" decoding="async" loading="lazy"/></a>
+                        </b:if>
+                        <div class="card-content">
+                              <b:if cond="data:post.labels">
+                                <div class="post-labels">
+                                  <b:loop values="data:post.labels" var="label" index="li">
+                                    <b:if cond="data:view.isSingleItem or data:li &lt; 2"><a expr:href="data:label.url" rel="tag">
+                                        <b:eval expr="data:label.name"/></a></b:if>
+                                  </b:loop>
+                                </div>
+                              </b:if>
+                          <h2 class="post-title"><a expr:href="data:post.url">
+                              <b:eval expr="data:post.title"/></a></h2>
+                          <p class="post-excerpt">
+                            <b:eval expr="snippet(data:post.snippets.long, {length: 180, links: false, linebreaks: false, ellipsis: true})"/>
+                          </p>
+                              <div class="byline">
+                                <b:if cond="data:post.author.name"><span>
+                                    <b:eval expr="data:post.author.name"/></span></b:if>
+                                <b:if cond="data:post.date">
+                                  <time expr:datetime="data:post.date.iso8601">
+                                    <b:eval expr="data:post.date"/>
+                                  </time>
+                                </b:if>
+                                <b:if cond="data:view.isPost and data:post.lastUpdated"><span>Updated
+                                    <time expr:datetime="data:post.lastUpdated.iso8601">
+                                      <b:eval expr="data:post.lastUpdated"/>
+                                    </time></span></b:if>
+                                <b:if cond="data:view.isPost"><span id="reading-time" hidden="hidden"></span></b:if>
+                              </div>
+                        </div>
+                      </article>
                 </b:if>
               </b:includable>
               <b:includable id="fcdLabels" var="post">
-                <b:if cond="data:post.labels">
-                  <div class="post-labels">
-                    <b:loop values="data:post.labels" var="label" index="li">
-                      <b:if cond="data:view.isSingleItem or data:li &lt; 2"><a expr:href="data:label.url" rel="tag">
-                          <b:eval expr="data:label.name"/></a></b:if>
-                    </b:loop>
-                  </div>
-                </b:if>
+                    <b:if cond="data:post.labels">
+                      <div class="post-labels">
+                        <b:loop values="data:post.labels" var="label" index="li">
+                          <b:if cond="data:view.isSingleItem or data:li &lt; 2"><a expr:href="data:label.url" rel="tag">
+                              <b:eval expr="data:label.name"/></a></b:if>
+                        </b:loop>
+                      </div>
+                    </b:if>
               </b:includable>
               <b:includable id="fcdByline" var="post">
-                <div class="byline">
-                  <b:if cond="data:post.author.name"><span>
-                      <b:eval expr="data:post.author.name"/></span></b:if>
-                  <b:if cond="data:post.date">
-                    <time expr:datetime="data:post.date.iso8601">
-                      <b:eval expr="data:post.date"/>
-                    </time>
-                  </b:if>
-                  <b:if cond="data:view.isPost and data:post.lastUpdated"><span>Updated
-                      <time expr:datetime="data:post.lastUpdated.iso8601">
-                        <b:eval expr="data:post.lastUpdated"/>
-                      </time></span></b:if>
-                  <b:if cond="data:view.isPost"><span id="reading-time" hidden="hidden"></span></b:if>
-                </div>
+                    <div class="byline">
+                      <b:if cond="data:post.author.name"><span>
+                          <b:eval expr="data:post.author.name"/></span></b:if>
+                      <b:if cond="data:post.date">
+                        <time expr:datetime="data:post.date.iso8601">
+                          <b:eval expr="data:post.date"/>
+                        </time>
+                      </b:if>
+                      <b:if cond="data:view.isPost and data:post.lastUpdated"><span>Updated
+                          <time expr:datetime="data:post.lastUpdated.iso8601">
+                            <b:eval expr="data:post.lastUpdated"/>
+                          </time></span></b:if>
+                      <b:if cond="data:view.isPost"><span id="reading-time" hidden="hidden"></span></b:if>
+                    </div>
               </b:includable>
               <b:includable id="commentPicker" var="post">
                 <b:include name="super.commentPicker" data="post"/>
@@ -273,7 +315,7 @@
     <p class="sr-only" id="fcd-status" role="status" aria-live="polite"></p>
     <script>
       //<![CDATA[
-"use strict";(()=>{function b(){let t=document.getElementById("theme-toggle");if(!t)return;let e=document.documentElement,r=matchMedia("(prefers-color-scheme: dark)"),o=()=>e.dataset.theme?e.dataset.theme==="dark":r.matches,n=()=>t.setAttribute("aria-label",`Switch to ${o()?"light":"dark"} theme`);t.hidden=!1,n(),r.addEventListener("change",n),t.addEventListener("click",()=>{e.dataset.theme=o()?"light":"dark";try{localStorage.setItem("fcd-theme",e.dataset.theme)}catch{}n()})}function E(){let t=document.getElementById("menu-toggle"),e=document.getElementById("primary-navigation");if(!t||!e)return;let r=matchMedia("(max-width: 639px)"),o=()=>{let n=e.contains(document.activeElement);e.hidden=r.matches,t.setAttribute("aria-expanded",String(!e.hidden)),e.hidden&&n&&t.focus()};t.hidden=!1,o(),r.addEventListener("change",o),t.addEventListener("click",()=>{e.hidden=!e.hidden,t.setAttribute("aria-expanded",String(!e.hidden))}),document.addEventListener("keydown",n=>{n.key==="Escape"&&r.matches&&!e.hidden&&(e.hidden=!0,t.setAttribute("aria-expanded","false"),t.focus())})}function A(t,e){let r=t.normalize("NFKC").toLocaleLowerCase();return e.normalize("NFKC").toLocaleLowerCase().trim().split(/\s+/u).every(o=>r.includes(o))}function w(){let t=document.querySelector("#search-query"),e=Array.from(document.querySelectorAll("[data-filter-card]")),r=document.getElementById("filter-status");if(!t)return;let o=e.map(n=>({card:n,container:n.closest(".post-outer-container")||n,text:n.textContent||""}));t.addEventListener("input",()=>{if(!o.length||!r)return;let n=0;o.forEach(({container:i,text:c})=>{let a=A(c,t.value);i.hidden=!a,a&&n++}),r.hidden=!t.value.trim(),r.textContent=`${n} of ${o.length} loaded articles match. Submit Search blog to search the full publication.`}),document.addEventListener("keydown",n=>{let i=n.target;if(!(n.isComposing||i instanceof Element&&i.closest('input,textarea,select,[contenteditable]:not([contenteditable="false"])'))&&(n.key==="/"&&!n.metaKey&&!n.ctrlKey&&!n.altKey||n.key.toLowerCase()==="k"&&(n.ctrlKey||n.metaKey)&&!n.altKey)){n.preventDefault();let c=document.getElementById("primary-navigation"),a=document.getElementById("menu-toggle");c?.hidden&&(c.hidden=!1,a?.setAttribute("aria-expanded","true")),t.focus()}})}function g(t,e){if(typeof t!="string"||/[-\u001f\u007f]/u.test(t))return null;try{let r=new URL(t,e),o=new URL(e);return r.protocol==="https:"&&r.origin===o.origin&&!r.username&&!r.password?r.href:null}catch{return null}}function y(t){let e=document.getElementById("fcd-status");e&&(e.textContent=t)}function L(t,e){if(!t||typeof t!="object")return[];let r=t.feed?.entry;if(!Array.isArray(r))return[];let o=new Set,n=[];for(let i of r.slice(0,20)){if(!i||typeof i!="object")continue;let c=i,a=c.title?.$t,u=Array.isArray(c.link)?c.link.find(h=>h?.rel==="alternate"):void 0,m=g(u?.href,e);if(!(typeof a!="string"||!a.trim()||!m||o.has(m))&&(o.add(m),n.push({title:a.trim().slice(0,300),url:m}),n.length===5))break}return n}async function x(){let t=document.querySelector("#recent-posts"),e=document.getElementById("recent-status");if(!t||!e||!t.dataset.feed)return;let r=g(t.dataset.feed,location.href);if(!r)return;let o=new URL(r);o.searchParams.set("alt","json"),o.searchParams.set("max-results","8"),e.textContent="Loading recent posts\u2026";try{let n=await fetch(o,{credentials:"omit",signal:AbortSignal.timeout(8e3)});if(!n.ok)throw new Error("Feed unavailable");if(Number(n.headers.get("content-length"))>5e5)throw new Error("Feed too large");let c=n.body?.getReader();if(!c)throw new Error("No feed body");let a=[],u=0;for(;;){let{value:l,done:d}=await c.read();if(d)break;if(u+=l.length,u>5e5)throw await c.cancel(),new Error("Feed too large");a.push(l)}let m=new Uint8Array(u),h=0;for(let l of a)m.set(l,h),h+=l.length;let s=L(JSON.parse(new TextDecoder().decode(m)),location.href),f=document.createDocumentFragment();s.forEach(l=>{let d=document.createElement("li"),p=document.createElement("a");p.href=l.url,p.textContent=l.title,d.append(p),f.append(d)}),t.replaceChildren(f),e.textContent=s.length?"Newest publications":"No recent posts available. Browse the publication below."}catch{e.textContent="Recent posts could not be loaded. Browse the latest articles below."}}function k(){let t=document.getElementById("article-body");if(!t)return;let e=document.getElementById("reading-time"),r=(t.textContent||"").trim().split(/\s+/u).filter(Boolean).length;e&&r&&(e.textContent=`${Math.max(1,Math.ceil(r/220))} min read`,e.hidden=!1);let o=document.getElementById("copy-link");o&&(o.hidden=!1,o.addEventListener("click",async()=>{try{let s=document.querySelector('link[rel="canonical"]')?.href||location.href;await navigator.clipboard.writeText(s),y("Article link copied")}catch{y("Copy unavailable. Copy the address from your browser.")}}));let n=Array.from(t.querySelectorAll("h2,h3,h4"));if(n.length<2)return;let i=document.createElement("details");i.className="article-toc";let c=document.createElement("summary");c.textContent="On this page",i.append(c);let a=document.createElement("nav");a.setAttribute("aria-label","Table of contents");let u=document.createElement("ol");a.append(u),i.append(a);let m=new Set(Array.from(document.querySelectorAll("[id]"),s=>s.id)),h=new Map;if(n.forEach((s,f)=>{if(!s.id||document.querySelectorAll(`[id="${CSS.escape(s.id)}"]`).length>1){let p=`fcd-section-${f+1}`;for(;m.has(p);)p+="-heading";s.id=p,m.add(p)}s.tabIndex=-1;let l=document.createElement("li"),d=document.createElement("a");d.href=`#${encodeURIComponent(s.id)}`,d.textContent=s.textContent||`Section ${f+1}`,d.addEventListener("click",()=>{s.focus({preventScroll:!0})}),l.append(d),u.append(l),h.set(s,d)}),t.before(i),"IntersectionObserver"in window){let s=new IntersectionObserver(f=>{for(let l of f)l.isIntersecting&&(h.forEach(d=>d.removeAttribute("aria-current")),h.get(l.target)?.setAttribute("aria-current","location"))},{rootMargin:"0px 0px -65% 0px"});n.forEach(f=>s.observe(f))}}function C(){let t=document.getElementById("article-body");t&&(t.querySelectorAll("pre").forEach(e=>{e.tabIndex=0,e.setAttribute("aria-label","Scrollable code block");let r=e.querySelector("code")||e,o=r.textContent||"",n=Array.from(r.classList).find(u=>u.startsWith("language-"))?.slice(9)||"Code",i=document.createElement("div");i.className="code-toolbar";let c=document.createElement("span");c.textContent=n;let a=document.createElement("button");a.type="button",a.textContent="Copy",a.setAttribute("aria-label",`Copy ${n} code`),a.addEventListener("click",async()=>{try{await navigator.clipboard.writeText(o),y("Code copied")}catch{y("Copy unavailable. Select the code and copy it manually.")}}),i.append(c,a),e.before(i)}),t.querySelectorAll("table").forEach((e,r)=>{if(e.parentElement?.classList.contains("table-scroll"))return;let o=document.createElement("div");o.className="table-scroll",o.tabIndex=0,o.setAttribute("role","region"),o.setAttribute("aria-label",e.caption?.textContent||`Scrollable table ${r+1}`),e.before(o),o.append(e)}))}b();E();w();k();C();x();})();
+"use strict";(()=>{function b(){let t=document.getElementById("theme-toggle");if(!t)return;let e=document.documentElement,r=matchMedia("(prefers-color-scheme: dark)"),o=()=>e.dataset.theme?e.dataset.theme==="dark":r.matches,n=()=>t.setAttribute("aria-label",`Switch to ${o()?"light":"dark"} theme`);t.hidden=!1,n(),r.addEventListener("change",n),t.addEventListener("click",()=>{e.dataset.theme=o()?"light":"dark";try{localStorage.setItem("fcd-theme",e.dataset.theme)}catch{}n()})}function E(){let t=document.getElementById("menu-toggle"),e=document.getElementById("primary-navigation");if(!t||!e)return;let r=matchMedia("(max-width: 639px)"),o=()=>{let n=e.contains(document.activeElement);e.hidden=r.matches,t.setAttribute("aria-expanded",String(!e.hidden)),e.hidden&&n&&t.focus()};t.hidden=!1,o(),r.addEventListener("change",o),t.addEventListener("click",()=>{e.hidden=!e.hidden,t.setAttribute("aria-expanded",String(!e.hidden))}),document.addEventListener("keydown",n=>{n.key==="Escape"&&r.matches&&!e.hidden&&(e.hidden=!0,t.setAttribute("aria-expanded","false"),t.focus())})}function C(t,e){let r=t.normalize("NFKC").toLocaleLowerCase();return e.normalize("NFKC").toLocaleLowerCase().trim().split(/\s+/u).every(o=>r.includes(o))}function w(){let t=document.querySelector("#search-query"),e=Array.from(document.querySelectorAll("[data-filter-card]")),r=document.getElementById("filter-status");if(!t)return;let o=e.map(n=>({card:n,container:n.closest(".post-outer-container")||n,text:n.textContent||""}));t.addEventListener("input",()=>{if(!o.length||!r)return;let n=0;o.forEach(({container:c,text:i})=>{let a=C(i,t.value);c.hidden=!a,a&&n++}),r.hidden=!t.value.trim(),r.textContent=`${n} of ${o.length} loaded articles match. Submit Search blog to search the full publication.`}),document.addEventListener("keydown",n=>{let c=n.target;if(!(n.isComposing||c instanceof Element&&c.closest('input,textarea,select,[contenteditable]:not([contenteditable="false"])'))&&(n.key==="/"&&!n.metaKey&&!n.ctrlKey&&!n.altKey||n.key.toLowerCase()==="k"&&(n.ctrlKey||n.metaKey)&&!n.altKey)){n.preventDefault();let i=document.getElementById("primary-navigation"),a=document.getElementById("menu-toggle");i?.hidden&&(i.hidden=!1,a?.setAttribute("aria-expanded","true")),t.focus()}})}function g(t,e){if(typeof t!="string"||Array.from(t).some(r=>{let o=r.charCodeAt(0);return o<=31||o===127}))return null;try{let r=new URL(t,e),o=new URL(e);return r.protocol==="https:"&&r.origin===o.origin&&!r.username&&!r.password?r.href:null}catch{return null}}function y(t){let e=document.getElementById("fcd-status");e&&(e.textContent=t)}function L(t,e){if(!t||typeof t!="object")return[];let r=t.feed?.entry;if(!Array.isArray(r))return[];let o=new Set,n=[];for(let c of r.slice(0,20)){if(!c||typeof c!="object")continue;let i=c,a=i.title?.$t,u=Array.isArray(i.link)?i.link.find(h=>h?.rel==="alternate"):void 0,m=g(u?.href,e);if(!(typeof a!="string"||!a.trim()||!m||o.has(m))&&(o.add(m),n.push({title:a.trim().slice(0,300),url:m}),n.length===5))break}return n}async function x(){let t=document.querySelector("#recent-posts"),e=document.getElementById("recent-status");if(!t||!e||!t.dataset.feed)return;let r=g(t.dataset.feed,location.href);if(!r)return;let o=new URL(r);o.searchParams.set("alt","json"),o.searchParams.set("max-results","8"),e.textContent="Loading recent posts\u2026";try{let n=await fetch(o,{credentials:"omit",signal:AbortSignal.timeout(8e3)});if(!n.ok)throw new Error("Feed unavailable");if(Number(n.headers.get("content-length"))>5e5)throw new Error("Feed too large");let i=n.body?.getReader();if(!i)throw new Error("No feed body");let a=[],u=0;for(;;){let{value:l,done:d}=await i.read();if(d)break;if(u+=l.length,u>5e5)throw await i.cancel(),new Error("Feed too large");a.push(l)}let m=new Uint8Array(u),h=0;for(let l of a)m.set(l,h),h+=l.length;let s=L(JSON.parse(new TextDecoder().decode(m)),location.href),f=document.createDocumentFragment();s.forEach(l=>{let d=document.createElement("li"),p=document.createElement("a");p.href=l.url,p.textContent=l.title,d.append(p),f.append(d)}),t.replaceChildren(f),e.textContent=s.length?"Newest publications":"No recent posts available. Browse the publication below."}catch{e.textContent="Recent posts could not be loaded. Browse the latest articles below."}}function k(){let t=document.getElementById("article-body");if(!t)return;let e=document.getElementById("reading-time"),r=(t.textContent||"").trim().split(/\s+/u).filter(Boolean).length;e&&r&&(e.textContent=`${Math.max(1,Math.ceil(r/220))} min read`,e.hidden=!1);let o=document.getElementById("copy-link");o&&(o.hidden=!1,o.addEventListener("click",async()=>{try{let s=document.querySelector('link[rel="canonical"]')?.href||location.href;await navigator.clipboard.writeText(s),y("Article link copied")}catch{y("Copy unavailable. Copy the address from your browser.")}}));let n=Array.from(t.querySelectorAll("h2,h3,h4"));if(n.length<2)return;let c=document.createElement("details");c.className="article-toc";let i=document.createElement("summary");i.textContent="On this page",c.append(i);let a=document.createElement("nav");a.setAttribute("aria-label","Table of contents");let u=document.createElement("ol");a.append(u),c.append(a);let m=new Set(Array.from(document.querySelectorAll("[id]"),s=>s.id)),h=new Map;if(n.forEach((s,f)=>{if(!s.id||document.querySelectorAll(`[id="${CSS.escape(s.id)}"]`).length>1){let p=`fcd-section-${f+1}`;for(;m.has(p);)p+="-heading";s.id=p,m.add(p)}s.tabIndex=-1;let l=document.createElement("li"),d=document.createElement("a");d.href=`#${encodeURIComponent(s.id)}`,d.textContent=s.textContent||`Section ${f+1}`,d.addEventListener("click",()=>{s.focus({preventScroll:!0})}),l.append(d),u.append(l),h.set(s,d)}),t.before(c),"IntersectionObserver"in window){let s=new IntersectionObserver(f=>{for(let l of f)l.isIntersecting&&(h.forEach(d=>d.removeAttribute("aria-current")),h.get(l.target)?.setAttribute("aria-current","location"))},{rootMargin:"0px 0px -65% 0px"});n.forEach(f=>s.observe(f))}}function A(){let t=document.getElementById("article-body");t&&(t.querySelectorAll("pre").forEach(e=>{e.tabIndex=0,e.setAttribute("aria-label","Scrollable code block");let r=e.querySelector("code")||e,o=r.textContent||"",n=Array.from(r.classList).find(u=>u.startsWith("language-"))?.slice(9)||"Code",c=document.createElement("div");c.className="code-toolbar";let i=document.createElement("span");i.textContent=n;let a=document.createElement("button");a.type="button",a.textContent="Copy",a.setAttribute("aria-label",`Copy ${n} code`),a.addEventListener("click",async()=>{try{await navigator.clipboard.writeText(o),y("Code copied")}catch{y("Copy unavailable. Select the code and copy it manually.")}}),c.append(i,a),e.before(c)}),t.querySelectorAll("table").forEach((e,r)=>{if(e.parentElement?.classList.contains("table-scroll"))return;let o=document.createElement("div");o.className="table-scroll",o.tabIndex=0,o.setAttribute("role","region"),o.setAttribute("aria-label",e.caption?.textContent||`Scrollable table ${r+1}`),e.before(o),o.append(e)}))}b();E();w();k();A();x();})();
 
       //]]>
     </script>

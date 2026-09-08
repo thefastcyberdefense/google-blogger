@@ -1,0 +1,50 @@
+extends home.pug
+block config
+  - var view = 'article'
+block stream
+  .blog-posts
+    .post-outer-container
+      .post-outer
+        +fcdArticle(fixturePost, true)
+          p This fixture exercises shared production presentation and the compiled script bundle. It does not interpret Blogger expressions.
+          h2 Know the boundary
+          p Start with the identities, resources and grants that define the system.
+          .note
+            strong Note:
+            |  Prefer explicit grants over broad defaults.
+          h3 Inspect the permissions
+          pre
+            code.language-bash= 'printf "%s\\n" "' + 'x'.repeat(240) + '"'
+          h2 Validate the controls
+          .warning
+            strong Warning:
+            |  Test changes in a non-production environment first.
+          table
+            caption Control verification matrix
+            thead
+              tr
+                th(scope='col') Control
+                th(scope='col') Expected result
+            tbody
+              tr
+                td Least privilege
+                td Unauthorized requests are rejected.
+              tr
+                td Audit trail
+                td Events identify actor and resource.
+          table#wide-table(tabindex='0' aria-label='Scrollable incident evidence matrix')
+            caption Incident evidence across twelve systems
+            thead
+              tr
+                each column in Array.from({length:12},(_,i)=>i+1)
+                  th(scope='col')= 'System ' + column
+            tbody
+              each row in ['Authentication','Authorization','Network events']
+                tr
+                  each column in Array.from({length:12},(_,i)=>i+1)
+                    td= row + ' evidence ' + column
+          p
+            a(href='https://fastcyberdefense.com/')= 'https://fastcyberdefense.com/' + 'long-path-'.repeat(20)
+          blockquote Evidence matters more than a green badge.
+          h3 Preserve the evidence
+          p Store results with the tested commit and explain remaining gaps.

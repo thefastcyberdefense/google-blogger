@@ -1,0 +1,11 @@
+//- The shared mixins are included by header.pug before Blog1 in theme.pug.
+//- Native view dispatch and named includables remain at this Blogger boundary.
+b:includable(id='post' var='post')
+  b:if(cond='data:view.isSingleItem')
+    +fcdArticle({}, false)
+  b:if(cond='not data:view.isSingleItem')
+    +fcdCard({}, false)
+b:includable(id='fcdLabels' var='post')
+  +fcdLabels({}, false)
+b:includable(id='fcdByline' var='post')
+  +fcdByline({}, false, false)

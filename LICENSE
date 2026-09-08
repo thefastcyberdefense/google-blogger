@@ -1,0 +1,15 @@
+# Licensing and upstream notices
+
+Original FCD-specific code and branding: Copyright (c) 2026 Fast Cyber Defense. All rights reserved. No general public reuse license is granted for FCD-specific code or identity in this initialization.
+
+Ledger-derived portions are used with permission confirmed by the owner in the project request. Their original notice and license reference are preserved below; this repository does not silently relicense third-party code.
+
+Required Notice: Copyright (c) 2026 Md Redwan Ahmed.
+Required Notice: This license covers the software code only. Md Redwan Ahmed's name, likeness, biography, domain names, blog content, original media, logos, and personal or business branding are not licensed for reuse. Remove or replace all such identity-specific material before any public deployment, publication, or distribution as a website or theme.
+
+Ledger source license: PolyForm Noncommercial License 1.0.0
+https://polyformproject.org/licenses/noncommercial/1.0.0
+
+Source provenance: https://github.com/redwan-cse/ledger-blogger-theme/tree/692a82463cb8d0869a6f5e7c946ecc757cacb7e2
+
+Dependencies retain their own licenses. The separately saved FCD Superpowers skill includes the Superpowers MIT license and Jesse Vincent attribution; no Superpowers plugin runtime is bundled in this theme.

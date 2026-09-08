@@ -1,0 +1,51 @@
+doctype html
+html&attributes(rootAttributes)
+  head
+    meta(name='viewport' content='width=device-width, initial-scale=1')/
+    meta(name='theme-build' content=build)/
+    meta(name='color-scheme' content='light dark')/
+    title
+      | <data:view.title.escaped/>
+    b:include(data='blog' name='all-head-content')/
+    link(rel='alternate' type='application/atom+xml' expr:href='data:blog.canonicalHomepageUrl path "feeds/posts/default"' expr:title='data:blog.title.escaped')/
+    b:skin(version='0.0.0').
+      <![CDATA[
+      !{css}
+      ]]>
+    b:template-skin.
+      <![CDATA[
+      body#layout .fcd-layout,body#layout .site-header,body#layout .site-footer{display:block;position:static}body#layout .skip-link,body#layout .js-control{display:none}
+      ]]>
+    b:defaultmarkups
+      include defaultmarkups/common.pug
+      include defaultmarkups/blog.pug
+    include partials/head-meta.pug
+    script.
+      //<![CDATA[
+      try{var t=localStorage.getItem('fcd-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t;}catch(e){}
+      //]]>
+  body
+    b:class(cond='data:view.isSingleItem' name='is-single')/
+    b:class(cond='data:view.isHomepage and not data:newerPageUrl' name='is-home-lead')/
+    a.skip-link(href='#content') Skip to content
+    include widgets/header.pug
+    main#content.container(tabindex='-1')
+      b:if(cond='not data:view.isSingleItem')
+        header.publication-heading
+          p.eyebrow Fast Cyber Defense Blog
+          h1
+            b:if(cond='data:view.isHomepage') Security knowledge. Practical defense.
+            b:if(cond='not data:view.isHomepage')
+              b:eval(expr='data:view.title')/
+          p.standfirst Research, threat insights, and guidance for stronger security.
+      include widgets/label.pug
+      .fcd-layout
+        .publication-stream
+          include widgets/blog.pug
+        include widgets/sidebar.pug
+    include widgets/footer.pug
+    p#fcd-status.sr-only(role='status' aria-live='polite')
+    script.
+      //<![CDATA[
+      !{script}
+      //]]>

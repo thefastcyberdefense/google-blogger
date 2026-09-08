@@ -1,0 +1,71 @@
+include ../src/partials/presentation.pug
+block config
+  - var view = typeof fixtureView === 'string' ? fixtureView : 'home'
+- var titles = ['Hardening cloud access without slowing your team down', 'What a useful incident response checklist actually includes', 'A practical guide to investigating long and unusual authentication chains', 'Making vulnerability remediation measurable']
+- var image = 'data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%22800%22%20height=%22450%22%3E%3Crect%20width=%22800%22%20height=%22450%22%20fill=%22%23175f9e%22/%3E%3C/svg%3E'
+- var labels = [{name:'Cloud Security',url:'/search/label/Cloud'},{name:'Research',url:'/search/label/Research'}]
+- var fixturePost = {title:'A practical guide to strengthening cloud identity boundaries',url:'/article',author:'Fixture author',date:'2026-09-08',dateLabel:'September 8, 2026',updated:'2026-09-09',updatedLabel:'September 9, 2026',labels,excerpt:'Synthetic technical content for responsive and interaction tests, not a published article.'}
+doctype html
+html(lang='en')
+  head
+    meta(charset='utf-8')
+    meta(name='viewport' content='width=device-width, initial-scale=1')
+    title FCD publication layout simulation
+    style!= css
+  body(class=view === 'article' ? 'is-single' : view === 'home' ? 'is-home-lead' : '')
+    a.skip-link(href='#content') Skip to content
+    +fcdHeader(true)
+    main#content.container(tabindex='-1')
+      if view !== 'article'
+        header.publication-heading
+          p.eyebrow Fast Cyber Defense Blog
+          h1= view === 'home' ? 'Security knowledge. Practical defense.' : view === 'error' ? 'Page not found' : view === 'empty' ? 'Search results' : 'Latest articles'
+          p.standfirst Research, threat insights, and guidance for stronger security.
+      #topics.topics
+        #Label1.widget.Label
+          nav.topic-navigation(aria-label='Article topics')
+            each label in labels
+              a.topic-pill(href=label.url rel='tag')= label.name
+      .fcd-layout
+        .publication-stream
+          #page_body.main
+            #Blog1.widget.Blog
+              block stream
+                if view === 'empty' || view === 'error'
+                  section.empty-state
+                    h2 No articles to show
+                    p Try another search or explore the latest publications.
+                    a(href='/') Visit the publication
+                else
+                  p#filter-status.filter-status(role='status' hidden)
+                  .blog-posts
+                    each title, i in titles
+                      .post-outer-container
+                        .post-outer
+                          +fcdCard({title,url:'/article',labels,author:'Fixture author',date:'2026-09-08',dateLabel:'September 8, 2026',excerpt:'Synthetic test fixture: security guidance with long titles, labels and text. This content is not shipped as Blogger posts.',image:i % 2 === 0 ? image : null}, true)
+                  if view === 'paged'
+                    nav.pagination(aria-label='Article pages')
+                      a.blog-pager-newer-link(href='/' rel='prev') Newer articles
+                      a.blog-pager-older-link(href='/search?updated-max=2026-09-01' rel='next') Older articles
+        aside.sidebar(aria-label='Publication sidebar')
+          section.sidebar-panel
+            h2 Recent Posts
+            ol#recent-posts.recent-list(data-feed='/feeds/posts/default')
+            p#recent-status Small updates. Lasting insight.
+            a(href='/search') Browse latest articles
+          section.sidebar-panel
+            h2 Follow the research
+            p Get new publications in your feed reader.
+            a(href='/feeds/posts/default') Subscribe via Atom
+    footer.site-footer
+      .container.footer-grid
+        div
+          p.brand-name Fast Cyber Defense
+          p Quick to Act, Strong to Protect.
+        nav(aria-label='Company and publication')
+          a(href='https://fastcyberdefense.com/') Company website
+          a(href='/feeds/posts/default') Publication feed
+          a(href='#content') Back to content
+      .container.footer-note Simulation fixture, not Blogger-rendered output or production editorial content.
+    p#fcd-status.sr-only(role='status' aria-live='polite')
+    script!= script

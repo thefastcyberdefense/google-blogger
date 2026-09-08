@@ -1,0 +1,14 @@
+aside.sidebar(aria-label='Publication sidebar')
+  section.sidebar-panel
+    h2 Recent Posts
+    ol#recent-posts.recent-list(expr:data-feed='data:blog.homepageUrl path "feeds/posts/default"')
+    p#recent-status Small updates. Lasting insight.
+    a(expr:href='data:blog.homepageUrl path "search"') Browse latest articles
+  section.sidebar-panel
+    h2 Follow the research
+    p Get new publications in your feed reader.
+    a(expr:href='data:blog.homepageUrl path "feeds/posts/default"') Subscribe via Atom
+  b:section(id='sidebar' class='sidebar-widgets' name='Sidebar widgets' showaddelement='true')
+    b:widget(id='BlogArchive1' type='BlogArchive' title='Archive' version='2' locked='false')
+      b:includable(id='main')
+        b:include(name='super.main')/

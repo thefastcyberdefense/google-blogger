@@ -1,53 +1,39 @@
 extends home.pug
-block heading
-  p.eyebrow Technical article fixture
+block config
+  - var view = 'article'
 block stream
-  article.article-view
-    header.article-header
-      .post-labels
-        a(href='/search/label/Cloud') Cloud Security
-      h1.post-title A practical guide to strengthening cloud identity boundaries
-      .byline
-        span Fixture author
-        time(datetime='2026-09-08') September 8, 2026
-        span#reading-time(hidden)
-      p.standfirst Synthetic technical content for responsive and interaction tests, not a published article.
-    .post-body#article-body
-      p This fixture exercises the theme stylesheet and script bundle. It does not interpret Blogger expressions.
-      h2 Know the boundary
-      p Start with the identities, resources and grants that define the system.
-      .note
-        strong Note:
-        |  Prefer explicit grants over broad defaults.
-      h3 Inspect the permissions
-      pre
-        code.language-bash= 'printf "%s\\n" "' + 'x'.repeat(240) + '"'
-      h2 Validate the controls
-      .warning
-        strong Warning:
-        |  Test changes in a non-production environment first.
-      table
-        caption Control verification matrix
-        thead
-          tr
-            th(scope='col') Control
-            th(scope='col') Expected result
-        tbody
-          tr
-            td Least privilege
-            td Unauthorized requests are rejected.
-          tr
-            td Audit trail
-            td Events identify actor and resource.
-      p
-        a(href='https://fastcyberdefense.com/')= 'https://fastcyberdefense.com/' + 'long-path-'.repeat(20)
-      blockquote Evidence matters more than a green badge.
-      h3 Preserve the evidence
-      p Store results with the tested commit and explain remaining gaps.
-    .share-actions(aria-label='Share article')
-      button#copy-link.js-control(type='button' hidden) Copy article link
-      a(href='https://www.linkedin.com/' target='_blank' rel='noopener noreferrer') Share on LinkedIn
-    aside.article-cta
-      h2 Need help securing your organization?
-      p Put knowledge into practice with Fast Cyber Defense.
-      a(href='https://fastcyberdefense.com/') Explore FCD services
+  .blog-posts
+    .post-outer-container
+      .post-outer
+        +fcdArticle(fixturePost, true)
+          p This fixture exercises shared production presentation and the compiled script bundle. It does not interpret Blogger expressions.
+          h2 Know the boundary
+          p Start with the identities, resources and grants that define the system.
+          .note
+            strong Note:
+            |  Prefer explicit grants over broad defaults.
+          h3 Inspect the permissions
+          pre
+            code.language-bash= 'printf "%s\\n" "' + 'x'.repeat(240) + '"'
+          h2 Validate the controls
+          .warning
+            strong Warning:
+            |  Test changes in a non-production environment first.
+          table
+            caption Control verification matrix
+            thead
+              tr
+                th(scope='col') Control
+                th(scope='col') Expected result
+            tbody
+              tr
+                td Least privilege
+                td Unauthorized requests are rejected.
+              tr
+                td Audit trail
+                td Events identify actor and resource.
+          p
+            a(href='https://fastcyberdefense.com/')= 'https://fastcyberdefense.com/' + 'long-path-'.repeat(20)
+          blockquote Evidence matters more than a green badge.
+          h3 Preserve the evidence
+          p Store results with the tested commit and explain remaining gaps.

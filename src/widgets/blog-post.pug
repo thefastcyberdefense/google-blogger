@@ -1,55 +1,11 @@
+//- The shared mixins are included by header.pug before Blog1 in theme.pug.
+//- Native view dispatch and named includables remain at this Blogger boundary.
 b:includable(id='post' var='post')
   b:if(cond='data:view.isSingleItem')
-    article.article-view
-      header.article-header
-        b:include(name='fcdLabels' data='post')/
-        h1.post-title
-          b:eval(expr='data:post.title')/
-        b:include(name='fcdByline' data='post')/
-        b:if(cond='data:view.description')
-          p.standfirst
-            b:eval(expr='data:view.description')/
-      .post-body#article-body
-        b:eval(expr='data:post.body')/
-      b:if(cond='data:view.isPost')
-        .share-actions(aria-label='Share article')
-          button.js-control#copy-link(type='button' hidden='hidden') Copy article link
-          a(expr:href='"https://www.linkedin.com/sharing/share-offsite/" params {url: data:post.url.canonical}' target='_blank' rel='noopener noreferrer') Share on LinkedIn
-        aside.article-cta
-          h2 Need help securing your organization?
-          p Put knowledge into practice with Fast Cyber Defense.
-          a(href='https://fastcyberdefense.com/') Explore FCD services
+    +fcdArticle({}, false)
   b:if(cond='not data:view.isSingleItem')
-    article.post-card(data-filter-card='true')
-      b:if(cond='data:post.featuredImage')
-        a.card-image(expr:href='data:post.url' aria-hidden='true' tabindex='-1')
-          img(expr:src='resizeImage(data:post.featuredImage, 800, "16:9")' expr:srcset='resizeImage(data:post.featuredImage, 400, "16:9") + " 400w, " + resizeImage(data:post.featuredImage, 800, "16:9") + " 800w"' sizes='(max-width: 639px) 100vw, (max-width: 1023px) 50vw, 40vw' width='800' height='450' alt='' decoding='async' loading='lazy')/
-      .card-content
-        b:include(name='fcdLabels' data='post')/
-        h2.post-title
-          a(expr:href='data:post.url')
-            b:eval(expr='data:post.title')/
-        p.post-excerpt
-          b:eval(expr='snippet(data:post.snippets.long, {length: 180, links: false, linebreaks: false, ellipsis: true})')/
-        b:include(name='fcdByline' data='post')/
+    +fcdCard({}, false)
 b:includable(id='fcdLabels' var='post')
-  b:if(cond='data:post.labels')
-    .post-labels
-      b:loop(values='data:post.labels' var='label' index='li')
-        b:if(cond='data:view.isSingleItem or data:li < 2')
-          a(expr:href='data:label.url' rel='tag')
-            b:eval(expr='data:label.name')/
+  +fcdLabels({}, false)
 b:includable(id='fcdByline' var='post')
-  .byline
-    b:if(cond='data:post.author.name')
-      span
-        b:eval(expr='data:post.author.name')/
-    b:if(cond='data:post.date')
-      time(expr:datetime='data:post.date.iso8601')
-        b:eval(expr='data:post.date')/
-    b:if(cond='data:view.isPost and data:post.lastUpdated')
-      span Updated
-        time(expr:datetime='data:post.lastUpdated.iso8601')
-          b:eval(expr='data:post.lastUpdated')/
-    b:if(cond='data:view.isPost')
-      span#reading-time(hidden='hidden')
+  +fcdByline({}, false, false)

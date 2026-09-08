@@ -1,20 +1,2 @@
-header.site-header
-  .container.header-row
-    b:section(id='header' class='header' name='Brand' showaddelement='false')
-      b:widget(id='Header1' type='Header' title='Fast Cyber Defense' version='2' locked='true')
-        b:includable(id='main')
-          a.brand(expr:href='data:blog.homepageUrl' aria-label='Fast Cyber Defense Blog homepage')
-            span.brand-monogram(aria-hidden='true') FCD
-            span.brand-name Fast Cyber Defense
-              small Security publication
-    .header-actions
-      button#theme-toggle.js-control(type='button' hidden='hidden' aria-label='Switch color theme') Theme
-      button#menu-toggle.js-control(type='button' hidden='hidden' aria-controls='primary-navigation' aria-expanded='false') Menu
-  nav#primary-navigation.container.primary-navigation(aria-label='Primary')
-    a(expr:href='data:blog.homepageUrl path "search"') Latest
-    a(href='#topics') Topics
-    a(href='https://fastcyberdefense.com/') Company website
-    form#site-search.search-form(expr:action='data:blog.searchUrl' method='get' role='search')
-      label.sr-only(for='search-query') Search articles
-      input#search-query(type='search' name='q' placeholder='Search security insights' autocomplete='off')/
-      button(type='submit') Search blog
+include ../partials/presentation.pug
++fcdHeader(false)

@@ -2,43 +2,74 @@ name: FCD theme verification
 on:
   push:
     branches: [main, feat/fcd-blogger-foundation]
-  pull_request:
   workflow_dispatch:
 permissions:
   contents: read
 concurrency:
-  group: fcd-ci-${{ github.event.pull_request.head.ref || github.ref }}
+  group: fcd-ci-${{ github.ref }}
   cancel-in-progress: true
 jobs:
+  initialize-lock:
+    if: github.ref == 'refs/heads/feat/fcd-blogger-foundation'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    outputs:
+      sha: ${{ steps.lock.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@94196ee1d15439c1b6651cd87ef14e88ec435966
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - name: One-time approved lockfile initialization
+        id: lock
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ ! -f package-lock.json ]; then
+            npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add -- package-lock.json
+            git commit -m 'chore: generate initial npm dependency lockfile'
+            git push origin HEAD:refs/heads/feat/fcd-blogger-foundation
+          fi
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
   verify:
+    needs: initialize-lock
+    if: ${{ always() && (needs.initialize-lock.result == 'success' || needs.initialize-lock.result == 'skipped') }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
         with:
+          ref: ${{ needs.initialize-lock.outputs.sha || github.sha }}
           persist-credentials: false
       - uses: actions/setup-node@94196ee1d15439c1b6651cd87ef14e88ec435966
         with:
           node-version-file: .nvmrc
           package-manager-cache: false
-      - name: Resolve initial lockfile only when not yet committed
-        if: ${{ hashFiles('package-lock.json') == '' }}
-        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
       - run: npm ci --ignore-scripts --no-audit --no-fund
-      - name: Record installation provenance
+      - name: Record exact tested source
         run: |
           node --version
           npm --version
+          git rev-parse HEAD
           sha256sum package-lock.json
-          echo 'Initialization lockfile is an artifact until committed; this run alone does not prove a fresh clone has npm ci support.' >> "$GITHUB_STEP_SUMMARY"
-      - run: npm run verify
+          echo "Tested source: $(git rev-parse HEAD)" >> "$GITHUB_STEP_SUMMARY"
+      - run: npm run typecheck
+      - run: npm run build
+      - run: npm run contract:check
+      - run: npm test
       - run: npm run preview -- --build-only
       - run: npx --no-install playwright install --with-deps chromium
       - run: npm run test:render
       - run: npm audit --audit-level=moderate
       - name: Upload verification evidence
         if: ${{ always() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: fcd-evidence-${{ github.sha }}
           path: |

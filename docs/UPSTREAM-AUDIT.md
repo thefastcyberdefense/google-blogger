@@ -1,49 +1,53 @@
-# Reuse, verification and limitations
+# Reuse, foundation hardening and evidence boundaries
 
-Ledger audit commit: 692a82463cb8d0869a6f5e7c946ecc757cacb7e2. Owner confirmed ownership and reuse permission. Reused/adapted: V3 root contract, compiler pipeline/build stamp/size cap, default Blog super.main bean preparation, Common title include, Blog1 native dispatch, data-view post/body/labels/date patterns and older/newer URLs.
+## Provenance
 
-Redesigned: FCD header, cards, article layout, sidebar, search, theme tokens and footer. Recent posts uses bounded JSON parsing and safe DOM, not cached raw HTML. Personal analytics, identity and publishing scripts are excluded.
+Ledger audit reference: 692a82463cb8d0869a6f5e7c946ecc757cacb7e2. Owner confirmed reuse permission. Reused/adapted V3 root and widget identities, compiler/build-stamp/size conventions, Blog super.main bean preparation, native Blog1 body/view/date/label patterns, comments delegation and cursor pagination. Personal identities, analytics, raw-HTML caches and publishing scripts are excluded. FCD corporate tokens were inspected in the current corporate source, not the private application copied.
 
-## Three PR #1 review blockers: remediation
+## Original PR blockers
 
-The reviewed source was 39737d77bb7e0065d549935c056a139a57dfffd9. The user approved a 15-file remediation batch while keeping main untouched.
+The initial review found valid hyphenated URLs rejected by a corrupted character class, substring-based deployment false positives, and separate browser-fixture markup with production-state drift.
 
-### URL validation
+URL validation now checks character codes 0-31 and 127 while preserving safe same-origin HTTPS permalinks. Deployment smoke checks parse inert HTML, validate exact unique metadata and visible populated publication DOM, reject login/redirect/CSS-only responses and bound size/time. Presentation now shares brand/header/search/card/article mixins; structural comparison and a deliberate label-removal negative control protect production/fixture parity.
 
-The old serialized character class rejected literal hyphens and missed most control characters. The corrected validator uses character-code checks (0 through 31, plus 127), retains HTTPS/same-origin/no-credentials checks, and accepts hyphenated Blogger slugs and staging hostnames. Unit tests cover every control-character code, relative/absolute hyphenated links and multi-entry feeds. Browser feed fixtures now use three realistic hyphenated permalinks.
+Original failing baseline: https://github.com/thefastcyberdefense/google-blogger/actions/runs/34252776585/job/102151027708 (19 passed, 44 failed). Verified blocker-fix head d02cb6f7be574d6e7fe1b71cd33ab58f39c1524e passed 65 unit/contract and 330 browser tests: https://github.com/thefastcyberdefense/google-blogger/actions/runs/34254004137/job/102155082010 . This does not attest to later revisions.
 
-### Deployment inspection
+## Approved foundation-hardening scope
 
-The old global substring checks could accept CSS-only pages. tools/deploy-check.ts now parses HTML in Chromium with page JavaScript disabled and all resource requests blocked. It requires exactly one matching head meta[name=theme-build], a visible main landmark and either a visible nonempty article/title or a catalog with visible populated same-origin article links. Empty staging is not silently passed. Redirected, non-2xx, unexpected-destination and login responses are rejected, and response size/time are bounded.
+The owner approved foundation hardening while explicitly deferring advanced features. The batch adds scoped native XML contracts, CSS-only table containment, wider accessibility/failure-state coverage, responsive text reflow and reconciled documentation. Main and deployment remain unchanged.
 
-The checker requires the existing pinned Playwright Chromium installation: in Actions, run `npx --no-install playwright install --with-deps chromium` before `npm run deploy:check`. No new dependency was added. The CLI tests mock fetch in isolated child processes and parse the resulting HTML with Chromium; they do not contact a real staging blog. Production scripts and remote styles are not executed by this smoke check; full live interaction testing is still separate.
+### Static native-render checks
 
-### Presentation parity
+The validator checks actual parsed XML rather than global token presence: V3/V2, no legacy root, exactly one skin/head/body, unique section/widget/includable identities, locked Blog1 inside main#content, Header1, skip target, single-item class guard, required FCD includables, actual native post body output, comment dispatch/delegation, older/newer links, empty-state markup, one native head owner and exact-format build stamp. Expression checks examine only expression-bearing attributes and ignore descriptive XML comments.
 
-src/partials/presentation.pug now owns header, brand/search controls, cards, byline, article shell and share/CTA markup for both production and fixtures. Blogger expressions and widget declarations remain explicit boundaries; this is not a fabricated Blogger expression interpreter.
+Fourteen invalid-output mutation cases plus positive/current/comment-only controls test the validator. These do not interpret Blogger expressions or prove every include resolves in Google's runtime. Inherited comments/widgets and actual native layout still need staging verification.
 
-Fixtures model Header1/Blog1/section/post wrappers, two image and two imageless cards, the is-single article body class, pagination, empty and error views. Structural tests compare compiled production XML and parsed fixture DOM for header controls/wrappers, image attributes, card slots, article heading and body container. A temporary negative-control mutation removes the shared production search label and verifies the fixture accessibility contract rejects it. Temporary copies are discarded; repository source is not mutated during that test.
+### No-JavaScript tables and reflow
 
-Wrappers are still modeled, not captured from a real Blogger import. The parity gate reduces source/fixture drift but cannot prove Google's runtime markup or expression evaluation. The remainder of the footer/sidebar/topic/empty-state simulation still has explicit fixture data; no claim of universal structural equivalence is made.
+A twelve-column evidence table exposed a real no-theme-JS containment gap. Tables now provide local horizontal scrolling through CSS; JS can progressively add labeled keyboard-operable wrappers without hiding content globally. Native table/column-header roles are asserted in browser tests. Authoring requirements for no-JS keyboard access across browsers are documented in DEPLOYMENT.md.
 
-## Evidence
+At 320px and 200% text size, the expanded tests exposed masthead overflow. Flexible header/search wrapping fixes that while retaining the strict page-width assertion. Horizontal scrolling tests use ArrowRight; the earlier End input exercised vertical behavior and was corrected as a test-design error, not hidden with a skip.
 
-Failing baseline: https://github.com/thefastcyberdefense/google-blogger/actions/runs/34252776585/job/102151027708
+### Accessibility and failure states
 
-At 7cf2a65226ca552255d1a120abe8f55f7106ef57, Actions recorded 19 passing and 44 failing unit/contract regressions, including incorrect URL acceptance/rejection, false deployment passes, article state and native-wrapper fixture omissions. These failures were assertions, not missing dependencies.
+Axe covers home/article/paged/empty/error initial and expanded states across 11 widths and light/dark themes, including no-result state and open TOC. Behavior tests assert native search GET payload, slash handling while editing, Ctrl+K focus, menu visibility/escape/focus return, theme persistence, accurate clipboard payload and denial announcements, storage failure, reduced motion, skip link, keyboard table scrolling and 200% text reflow. Five-view no-theme-JS coverage is retained. No broad axe suppression or retry-based masking was added.
 
-Green implementation: https://github.com/thefastcyberdefense/google-blogger/actions/runs/34253362294/job/102152940018
+## Hardening evidence
 
-At 677a596283ac20d3c15f689ec4236fdd8c4987a1, Actions passed 65 unit/contract and 330 browser tests, with zero failed/pending unit tests and zero skipped/unexpected/flaky browser tests. Install, typecheck, build, XML contracts and moderate-or-higher dependency audit gate passed. An intermediate shared-attribute escaping error was caught by XML validation and corrected using normal escaped Pug attributes; no check was weakened.
+Red baseline at 9e4b0606d6c9b378f7ab4fb36799d9b46d1843c3: https://github.com/thefastcyberdefense/google-blogger/actions/runs/34255006028/job/102158765768 recorded 67 passed, 15 failed. These were behavior/contract assertions, not dependency setup errors.
 
-Corrected XML was transferred from that successful Actions artifact, with its exact source stamp checked, and committed as 82311939f06da7257aeec9d3dbcc973a561fd151. Normal CI is read-only again and compares checked-in XML with a fresh build while normalizing only the build-stamp value. Later commits must obtain their own successful checks; the linked run does not attest to future revisions. Screenshots and full machine-readable reports remain in Actions artifacts.
+At 8e17a7fcc8cbba23f7f2ec06f5ddd429e024856e, all 82 unit/contract tests passed, but browser checks found text reflow and the End-key test issue: https://github.com/thefastcyberdefense/google-blogger/actions/runs/34255435310/job/102159928017 . Not a passing acceptance run.
 
-All automated project tests/builds ran in GitHub Actions. No local automated project testing, merge or production deployment was performed.
+At 9a8a1b5969d21ee9bac5c57c2a2e6e9494535ee2, 82 unit/contract and 484 browser tests passed, with no skipped/flaky browser cases. Install/type/build/XML/audit passed. The overall run correctly **failed only its stale checked-in XML gate**: https://github.com/thefastcyberdefense/google-blogger/actions/runs/34256183053/job/102162826698 . This run is not described as green.
 
-## Remaining release gates
+The generated XML from that run was transferred after checking exact source, job-stage outcomes, browser report totals and artifact stamp. It was committed in 1031863fd942525f1f4fc4045017c12ddda9c45c. Temporary artifact-write permission is removed in the final workflow; normal CI is contents:read only. Final acceptance requires the complete successful check on the latest PR head, including XML consistency.
 
-Native commentPicker delegates to super.commentPicker instead of copying Ledger's explicit comments suite. This still requires actual threaded/unthreaded Blogger staging validation. Only reviewed Common and Blog defaultmarkup overrides are currently included; other native behavior is inherited, not claimed as a full override port.
+The transfer also exposed that Playwright clears test-results when starting. Unit JSON now lives at unit-report.json and is uploaded separately so the final artifact retains both unit and browser evidence. No production credentials or external publication job are present.
 
-Ledger's large enhancement script and extensive 39-rule checker have not been fully ported. Initial source tests are narrower. The original initialization did not have demonstrated red-green history; the linked new blocker regressions do.
+## Remaining gates and review decision boundary
 
-Actual Blogger import/save, page-type/native-widget rendering, broader SEO, advanced article features, performance and human accessibility remain pending. The main website's brand source was reviewed, not copied; only verified root company links are used. The inaccessible live-blog audit waiver does not waive future staging validation.
+This is a reviewable unreleased foundation, not the full original publication definition of done. Advanced editorial/technical-content features are next-milestone work by explicit approval. No Mermaid/highlighting/related-article implementation is falsely claimed here.
+
+Actual Blogger import/save, native comment/widget/page-type behavior, full SEO/performance and human screen-reader/inclusive testing remain pending. 200% text scaling does not stand in for 400% browser zoom. Modeled native wrappers and parsed static contracts do not prove real Google runtime output. The live-blog audit waiver does not waive those gates.
+
+All automated project verification ran in GitHub Actions. Source review is sequential self-review, not independent external approval. Neither a passing fixture suite nor this document authorizes merging main or deploying production.

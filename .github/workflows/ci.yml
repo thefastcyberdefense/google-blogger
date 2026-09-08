@@ -1,60 +1,89 @@
-name: FCD hardened artifact refresh
+name: FCD theme verification
 on:
+  push:
+    branches: [main]
   pull_request:
+  workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: fcd-ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 jobs:
-  refresh-verified-xml:
-    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'feat/fcd-blogger-foundation'
+  verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      contents: write
-      actions: read
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 3
-      - name: Confirm no source drift since tested revision
-        run: git diff --exit-code 9a8a1b5969d21ee9bac5c57c2a2e6e9494535ee2 HEAD -- src tools tests fixtures package.json package-lock.json
-      - uses: actions/download-artifact@484a0b528fb4d7bd804637ccb632e47a0e638317
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@94196ee1d15439c1b6651cd87ef14e88ec435966
         with:
-          artifact-ids: '10068148027'
-          run-id: '34256183053'
-          github-token: ${{ github.token }}
-          path: .verified-evidence
-      - name: Verify tests and artifact stamp before copying only XML
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Record exact tested source
         run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-          import json, os, urllib.request
-          import xml.etree.ElementTree as ET
-          req=urllib.request.Request('https://api.github.com/repos/thefastcyberdefense/google-blogger/actions/jobs/102162826698',headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json'})
-          with urllib.request.urlopen(req,timeout=20) as response: job=json.load(response)
-          assert job['head_sha']=='9a8a1b5969d21ee9bac5c57c2a2e6e9494535ee2' and job['status']=='completed'
-          steps={s['name']:s['conclusion'] for s in job['steps']}
-          for name in ['Run npm ci --ignore-scripts --no-audit --no-fund','Run npm run typecheck','Run npm run build','Run npm run contract:check','Run npm test -- --reporter=default --reporter=json --outputFile=test-results/unit.json','Run npm run test:render','Run npm audit --audit-level=moderate']:
-              assert steps[name]=='success',name
-          assert [s['name'] for s in job['steps'] if s['conclusion']=='failure']==['Reject stale generated XML apart from its historical build stamp']
-          evidence=Path('.verified-evidence')
-          browser=json.loads((evidence/'test-results/browser.json').read_text())['stats']
-          assert browser['expected']==484 and browser['unexpected']==0 and browser['skipped']==0 and browser['flaky']==0,browser
-          data=(evidence/'dist/theme.xml').read_bytes()
-          root=ET.fromstring(data)
-          ns='{http://www.w3.org/1999/xhtml}'
-          stamps=[m.get('content') for m in root.findall('.//'+ns+'meta') if m.get('name')=='theme-build']
-          assert stamps==['0.1.0+9a8a1b5969d21ee9bac5c57c2a2e6e9494535ee2'],stamps
-          Path('dist/theme.xml').write_bytes(data)
-          PY
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -- dist/theme.xml
-          if ! git diff --cached --quiet; then
-            git commit -m 'build: regenerate theme with foundation hardening'
-            git push origin HEAD:refs/heads/feat/fcd-blogger-foundation
+          node --version
+          npm --version
+          git rev-parse HEAD
+          sha256sum package-lock.json
+          echo "Tested source: $(git rev-parse HEAD)" >> "$GITHUB_STEP_SUMMARY"
+      - run: npm run typecheck
+      - name: Preserve checked-in artifact for source consistency comparison
+        run: cp dist/theme.xml "$RUNNER_TEMP/checked-in-theme.xml"
+      - run: npm run build
+      - run: npm run contract:check
+      - run: npx --no-install playwright install --with-deps chromium
+      # Playwright cleans test-results on startup. Preserve the unit report outside that directory.
+      - run: npm test -- --reporter=default --reporter=json --outputFile=unit-report.json
+      - name: Report regression evidence
+        if: ${{ always() }}
+        run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          if (fs.existsSync('unit-report.json')) {
+            const r=JSON.parse(fs.readFileSync('unit-report.json','utf8'));
+            console.log('::notice title=Unit and contract totals::'+JSON.stringify({passed:r.numPassedTests,failed:r.numFailedTests,pending:r.numPendingTests}));
+            for(const suite of r.testResults || []) for(const a of suite.assertionResults || []) if(a.status==='failed') console.log('::error title=Regression failed::'+a.fullName.replace(/[%\r\n]/g,' '));
+          }
+          JS
+      - run: npm run preview -- --build-only
+      - run: npm run test:render
+      - name: Report browser counts
+        if: ${{ always() }}
+        run: |
+          if [ -f test-results/browser.json ]; then
+            node -e "const fs=require('node:fs');const r=JSON.parse(fs.readFileSync('test-results/browser.json','utf8'));console.log('::notice title=Browser test summary::'+JSON.stringify(r.stats));"
           fi
+      - run: npm audit --audit-level=moderate
+      - name: Reject stale generated XML apart from its historical build stamp
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          def normalized(file):
+              root = ET.fromstring(Path(file).read_bytes())
+              ns = '{http://www.w3.org/1999/xhtml}'
+              stamps = [m for m in root.findall('.//'+ns+'meta') if m.get('name') == 'theme-build']
+              assert len(stamps) == 1, 'exactly one build stamp is required'
+              stamps[0].set('content', 'SOURCE_STAMP')
+              return ET.tostring(root)
+          assert normalized(Path(os.environ['RUNNER_TEMP'])/'checked-in-theme.xml') == normalized('dist/theme.xml'), 'dist/theme.xml differs from compiled source; regenerate it through Actions'
+          print('PASS: checked-in XML matches current source, excluding source-stamp value only')
+          PY
+      - name: Upload verification evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: fcd-evidence-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            package-lock.json
+            dist/theme.xml
+            unit-report.json
+            playwright-report/
+            test-results/
+          if-no-files-found: error
+          retention-days: 14

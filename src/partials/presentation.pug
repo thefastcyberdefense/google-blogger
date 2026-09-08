@@ -1,7 +1,7 @@
 //- Shared presentation, not a Blogger expression interpreter. Fixture values are synthetic build-time inputs.
-//- Native wrappers and data expressions remain explicit at production boundaries.
+//- Use normal Pug attributes: &attributes bypasses escaping needed for Blogger expressions containing quotes.
 mixin fcdBrand(fixture)
-  a.brand&attributes(fixture ? {href:'/', 'aria-label':'Fast Cyber Defense Blog homepage'} : {'expr:href':'data:blog.homepageUrl', 'aria-label':'Fast Cyber Defense Blog homepage'})
+  a.brand(href=fixture ? '/' : undefined expr:href=fixture ? undefined : 'data:blog.homepageUrl' aria-label='Fast Cyber Defense Blog homepage')
     span.brand-monogram(aria-hidden='true') FCD
     span.brand-name Fast Cyber Defense
       small Security publication
@@ -22,10 +22,10 @@ mixin fcdHeader(fixture = false)
         button#theme-toggle.js-control(type='button' hidden='hidden' aria-label='Switch color theme') Theme
         button#menu-toggle.js-control(type='button' hidden='hidden' aria-controls='primary-navigation' aria-expanded='false') Menu
     nav#primary-navigation.container.primary-navigation(aria-label='Primary')
-      a&attributes(fixture ? {href:'/search'} : {'expr:href':'data:blog.homepageUrl path "search"'}) Latest
+      a(href=fixture ? '/search' : undefined expr:href=fixture ? undefined : 'data:blog.homepageUrl path "search"') Latest
       a(href='#topics') Topics
       a(href='https://fastcyberdefense.com/') Company website
-      form#site-search.search-form&attributes(fixture ? {action:'/search',method:'get',role:'search'} : {'expr:action':'data:blog.searchUrl',method:'get',role:'search'})
+      form#site-search.search-form(action=fixture ? '/search' : undefined expr:action=fixture ? undefined : 'data:blog.searchUrl' method='get' role='search')
         label.sr-only(for='search-query') Search articles
         input#search-query(type='search' name='q' placeholder='Search security insights' autocomplete='off')/
         button(type='submit') Search blog
@@ -69,8 +69,8 @@ mixin fcdByline(post, fixture, single)
         span#reading-time(hidden='hidden')
 
 mixin fcdCardImage(post, fixture)
-  a.card-image&attributes(fixture ? {href:post.url,'aria-hidden':'true',tabindex:'-1'} : {'expr:href':'data:post.url','aria-hidden':'true',tabindex:'-1'})
-    img&attributes(fixture ? {src:post.image,srcset:post.image+' 400w, '+post.image+' 800w',sizes:'(max-width: 639px) 100vw, (max-width: 1023px) 50vw, 40vw',width:'800',height:'450',alt:'',decoding:'async',loading:'lazy'} : {'expr:src':'resizeImage(data:post.featuredImage, 800, "16:9")','expr:srcset':'resizeImage(data:post.featuredImage, 400, "16:9") + " 400w, " + resizeImage(data:post.featuredImage, 800, "16:9") + " 800w"',sizes:'(max-width: 639px) 100vw, (max-width: 1023px) 50vw, 40vw',width:'800',height:'450',alt:'',decoding:'async',loading:'lazy'})/
+  a.card-image(href=fixture ? post.url : undefined expr:href=fixture ? undefined : 'data:post.url' aria-hidden='true' tabindex='-1')
+    img(src=fixture ? post.image : undefined srcset=fixture ? post.image+' 400w, '+post.image+' 800w' : undefined expr:src=fixture ? undefined : 'resizeImage(data:post.featuredImage, 800, "16:9")' expr:srcset=fixture ? undefined : 'resizeImage(data:post.featuredImage, 400, "16:9") + " 400w, " + resizeImage(data:post.featuredImage, 800, "16:9") + " 800w"' sizes='(max-width: 639px) 100vw, (max-width: 1023px) 50vw, 40vw' width='800' height='450' alt='' decoding='async' loading='lazy')/
 
 mixin fcdCard(post = {}, fixture = false)
   article.post-card(data-filter-card='true')
@@ -83,7 +83,7 @@ mixin fcdCard(post = {}, fixture = false)
     .card-content
       +fcdLabels(post, fixture)
       h2.post-title
-        a&attributes(fixture ? {href:post.url} : {'expr:href':'data:post.url'})
+        a(href=fixture ? post.url : undefined expr:href=fixture ? undefined : 'data:post.url')
           if fixture
             = post.title
           else
@@ -98,7 +98,7 @@ mixin fcdCard(post = {}, fixture = false)
 mixin fcdShareAndCta(post, fixture)
   .share-actions(aria-label='Share article')
     button.js-control#copy-link(type='button' hidden='hidden') Copy article link
-    a&attributes(fixture ? {href:'https://www.linkedin.com/sharing/share-offsite/?url='+encodeURIComponent('https://blogs.fastcyberdefense.com'+post.url),target:'_blank',rel:'noopener noreferrer'} : {'expr:href':'"https://www.linkedin.com/sharing/share-offsite/" params {url: data:post.url.canonical}',target:'_blank',rel:'noopener noreferrer'}) Share on LinkedIn
+    a(href=fixture ? 'https://www.linkedin.com/sharing/share-offsite/?url='+encodeURIComponent('https://blogs.fastcyberdefense.com'+post.url) : undefined expr:href=fixture ? undefined : '"https://www.linkedin.com/sharing/share-offsite/" params {url: data:post.url.canonical}' target='_blank' rel='noopener noreferrer') Share on LinkedIn
   aside.article-cta
     h2 Need help securing your organization?
     p Put knowledge into practice with Fast Cyber Defense.

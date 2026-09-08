@@ -1,0 +1,49 @@
+name: FCD theme verification
+on:
+  push:
+    branches: [main, feat/fcd-blogger-foundation]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: fcd-ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@94196ee1d15439c1b6651cd87ef14e88ec435966
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - name: Resolve initial lockfile only when not yet committed
+        if: ${{ hashFiles('package-lock.json') == '' }}
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Record installation provenance
+        run: |
+          node --version
+          npm --version
+          sha256sum package-lock.json
+          echo 'Initialization lockfile is an artifact until committed; this run alone does not prove a fresh clone has npm ci support.' >> "$GITHUB_STEP_SUMMARY"
+      - run: npm run verify
+      - run: npx --no-install playwright install --with-deps chromium
+      - run: npm run test:render
+      - run: npm audit --audit-level=moderate
+      - name: Upload verification evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: fcd-evidence-${{ github.sha }}
+          path: |
+            package-lock.json
+            dist/theme.xml
+            playwright-report/
+            test-results/
+          if-no-files-found: error
+          retention-days: 14

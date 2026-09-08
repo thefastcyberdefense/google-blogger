@@ -1,0 +1,29 @@
+{
+  "name": "fcd-blogger-theme",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Fast Cyber Defense publication theme for Blogger Layouts V3",
+  "license": "UNLICENSED",
+  "engines": { "node": ">=24.20.0 <25", "npm": ">=11" },
+  "scripts": {
+    "build": "node tools/generate.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "contract:check": "python3 tools/validate-xml.py",
+    "verify": "npm run typecheck && npm run build && npm run contract:check && npm test",
+    "preview": "node tools/preview.ts",
+    "test:render": "playwright test",
+    "deploy:check": "node tools/deploy-check.ts"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.10.2",
+    "@playwright/test": "1.62.1",
+    "@types/node": "24.13.3",
+    "esbuild": "0.25.12",
+    "pug": "3.0.3",
+    "sass": "1.103.1",
+    "typescript": "5.9.3",
+    "vitest": "3.2.7"
+  }
+}

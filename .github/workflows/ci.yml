@@ -34,22 +34,6 @@ jobs:
       - name: Preserve checked-in artifact for source consistency comparison
         run: cp dist/theme.xml "$RUNNER_TEMP/checked-in-theme.xml"
       - run: npm run build
-      - name: Reject stale generated XML apart from its historical build stamp
-        run: |
-          python3 - <<'PY'
-          import os
-          from pathlib import Path
-          import xml.etree.ElementTree as ET
-          def normalized(file):
-              root = ET.fromstring(Path(file).read_bytes())
-              ns = '{http://www.w3.org/1999/xhtml}'
-              stamps = [m for m in root.findall('.//'+ns+'meta') if m.get('name') == 'theme-build']
-              assert len(stamps) == 1, 'exactly one build stamp is required'
-              stamps[0].set('content', 'SOURCE_STAMP')
-              return ET.tostring(root)
-          assert normalized(Path(os.environ['RUNNER_TEMP'])/'checked-in-theme.xml') == normalized('dist/theme.xml'), 'dist/theme.xml differs from compiled source; regenerate it through Actions'
-          print('PASS: checked-in XML matches current source, excluding source-stamp value only')
-          PY
       - run: npm run contract:check
       - run: npx --no-install playwright install --with-deps chromium
       - run: npm test -- --reporter=default --reporter=json --outputFile=test-results/unit.json
@@ -73,6 +57,22 @@ jobs:
             node -e "const fs=require('node:fs');const r=JSON.parse(fs.readFileSync('test-results/browser.json','utf8'));console.log('::notice title=Browser test summary::'+JSON.stringify(r.stats));"
           fi
       - run: npm audit --audit-level=moderate
+      - name: Reject stale generated XML apart from its historical build stamp
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          def normalized(file):
+              root = ET.fromstring(Path(file).read_bytes())
+              ns = '{http://www.w3.org/1999/xhtml}'
+              stamps = [m for m in root.findall('.//'+ns+'meta') if m.get('name') == 'theme-build']
+              assert len(stamps) == 1, 'exactly one build stamp is required'
+              stamps[0].set('content', 'SOURCE_STAMP')
+              return ET.tostring(root)
+          assert normalized(Path(os.environ['RUNNER_TEMP'])/'checked-in-theme.xml') == normalized('dist/theme.xml'), 'dist/theme.xml differs from compiled source; regenerate it through Actions'
+          print('PASS: checked-in XML matches current source, excluding source-stamp value only')
+          PY
       - name: Upload verification evidence
         if: ${{ always() }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a

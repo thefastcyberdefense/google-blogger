@@ -9,43 +9,50 @@ concurrency:
   group: fcd-ci-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  initialize-lock:
+  materialize-initial-theme:
     if: github.ref == 'refs/heads/feat/fcd-blogger-foundation'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
       contents: write
-    outputs:
-      sha: ${{ steps.lock.outputs.sha }}
+      actions: read
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@94196ee1d15439c1b6651cd87ef14e88ec435966
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/download-artifact@484a0b528fb4d7bd804637ccb632e47a0e638317
         with:
-          node-version-file: .nvmrc
-          package-manager-cache: false
-      - name: One-time approved lockfile initialization
-        id: lock
+          artifact-ids: '10063937891'
+          run-id: '34245507747'
+          github-token: ${{ github.token }}
+          path: .bootstrap-evidence
+      - name: Preserve only the verified generated XML
         shell: bash
         run: |
           set -euo pipefail
-          if [ ! -f package-lock.json ]; then
-            npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+          if [ ! -f dist/theme.xml ]; then
+            python3 - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          source = Path('.bootstrap-evidence/dist/theme.xml')
+          data = source.read_bytes()
+          root = ET.fromstring(data)
+          ns = '{http://www.w3.org/1999/xhtml}'
+          stamp = [m.get('content') for m in root.findall('.//'+ns+'meta') if m.get('name') == 'theme-build']
+          assert stamp == ['0.1.0+9aa3c57bbbdec38568a20d1eeeb25ae68f2dc166'], stamp
+          Path('dist').mkdir(exist_ok=True)
+          Path('dist/theme.xml').write_bytes(data)
+          PY
             git config user.name 'github-actions[bot]'
             git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git add -- package-lock.json
-            git commit -m 'chore: generate initial npm dependency lockfile'
+            git add -- dist/theme.xml
+            git commit -m 'build: preserve Actions-verified initial Blogger theme'
             git push origin HEAD:refs/heads/feat/fcd-blogger-foundation
           fi
-          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
   verify:
-    needs: initialize-lock
-    if: ${{ always() && (needs.initialize-lock.result == 'success' || needs.initialize-lock.result == 'skipped') }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          ref: ${{ needs.initialize-lock.outputs.sha || github.sha }}
           persist-credentials: false
       - uses: actions/setup-node@94196ee1d15439c1b6651cd87ef14e88ec435966
         with:

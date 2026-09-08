@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html b:css="false" b:defaultwidgetversion="2" b:layoutsVersion="3" b:responsive="true" b:templateUrl="indie.xml" b:templateVersion="0.0.0" expr:dir="data:blog.languageDirection" expr:lang="data:blog.locale" xmlns="http://www.w3.org/1999/xhtml" xmlns:b="http://www.google.com/2005/gml/b" xmlns:data="http://www.google.com/2005/gml/data" xmlns:expr="http://www.google.com/2005/gml/expr">
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <meta name="theme-build" content="0.1.0+9aa3c57bbbdec38568a20d1eeeb25ae68f2dc166"/>
+    <meta name="color-scheme" content="light dark"/>
+    <title><data:view.title.escaped/></title>
+    <b:include data="blog" name="all-head-content"/>
+    <link rel="alternate" type="application/atom+xml" expr:href="data:blog.canonicalHomepageUrl path &quot;feeds/posts/default&quot;" expr:title="data:blog.title.escaped"/>
+    <b:skin version="0.0.0">
+      <![CDATA[
+:root{color-scheme:light;--background:#f8fbfe;--surface:#ffffff;--elevated:#edf6fb;--border:#bccbdc;--muted-surface:#edf3f8;--primary:#175f9e;--brand:#3d8fe1;--secondary:#c8e8f4;--text:#202e48;--muted-text:#53627b;--danger:#a92135;--warning:#805400;--success:#176538;--information:#175f9e;--code:#eef3f9;--focus:#1259a0;--sans:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--mono:"Fira Code",ui-monospace,SFMono-Regular,Consolas,monospace}@media(prefers-color-scheme: dark){:root:not([data-theme=light]){color-scheme:dark;--background:#0e1527;--surface:#172139;--elevated:#1d2e48;--border:#425575;--muted-surface:#1d2a42;--primary:#8bc9fa;--secondary:#24486b;--text:#e4edf7;--muted-text:#b4c1d4;--danger:#ff9cad;--warning:#efca81;--success:#8cdfb0;--information:#8bc9fa;--code:#111b2e;--focus:#a6d8ff}}:root[data-theme=dark]{color-scheme:dark;--background:#0e1527;--surface:#172139;--elevated:#1d2e48;--border:#425575;--muted-surface:#1d2a42;--primary:#8bc9fa;--secondary:#24486b;--text:#e4edf7;--muted-text:#b4c1d4;--danger:#ff9cad;--warning:#efca81;--success:#8cdfb0;--information:#8bc9fa;--code:#111b2e;--focus:#a6d8ff}@supports(color: oklch(50% 0.1 250deg)){:root{--brand:oklch(0.6386 0.1467 251.2451)}}*{box-sizing:border-box}html{scroll-padding-top:1.5rem}body{margin:0;background:var(--background);color:var(--text);font:1rem/1.65 var(--sans)}[hidden]{display:none !important}a{color:var(--primary);text-underline-offset:.22em}button,input,select{font:inherit}button,a,input{touch-action:manipulation}button{cursor:pointer}button,input{border:1px solid var(--border);border-radius:.35rem;background:var(--surface);color:var(--text);padding:.55rem .8rem;min-height:44px}input{min-width:0;max-width:100%}button:hover{border-color:var(--primary)}:focus-visible{outline:3px solid var(--focus);outline-offset:4px}h1,h2,h3,h4{line-height:1.18;letter-spacing:-0.03em;overflow-wrap:anywhere}p,li,a{overflow-wrap:anywhere}h1{font-size:clamp(2rem,4vw,3.6rem)}h2{font-size:1.5rem}img,svg,video,iframe{max-width:100%}img{height:auto}figure{margin:1.5rem 0}figcaption{color:var(--muted-text)}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}.skip-link{position:fixed;top:.5rem;left:.5rem;z-index:1000;transform:translateY(-200%);padding:.75rem;background:var(--surface)}.skip-link:focus{transform:none}.container{width:min(1280px,100% - 2rem);margin-inline:auto}.eyebrow{font-size:.875rem;font-weight:750;letter-spacing:.1em;text-transform:uppercase;color:var(--primary)}.standfirst{font-size:1.125rem;color:var(--muted-text);max-width:65ch}@media(prefers-reduced-motion: no-preference){html{scroll-behavior:smooth}a,button{transition:color .15s,border-color .15s}}.site-header{background:var(--surface);border-top:5px solid var(--brand);border-bottom:1px solid var(--border)}.header-row{display:flex;justify-content:space-between;align-items:center;gap:1rem;padding-block:1.15rem}.brand{display:flex;gap:.8rem;align-items:center;text-decoration:none;color:var(--text)}.brand-monogram{background:var(--text);color:var(--surface);font-weight:850;font-size:1.15rem;letter-spacing:-0.07em;padding:.7rem .55rem;border-radius:.25rem}.brand-name{font-weight:750;line-height:1.2;font-size:1.125rem}.brand-name small{display:block;font-size:.875rem;font-weight:400;letter-spacing:.04em;color:var(--muted-text);margin-top:.3rem}.header-actions{display:flex;gap:.5rem;flex-shrink:0}.primary-navigation{display:flex;gap:1.2rem;align-items:center;flex-wrap:wrap;padding-block:.85rem}.primary-navigation>a{padding:.5rem 0;text-decoration:none;font-weight:600}.search-form{display:flex;gap:.5rem;flex:1;min-width:min(100%,270px);margin-left:auto}.search-form input{flex:1;width:10rem}.publication-heading{padding:2rem 0 1rem}.publication-heading h1{max-width:22ch;margin:.5rem 0 1rem}.topic-navigation{display:flex;flex-wrap:wrap;gap:.5rem;padding-block:1rem 1.75rem}.topic-pill{background:var(--muted-surface);border-radius:2rem;padding:.5rem .85rem;text-decoration:none;font-size:.875rem;min-height:44px;display:inline-flex;align-items:center}.fcd-layout{display:grid;grid-template-columns:minmax(0, 1fr);gap:2.5rem;padding-bottom:3rem}.publication-stream,.sidebar,.widget{min-width:0}.sidebar{display:grid;gap:1.5rem;align-content:start}.sidebar-panel,.sidebar-widgets{padding:1.25rem;background:var(--surface);border:1px solid var(--border);border-radius:.5rem}.sidebar-panel h2{font-size:1.15rem;margin:0 0 .75rem}.recent-list{padding-left:1.25rem}.recent-list li{padding:.5rem 0}.recent-list a{font-weight:650;text-decoration:none}.pagination{display:flex;justify-content:space-between;gap:1rem;margin:2rem 0;grid-column:1/-1}.pagination a{padding:.6rem 0}.site-footer{background:var(--surface);border-top:1px solid var(--border);padding-block:2.5rem}.footer-grid{display:flex;justify-content:space-between;flex-wrap:wrap;gap:1.5rem}.footer-grid nav{display:flex;gap:1rem;flex-wrap:wrap;align-items:center}.footer-grid nav a{min-height:44px;display:inline-flex;align-items:center}.footer-note{margin-top:1.5rem;color:var(--muted-text);font-size:.875rem}.is-single #topics{padding-top:1rem}.filter-status{color:var(--muted-text)}.empty-state{padding:2rem;background:var(--surface)}@media(min-width: 1024px){.fcd-layout{grid-template-columns:minmax(0, 1fr) 280px}.is-single .fcd-layout{grid-template-columns:minmax(0, 1fr) 250px}.article-view{max-width:76ch;margin-inline:auto}#menu-toggle{display:none !important}}@media(max-width: 639px){.header-row{gap:.5rem}.brand-name{font-size:1rem}.brand-name small{font-size:.875rem}.brand-monogram{display:none}.header-actions{gap:.3rem}.header-actions button{font-size:.875rem;padding-inline:.6rem}.primary-navigation{gap:.8rem}.search-form{flex-basis:100%;margin:0}.publication-heading{padding-top:1.25rem}.publication-heading h1{font-size:2rem}.footer-grid{display:block}}@media(min-width: 640px){#menu-toggle{display:none !important}}.blog-posts{display:grid;grid-template-columns:minmax(0, 1fr);gap:1.5rem}.blog-posts>.date-outer,.blog-posts>.date-outer>.date-posts,.blog-posts>.post-outer-container{min-width:0}.post-card{height:100%;background:var(--surface);border:1px solid var(--border);border-radius:.5rem;overflow:hidden;display:flex;flex-direction:column;min-width:0}.card-image{display:block;aspect-ratio:16/9;overflow:hidden}.card-image img{width:100%;height:100%;object-fit:cover}.card-content{padding:1.25rem;display:flex;flex-direction:column;flex:1;min-width:0}.post-labels{display:flex;gap:.6rem;flex-wrap:wrap;font-size:.875rem;font-weight:650}.post-labels a{padding:.3rem 0;min-height:32px}.post-card .post-title{font-size:1.4rem;margin:.65rem 0}.post-title a{color:var(--text);text-decoration:none}.post-title a:hover{text-decoration:underline}.post-excerpt{color:var(--muted-text);margin:0 0 1rem}.post-card .post-excerpt{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}.byline{display:flex;gap:.3rem .8rem;flex-wrap:wrap;color:var(--muted-text);font-size:.875rem;margin-top:auto}.byline time{white-space:normal}.post-card .post-title a{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}@media(min-width: 640px){.blog-posts{grid-template-columns:repeat(2, minmax(0, 1fr))}.is-home-lead .blog-posts>.post-outer-container:first-child,.is-home-lead .blog-posts>.post-card:first-child{grid-column:1/-1}.is-home-lead .blog-posts>.post-card:first-child .post-title,.is-home-lead .blog-posts>.post-outer-container:first-child .post-title{font-size:2rem}}.is-single .blog-posts{display:block}.article-header{margin-bottom:2rem}.article-header h1{font-size:clamp(2rem,4vw,3.5rem);margin:.75rem 0 1rem}.article-header .byline{margin-top:1rem}.post-body{font-size:1.125rem;line-height:1.85;overflow-wrap:anywhere;min-width:0}.post-body h2,.post-body h3,.post-body h4{scroll-margin-top:1.5rem}.post-body h2{font-size:1.8rem;margin-top:2.4rem}.post-body h3{font-size:1.45rem;margin-top:2rem}.post-body h4{font-size:1.2rem}.post-body p{margin-block:1.2rem}.post-body blockquote{border-left:4px solid var(--brand);margin:1.5rem 0;padding:.5rem 1.25rem;background:var(--elevated)}.post-body pre{max-width:100%;overflow:auto;background:var(--code);border:1px solid var(--border);border-radius:.4rem;padding:1rem;font:.9rem/1.65 var(--mono);tab-size:2;white-space:pre;overflow-wrap:normal}.post-body code{font-family:var(--mono);background:var(--code);border-radius:.2rem;padding:.1em .25em}.post-body pre code{padding:0;background:none}.code-toolbar{display:flex;align-items:center;justify-content:space-between;gap:1rem;font-size:.875rem;color:var(--muted-text)}.table-scroll{overflow:auto;max-width:100%;margin:1.5rem 0}.post-body table{border-collapse:collapse;max-width:100%;font-size:1rem}.post-body th,.post-body td{padding:.65rem;border:1px solid var(--border);vertical-align:top}.post-body th{background:var(--elevated);text-align:left}.post-body img{max-width:100%;height:auto}.post-body .note,.post-body .warning{padding:1rem 1.25rem;border-inline-start:4px solid var(--information);background:var(--elevated);margin-block:1.5rem}.post-body .warning{border-color:var(--warning)}.share-actions{display:flex;gap:1rem;align-items:center;flex-wrap:wrap;margin-block:2rem}.article-cta{padding:1.5rem;background:var(--elevated);border-radius:.5rem;margin-top:2rem}.article-cta h2{font-size:1.35rem;margin-top:0}.article-toc{border:1px solid var(--border);border-radius:.4rem;padding:1rem;margin-block:1rem 2rem;background:var(--surface)}.article-toc summary{cursor:pointer;font-weight:700;min-height:44px}.article-toc ol{padding-left:1.3rem}.article-toc a{display:inline-block;padding:.25rem 0}.article-toc a[aria-current=location]{font-weight:750;color:var(--text)}.comments{margin-top:2rem;min-width:0}.comments iframe{max-width:100%}.comments img{width:auto}.post-body .mermaid{overflow:auto;max-width:100%}
+      ]]>
+    </b:skin>
+    <b:template-skin>
+      <![CDATA[
+      body#layout .fcd-layout,body#layout .site-header,body#layout .site-footer{display:block;position:static}body#layout .skip-link,body#layout .js-control{display:none}
+      ]]>
+    </b:template-skin>
+    <b:defaultmarkups>
+      <b:defaultmarkup type="Common">
+        <b:includable id="widgetTitle">
+          <b:if cond="data:widget.title">
+            <h2 class="widget-title">
+              <b:eval expr="data:widget.title"/>
+            </h2>
+          </b:if>
+        </b:includable>
+        <b:includable id="widget-title">
+          <b:include name="widgetTitle"/>
+        </b:includable>
+        <b:includable id="widgetNotAvailableInPreview">
+          <b:include name="super.widgetNotAvailableInPreview"/>
+        </b:includable>
+      </b:defaultmarkup>
+      <b:defaultmarkup type="Blog">
+        <b:includable id="main">
+          <b:with value="3" var="maxNumAds">
+            <b:with value="data:widgets.AdSense count (w =&gt; true)" var="numDesktopAds">
+              <b:with value="data:widgets.AdSense count (w =&gt; w.sectionId != &quot;ads&quot;)" var="numMobileAds">
+                <b:with value="data:widgets.FeaturedPost filter (w =&gt; w.sectionId == &quot;page_body&quot;) map (w =&gt; w.postId)" var="featuredPostIds">
+                  <b:with value="data:view.isHomepage ? data:posts filter (post =&gt; post.id not in data:featuredPostIds) : data:posts" var="posts">
+                    <b:include name="super.main"/>
+                  </b:with>
+                </b:with>
+              </b:with>
+            </b:with>
+          </b:with>
+        </b:includable>
+      </b:defaultmarkup>
+    </b:defaultmarkups>
+    <meta property="og:site_name" expr:content="data:blog.title.escaped"/>
+    <meta property="og:type" expr:content="data:view.isPost ? &quot;article&quot; : &quot;website&quot;"/>
+    <meta name="twitter:card" expr:content="data:view.featuredImage ? &quot;summary_large_image&quot; : &quot;summary&quot;"/>
+    <meta name="twitter:title" expr:content="data:view.title.escaped"/>
+    <b:if cond="data:view.description">
+      <meta name="twitter:description" expr:content="data:view.description.escaped"/>
+    </b:if>
+    <b:if cond="data:view.featuredImage">
+      <meta name="twitter:image" expr:content="data:view.featuredImage"/>
+    </b:if>
+    <b:if cond="data:view.isHomepage">
+      <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"<data:blog.title.jsonEscaped/>","url":"<data:blog.canonicalHomepageUrl.jsonEscaped/>","publisher":{"@type":"Organization","name":"Fast Cyber Defense","url":"https://fastcyberdefense.com/"}}</script>
+    </b:if>
+    <b:if cond="data:view.isPost">
+      <b:with value="data:widgets.Blog.first.posts.first" var="post">
+        <meta property="article:published_time" expr:content="data:post.date.iso8601"/>
+        <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"<data:post.title.jsonEscaped/>","mainEntityOfPage":"<data:view.url.canonical.jsonEscaped/>","datePublished":"<data:post.date.iso8601.jsonEscaped/>","author":{"@type":"Person","name":"<data:post.author.name.jsonEscaped/>"},"publisher":{"@type":"Organization","name":"Fast Cyber Defense","url":"https://fastcyberdefense.com/"}<b:if cond='data:post.lastUpdated'>,"dateModified":"<data:post.lastUpdated.iso8601.jsonEscaped/>"</b:if><b:if cond='data:view.featuredImage'>,"image":"<data:view.featuredImage.jsonEscaped/>"</b:if>}</script>
+        <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Fast Cyber Defense Blog","item":"<data:blog.canonicalHomepageUrl.jsonEscaped/>"},{"@type":"ListItem","position":2,"name":"<data:post.title.jsonEscaped/>","item":"<data:view.url.canonical.jsonEscaped/>"}]}</script>
+      </b:with>
+    </b:if>
+    <script>
+      //<![CDATA[
+      try{var t=localStorage.getItem('fcd-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t;}catch(e){}
+      //]]>
+    </script>
+  </head>
+  <body>
+    <b:class cond="data:view.isSingleItem" name="is-single"/>
+    <b:class cond="data:view.isHomepage and not data:newerPageUrl" name="is-home-lead"/><a class="skip-link" href="#content">Skip to content</a>
+    <header class="site-header">
+      <div class="container header-row">
+        <b:section class="header" id="header" name="Brand" showaddelement="false">
+          <b:widget id="Header1" type="Header" title="Fast Cyber Defense" version="2" locked="true">
+            <b:includable id="main"><a class="brand" expr:href="data:blog.homepageUrl" aria-label="Fast Cyber Defense Blog homepage"><span class="brand-monogram" aria-hidden="true">FCD</span><span class="brand-name">Fast Cyber Defense<small>Security publication</small></span></a></b:includable>
+          </b:widget>
+        </b:section>
+        <div class="header-actions">
+          <button class="js-control" id="theme-toggle" type="button" hidden="hidden" aria-label="Switch color theme">Theme</button>
+          <button class="js-control" id="menu-toggle" type="button" hidden="hidden" aria-controls="primary-navigation" aria-expanded="false">Menu</button>
+        </div>
+      </div>
+      <nav class="container primary-navigation" id="primary-navigation" aria-label="Primary"><a expr:href="data:blog.homepageUrl path &quot;search&quot;">Latest</a><a href="#topics">Topics</a><a href="https://fastcyberdefense.com/">Company website</a>
+        <form class="search-form" id="site-search" expr:action="data:blog.searchUrl" method="get" role="search">
+          <label class="sr-only" for="search-query">Search articles</label>
+          <input id="search-query" type="search" name="q" placeholder="Search security insights" autocomplete="off"/>
+          <button type="submit">Search blog</button>
+        </form>
+      </nav>
+    </header>
+    <main class="container" id="content" tabindex="-1">
+      <b:if cond="not data:view.isSingleItem">
+        <header class="publication-heading">
+          <p class="eyebrow">Fast Cyber Defense Blog</p>
+          <h1>
+            <b:if cond="data:view.isHomepage">Security knowledge. Practical defense.</b:if>
+            <b:if cond="not data:view.isHomepage">
+              <b:eval expr="data:view.title"/>
+            </b:if>
+          </h1>
+          <p class="standfirst">Research, threat insights, and guidance for stronger security.</p>
+        </header>
+      </b:if>
+      <b:section class="topics" id="topics" name="Topics" showaddelement="false">
+        <b:widget id="Label1" type="Label" title="Topics" version="2" locked="false">
+          <b:includable id="main">
+            <b:if cond="data:labels">
+              <nav class="topic-navigation" aria-label="Article topics">
+                <b:loop values="data:labels" var="label"><a class="topic-pill" expr:href="data:label.url" rel="tag">
+                    <b:eval expr="data:label.name"/></a></b:loop>
+              </nav>
+            </b:if>
+          </b:includable>
+        </b:widget>
+      </b:section>
+      <div class="fcd-layout">
+        <div class="publication-stream">
+          <b:section class="main" id="page_body" name="Posts" showaddelement="false">
+            <b:widget id="Blog1" type="Blog" title="Blog Posts" version="2" locked="true">
+              <b:includable id="main">
+                <b:if cond="data:posts.any and not data:view.isError">
+                  <b:if cond="data:view.isMultipleItems">
+                    <p class="filter-status" id="filter-status" role="status" hidden="hidden"></p>
+                  </b:if>
+                  <b:include name="super.main"/>
+                </b:if>
+                <b:if cond="not data:posts.any or data:view.isError">
+                  <b:include name="noContentPlaceholder"/>
+                </b:if>
+              </b:includable>
+              <b:includable id="noContentPlaceholder">
+                <section class="empty-state">
+                  <h2>No articles to show</h2>
+                  <p>Try another search or explore the latest publications.</p><a expr:href="data:blog.homepageUrl">Visit the publication</a>
+                </section>
+              </b:includable>
+              <b:includable id="postCommentsAndAd" var="post">
+                <b:include name="post" data="post"/>
+                <b:if cond="data:view.isSingleItem">
+                  <b:include name="commentPicker" data="post"/>
+                </b:if>
+              </b:includable>
+              <b:includable id="post" var="post">
+                <b:if cond="data:view.isSingleItem">
+                  <article class="article-view">
+                    <header class="article-header">
+                      <b:include name="fcdLabels" data="post"/>
+                      <h1 class="post-title">
+                        <b:eval expr="data:post.title"/>
+                      </h1>
+                      <b:include name="fcdByline" data="post"/>
+                      <b:if cond="data:view.description">
+                        <p class="standfirst">
+                          <b:eval expr="data:view.description"/>
+                        </p>
+                      </b:if>
+                    </header>
+                    <div class="post-body" id="article-body">
+                      <b:eval expr="data:post.body"/>
+                    </div>
+                    <b:if cond="data:view.isPost">
+                      <div class="share-actions" aria-label="Share article">
+                        <button class="js-control" id="copy-link" type="button" hidden="hidden">Copy article link</button><a expr:href="&quot;https://www.linkedin.com/sharing/share-offsite/&quot; params {url: data:post.url.canonical}" target="_blank" rel="noopener noreferrer">Share on LinkedIn</a>
+                      </div>
+                      <aside class="article-cta">
+                        <h2>Need help securing your organization?</h2>
+                        <p>Put knowledge into practice with Fast Cyber Defense.</p><a href="https://fastcyberdefense.com/">Explore FCD services</a>
+                      </aside>
+                    </b:if>
+                  </article>
+                </b:if>
+                <b:if cond="not data:view.isSingleItem">
+                  <article class="post-card" data-filter-card="true">
+                    <b:if cond="data:post.featuredImage"><a class="card-image" expr:href="data:post.url" aria-hidden="true" tabindex="-1"><img expr:src="resizeImage(data:post.featuredImage, 800, &quot;16:9&quot;)" expr:srcset="resizeImage(data:post.featuredImage, 400, &quot;16:9&quot;) + &quot; 400w, &quot; + resizeImage(data:post.featuredImage, 800, &quot;16:9&quot;) + &quot; 800w&quot;" sizes="(max-width: 639px) 100vw, (max-width: 1023px) 50vw, 40vw" width="800" height="450" alt="" decoding="async" loading="lazy"/></a></b:if>
+                    <div class="card-content">
+                      <b:include name="fcdLabels" data="post"/>
+                      <h2 class="post-title"><a expr:href="data:post.url">
+                          <b:eval expr="data:post.title"/></a></h2>
+                      <p class="post-excerpt">
+                        <b:eval expr="snippet(data:post.snippets.long, {length: 180, links: false, linebreaks: false, ellipsis: true})"/>
+                      </p>
+                      <b:include name="fcdByline" data="post"/>
+                    </div>
+                  </article>
+                </b:if>
+              </b:includable>
+              <b:includable id="fcdLabels" var="post">
+                <b:if cond="data:post.labels">
+                  <div class="post-labels">
+                    <b:loop values="data:post.labels" var="label" index="li">
+                      <b:if cond="data:view.isSingleItem or data:li &lt; 2"><a expr:href="data:label.url" rel="tag">
+                          <b:eval expr="data:label.name"/></a></b:if>
+                    </b:loop>
+                  </div>
+                </b:if>
+              </b:includable>
+              <b:includable id="fcdByline" var="post">
+                <div class="byline">
+                  <b:if cond="data:post.author.name"><span>
+                      <b:eval expr="data:post.author.name"/></span></b:if>
+                  <b:if cond="data:post.date">
+                    <time expr:datetime="data:post.date.iso8601">
+                      <b:eval expr="data:post.date"/>
+                    </time>
+                  </b:if>
+                  <b:if cond="data:view.isPost and data:post.lastUpdated"><span>Updated
+                      <time expr:datetime="data:post.lastUpdated.iso8601">
+                        <b:eval expr="data:post.lastUpdated"/>
+                      </time></span></b:if>
+                  <b:if cond="data:view.isPost"><span id="reading-time" hidden="hidden"></span></b:if>
+                </div>
+              </b:includable>
+              <b:includable id="commentPicker" var="post">
+                <b:include name="super.commentPicker" data="post"/>
+              </b:includable>
+              <b:includable id="postPagination">
+                <b:if cond="data:newerPageUrl or data:olderPageUrl">
+                  <nav class="pagination" aria-label="Article pages">
+                    <b:if cond="data:newerPageUrl"><a class="blog-pager-newer-link" expr:href="data:newerPageUrl" rel="prev">Newer articles</a></b:if>
+                    <b:if cond="data:olderPageUrl"><a class="blog-pager-older-link" expr:href="data:olderPageUrl" rel="next">Older articles</a></b:if>
+                  </nav>
+                </b:if>
+              </b:includable>
+              <b:includable id="postMeta" var="post"></b:includable>
+              <b:includable id="inlineAd"></b:includable>
+              <b:includable id="postJumpLink"></b:includable>
+              <b:includable id="postShareButtons"></b:includable>
+              <b:includable id="postFooterAuthorProfile"></b:includable>
+            </b:widget>
+          </b:section>
+        </div>
+        <aside class="sidebar" aria-label="Publication sidebar">
+          <section class="sidebar-panel">
+            <h2>Recent Posts</h2>
+            <ol class="recent-list" id="recent-posts" expr:data-feed="data:blog.homepageUrl path &quot;feeds/posts/default&quot;"></ol>
+            <p id="recent-status">Small updates. Lasting insight.</p><a expr:href="data:blog.homepageUrl path &quot;search&quot;">Browse latest articles</a>
+          </section>
+          <section class="sidebar-panel">
+            <h2>Follow the research</h2>
+            <p>Get new publications in your feed reader.</p><a expr:href="data:blog.homepageUrl path &quot;feeds/posts/default&quot;">Subscribe via Atom</a>
+          </section>
+          <b:section class="sidebar-widgets" id="sidebar" name="Sidebar widgets" showaddelement="true">
+            <b:widget id="BlogArchive1" type="BlogArchive" title="Archive" version="2" locked="false">
+              <b:includable id="main">
+                <b:include name="super.main"/>
+              </b:includable>
+            </b:widget>
+          </b:section>
+        </aside>
+      </div>
+    </main>
+    <footer class="site-footer">
+      <div class="container footer-grid">
+        <div>
+          <p class="brand-name">Fast Cyber Defense</p>
+          <p>Quick to Act, Strong to Protect.</p>
+        </div>
+        <nav aria-label="Company and publication"><a href="https://fastcyberdefense.com/">Company website</a><a expr:href="data:blog.homepageUrl path &quot;feeds/posts/default&quot;">Publication feed</a><a href="#content">Back to content</a></nav>
+      </div>
+      <div class="container footer-note">Security research and practical guidance from Fast Cyber Defense.</div>
+    </footer>
+    <p class="sr-only" id="fcd-status" role="status" aria-live="polite"></p>
+    <script>
+      //<![CDATA[
+"use strict";(()=>{function b(){let t=document.getElementById("theme-toggle");if(!t)return;let e=document.documentElement,r=matchMedia("(prefers-color-scheme: dark)"),o=()=>e.dataset.theme?e.dataset.theme==="dark":r.matches,n=()=>t.setAttribute("aria-label",`Switch to ${o()?"light":"dark"} theme`);t.hidden=!1,n(),r.addEventListener("change",n),t.addEventListener("click",()=>{e.dataset.theme=o()?"light":"dark";try{localStorage.setItem("fcd-theme",e.dataset.theme)}catch{}n()})}function E(){let t=document.getElementById("menu-toggle"),e=document.getElementById("primary-navigation");if(!t||!e)return;let r=matchMedia("(max-width: 639px)"),o=()=>{let n=e.contains(document.activeElement);e.hidden=r.matches,t.setAttribute("aria-expanded",String(!e.hidden)),e.hidden&&n&&t.focus()};t.hidden=!1,o(),r.addEventListener("change",o),t.addEventListener("click",()=>{e.hidden=!e.hidden,t.setAttribute("aria-expanded",String(!e.hidden))}),document.addEventListener("keydown",n=>{n.key==="Escape"&&r.matches&&!e.hidden&&(e.hidden=!0,t.setAttribute("aria-expanded","false"),t.focus())})}function A(t,e){let r=t.normalize("NFKC").toLocaleLowerCase();return e.normalize("NFKC").toLocaleLowerCase().trim().split(/\s+/u).every(o=>r.includes(o))}function w(){let t=document.querySelector("#search-query"),e=Array.from(document.querySelectorAll("[data-filter-card]")),r=document.getElementById("filter-status");if(!t)return;let o=e.map(n=>({card:n,container:n.closest(".post-outer-container")||n,text:n.textContent||""}));t.addEventListener("input",()=>{if(!o.length||!r)return;let n=0;o.forEach(({container:i,text:c})=>{let a=A(c,t.value);i.hidden=!a,a&&n++}),r.hidden=!t.value.trim(),r.textContent=`${n} of ${o.length} loaded articles match. Submit Search blog to search the full publication.`}),document.addEventListener("keydown",n=>{let i=n.target;if(!(n.isComposing||i instanceof Element&&i.closest('input,textarea,select,[contenteditable]:not([contenteditable="false"])'))&&(n.key==="/"&&!n.metaKey&&!n.ctrlKey&&!n.altKey||n.key.toLowerCase()==="k"&&(n.ctrlKey||n.metaKey)&&!n.altKey)){n.preventDefault();let c=document.getElementById("primary-navigation"),a=document.getElementById("menu-toggle");c?.hidden&&(c.hidden=!1,a?.setAttribute("aria-expanded","true")),t.focus()}})}function g(t,e){if(typeof t!="string"||/[-\u001f\u007f]/u.test(t))return null;try{let r=new URL(t,e),o=new URL(e);return r.protocol==="https:"&&r.origin===o.origin&&!r.username&&!r.password?r.href:null}catch{return null}}function y(t){let e=document.getElementById("fcd-status");e&&(e.textContent=t)}function L(t,e){if(!t||typeof t!="object")return[];let r=t.feed?.entry;if(!Array.isArray(r))return[];let o=new Set,n=[];for(let i of r.slice(0,20)){if(!i||typeof i!="object")continue;let c=i,a=c.title?.$t,u=Array.isArray(c.link)?c.link.find(h=>h?.rel==="alternate"):void 0,m=g(u?.href,e);if(!(typeof a!="string"||!a.trim()||!m||o.has(m))&&(o.add(m),n.push({title:a.trim().slice(0,300),url:m}),n.length===5))break}return n}async function x(){let t=document.querySelector("#recent-posts"),e=document.getElementById("recent-status");if(!t||!e||!t.dataset.feed)return;let r=g(t.dataset.feed,location.href);if(!r)return;let o=new URL(r);o.searchParams.set("alt","json"),o.searchParams.set("max-results","8"),e.textContent="Loading recent posts\u2026";try{let n=await fetch(o,{credentials:"omit",signal:AbortSignal.timeout(8e3)});if(!n.ok)throw new Error("Feed unavailable");if(Number(n.headers.get("content-length"))>5e5)throw new Error("Feed too large");let c=n.body?.getReader();if(!c)throw new Error("No feed body");let a=[],u=0;for(;;){let{value:l,done:d}=await c.read();if(d)break;if(u+=l.length,u>5e5)throw await c.cancel(),new Error("Feed too large");a.push(l)}let m=new Uint8Array(u),h=0;for(let l of a)m.set(l,h),h+=l.length;let s=L(JSON.parse(new TextDecoder().decode(m)),location.href),f=document.createDocumentFragment();s.forEach(l=>{let d=document.createElement("li"),p=document.createElement("a");p.href=l.url,p.textContent=l.title,d.append(p),f.append(d)}),t.replaceChildren(f),e.textContent=s.length?"Newest publications":"No recent posts available. Browse the publication below."}catch{e.textContent="Recent posts could not be loaded. Browse the latest articles below."}}function k(){let t=document.getElementById("article-body");if(!t)return;let e=document.getElementById("reading-time"),r=(t.textContent||"").trim().split(/\s+/u).filter(Boolean).length;e&&r&&(e.textContent=`${Math.max(1,Math.ceil(r/220))} min read`,e.hidden=!1);let o=document.getElementById("copy-link");o&&(o.hidden=!1,o.addEventListener("click",async()=>{try{let s=document.querySelector('link[rel="canonical"]')?.href||location.href;await navigator.clipboard.writeText(s),y("Article link copied")}catch{y("Copy unavailable. Copy the address from your browser.")}}));let n=Array.from(t.querySelectorAll("h2,h3,h4"));if(n.length<2)return;let i=document.createElement("details");i.className="article-toc";let c=document.createElement("summary");c.textContent="On this page",i.append(c);let a=document.createElement("nav");a.setAttribute("aria-label","Table of contents");let u=document.createElement("ol");a.append(u),i.append(a);let m=new Set(Array.from(document.querySelectorAll("[id]"),s=>s.id)),h=new Map;if(n.forEach((s,f)=>{if(!s.id||document.querySelectorAll(`[id="${CSS.escape(s.id)}"]`).length>1){let p=`fcd-section-${f+1}`;for(;m.has(p);)p+="-heading";s.id=p,m.add(p)}s.tabIndex=-1;let l=document.createElement("li"),d=document.createElement("a");d.href=`#${encodeURIComponent(s.id)}`,d.textContent=s.textContent||`Section ${f+1}`,d.addEventListener("click",()=>{s.focus({preventScroll:!0})}),l.append(d),u.append(l),h.set(s,d)}),t.before(i),"IntersectionObserver"in window){let s=new IntersectionObserver(f=>{for(let l of f)l.isIntersecting&&(h.forEach(d=>d.removeAttribute("aria-current")),h.get(l.target)?.setAttribute("aria-current","location"))},{rootMargin:"0px 0px -65% 0px"});n.forEach(f=>s.observe(f))}}function C(){let t=document.getElementById("article-body");t&&(t.querySelectorAll("pre").forEach(e=>{e.tabIndex=0,e.setAttribute("aria-label","Scrollable code block");let r=e.querySelector("code")||e,o=r.textContent||"",n=Array.from(r.classList).find(u=>u.startsWith("language-"))?.slice(9)||"Code",i=document.createElement("div");i.className="code-toolbar";let c=document.createElement("span");c.textContent=n;let a=document.createElement("button");a.type="button",a.textContent="Copy",a.setAttribute("aria-label",`Copy ${n} code`),a.addEventListener("click",async()=>{try{await navigator.clipboard.writeText(o),y("Code copied")}catch{y("Copy unavailable. Select the code and copy it manually.")}}),i.append(c,a),e.before(i)}),t.querySelectorAll("table").forEach((e,r)=>{if(e.parentElement?.classList.contains("table-scroll"))return;let o=document.createElement("div");o.className="table-scroll",o.tabIndex=0,o.setAttribute("role","region"),o.setAttribute("aria-label",e.caption?.textContent||`Scrollable table ${r+1}`),e.before(o),o.append(e)}))}b();E();w();k();C();x();})();
+
+      //]]>
+    </script>
+  </body>
+</html>

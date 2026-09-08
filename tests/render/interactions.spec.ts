@@ -63,13 +63,15 @@ test('wide evidence tables retain local keyboard scrolling and semantics',async(
  await expect(page.getByRole('columnheader',{name:'System 12',exact:true})).toHaveCount(1);
  await region.focus();await expect(region).toBeFocused();
  const widths=await region.evaluate(el=>({client:el.clientWidth,scroll:el.scrollWidth}));
- if(widths.scroll>widths.client){await page.keyboard.press('End');await expect.poll(()=>region.evaluate(el=>el.scrollLeft)).toBeGreaterThan(0);}
+ // ArrowRight is the native horizontal-scroll key; End targets vertical scrolling in Chromium.
+ if(widths.scroll>widths.client){await page.keyboard.press('ArrowRight');await expect.poll(()=>region.evaluate(el=>el.scrollLeft)).toBeGreaterThan(0);}
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
 });
 test('skip link works and 200 percent text retains page reflow',async({page})=>{
  await page.goto('/article');await page.keyboard.press('Tab');await expect(page.locator('.skip-link')).toBeFocused();await page.keyboard.press('Enter');await expect(page.locator('main#content')).toBeFocused();
  await page.addStyleTag({content:'html{font-size:200%}'});
- expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+ const reflow=await page.evaluate(()=>({width:document.documentElement.scrollWidth,viewport:innerWidth,overflow:Array.from(document.querySelectorAll('body *')).filter(el=>el.getBoundingClientRect().right>innerWidth+1&&!el.closest('pre,table,.table-scroll')).map(el=>el.tagName+'.'+el.className)}));
+ expect(reflow.width,JSON.stringify(reflow)).toBeLessThanOrEqual(reflow.viewport+1);
  await expect(page.locator('#article-body')).toBeVisible();
  // Text scaling is not a claim of browser 400% zoom or human screen-reader validation.
 });

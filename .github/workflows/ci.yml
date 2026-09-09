@@ -1,10 +1,10 @@
-name: FCD dependency preflight
+name: FCD technical-content regressions
 on:
   pull_request:
 permissions:
   contents: read
 jobs:
-  dependency-preflight:
+  red-regressions:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -16,38 +16,19 @@ jobs:
         with:
           node-version-file: .nvmrc
           package-manager-cache: false
-      - name: Inspect exact published distribution and dependency audit
-        shell: bash
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npx --no-install vitest run tests/unit/enhancement-loader.test.ts tests/unit/highlighting.test.ts tests/unit/diagrams.test.ts tests/unit/staging-check.test.ts --reporter=default --reporter=json --outputFile=unit-report.json
+      - name: Report regression outcomes
+        if: ${{ always() }}
         run: |
-          set -euo pipefail
-          mkdir -p /tmp/fcd-dependencies evidence
-          cd /tmp/fcd-dependencies
-          npm init -y
-          npm install --ignore-scripts --no-audit --no-fund mermaid@11.17.2 prismjs@1.30.0
-          npm audit --json > "$GITHUB_WORKSPACE/evidence/audit.json" || audit_exit=$?
-          cp package-lock.json "$GITHUB_WORKSPACE/evidence/dependency-lock.json"
-          cd "$GITHUB_WORKSPACE"
-          python3 - <<'PY'
-          import json,re,urllib.request
-          from pathlib import Path
-          root=Path('/tmp/fcd-dependencies/node_modules/mermaid/dist')
-          records=[]
-          for p in root.rglob('*.mjs'):
-              if 'mermaid.esm.min' not in str(p): continue
-              text=p.read_text()
-              versions=sorted(set(re.findall(r'DOMPurify[^\n]{0,100}',text)))
-              if versions: records.append({'file':str(p.relative_to(root)),'notices':versions,'in_place':text.count('IN_PLACE')})
-          req=urllib.request.Request('https://cdn.jsdelivr.net/npm/mermaid@11.17.2/dist/mermaid.esm.min.mjs')
-          with urllib.request.urlopen(req,timeout=30) as r: entry=r.read()
-          assert entry== (root/'mermaid.esm.min.mjs').read_bytes(),'CDN entry differs from exact npm distribution'
-          audit=json.loads(Path('evidence/audit.json').read_text())
-          summary={'bundle_dompurify':records,'entry_bytes':len(entry),'audit':audit.get('metadata',{}).get('vulnerabilities',{}),'findings':audit.get('vulnerabilities',{})}
-          Path('evidence/preflight.json').write_text(json.dumps(summary,indent=2))
-          print('::notice title=Dependency preflight::'+json.dumps(summary).replace('\n',' ')[:12000])
-          PY
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          const r=JSON.parse(fs.readFileSync('unit-report.json','utf8'));
+          console.log('::notice title=Red regression totals::'+JSON.stringify({passed:r.numPassedTests,failed:r.numFailedTests}));
+          for(const s of r.testResults)for(const a of s.assertionResults||[])if(a.status==='failed')console.log('::error title=Regression::'+a.fullName);
+          JS
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: ${{ always() }}
         with:
-          name: dependency-preflight-${{ github.event.pull_request.head.sha }}
-          path: evidence/
-          if-no-files-found: error
+          name: red-regressions
+          path: unit-report.json

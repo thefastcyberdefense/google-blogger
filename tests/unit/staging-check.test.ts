@@ -11,6 +11,7 @@ it('checks all eight configured response types without contacting real staging',
  const seen:string[]=[];const fetch=vi.spyOn(globalThis,'fetch').mockImplementation(async(input)=>{const url=String(input);seen.push(url);const type=new URL(url).pathname.slice(1);return new Response(markup(type),{status:type==='error'?404:200});});
  try{await runStaging(validateManifest(raw()));expect(seen).toHaveLength(8);}finally{fetch.mockRestore();}
 },60000);
-it.each([['redirect',302,''],['missing body',200,'<html><head><meta name="theme-build" content="'+build+'"><style>.post-title{}</style></head><body></body></html>'],['stale build',200,markup('home').replace(build,'0.1.0+'+'b'.repeat(40))]])('rejects %s responses',async(_name,status,body)=>{
- const fetch=vi.spyOn(globalThis,'fetch').mockResolvedValue(new Response(body,{status:Number(status)}));try{await expect(runStaging(validateManifest(raw()))).rejects.toThrow();}finally{fetch.mockRestore();}
+const invalid:[string,number,string][]=[['redirect',302,''],['missing body',200,'<html><head><meta name="theme-build" content="'+build+'"><style>.post-title{}</style></head><body></body></html>'],['stale build',200,markup('home').replace(build,'0.1.0+'+'b'.repeat(40))]];
+it.each(invalid)('rejects %s responses',async(_name,status,body)=>{
+ const fetch=vi.spyOn(globalThis,'fetch').mockResolvedValue(new Response(body,{status}));try{await expect(runStaging(validateManifest(raw()))).rejects.toThrow();}finally{fetch.mockRestore();}
 },30000);

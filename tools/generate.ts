@@ -29,8 +29,8 @@ export async function generateTheme(){
  const size={source:sha,xml:measure(xml),css:measure(compiled.css),js:measure(compiled.script)};
  if(process.env.FCD_BASELINE_REPORT){
   const base=JSON.parse(await readFile(process.env.FCD_BASELINE_REPORT,'utf8')) as {source:string;css:{raw:number};js:{raw:number}};
-  if(base.source!=='ec08c4b9d1ba2cd35d9ec8a9bcbe557f2d01ca3d'||!Number.isFinite(base.css.raw)||!Number.isFinite(base.js.raw))throw new Error('Invalid pinned baseline report');
-  if(size.css.raw-base.css.raw>12288||size.js.raw-base.js.raw>2048)throw new Error('Editorial CSS/JS growth exceeds approved budgets');
+  if(base.source!=='18b127d014e5d02a860603b18f10dd6c7ab81169'||!Number.isFinite(base.css.raw)||!Number.isFinite(base.js.raw))throw new Error('Invalid pinned baseline report');
+  if(size.css.raw-base.css.raw>2048||size.js.raw-base.js.raw>8192)throw new Error('Discovery CSS/JS growth exceeds approved budgets');
  }
  await writeFile(path.join(root,'build-size.json'),JSON.stringify(size,null,2));
  await mkdir(path.join(root,'dist'),{recursive:true});await writeFile(path.join(root,'dist/theme.xml'),xml);

@@ -5,7 +5,7 @@ block stream
   .blog-posts
     .post-outer-container
       .post-outer
-        +fcdArticle(fixturePost, true)
+        +fcdArticle({...fixturePost,isPost:typeof fixtureIsPost === 'undefined' ? true : fixtureIsPost}, true)
           p This fixture exercises shared production presentation and the compiled script bundle. It does not interpret Blogger expressions.
           h2 Know the boundary
           p Start with the identities, resources and grants that define the system.

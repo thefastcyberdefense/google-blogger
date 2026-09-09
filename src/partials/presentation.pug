@@ -95,6 +95,21 @@ mixin fcdCard(post = {}, fixture = false)
           b:eval(expr='snippet(data:post.snippets.long, {length: 180, links: false, linebreaks: false, ellipsis: true})')/
       +fcdByline(post, fixture, false)
 
+mixin fcdRelated(post, fixture)
+  section.related-articles(data-related-post='true' aria-labelledby='related-heading' data-post-url=fixture ? post.url : undefined data-post-id=fixture ? post.id : undefined expr:data-post-url=fixture ? undefined : 'data:post.url.canonical' expr:data-post-id=fixture ? undefined : 'data:post.id')
+    h2#related-heading(data-related-heading='true') Continue reading
+    ol.related-list(data-related-list='true')
+    p(data-related-status='true') Explore more publications and topics.
+    a.related-fallback(href=fixture ? '/search' : undefined expr:href=fixture ? undefined : 'data:blog.homepageUrl path "search"') Browse latest articles
+    +fcdLabels(post, fixture)
+    div(hidden='hidden')
+      if fixture
+        each label in (post.labels || []).slice(0,20)
+          span(data-current-label=label.name)
+      else
+        b:loop(values='data:post.labels take 20' var='relatedLabel')
+          span(expr:data-current-label='data:relatedLabel.name')
+
 mixin fcdShareAndCta(post, fixture)
   .share-actions(aria-label='Share article')
     button.js-control#copy-link(type='button' hidden='hidden') Copy article link
@@ -127,7 +142,10 @@ mixin fcdArticle(post = {}, fixture = false)
       else
         b:eval(expr='data:post.body')/
     if fixture
-      +fcdShareAndCta(post, true)
+      if post.isPost !== false
+        +fcdRelated(post, true)
+        +fcdShareAndCta(post, true)
     else
       b:if(cond='data:view.isPost')
+        +fcdRelated({}, false)
         +fcdShareAndCta({}, false)

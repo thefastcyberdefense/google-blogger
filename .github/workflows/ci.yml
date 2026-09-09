@@ -24,7 +24,7 @@ jobs:
           package-manager-cache: false
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          ref: ec08c4b9d1ba2cd35d9ec8a9bcbe557f2d01ca3d
+          ref: 18b127d014e5d02a860603b18f10dd6c7ab81169
           path: .baseline-src
           persist-credentials: false
       - name: Build pinned base and capture size evidence
@@ -37,7 +37,7 @@ jobs:
           import {assets} from './.baseline-src/tools/generate.ts';
           import fs from 'node:fs';import {gzipSync} from 'node:zlib';
           const data=await assets();const measure=t=>({raw:Buffer.byteLength(t),gzip:gzipSync(t).byteLength});
-          const report={source:'ec08c4b9d1ba2cd35d9ec8a9bcbe557f2d01ca3d',css:measure(data.css),js:measure(data.script),xml:measure(fs.readFileSync('.baseline-src/dist/theme.xml','utf8'))};
+          const report={source:'18b127d014e5d02a860603b18f10dd6c7ab81169',css:measure(data.css),js:measure(data.script),xml:measure(fs.readFileSync('.baseline-src/dist/theme.xml','utf8'))};
           fs.writeFileSync('baseline-size.json',JSON.stringify(report,null,2));console.log('::notice title=Pinned baseline::'+JSON.stringify(report));
           JS
       - run: npm ci --ignore-scripts --no-audit --no-fund

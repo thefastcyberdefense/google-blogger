@@ -1,25 +1,24 @@
 # Changelog
 
-## Unreleased: Phase 2B PR A
+## Unreleased: Phase 2B PR B
 
-- Added shared native-context lead, secondary and standard cards without replacing Blogger's posts loop.
-- Added responsive lead-image priority and stable image-less presentation.
-- Existing loaded-card filtering switches out of editorial layout, preserves order and resets; native full-publication search remains authoritative.
-- Added author-controlled in-body cover styling, reading measure and print cleanup without synthesizing or moving images.
-- Added small-catalog/date-wrapper fixtures, parity mutations and editorial interaction/image/print/no-JS coverage.
-- Added Actions-built pinned-base and current raw/gzip size evidence with approved growth gates.
+- Added bounded normalized feed model and shared transport with source identity, byte/time limits and one shared explicit retry.
+- Added deterministic post-only related articles and honest latest/empty/error native fallbacks; current article excluded from both consumers.
+- Migrated Recent Posts without removing the original safe five-result parser contract.
+- Added catalog clear/reset focus handling, preserving native full-publication search.
+- Added identity/ranking/stream/timeout/redirect/retry/renderer isolation/native context and compiled browser regressions.
+- Fixed Actions-discovered sidebar overflow at 200% text without suppressing tests.
+- Approved budgets enforced against merged PR A: JS +8192, CSS +2048 raw bytes; XML <=500000.
+- XML transferred from verified Actions source to the feature branch; full read-only final-head verification remains required. No merge/deployment.
 
-Implementation is unmerged. Accept only after full exact-head checks and Actions-generated XML consistency. Native Blogger staging/human release gates remain pending.
+## Phase 2B PR A (merged without deployment)
 
-## Phase 2 technical content (PR #2, merged without deployment)
+Native-order editorial homepage/cards, responsive lead image hints, author-controlled cover convention, reading measure and print styling. Source verification: 129 unit/contract and 792 browser tests before merge; main post-merge run 34338858565 passed.
 
-- Prism 1.30.0 grammar subset, safe highlighting and original copy payloads.
-- Optional Mermaid 11.17.2 ESM loading, strict config, readable source, bounded zoom/reset and theme lifecycle.
-- Keyboard-focusable source regions and real-library regression coverage.
-- Eight-view read-only staging tooling; article-type and hidden-content false positives fixed with test-first regressions.
-- Vitest upgraded to patched 4.1.11 with genuine audited lockfile. Mermaid preflight confirmed bundled DOMPurify 3.4.12.
-- 127 unit/contract and 594 browser tests passed on PR #2 head before history-preserving merge. Main post-merge CI also passed. No deployment.
+## Phase 2 technical content (merged without deployment)
 
-## 0.1.0 foundation
+Prism 1.30.0 explicit grammar subset; Mermaid 11.17.2 optional strict ESM rendering and source fallback; accessible controls and lifecycle; read-only eight-view staging tooling with article/hidden-content fixes. Vitest 4.1.11 patched and genuinely locked/audited. 127 unit/contract and 594 browser tests before merge.
 
-PR #1 merged with history preserved: native V3/V2 engine, initial FCD presentation, safe feed/search, shared fixture parity, hardened XML contracts, no-JS tables and keyboard/accessibility regressions. Actual Blogger import/runtime and human acceptance were not claimed.
+## Foundation
+
+Native V3/V2 engine, shared FCD presentation, safe search/feed, source-fixture parity, XML mutation contracts, keyboard/a11y/no-JS regressions. Actual Blogger and human release gates remain separate.

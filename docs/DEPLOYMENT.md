@@ -1,26 +1,21 @@
-# Blogger staging and deployment boundaries
+# Staging and deployment boundaries
 
-PR #1 and PR #2 are merged on main without deployment. PR #3 editorial experience remains unmerged. Source verification, merge approval and actual production deployment are separate decisions.
+PR #1 through PR #3 merged without deployment. PR B discovery is draft PR #4. Merge and release approvals remain separate; no Blogger import, publishing, DNS changes or deletions are authorized by implementation.
 
-## Artifact selection
+## Artifact
 
-Use the fresh XML artifact from the latest successful exact-head Actions run, and record its full theme-build stamp. PR #3's committed XML was generated from source 388660f8e5fdb9ebb8b44f03b882748ae9b021c7 and transferred in commit 2c74454f9321c2764445c160790cd302e1fdc3a8 after source/report/budget checks. Ordinary read-only CI compares it against fresh compilation, normalizing only the historical stamp. No other content mismatch is allowed.
+Use XML from the latest complete successful exact-head Actions run. Discovery XML was generated from bed1f1351db1cb5620dcf3680c7ab3567da0b9c3 and committed only after artifact/source/report validation in 13e5d4220eb95122bc136517e6bd02714779e77d. Full read-only CI must confirm consistency, normalizing only historical theme-build metadata. Temporary artifact writers are removed before acceptance. Optional pinned Mermaid CDN bytes remain external to XML.
 
-The Actions artifact includes reports, screenshots and size evidence. Optional exact-version Mermaid ESM is external to XML bytes; verify readable-source fallback when CDN loading is blocked. XML is not a promise of fully self-contained diagrams.
+## Native Blogger checks
 
-## Author-controlled covers
+Export existing XML/content and record widget settings first. An owner or explicitly authorized operator imports/saves to a dedicated staging Blogger blog. Record blog identity, exact build stamp and eight real view URLs in FCD_STAGING_MANIFEST_JSON. The separate read-only staging workflow validates configured views; it never uploads XML or publishes content. Missing configuration stays blocked.
 
-To use a cover, apply class fcd-article-cover to an existing in-body figure with a meaningful image alternative and optional caption. The theme does not synthesize a duplicate hero, scrape, move or remove images. Authors control whether an above-fold body image should be eager; do not blanket-prioritize all images. Print removes navigation/toolbars/promotional chrome; author content and technical-source readability still need human review.
+Check post-only recommendations, canonical post identity, label encoding, current-post exclusion and related/latest/empty/failure states on native Blogger output. Static pages must have no related shell. Confirm native comments, widgets, Layout editor, labels and cursors remain correct. Fixtures are not expression interpreters.
 
-## Owner-assisted staging sequence
+## Feed policy
 
-1. Export existing XML/content and record Layout widget settings before changes.
-2. Use a dedicated Blogger staging blog with non-sensitive representative content. Public feed-dependent tests require compatible feed settings.
-3. Owner or explicitly authorized operator imports and saves the selected XML. No automated Blogger import is claimed or authorized by a CI run.
-4. Configure repository variable FCD_STAGING_MANIFEST_JSON from fixtures/staging-views.example.json using real home/article/label/search/archive/static/error/paged URLs, exact build stamp and expected visible content for search/static/error. Do not include credentials.
-5. Run the separate manual read-only workflow on the trusted ref. Missing configuration blocks checks; it never seeds posts, imports XML, deploys or merges.
-6. Record actual native comments, labels, cursors, feeds and Layout editor behavior. Confirm lead/secondary roles on initial homepage only, no duplicated posts, meaningful image alternatives and no duplicated author covers.
-7. Record human keyboard, zoom/print and screen-reader checks separately from automated Chromium/axe results.
-8. Request explicit production release after all gates pass. Restore exported XML/widget configuration if an approved deployment needs rollback.
+Public site feeds can be Full, Short, Until Jump Break, Custom, None or redirected. Private blogs do not support public feeds. PR B does not change these settings. Requests are fixed same-origin JSON feed requests, reject redirects, omit credentials and accept at most 500000 decoded bytes with an 8-second deadline. Post candidate count 50; non-post Recent Posts 8; one automatic attempt plus one shared explicit retry. Full feeds may exceed the byte cap: retain native fallback rather than silently increasing limits. No full-archive search claim, JSONP/proxy or persistent cache.
 
-Actual staging URL/import/save evidence has not been supplied. Simulated fixtures and mocked HTTP responses are not actual Blogger-rendering evidence. Keep production unchanged until separately approved. Never paste passwords or secrets into XML or chat.
+## Human and production gates
+
+Authors may use fcd-article-cover on an existing meaningful figure; no auto-generated duplicate cover. Verify human keyboard, zoom/print and screen-reader behavior separately. Discovery navigation is hidden for print; article technical source remains readable. Record actual Blogger import/save and human results before release. Request explicit production approval after all applicable gates pass. Rollback restores exported XML/widget settings. No credentials in theme or chat.

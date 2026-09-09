@@ -1,43 +1,35 @@
 # Fast Cyber Defense Blog
 
-Unreleased Google Blogger Layouts V3 / Widget Version 2 theme. PR #1 foundation and PR #2 technical content are merged; neither was deployed. PR A (Phase 2B editorial experience) is a separate unmerged draft.
+Unreleased Blogger Layouts V3 / Widget Version 2 theme. Foundation, technical content and PR A editorial presentation are merged without deployment. PR B content discovery is an unmerged feature branch.
 
-## Build and architecture
+## Architecture and build
 
-Node 24.20.0 (`.nvmrc`), npm 11+, genuine locked dependencies. Pug, SCSS and bundled TypeScript generate one `dist/theme.xml`; no React, server or database. Do not edit generated XML manually. All automated project builds/tests run in GitHub Actions.
+Node 24.20.0, npm 11+, genuine locked dependencies. Pug/SCSS/bundled TypeScript compile one dist/theme.xml; no React, backend or database. Automated project execution stays in GitHub Actions. Entry points: npm ci, npm run build, npm run preview. Never edit generated XML manually.
 
-```sh
-npm ci
-npm run build
-npm run preview
-```
+Normal CI uses pinned actions and contents:read; no deployment secrets. Typechecks, XML/native contracts, dependency audit, regression suites and generated XML parity are mandatory. Historic build metadata is the only normalized difference between checked-in and freshly built XML. Use exact-head run evidence, not older green stages.
 
-The commands above describe the pipeline/preview entry points; project acceptance execution remains Actions-based. Normal CI is read-only, with pinned actions, dependency audit, XML contracts, shared-presentation parity, unit and browser coverage. The checked-in XML retains its actual generating stamp; CI compares it with a fresh build while normalizing only that stamp. Final acceptance requires the exact latest head, not earlier passing stages.
+## Editorial and technical features
 
-## Editorial experience (PR A)
+Initial home renders one lead, up to two secondary and standard native-order cards. Lead images are eager/high priority; missing images do not reorder posts. Shared presentation retains native wrappers. An existing author figure may use fcd-article-cover; no automatic extra cover or body rewriting. Reading measure, normal-flow TOC and print styling retain readable technical content.
 
-Initial homepage native order: one lead, up to two secondary cards, then standard cards. The lead spans the available stream before secondary cards; date groups retain their native hierarchy. Other catalogs use standard presentation. Local filtering switches to a compact grid, preserves original order, hides empty date groups and restores composition when cleared. Enter still uses native Blogger search, and counts explicitly cover only loaded articles.
+Prism 1.30.0 bundles explicit technical grammars, original copy payload and plain fallback. Mermaid 11.17.2 is an optional exact-pinned jsDelivr ESM dependency, loaded only for diagrams with strict config, retained source and bounded zoom. External Mermaid bytes are separate from XML. Timeout does not cancel ESM or impose a CPU deadline. No SVG export.
 
-Only an actual lead image is eager/high-priority. Missing images do not promote later posts. Responsive sources reserve dimensions. The first-slice cover policy is author-controlled: add class `fcd-article-cover` to an existing in-body figure with meaningful alt/caption. The theme does not add an extra hero, scrape the body or move/remove images. See docs/PHASE-2B-PR-A.md.
+## Content discovery (PR B)
 
-Long-form styling uses a bounded reading measure, normal-flow TOC and quieter CTA. Print omits controls, navigation and promotion while retaining readable article content and technical source. Automated print/reflow tests are not claims of human visual or assistive-technology approval.
+Post views share one bounded feed response between Recent Posts and related articles. At most three related titles rank by distinct shared labels, then date and stable identity; no matching content yields honestly labeled latest articles. Current article and duplicates are excluded. Static/catalog views retain only their existing Recent Posts request.
 
-## Technical content retained
+Transport limits: post request 50 candidates, non-post request 8; 500000 accepted decoded bytes, 8 seconds including body reading; one automatic attempt plus one shared explicit retry. No automatic pagination, persistent cache, recommendation images, backend, JSONP or new dependency. Feed HTML is never inserted or cached. Native topic/latest links survive failure or disabled JS.
 
-Prism 1.30.0 bundles Bash, PowerShell, Python, JavaScript, TypeScript, SQL, JSON, YAML, Docker, HTTP and XML aliases. Original copy text is preserved; unknown/oversized blocks stay plain.
+Typing filters loaded catalog cards only. Clear filter restores order and focus; Enter uses native Blogger search for the full publication. No whole-archive client index is claimed.
 
-Mermaid 11.17.2 loads as exact-pinned optional jsDelivr ESM only for diagrams. Strict configuration, immutable source, serialized theme-aware rendering and accessible zoom/reset remain. Optional external library bytes are not part of XML bytes. Timeout cannot abort import() or impose a CPU deadline. No SVG export. See docs/TECHNICAL-CONTENT.md.
+## Verification and budgets
 
-Vitest 4.1.11 is pinned after the earlier audit fix; PR A adds no dependencies.
+PR A baseline 18b127d014e5d02a860603b18f10dd6c7ab81169 passed post-merge Actions run 34338858565 with inherited 129 unit/contract and 792 browser coverage. PR B adds tests without removing those safeguards.
 
-## Verification and release boundaries
+PR B approved growth limits against an Actions-built PR A baseline: raw JS +8192 bytes, CSS +2048; XML <=500000. Raw/gzip evidence reported separately. Earlier PR A limits and measured sizes remain in docs/PHASE-2B-PR-A.md. See PR #4 for the actual latest outcome; pending artifact transfer is not completion.
 
-Merged baseline ec08c4b9d1ba2cd35d9ec8a9bcbe557f2d01ca3d passed post-merge Actions: https://github.com/thefastcyberdefense/google-blogger/actions/runs/34315679550 . Retain its 127 unit/contract and 594 browser regressions; additional editorial coverage must pass before PR A acceptance.
+## Staging and release
 
-PR A measures base and current assets in Actions: XML <=500000 bytes, incremental raw CSS <=12288 bytes and JS <=2048 bytes. Gzip sizes are reported separately. No new runtime dependency/request is introduced by editorial presentation. The final PR description supplies current exact-head outcomes and artifacts; an intermediate failed run is not green.
+Fixtures model shared presentation, not Blogger expression execution. Configure FCD_STAGING_MANIFEST_JSON only after owner-confirmed import/save with real eight-view URLs and exact stamp. The manual read-only workflow does not import, seed, deploy or merge.
 
-`npm run preview` produces explicitly labeled synthetic shared-presentation specimens, not Blogger expression evaluation. `npm run staging:check` and the manual read-only workflow require owner-confirmed Blogger import/save and real eight-view configuration in FCD_STAGING_MANIFEST_JSON. They do not upload XML, seed posts or deploy.
-
-Actual Blogger rendering, native comments/widgets/Layout, broader SEO/performance, non-Chromium and human accessibility remain separate release gates. Merge and production replacement require explicit approval. No credentials belong in theme or chat.
-
-Related articles/feed refactoring and expanded discovery remain PR B; metadata/cross-browser/release acceptance remains PR C. SVG export, audio, analytics, publishing automation and infrastructure are excluded.
+Feeds require a public compatible blog and may be disabled/truncated/redirected; the theme does not change settings. Actual Blogger rendering, native comments/Layout, human accessibility and broader browser/field performance remain release gates. No credentials in XML or chat. Merge/deployment/deletion require separate approval. See docs/DEPLOYMENT.md and docs/PHASE-2B-PR-B.md.

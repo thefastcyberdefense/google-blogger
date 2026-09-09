@@ -1,37 +1,34 @@
-# Phase 2B PR B: content discovery
+# PR B: bounded content discovery
 
-Approved 2026-09-09: maximum 28-file manifest (21 existing/7 new), branch feat/fcd-content-discovery, one draft PR, raw JS growth <=8192 bytes and CSS <=2048 against base 18b127d014e5d02a860603b18f10dd6c7ab81169; XML <=500000. Verified main run 34338858565 passed. Source-bound XML-only transfer is approved on this branch; no merge/deployment/deletion/publication.
+Approved 2026-09-09: maximum 28-file manifest, branch feat/fcd-content-discovery, draft PR #4, CSS growth <=2048 raw bytes / JS <=8192 against base 18b127d014e5d02a860603b18f10dd6c7ab81169; XML <=500000. Main baseline passed run 34338858565. No merge/deployment/deletion/publication. Use FCD Superpowers, Ralph, GSD and relevant review skills. All automated execution in GitHub Actions.
 
-Use FCD Superpowers, Ralph and GSD, plus accessibility/code review. All automated builds/tests run in Actions. Skills are workflow adaptations, not native background runners. A self-review is not independent human approval.
+## Implemented stories
 
-## Implementation
+B1 red contracts: d261c3cbb1aeea70fb019fdbde787c7d9e10b63c, run 34340770222, 129 inherited passes and 14 failing new contracts. Unconnected placeholders establish behavioral failures, not missing-module errors.
 
-The shared model retains bounded title, safe same-origin URL, comparison identity, optional validated Blogger ID, at most 20 labels of 100 characters and optional ISO publication time. At most 50 entries are inspected. Bodies/HTML are not retained. The original parseFeed adapter retains five-item safety semantics.
+B2 model/identity: bounds 50 candidates, 300-character titles, 20 labels of 100 characters, validated optional ID/date. Normalizes known mobile/tracking aliases while preserving meaningful query/path distinctions. parseFeed retains original five-result adapter. No feed bodies retained or HTML inserted.
 
-Comparison identity removes fragments, m=0/1, utm_*, gclid and fbclid; unrelated query data and case-sensitive paths stay distinct. Label keys normalize Unicode NFKC, whitespace and case, with distinct labels counted once. Related ranking excludes current ID or URL, sorts shared-label count then publication date then deterministic identity, and returns at most three. Genuine matches are not padded with unrelated posts; no matches use Latest articles. No safe records means native fallback links.
+B3 transport: one shared automatic request plus one explicit shared retry; 8 entries on non-post pages, 50 on post pages; 500000 accepted decoded bytes and 8-second headers/body deadline. Credentials omitted, redirects rejected, streams cancelled, no polling/pagination/persistent storage. Native chunks can exceed remaining allowance before rejection: application cap is not exact wire-byte control.
 
-One controller chooses one shared 50-entry request on native post views or an 8-entry Recent Posts request elsewhere. Related UI is guarded by native data:view.isPost; static pages do not receive the shell. A page without consumers does not fetch. Reinitialization cannot restart controller budgets. Failure in one renderer is isolated from the other.
+B4 ranking: current ID/URL excluded, distinct shared labels then valid date then deterministic identity. Up to three genuine matches; no unrelated padding; Latest articles fallback only if no matches. Recent Posts up to five, excluding current post on article views.
 
-Transport accepts only the constructed same-origin /feeds/posts/default?alt=json endpoint, omits credentials, disallows redirects, validates HTTP/content type/destination, and reads at most 500000 accepted bytes. The 8-second deadline covers headers and body; oversize/stalled streams are cancelled. One automatic attempt plus at most one shared explicit retry per page, no automatic pagination/polling. Individual network chunks can exceed the remaining application allowance before rejection; this is not a precise wire-byte cap. No persistent caching, external proxy, JSONP or new dependency.
+B5 presentation: escaped native post-only shell, repeated label context (no comma split), safe text links/date/label, permanent topic/latest links, one local live-status region. No recommendations for static pages or missing current identity. No consumers means no requests. Reinitialization and renderer failure isolated.
 
-Recent Posts shows at most five and excludes the current post on article views. Related links are text-first with optional label/date, no new image requests. Permanent native topic/latest links survive JS failure. One local live status avoids competing result announcements; retry remains visibly exhausted after its single allowance.
+B6 clear filter: catalog-only control, focus returned before hide, preserved order/reset/shortcuts/native submission. No full-archive index or recommendation images.
 
-Clear filter exists only for loaded catalog cards and nonempty queries. It focuses the input before hiding itself, restores the original editorial composition/order and preserves native full-publication form submission. Article search does not pretend to filter the archive.
+B7 verification: source bed1f1351db1cb5620dcf3680c7ab3567da0b9c3 passed 168 unit/contract and 946 browser tests, zero failures/skips/flaky/pending, in run 34342761242. Typecheck/build/XML contracts/audit/budgets passed. Overall run failed ONLY stale checked-in XML; do not call it green. Six earlier enlarged-text sidebar failures were fixed with minmax(0,1fr), min-width:0 and wrapping retry controls, not weakened assertions. Existing source security contract remained unchanged; shared deadline/byte helpers are used by transport.
 
-## Story and evidence ledger
+B8 XML transfer: verified artifact 10100708711, source bed1f1351db1cb5620dcf3680c7ab3567da0b9c3, digest sha256:edcbe765d1fc5a492ca5b38f5ca7502756ea5df62ebbb8dd651d34f8dc5dec03. Source/job/report/budget/stamp checks preceded XML-only commit 13e5d4220eb95122bc136517e6bd02714779e77d. Temporary write permissions removed; full read-only CI restored. Final exact-head rerun is now required before acceptance; check PR #4 for current outcome. No further implementation approval needed for this closure.
 
-B1 behavioral red established at d261c3cbb1aeea70fb019fdbde787c7d9e10b63c: run 34340770222 recorded 129 inherited passes and 14 failing discovery contract tests. Unconnected placeholders were used for executable red assertions, not missing-module errors.
+## Measured source budgets
 
-B2-B6 model/identity, transport/retry, ranking, native shell/Recent Posts and clear filter are implemented. Unit tests cover byte boundary, stalled headers/body, redirects, HTTP/schema failures, duplicates/identity/labels/date limits, exact ranking, retry/coalescing and native-shell mutation/escaping controls. Browser tests execute actual compiled runtime with controlled feed responses, including post/static/repeated initialization, unsafe fields, no-JS, enlarged text, print and clear/reset.
+XML 95025 bytes; CSS 15716 versus base 14701 (+1015); JS 56780 versus base 51372 (+5408). Within approved limits. Gzip and final exact-head values appear in Actions artifacts. No dependencies or external discovery service added.
 
-The first integrated check found a retained source-level safety contract requiring the deadline and byte limit in feed.ts. Shared signal/byte-limit helpers now remain there and are actually used by transport; the inherited security test was not weakened or edited.
+## Remaining gates and scope
 
-B7 integrated verification/review and B8 XML transfer/final read-only acceptance remain pending until the latest exact-head Actions outcome and artifact provenance are recorded in PR #4. Earlier partial or failed runs are not final passes.
+Final read-only XML consistency/result still must pass. Source review was sequential, not independent human approval; screenshot production is not a claim of visual approval. Actual Blogger import/save, eight native views, feed settings, comments/widgets/Layout, human accessibility/print, broader browser/field performance remain pending release gates. PR C retains metadata/cross-browser work. Public feed may be private/disabled/truncated/redirected; do not change blog settings automatically.
 
-## Acceptance and limitations
+Native V3/V2/Blog1/Header1/super.main/comments/pagination retained. Only necessary paths within approved maximum touched. Do not merge or deploy automatically.
 
-The approved B-01 through B-29 preview remains the scope reference. Preserve inherited 129 unit/contract and 792 browser coverage; no dependency or test-matrix changes. New source-level safety checks supplement, not replace, browser behavior. No exhaustive real Blogger or human screen-reader validation is claimed.
-
-The public feed is a bounded recent candidate set, not the full archive. Missing identity disables personalized recommendations. Private/disabled/truncated/redirected feeds may fail; native links remain. No blog settings are changed automatically.
-
-Actual Blogger import/save, labels/identities/feed settings, comments/widgets/Layout, human accessibility/print and wider browser/field performance are separate release gates. PR C retains metadata/cross-browser expansion. Related navigation is omitted from print. No merge or deployment until separately approved.
+Evidence: https://github.com/thefastcyberdefense/google-blogger/actions/runs/34342761242/job/102437182398
+PR: https://github.com/thefastcyberdefense/google-blogger/pull/4

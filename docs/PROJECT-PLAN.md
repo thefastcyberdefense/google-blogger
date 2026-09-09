@@ -2,28 +2,26 @@
 
 ## Accepted baseline
 
-PR #1 foundation and PR #2 technical content are merged with history preserved. Main baseline ec08c4b9d1ba2cd35d9ec8a9bcbe557f2d01ca3d passed post-merge Actions (run 34315679550). No Blogger deployment, production import, DNS change or publication occurred. Earlier scope and audit provenance remain in docs/UPSTREAM-AUDIT.md and git history.
+PR #1 foundation, PR #2 technical content and PR #3 editorial presentation are merged with history preserved, without deployment. Main baseline 18b127d014e5d02a860603b18f10dd6c7ab81169 passed post-merge Actions run 34338858565. Native Blogger import and human release evidence remain pending.
 
-## Approved Phase 2B
+## Phase 2B
 
-PR A: editorial homepage/cards, image policy, long-form/print presentation and baseline/acceptance evidence. Approved 26-file manifest, one branch feat/fcd-editorial-experience and one draft PR, including temporary branch-only verified XML transfer. See docs/PHASE-2B-PR-A.md for story status. Do not expand file scope silently.
+PR A completed source integration: native-order editorial roles, images, filtering, author-controlled cover and print. Historical scope/evidence in docs/PHASE-2B-PR-A.md. No automatic production release.
 
-PR B (direction approved, implementation preview still required): shared bounded feed model, related articles and search/topic discovery refinements. Native search remains full-publication fallback; a bounded feed does not certify whole-archive coverage.
+PR B approved implementation: up to 28 files, branch feat/fcd-content-discovery, one draft PR, bounded shared feed/identity/ranking, related articles, Recent Posts migration, clear filter, tests and verified XML-only transfer. See docs/PHASE-2B-PR-B.md. No new dependencies, recommendation images, persistent cache, full-archive index or backend.
 
-PR C (direction approved, implementation preview still required): page-type metadata validation, representative additional browser coverage, performance and staging acceptance package.
+PR C direction only: metadata, representative additional-browser coverage, performance and actual staging acceptance. Exact implementation preview still required.
 
-## Invariants
+## Invariants and workflow
 
-Preserve Blog1/Header1, Layouts V3, Widget Version 2, native expressions, super.main, labels/search/archives/pagination/comments and shared source/fixture parity. Retain technical source fallback and strict exact-pinned optional Mermaid. No framework/backend/database. No article duplicates or CSS reading-order mismatch.
+Preserve Blog1/Header1, V3/V2, super.main, native expressions/comments/labels/archive/pagination, shared presentation and technical fallbacks. Use FCD Superpowers + Ralph + GSD and relevant accessibility/code review. All automated execution in Actions. Real behavioral red, exact-head green, honest self-review provenance. Source/fixture/native Blogger/human evidence remain distinct.
 
-Use FCD Superpowers, Ralph and GSD with relevant accessibility/security/code review. All automated builds/tests run in Actions. Show meaningful behavioral red evidence, then fixes and complete final-head verification. Keep source, fixture, actual Blogger and human evidence distinct.
+## Current budgets
 
-## Budgets and artifact handling
+PR B measures base 18b127d014e5d02a860603b18f10dd6c7ab81169 through Actions; raw JS growth <=8192, CSS <=2048; XML <=500000. Preserve historical PR A budget evidence, do not silently change acceptance thresholds. Normal CI read-only. Only the approved temporary branch-specific XML writer may use write permission, and it must validate source/job/reports/stamp before committing dist/theme.xml only, then be removed before final acceptance.
 
-XML <=500000 bytes. PR A raw CSS growth <=12288 bytes, JS <=2048 bytes against the Actions-built pinned main baseline; gzip and runtime network bytes separately reported. Normal CI read-only. Temporary approved transfer verifies source, job/report outcomes and stamp, changes only dist/theme.xml on the feature branch, and is removed before final acceptance.
+## Gates
 
-## Gates and deferrals
+Source complete: accepted behavior, reviewed source, full exact-head checks/audit/budgets and generated XML parity. Merge requires owner approval. Release requires actual Blogger import/save/eight views, native comments/widgets/Layout, human checks and operational approval. No merge/deployment/deletion/publication follows from planning or test success.
 
-Source-complete requires implemented accepted stories, review, full exact-head tests/audit/budgets and regenerated XML consistency. Merge requires explicit approval. Release requires actual Blogger upload/save, eight native page types, comments/widgets/Layout, human accessibility and operational approval. Missing evidence stays pending.
-
-SVG export, narration, analytics, newsletter/backend services, publishing automation, infrastructure and replacement native cursors remain excluded. No merge/deployment/deletion is authorized by Phase 2B planning or PR A implementation approval.
+SVG export, narration, analytics, newsletter/backend services, publishing automation, infrastructure and replacement cursors remain excluded.

@@ -1,10 +1,11 @@
-//- The shared mixins are included by header.pug before Blog1 in theme.pug.
-//- Native view dispatch and named includables remain at this Blogger boundary.
+//- Shared presentation; preserve native dispatch and the existing eligible-post sequence.
 b:includable(id='post' var='post')
   b:if(cond='data:view.isSingleItem')
     +fcdArticle({}, false)
   b:if(cond='not data:view.isSingleItem')
-    +fcdCard({}, false)
+    b:with(value='data:view.isHomepage and not data:newerPageUrl' var='fcdInitialHome')
+      b:with(value='data:fcdInitialHome ? (data:post.id == data:posts.first.id ? "lead" : (data:post.id in (data:posts take 3 map (p => p.id)) ? "secondary" : "standard")) : "standard"' var='fcdEditorialRole')
+        +fcdCard({}, false)
 b:includable(id='fcdLabels' var='post')
   +fcdLabels({}, false)
 b:includable(id='fcdByline' var='post')

@@ -1,5 +1,4 @@
-//- Shared presentation, not a Blogger expression interpreter. Fixture values are synthetic build-time inputs.
-//- Use normal Pug attributes: &attributes bypasses escaping needed for Blogger expressions containing quotes.
+//- Shared production presentation and synthetic fixture inputs. Native expressions are not interpreted by fixtures.
 mixin fcdBrand(fixture)
   a.brand(href=fixture ? '/' : undefined expr:href=fixture ? undefined : 'data:blog.homepageUrl' aria-label='Fast Cyber Defense Blog homepage')
     span.brand-monogram(aria-hidden='true') FCD
@@ -69,11 +68,12 @@ mixin fcdByline(post, fixture, single)
         span#reading-time(hidden='hidden')
 
 mixin fcdCardImage(post, fixture)
+  - var lead = fixture && post.role === 'lead'
   a.card-image(href=fixture ? post.url : undefined expr:href=fixture ? undefined : 'data:post.url' aria-hidden='true' tabindex='-1')
-    img(src=fixture ? post.image : undefined srcset=fixture ? post.image+' 400w, '+post.image+' 800w' : undefined expr:src=fixture ? undefined : 'resizeImage(data:post.featuredImage, 800, "16:9")' expr:srcset=fixture ? undefined : 'resizeImage(data:post.featuredImage, 400, "16:9") + " 400w, " + resizeImage(data:post.featuredImage, 800, "16:9") + " 800w"' sizes='(max-width: 639px) 100vw, (max-width: 1023px) 50vw, 40vw' width='800' height='450' alt='' decoding='async' loading='lazy')/
+    img(src=fixture ? post.image : undefined srcset=fixture ? post.image+' 400w, '+post.image+' 800w, '+post.image+' 1200w' : undefined expr:src=fixture ? undefined : 'resizeImage(data:post.featuredImage, 800, "16:9")' expr:srcset=fixture ? undefined : 'resizeImage(data:post.featuredImage, 400, "16:9") + " 400w, " + resizeImage(data:post.featuredImage, 800, "16:9") + " 800w, " + resizeImage(data:post.featuredImage, 1200, "16:9") + " 1200w"' sizes='(max-width: 639px) calc(100vw - 2rem), (max-width: 1023px) 65vw, 640px' width='800' height='450' alt='' decoding='async' loading=fixture ? (lead ? 'eager' : 'lazy') : undefined fetchpriority=fixture ? (lead ? 'high' : 'auto') : undefined expr:loading=fixture ? undefined : 'data:fcdEditorialRole == "lead" ? "eager" : "lazy"' expr:fetchpriority=fixture ? undefined : 'data:fcdEditorialRole == "lead" ? "high" : "auto"')/
 
 mixin fcdCard(post = {}, fixture = false)
-  article.post-card(data-filter-card='true')
+  article.post-card(data-filter-card='true' data-editorial-role=fixture ? (post.role || 'standard') : undefined expr:data-editorial-role=fixture ? undefined : 'data:fcdEditorialRole')
     if fixture
       if post.image
         +fcdCardImage(post, true)

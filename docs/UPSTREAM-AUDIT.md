@@ -1,53 +1,21 @@
-# Reuse, foundation hardening and evidence boundaries
+# Phase 2 upstream audit and evidence
 
-## Provenance
+Foundation was merged in PR #1 at c3a68fc3ddbe1bdbee574e7a127d11aa82096e9e; main remains unchanged by Phase 2. Earlier foundation review and evidence remain in PR #1 and git history.
 
-Ledger audit reference: 692a82463cb8d0869a6f5e7c946ecc757cacb7e2. Owner confirmed reuse permission. Reused/adapted V3 root and widget identities, compiler/build-stamp/size conventions, Blog super.main bean preparation, native Blog1 body/view/date/label patterns, comments delegation and cursor pagination. Personal identities, analytics, raw-HTML caches and publishing scripts are excluded. FCD corporate tokens were inspected in the current corporate source, not the private application copied.
+Ledger reference remains 692a82463cb8d0869a6f5e7c946ecc757cacb7e2. Read its full enhancement module and regression tests. Reuse lifecycle/diagram regression concepts, not loose security, raw HTML caches, personal asset mapping, fixed author identity, or replacement of native pagination with a 50-entry client catalog. Native V3/V2 rendering is unchanged in this slice.
 
-## Original PR blockers
+## Dependency preflight
 
-The initial review found valid hyphenated URLs rejected by a corrupted character class, substring-based deployment false positives, and separate browser-fixture markup with production-state drift.
+Actions run https://github.com/thefastcyberdefense/google-blogger/actions/runs/34303571497/job/102315452096 confirmed Mermaid 11.17.2 CDN entry matches npm distribution, bundled DOMPurify is 3.4.12, and isolated Mermaid/Prism audit reported zero vulnerabilities. Third-party scanner reports were checked against primary affected-version ranges, not treated as proof of exploitability.
 
-URL validation now checks character codes 0-31 and 127 while preserving safe same-origin HTTPS permalinks. Deployment smoke checks parse inert HTML, validate exact unique metadata and visible populated publication DOM, reject login/redirect/CSS-only responses and bound size/time. Presentation now shares brand/header/search/card/article mixins; structural comparison and a deliberate label-removal negative control protect production/fixture parity.
+Integrated audit then found GHSA-82fw-gwwq-j7x9 in the foundation's Vitest 3.2.7. Updated to patched 4.1.11 (Node 24 compatible); the approved branch-only lock job audited and committed a genuine npm lockfile. Main's historical dependency graph was not changed. The temporary lock writer has been removed; normal CI is read-only.
 
-Original failing baseline: https://github.com/thefastcyberdefense/google-blogger/actions/runs/34252776585/job/102151027708 (19 passed, 44 failed). Verified blocker-fix head d02cb6f7be574d6e7fe1b71cd33ab58f39c1524e passed 65 unit/contract and 330 browser tests: https://github.com/thefastcyberdefense/google-blogger/actions/runs/34254004137/job/102155082010 . This does not attest to later revisions.
+## Test-first evidence
 
-## Approved foundation-hardening scope
+https://github.com/thefastcyberdefense/google-blogger/actions/runs/34303681851/job/102315785569 recorded 17 failing and two passing behavior regressions before implementation (concurrency/retry, fixed URL, aliases, strict source validation and missing staging configuration). Minimal red-phase placeholders were not connected to production initialization.
 
-The owner approved foundation hardening while explicitly deferring advanced features. The batch adds scoped native XML contracts, CSS-only table containment, wider accessibility/failure-state coverage, responsive text reflow and reconciled documentation. Main and deployment remain unchanged.
+The first full integration run passed types/build/XML/unit stages and 528 browser cases but failed 22 actual-library cases because the timeline fixture used invalid colon-delimited clock periods. Source fallback worked; assertions were not removed. Corrected to valid named periods. The latest PR-head run must be consulted; no final green claim is made here.
 
-### Static native-render checks
+## Remaining acceptance work
 
-The validator checks actual parsed XML rather than global token presence: V3/V2, no legacy root, exactly one skin/head/body, unique section/widget/includable identities, locked Blog1 inside main#content, Header1, skip target, single-item class guard, required FCD includables, actual native post body output, comment dispatch/delegation, older/newer links, empty-state markup, one native head owner and exact-format build stamp. Expression checks examine only expression-bearing attributes and ignore descriptive XML comments.
-
-Fourteen invalid-output mutation cases plus positive/current/comment-only controls test the validator. These do not interpret Blogger expressions or prove every include resolves in Google's runtime. Inherited comments/widgets and actual native layout still need staging verification.
-
-### No-JavaScript tables and reflow
-
-A twelve-column evidence table exposed a real no-theme-JS containment gap. Tables now provide local horizontal scrolling through CSS; JS can progressively add labeled keyboard-operable wrappers without hiding content globally. Native table/column-header roles are asserted in browser tests. Authoring requirements for no-JS keyboard access across browsers are documented in DEPLOYMENT.md.
-
-At 320px and 200% text size, the expanded tests exposed masthead overflow. Flexible header/search wrapping fixes that while retaining the strict page-width assertion. Horizontal scrolling tests use ArrowRight; the earlier End input exercised vertical behavior and was corrected as a test-design error, not hidden with a skip.
-
-### Accessibility and failure states
-
-Axe covers home/article/paged/empty/error initial and expanded states across 11 widths and light/dark themes, including no-result state and open TOC. Behavior tests assert native search GET payload, slash handling while editing, Ctrl+K focus, menu visibility/escape/focus return, theme persistence, accurate clipboard payload and denial announcements, storage failure, reduced motion, skip link, keyboard table scrolling and 200% text reflow. Five-view no-theme-JS coverage is retained. No broad axe suppression or retry-based masking was added.
-
-## Hardening evidence
-
-Red baseline at 9e4b0606d6c9b378f7ab4fb36799d9b46d1843c3: https://github.com/thefastcyberdefense/google-blogger/actions/runs/34255006028/job/102158765768 recorded 67 passed, 15 failed. These were behavior/contract assertions, not dependency setup errors.
-
-At 8e17a7fcc8cbba23f7f2ec06f5ddd429e024856e, all 82 unit/contract tests passed, but browser checks found text reflow and the End-key test issue: https://github.com/thefastcyberdefense/google-blogger/actions/runs/34255435310/job/102159928017 . Not a passing acceptance run.
-
-At 9a8a1b5969d21ee9bac5c57c2a2e6e9494535ee2, 82 unit/contract and 484 browser tests passed, with no skipped/flaky browser cases. Install/type/build/XML/audit passed. The overall run correctly **failed only its stale checked-in XML gate**: https://github.com/thefastcyberdefense/google-blogger/actions/runs/34256183053/job/102162826698 . This run is not described as green.
-
-The generated XML from that run was transferred after checking exact source, job-stage outcomes, browser report totals and artifact stamp. It was committed in 1031863fd942525f1f4fc4045017c12ddda9c45c. Temporary artifact-write permission is removed in the final workflow; normal CI is contents:read only. Final acceptance requires the complete successful check on the latest PR head, including XML consistency.
-
-The transfer also exposed that Playwright clears test-results when starting. Unit JSON now lives at unit-report.json and is uploaded separately so the final artifact retains both unit and browser evidence. No production credentials or external publication job are present.
-
-## Remaining gates and review decision boundary
-
-This is a reviewable unreleased foundation, not the full original publication definition of done. Advanced editorial/technical-content features are next-milestone work by explicit approval. No Mermaid/highlighting/related-article implementation is falsely claimed here.
-
-Actual Blogger import/save, native comment/widget/page-type behavior, full SEO/performance and human screen-reader/inclusive testing remain pending. 200% text scaling does not stand in for 400% browser zoom. Modeled native wrappers and parsed static contracts do not prove real Google runtime output. The live-blog audit waiver does not waive those gates.
-
-All automated project verification ran in GitHub Actions. Source review is sequential self-review, not independent external approval. Neither a passing fixture suite nor this document authorizes merging main or deploying production.
+Final full green Actions run; resolve any real-library/a11y findings; complete security/race/idempotence/oversized library cases; validate staging-tool positive and negative response paths; regenerate checked-in XML and prove consistency; reconcile remaining plan/changelog/deployment docs. Source CI does not imply actual Blogger compatibility. Main, merges and production are untouched.

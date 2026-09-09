@@ -1,5 +1,13 @@
 import {test,expect} from '@playwright/test';
-
+import {readFile} from 'node:fs/promises';
+const origin='https://blogs.fastcyberdefense.com';
+test.beforeEach(async({page})=>{
+ await page.route(origin+'/**',async route=>{
+  const url=new URL(route.request().url());if(url.pathname.startsWith('/feeds/'))return route.fulfill({contentType:'application/json',body:'{"feed":{"entry":[]}}'});
+  const view=url.pathname==='/article'?'article':url.pathname==='/paged'?'paged':'home';
+  await route.fulfill({contentType:'text/html',body:await readFile(`.preview/${view}.html`,'utf8')});
+ });
+});
 test('initial homepage identifies one lead and two secondary cards in native order',async({page})=>{
  await page.goto('/home');
  await expect(page.locator('[data-editorial-role="lead"]')).toHaveCount(1);

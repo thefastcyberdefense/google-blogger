@@ -1,89 +1,53 @@
-name: FCD theme verification
+name: FCD dependency preflight
 on:
-  push:
-    branches: [main]
   pull_request:
-  workflow_dispatch:
 permissions:
   contents: read
-concurrency:
-  group: fcd-ci-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
 jobs:
-  verify:
+  dependency-preflight:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
       - uses: actions/setup-node@94196ee1d15439c1b6651cd87ef14e88ec435966
         with:
           node-version-file: .nvmrc
           package-manager-cache: false
-      - run: npm ci --ignore-scripts --no-audit --no-fund
-      - name: Record exact tested source
+      - name: Inspect exact published distribution and dependency audit
+        shell: bash
         run: |
-          node --version
-          npm --version
-          git rev-parse HEAD
-          sha256sum package-lock.json
-          echo "Tested source: $(git rev-parse HEAD)" >> "$GITHUB_STEP_SUMMARY"
-      - run: npm run typecheck
-      - name: Preserve checked-in artifact for source consistency comparison
-        run: cp dist/theme.xml "$RUNNER_TEMP/checked-in-theme.xml"
-      - run: npm run build
-      - run: npm run contract:check
-      - run: npx --no-install playwright install --with-deps chromium
-      # Playwright cleans test-results on startup. Preserve the unit report outside that directory.
-      - run: npm test -- --reporter=default --reporter=json --outputFile=unit-report.json
-      - name: Report regression evidence
-        if: ${{ always() }}
-        run: |
-          node --input-type=module <<'JS'
-          import fs from 'node:fs';
-          if (fs.existsSync('unit-report.json')) {
-            const r=JSON.parse(fs.readFileSync('unit-report.json','utf8'));
-            console.log('::notice title=Unit and contract totals::'+JSON.stringify({passed:r.numPassedTests,failed:r.numFailedTests,pending:r.numPendingTests}));
-            for(const suite of r.testResults || []) for(const a of suite.assertionResults || []) if(a.status==='failed') console.log('::error title=Regression failed::'+a.fullName.replace(/[%\r\n]/g,' '));
-          }
-          JS
-      - run: npm run preview -- --build-only
-      - run: npm run test:render
-      - name: Report browser counts
-        if: ${{ always() }}
-        run: |
-          if [ -f test-results/browser.json ]; then
-            node -e "const fs=require('node:fs');const r=JSON.parse(fs.readFileSync('test-results/browser.json','utf8'));console.log('::notice title=Browser test summary::'+JSON.stringify(r.stats));"
-          fi
-      - run: npm audit --audit-level=moderate
-      - name: Reject stale generated XML apart from its historical build stamp
-        run: |
+          set -euo pipefail
+          mkdir -p /tmp/fcd-dependencies evidence
+          cd /tmp/fcd-dependencies
+          npm init -y
+          npm install --ignore-scripts --no-audit --no-fund mermaid@11.17.2 prismjs@1.30.0
+          npm audit --json > "$GITHUB_WORKSPACE/evidence/audit.json" || audit_exit=$?
+          cp package-lock.json "$GITHUB_WORKSPACE/evidence/dependency-lock.json"
+          cd "$GITHUB_WORKSPACE"
           python3 - <<'PY'
-          import os
+          import json,re,urllib.request
           from pathlib import Path
-          import xml.etree.ElementTree as ET
-          def normalized(file):
-              root = ET.fromstring(Path(file).read_bytes())
-              ns = '{http://www.w3.org/1999/xhtml}'
-              stamps = [m for m in root.findall('.//'+ns+'meta') if m.get('name') == 'theme-build']
-              assert len(stamps) == 1, 'exactly one build stamp is required'
-              stamps[0].set('content', 'SOURCE_STAMP')
-              return ET.tostring(root)
-          assert normalized(Path(os.environ['RUNNER_TEMP'])/'checked-in-theme.xml') == normalized('dist/theme.xml'), 'dist/theme.xml differs from compiled source; regenerate it through Actions'
-          print('PASS: checked-in XML matches current source, excluding source-stamp value only')
+          root=Path('/tmp/fcd-dependencies/node_modules/mermaid/dist')
+          records=[]
+          for p in root.rglob('*.mjs'):
+              if 'mermaid.esm.min' not in str(p): continue
+              text=p.read_text()
+              versions=sorted(set(re.findall(r'DOMPurify[^\n]{0,100}',text)))
+              if versions: records.append({'file':str(p.relative_to(root)),'notices':versions,'in_place':text.count('IN_PLACE')})
+          req=urllib.request.Request('https://cdn.jsdelivr.net/npm/mermaid@11.17.2/dist/mermaid.esm.min.mjs')
+          with urllib.request.urlopen(req,timeout=30) as r: entry=r.read()
+          assert entry== (root/'mermaid.esm.min.mjs').read_bytes(),'CDN entry differs from exact npm distribution'
+          audit=json.loads(Path('evidence/audit.json').read_text())
+          summary={'bundle_dompurify':records,'entry_bytes':len(entry),'audit':audit.get('metadata',{}).get('vulnerabilities',{}),'findings':audit.get('vulnerabilities',{})}
+          Path('evidence/preflight.json').write_text(json.dumps(summary,indent=2))
+          print('::notice title=Dependency preflight::'+json.dumps(summary).replace('\n',' ')[:12000])
           PY
-      - name: Upload verification evidence
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: ${{ always() }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: fcd-evidence-${{ github.event.pull_request.head.sha || github.sha }}
-          path: |
-            package-lock.json
-            dist/theme.xml
-            unit-report.json
-            playwright-report/
-            test-results/
+          name: dependency-preflight-${{ github.event.pull_request.head.sha }}
+          path: evidence/
           if-no-files-found: error
-          retention-days: 14

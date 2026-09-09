@@ -1,27 +1,29 @@
-# FCD development status and Phase 2 boundary
+# FCD development plan
 
-The unreleased foundation was merged in PR #1 at c3a68fc3ddbe1bdbee574e7a127d11aa82096e9e, with history preserved and no deployment. Its full original plan and audit remain in git history and docs/UPSTREAM-AUDIT.md.
+## Accepted baseline
 
-The owner approved Phase 2 direction and the first 30-path implementation preview: 15 updated and 15 new paths, one branch `feat/fcd-technical-content`, one draft PR (#2), plus exact-pinned optional Mermaid CDN loading. Use FCD Superpowers, FCD Accessibility Reviewer and source review; all automated builds/tests run in Actions. Main, merge, production imports and DNS changes are excluded.
+PR #1 foundation and PR #2 technical content are merged with history preserved. Main baseline ec08c4b9d1ba2cd35d9ec8a9bcbe557f2d01ca3d passed post-merge Actions (run 34315679550). No Blogger deployment, production import, DNS change or publication occurred. Earlier scope and audit provenance remain in docs/UPSTREAM-AUDIT.md and git history.
 
-## First-slice objectives
+## Approved Phase 2B
 
-- Preserve native Blog1/Header1, Layouts V3, Widget Version 2, server-rendered content, labels/search/pagination/comments and the hardened source/fixture parity boundary.
-- Bundle a reviewed explicit Prism grammar subset; no runtime language fetches or content reformatting. Unknown/oversized code remains plain.
-- Load an exact-reviewed Mermaid module only for diagrams, deduplicate loading and preserve source. Strict security, no post-controlled configuration, awaited serialized rendering, local error handling, bounded zoom/reset and accessible descriptions/controls.
-- Add read-only staging tooling for eight real page types; missing configuration/import evidence is pending, not passed.
-- Preserve prior tests and add actual-library, negative-input, source/copy, initialization, keyboard and async-theme tests. Regenerate XML through Actions and verify final source consistency.
+PR A: editorial homepage/cards, image policy, long-form/print presentation and baseline/acceptance evidence. Approved 26-file manifest, one branch feat/fcd-editorial-experience and one draft PR, including temporary branch-only verified XML transfer. See docs/PHASE-2B-PR-A.md for story status. Do not expand file scope silently.
 
-## Evidence and workflow
+PR B (direction approved, implementation preview still required): shared bounded feed model, related articles and search/topic discovery refinements. Native search remains full-publication fallback; a bounded feed does not certify whole-archive coverage.
 
-Candidate releases verified 2026-09-09: Prism 1.30.0, Mermaid 11.17.2. Preflight validated exact CDN entry and DOMPurify 3.4.12 in its bundle. Integrated test-runner audit required patched Vitest 4.1.11. The test-first baseline recorded 17 failures and two passes before implementation; later tests exposed invalid timeline syntax and a real keyboard focus defect. See PR #2 and docs/UPSTREAM-AUDIT.md for exact run links.
+PR C (direction approved, implementation preview still required): page-type metadata validation, representative additional browser coverage, performance and staging acceptance package.
 
-Normal CI stays read-only. Approved branch-only lock/XML artifact transfers must bind source/check outcomes and be removed before final acceptance. A stale XML check remains a failure even when all behavior tests pass. No partial run or successful artifact upload constitutes final verification.
+## Invariants
 
-## Acceptance and deferrals
+Preserve Blog1/Header1, Layouts V3, Widget Version 2, native expressions, super.main, labels/search/archives/pagination/comments and shared source/fixture parity. Retain technical source fallback and strict exact-pinned optional Mermaid. No framework/backend/database. No article duplicates or CSS reading-order mismatch.
 
-First-slice source acceptance requires complete checks on the exact PR head, safe readable fallback, supported-code/representative-diagram rendering, retained foundation coverage, and regenerated XML parity. Actual Blogger upload/save, native comments/widgets/Layout, complete page-type SEO, performance/field data, cross-browser and human accessibility are separate release gates.
+Use FCD Superpowers, Ralph and GSD with relevant accessibility/security/code review. All automated builds/tests run in Actions. Show meaningful behavioral red evidence, then fixes and complete final-head verification. Keep source, fixture, actual Blogger and human evidence distinct.
 
-Deferred: SVG export, lead-plus-secondary editorial composition, article cover policy, related content, expanded search indexing, service-link verification, audio narration, publishing automation and infrastructure. Do not copy Ledger's personal identity/asset mappings, loose Mermaid config, raw cached HTML or replacement of native cursors.
+## Budgets and artifact handling
 
-Original 500,000-byte XML ceiling stays enforced. External runtime library bytes are reported separately. Input limits are not a guaranteed CPU interrupt. No production-readiness claim is implied by simulation fixtures or helper API tests.
+XML <=500000 bytes. PR A raw CSS growth <=12288 bytes, JS <=2048 bytes against the Actions-built pinned main baseline; gzip and runtime network bytes separately reported. Normal CI read-only. Temporary approved transfer verifies source, job/report outcomes and stamp, changes only dist/theme.xml on the feature branch, and is removed before final acceptance.
+
+## Gates and deferrals
+
+Source-complete requires implemented accepted stories, review, full exact-head tests/audit/budgets and regenerated XML consistency. Merge requires explicit approval. Release requires actual Blogger upload/save, eight native page types, comments/widgets/Layout, human accessibility and operational approval. Missing evidence stays pending.
+
+SVG export, narration, analytics, newsletter/backend services, publishing automation, infrastructure and replacement native cursors remain excluded. No merge/deployment/deletion is authorized by Phase 2B planning or PR A implementation approval.

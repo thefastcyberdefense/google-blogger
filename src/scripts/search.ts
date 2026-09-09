@@ -5,13 +5,16 @@ export function initSearch() {
   const status = document.getElementById('filter-status');
   if (!input) return;
   const entries = cards.map(card => ({ card, container: card.closest<HTMLElement>('.post-outer-container') || card, text: card.textContent || '' }));
-  input.addEventListener('input', () => {
+  const streams = new Set(entries.map(({card})=>card.closest<HTMLElement>('.blog-posts')).filter((stream):stream is HTMLElement=>!!stream));
+  const filter = () => {
     if (!entries.length || !status) return;
+    const active=!!input.value.trim();streams.forEach(stream=>{stream.dataset.filterActive=String(active);});
     let visible = 0;
     entries.forEach(({ container, text }) => { const match = matchesQuery(text, input.value); container.hidden = !match; if (match) visible++; });
-    status.hidden = !input.value.trim();
+    status.hidden = !active;
     status.textContent = `${visible} of ${entries.length} loaded articles match. Submit Search blog to search the full publication.`;
-  });
+  };
+  input.addEventListener('input',filter);input.form?.addEventListener('reset',()=>queueMicrotask(filter));filter();
   document.addEventListener('keydown', event => {
     const target = event.target;
     if (event.isComposing || target instanceof Element && target.closest('input,textarea,select,[contenteditable]:not([contenteditable="false"])')) return;

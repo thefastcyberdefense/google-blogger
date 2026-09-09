@@ -25,7 +25,12 @@ it('shared production structures match fixture controls and article/card slots',
         if(el.namespaceURI==='http://www.google.com/2005/gml/data') return [];
         if(el.namespaceURI===b && !['section','widget'].includes(el.localName)) return Array.from(el.children).flatMap(signature);
         const attrs:Record<string,string>={};
-        for(const attr of Array.from(el.attributes)) if(['id','class','role','type','for','name','hidden','tabindex','width','height','alt','sizes','loading','decoding'].includes(attr.name)||attr.name.startsWith('aria-')) attrs[attr.name]=attr.name==='hidden'?'true':attr.value;
+        for(const attr of Array.from(el.attributes)) if(['id','class','role','type','for','name','hidden','tabindex','width','height','alt','sizes','loading','fetchpriority','decoding'].includes(attr.name)||attr.name.startsWith('aria-')) attrs[attr.name]=attr.name==='hidden'?'true':attr.value;
+        // Compare the lead branch of these two narrowly specified native conditionals.
+        if(el.localName==='img'&&el.hasAttribute('expr:loading')){
+          if(el.getAttribute('expr:loading')!=='data:fcdEditorialRole == "lead" ? "eager" : "lazy"'||el.getAttribute('expr:fetchpriority')!=='data:fcdEditorialRole == "lead" ? "high" : "auto"')throw new Error('Unexpected native image priority expression');
+          attrs.loading='eager';attrs.fetchpriority='high';
+        }
         let tag=el.localName;
         if(el.namespaceURI===b){tag='div';delete attrs.type;delete attrs.name;if(el.localName==='widget')attrs.class=`widget ${el.getAttribute('type')}`;}
         return [{tag,attrs:Object.fromEntries(Object.entries(attrs).sort(([a],[z])=>a.localeCompare(z))),children:Array.from(el.children).flatMap(signature)}];
@@ -58,6 +63,13 @@ it('a deliberate production search-label regression also breaks the shared fixtu
     writeFileSync(file,source.replace(target,'span Search articles'));
     const broken=pug.renderFile(path.join(dir,'fixtures/home.pug'),{css:'',script:''});
     expect(()=>check(broken)).toThrow('Missing accessible production search label');
-    // No repository files are mutated; this is a temporary negative-control build.
   }finally{rmSync(dir,{recursive:true,force:true});}
+});
+it('editorial roles retain the native eligible sequence rather than a replacement loop',()=>{
+ const source=readFileSync('src/widgets/blog-post.pug','utf8');expect(source).toContain('data:view.isHomepage and not data:newerPageUrl');expect(source).toContain('data:post.id == data:posts.first.id');expect(source).toContain('data:posts take 3 map (p => p.id)');expect(source).not.toContain('b:loop');
+ const presentation=readFileSync('src/partials/presentation.pug','utf8');expect(presentation).toContain("expr:data-editorial-role=fixture ? undefined : 'data:fcdEditorialRole'");
+});
+it('changing the shared fixture lead-loading policy is caught by a negative control',()=>{
+ const dir=mkdtempSync(path.join(os.tmpdir(),'fcd-image-parity-'));
+ try{cpSync('src',path.join(dir,'src'),{recursive:true});cpSync('fixtures',path.join(dir,'fixtures'),{recursive:true});const file=path.join(dir,'src/partials/presentation.pug');const source=readFileSync(file,'utf8');const target="lead ? 'eager' : 'lazy'";expect(source).toContain(target);writeFileSync(file,source.replace(target,"lead ? 'lazy' : 'lazy'"));const broken=pug.renderFile(path.join(dir,'fixtures/home.pug'),{css:'',script:''});expect(broken).not.toContain('loading="eager"');expect(render('home')).toContain('loading="eager"');}finally{rmSync(dir,{recursive:true,force:true});}
 });

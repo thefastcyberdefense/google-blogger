@@ -1,17 +1,19 @@
 # FCD development agreement
 
-Read docs/PROJECT-PLAN.md before changing architecture. This is Google Blogger Layouts V3, not a generic frontend site. Preserve widget version 2, Header1/Blog1, native data expressions and super.main render delegation. Do not rename live widget bindings as a cosmetic edit.
+Read docs/PROJECT-PLAN.md before changing architecture. This is Google Blogger Layouts V3, not a generic frontend site. Preserve Widget Version 2, Header1/Blog1, native data expressions and super.main delegation. Do not rename widget bindings for cosmetics.
 
-Use the project-requested workspace GitHub connection. Work on feature branches, never rewrite main. Reuse reviewed Ledger technical infrastructure but not personal identity, analytics or UI. Keep Pug/SCSS/TypeScript modular and compile one dist/theme.xml.
+Use the project-requested workspace GitHub connection. Work on feature branches, never rewrite main. Reuse reviewed Ledger infrastructure without its personal identity, analytics or UI. Keep Pug/SCSS/TypeScript modular and compile one dist/theme.xml.
 
-Use the approved FCD Superpowers and FCD Accessibility Reviewer ClickUp skills. They adapt Superpowers' incremental planning, TDD, systematic debugging and evidence-based review, plus Ledger's real-render accessibility gate. They are not CLI plugin installations or background agents. Upstream: https://github.com/obra/superpowers (MIT).
+Use FCD Superpowers, Ralph Development Loop and GSD Development Workflow together. Load FCD Accessibility Reviewer for UI work and Code Review for substantive changes. These are approved ClickUp workflow adaptations, not installed CLI plugins or background agents. No independent-review claim for sequential self-review. Sources: https://github.com/obra/superpowers ; https://github.com/snarktank/ralph ; https://github.com/open-gsd/gsd-core .
 
-All automated builds/tests run in GitHub Actions. For a behavior change, demonstrate the regression fails for the correct reason, implement the fix and demonstrate green. Inspect commit-specific logs and artifacts; canceled/skipped/blocked/stale is not passed. Do not weaken tests to get green. Do not claim test-first history for inherited code.
+All automated builds/tests run in GitHub Actions. Demonstrate regressions fail for the correct behavior, then implement and demonstrate green. Inspect exact-commit evidence; canceled/skipped/blocked/stale is not passed. Preserve inherited regression coverage without manufacturing test-first history.
 
-Source CI must not use production secrets or deploy. The initialization pipeline may produce package-lock.json and dist/theme.xml as artifacts; repository writes from automation require an explicitly documented limited initialization step. Normal verification has read-only repository permission.
+Source CI must not deploy or use production secrets. Ordinary verification is read-only. Approved temporary artifact transfers are feature-branch-only, source-bound, verified and removed before acceptance. No manually edited XML or lockfiles.
 
-XML parsing, fixtures and compilation do not prove Blogger rendering. Actual import/save and expected build stamp on staging are required before production readiness. Browser automation does not establish complete WCAG conformance or human screen-reader coverage.
+XML parsing and shared-presentation fixtures do not prove Blogger rendering. Actual import/save and build-stamped native staging views are required before production readiness. Browser automation is not full WCAG or human screen-reader validation.
 
-Security: validate untrusted URLs, use textContent for feed/cache strings, bound network data, keep secrets out of frontend XML, and do not copy upstream analytics IDs. Core content/search submit/labels/pagination must survive theme-JS failure.
+Validate untrusted URLs, use safe text construction, bound fetches and keep secrets out of XML. Core content/search/labels/pagination must survive theme-JS failure. Do not add raw cached HTML or upstream analytics.
 
-PRs state scope, requirement coverage, Actions evidence and gaps. No merge, production import, DNS change, article publication or destructive cleanup without separate approval.
+PR A preserves native post order and wrappers, uses one lead plus up to two secondary cards only on initial home, and does not automatically duplicate or move author cover images. No-JS styles must be present in response markup; testing a style injection load event with JavaScript disabled can hang.
+
+PRs state scope, evidence and remaining gates. No merge, production import, DNS change, article publication or destructive cleanup without separate approval.

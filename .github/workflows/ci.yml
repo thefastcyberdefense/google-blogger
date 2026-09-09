@@ -1,68 +1,100 @@
-name: FCD editorial XML transfer
+name: FCD theme verification
 on:
+  push:
+    branches: [main]
   pull_request:
+  workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: fcd-ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 jobs:
-  transfer:
-    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'feat/fcd-editorial-experience'
+  verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      contents: write
-      actions: read
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 0
-      - name: Verify only transfer workflow changed
-        run: test "$(git diff --name-only 388660f8e5fdb9ebb8b44f03b882748ae9b021c7 HEAD)" = '.github/workflows/ci.yml'
-      - uses: actions/download-artifact@484a0b528fb4d7bd804637ccb632e47a0e638317
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@94196ee1d15439c1b6651cd87ef14e88ec435966
         with:
-          artifact-ids: '10096964676'
-          run-id: '34333530076'
-          github-token: ${{ github.token }}
-          path: .verified-evidence
-          merge-multiple: true
-      - name: Validate source, reports, budgets and XML
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ec08c4b9d1ba2cd35d9ec8a9bcbe557f2d01ca3d
+          path: .baseline-src
+          persist-credentials: false
+      - name: Build pinned base and capture size evidence
+        run: |
+          cd .baseline-src
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run build
+          cd ..
+          node --input-type=module <<'JS'
+          import {assets} from './.baseline-src/tools/generate.ts';
+          import fs from 'node:fs';import {gzipSync} from 'node:zlib';
+          const data=await assets();const measure=t=>({raw:Buffer.byteLength(t),gzip:gzipSync(t).byteLength});
+          const report={source:'ec08c4b9d1ba2cd35d9ec8a9bcbe557f2d01ca3d',css:measure(data.css),js:measure(data.script),xml:measure(fs.readFileSync('.baseline-src/dist/theme.xml','utf8'))};
+          fs.writeFileSync('baseline-size.json',JSON.stringify(report,null,2));console.log('::notice title=Pinned baseline::'+JSON.stringify(report));
+          JS
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npm run typecheck
+      - run: cp dist/theme.xml "$RUNNER_TEMP/checked-in-theme.xml"
+      - run: npm run build
         env:
-          GH_TOKEN: ${{ github.token }}
+          FCD_BASELINE_REPORT: baseline-size.json
+      - name: Record source and output size
+        run: |
+          git rev-parse HEAD
+          sha256sum dist/theme.xml
+          node -e "const fs=require('node:fs');console.log('::notice title=Built XML bytes::'+fs.statSync('dist/theme.xml').size);console.log('::notice title=Current asset sizes::'+fs.readFileSync('build-size.json','utf8').replace(/\n/g,''));"
+      - run: npm run contract:check
+      - run: npx --no-install playwright install --with-deps chromium
+      - run: npm test -- --reporter=default --reporter=json --outputFile=unit-report.json
+      - name: Report regression evidence
+        if: ${{ always() }}
+        run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';if(fs.existsSync('unit-report.json')){const r=JSON.parse(fs.readFileSync('unit-report.json','utf8'));console.log('::notice title=Unit totals::'+JSON.stringify({passed:r.numPassedTests,failed:r.numFailedTests,pending:r.numPendingTests}));for(const s of r.testResults||[])for(const a of s.assertionResults||[])if(a.status==='failed')console.log('::error title=Regression::'+a.fullName);}
+          JS
+      - run: npm run preview -- --build-only
+      - run: npm run test:render
+      - name: Report browser counts
+        if: ${{ always() }}
+        run: |
+          if [ -f test-results/browser.json ]; then
+            node -e "const r=require('./test-results/browser.json');console.log('::notice title=Browser totals::'+JSON.stringify(r.stats));"
+          fi
+      - run: npm audit --audit-level=moderate
+      - name: Reject stale generated XML except historical build stamp
         run: |
           python3 - <<'PY'
-          import urllib.request,json,os,hashlib
+          import os
           from pathlib import Path
           import xml.etree.ElementTree as ET
-          base='https://api.github.com/repos/thefastcyberdefense/google-blogger/'
-          def get(path):
-              req=urllib.request.Request(base+path,headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json'})
-              with urllib.request.urlopen(req,timeout=30) as r:return json.load(r)
-          job=get('actions/jobs/102407566941');sha='388660f8e5fdb9ebb8b44f03b882748ae9b021c7'
-          assert job['head_sha']==sha and job['status']=='completed','job source/state'
-          assert [s['name'] for s in job['steps'] if s['conclusion']=='failure']==['Reject stale generated XML except historical build stamp'],'unexpected failing steps'
-          for name in ['Run npm run typecheck','Run npm run build','Run npm run contract:check','Run npm test -- --reporter=default --reporter=json --outputFile=unit-report.json','Run npm run test:render','Run npm audit --audit-level=moderate','Build pinned base and capture size evidence']:
-              assert any(s['name']==name and s['conclusion']=='success' for s in job['steps']),name
-          meta=get('actions/artifacts/10096964676')
-          assert meta['workflow_run']['head_sha']==sha and not meta['expired'],'artifact provenance'
-          assert meta['digest']=='sha256:5499d11bf3031cbbe636101619d5681c8faa7254aef41d754c95ef9031f7bfaf','artifact digest'
-          evidence=Path('.verified-evidence');print('Evidence files:',[str(p) for p in evidence.glob('*')])
-          unit=json.loads((evidence/'unit-report.json').read_text());stats=json.loads((evidence/'test-results/browser.json').read_text())['stats']
-          assert unit['numPassedTests']==129 and unit['numFailedTests']==unit['numPendingTests']==0,'unit totals'
-          assert stats['expected']==792 and stats['unexpected']==stats['skipped']==stats['flaky']==0,'browser totals'
-          size=json.loads((evidence/'build-size.json').read_text());baseline=json.loads((evidence/'baseline-size.json').read_text())
-          assert size['source']==sha and baseline['source']=='ec08c4b9d1ba2cd35d9ec8a9bcbe557f2d01ca3d','budget sources'
-          assert size['css']['raw']-baseline['css']['raw']<=12288 and size['js']['raw']-baseline['js']['raw']<=2048,'growth budgets'
-          data=(evidence/'dist/theme.xml').read_bytes();assert len(data)==87093 and len(data)<=500000,'XML bytes'
-          root=ET.fromstring(data);ns='{http://www.w3.org/1999/xhtml}'
-          assert [m.get('content') for m in root.findall('.//'+ns+'meta') if m.get('name')=='theme-build']==['0.1.0+'+sha],'XML source stamp'
-          Path('dist/theme.xml').write_bytes(data)
-          print('::notice title=Verified XML::'+json.dumps({'source':sha,'bytes':len(data),'sha256':hashlib.sha256(data).hexdigest()}))
+          def normalized(file):
+              root=ET.fromstring(Path(file).read_bytes());ns='{http://www.w3.org/1999/xhtml}'
+              stamps=[m for m in root.findall('.//'+ns+'meta') if m.get('name')=='theme-build']
+              assert len(stamps)==1
+              stamps[0].set('content','SOURCE_STAMP')
+              return ET.tostring(root)
+          assert normalized(Path(os.environ['RUNNER_TEMP'])/'checked-in-theme.xml')==normalized('dist/theme.xml'),'Regenerate checked-in XML from Actions output'
+          print('PASS: checked-in XML equals compiled source except historical build stamp')
           PY
-      - name: Commit XML only to approved branch
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -- dist/theme.xml
-          test "$(git diff --cached --name-only)" = 'dist/theme.xml'
-          git commit -m 'build: regenerate verified editorial theme XML'
-          git push origin HEAD:refs/heads/feat/fcd-editorial-experience
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: ${{ always() }}
+        with:
+          name: fcd-evidence-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            dist/theme.xml
+            package-lock.json
+            baseline-size.json
+            build-size.json
+            unit-report.json
+            test-results/
+            playwright-report/
+          if-no-files-found: error
+          retention-days: 14

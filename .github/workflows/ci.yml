@@ -19,7 +19,12 @@ jobs:
           node-version-file: .nvmrc
           package-manager-cache: false
       - run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
-      - run: npm audit --audit-level=moderate
+      - name: Audit exact integrated lockfile
+        run: |
+          status=0
+          npm audit --json --audit-level=moderate > audit.json || status=$?
+          node -e "const a=require('./audit.json');console.log('::notice title=Audit details::'+JSON.stringify(a).replace(/[%\r\n]/g,' ').slice(0,15000));"
+          exit "$status"
       - name: Commit only the approved lockfile to the feature branch
         run: |
           git config user.name 'github-actions[bot]'
@@ -29,3 +34,8 @@ jobs:
             git commit -m 'chore: lock exact Prism and Mermaid dependency graph'
             git push origin HEAD:refs/heads/feat/fcd-technical-content
           fi
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: ${{ always() }}
+        with:
+          name: integrated-audit
+          path: audit.json

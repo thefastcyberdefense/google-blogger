@@ -1,0 +1,29 @@
+name: Read-only Blogger staging checks
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  staging:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@94196ee1d15439c1b6651cd87ef14e88ec435966
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npx --no-install playwright install --with-deps chromium
+      - name: Validate already-imported public staging views
+        env:
+          STAGING_MANIFEST_JSON: ${{ vars.FCD_STAGING_MANIFEST_JSON }}
+        run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          if(!process.env.STAGING_MANIFEST_JSON)throw new Error('BLOCKED: configure FCD_STAGING_MANIFEST_JSON after owner-confirmed import; no checks ran');
+          fs.writeFileSync('/tmp/fcd-staging.json',process.env.STAGING_MANIFEST_JSON);
+          JS
+          STAGING_MANIFEST=/tmp/fcd-staging.json npm run staging:check

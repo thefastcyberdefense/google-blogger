@@ -19,7 +19,8 @@ export function initDiscovery(){
  if(list&&recentStatus)consumers.push({root:list.parentElement||list,status:recentStatus,render:posts=>renderRecentPosts(list,recentStatus,current?withoutCurrent(posts,current):posts)});
  if(shell&&current&&relatedStatus)consumers.push({root:shell,status:relatedStatus,render:posts=>renderRelated(shell,posts,current)});
  if(!consumers.length)return;
- // The source markup declares native post scope, including when identity is unavailable.
+ // One local live status per page avoids competing announcements; both widgets remain readable.
+ (relatedStatus||recentStatus)?.setAttribute('role','status');
  const client=createFeedClient(location.origin,shell?50:8);let active=false;
  function state(busy:boolean){for(const c of consumers){c.root.setAttribute('aria-busy',String(busy));if(c.button)c.button.disabled=busy||!client.canRetry();}}
  async function load(retry=false){

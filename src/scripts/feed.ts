@@ -1,4 +1,6 @@
 import {safePostUrl} from './safe-dom.ts';
+export const FEED_BYTE_LIMIT=500000;
+export const feedRequestSignal=(controller:AbortController)=>AbortSignal.any([controller.signal,AbortSignal.timeout(8000)]);
 export type FeedPost={title:string;url:string};
 export type DiscoveryPost=FeedPost&{identity:string;id?:string;labels:{key:string;text:string}[];published?:number};
 export const labelKey=(value:string)=>value.normalize('NFKC').trim().replace(/\s+/gu,' ').toLowerCase();
@@ -33,7 +35,6 @@ export function parseDiscovery(data:unknown,base:string,limit=50):DiscoveryPost[
  }
  return result;
 }
-// Preserve the established five-item public parser contract for existing consumers/tests.
 export function parseFeed(data:unknown,base:string):FeedPost[]{try{return parseDiscovery(data,base,20).slice(0,5).map(({title,url})=>({title,url}));}catch{return [];}}
 export function renderRecentPosts(list:HTMLOListElement,status:HTMLElement,posts:DiscoveryPost[]){
  const fragment=document.createDocumentFragment();for(const post of posts.slice(0,5)){const li=document.createElement('li');const a=document.createElement('a');a.href=post.url;a.textContent=post.title;li.append(a);fragment.append(li);}list.replaceChildren(fragment);status.textContent=posts.length?'Newest publications':'No recent posts available. Browse the publication below.';

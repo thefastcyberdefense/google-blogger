@@ -24,13 +24,53 @@ export async function runStaging(manifest:Manifest){
    while(true){const {done,value}=await reader.read();if(done)break;count+=value.length;if(count>2000000){await reader.cancel();throw new Error('Staging response too large');}chunks.push(value);}
    const html=Buffer.concat(chunks).toString('utf8');
    if(['home','article','label','archive','paged'].includes(view.type))await inspectDeploymentHtml(html,manifest.build,view.url);
-   const context=await browser.newContext({javaScriptEnabled:false});await context.route('**/*',r=>r.abort());const page=await context.newPage();await page.setContent(html,{waitUntil:'domcontentloaded'});
-   const data=await page.evaluate(()=>({stamp:Array.from(document.querySelectorAll('head meta[name="theme-build"]'),m=>m.getAttribute('content')),main:document.querySelector('main#content')?.textContent||'',h1:document.querySelectorAll('main#content h1').length,canonical:Array.from(document.querySelectorAll('link[rel="canonical"]'),l=>l.getAttribute('href')),older:!!document.querySelector('a.blog-pager-older-link,a.blog-pager-newer-link')}));
-   if(data.stamp.length!==1||data.stamp[0]!==manifest.build||!data.main.trim()||data.h1!==1)throw new Error(view.type+': invalid native content/stamp/headings');
-   if(view.type!=='error'&&(data.canonical.length!==1||!data.canonical[0]||new URL(data.canonical[0],view.url).origin!==manifest.origin.replace(/\/$/,'')))throw new Error(view.type+': invalid canonical');
-   if(view.expectedText&&!data.main.includes(view.expectedText))throw new Error(view.type+': expected content not found');
-   if(view.type==='paged'&&!data.older)throw new Error('Native pagination links missing');
-   console.log(`PASS ${view.type}: expected HTTP, source stamp, native content and metadata`);await context.close();
+   const context=await browser.newContext({javaScriptEnabled:false,serviceWorkers:'block'});
+   try{
+    await context.route('**/*',r=>r.abort());const page=await context.newPage();await page.setContent(html,{waitUntil:'domcontentloaded',timeout:10000});
+    const data=await page.evaluate(()=>{
+     // Inspect the live parsed DOM: textContent alone includes hidden nodes, scripts and styles.
+     const visible=(el:Element|null):el is HTMLElement=>{
+      if(!(el instanceof HTMLElement)||el.closest('[hidden],[inert],[aria-hidden="true"]'))return false;
+      for(let parent:HTMLElement|null=el;parent;parent=parent.parentElement){
+       const css=getComputedStyle(parent);
+       if(css.display==='none'||css.visibility==='hidden'||css.visibility==='collapse'||css.contentVisibility==='hidden'||Number(css.opacity)===0)return false;
+      }
+      return Array.from(el.getClientRects()).some(rect=>rect.width>0&&rect.height>0);
+     };
+     const visibleText=(root:Element|null):string=>{
+      if(!root)return '';
+      const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);const text:string[]=[];
+      for(let node=walker.nextNode();node;node=walker.nextNode()){
+       const parent=node.parentElement;
+       if(!parent||parent.closest('script,style,template,noscript')||!visible(parent)||!node.textContent?.trim())continue;
+       const range=document.createRange();range.selectNodeContents(node);
+       if(Array.from(range.getClientRects()).some(rect=>rect.width>0&&rect.height>0))text.push(node.textContent);
+      }
+      return text.join(' ').replace(/\s+/g,' ').trim();
+     };
+     const mains=document.querySelectorAll('main#content');const main=mains[0]||null;
+     const headings=Array.from(main?.querySelectorAll('h1')||[]);
+     const articles=Array.from(main?.querySelectorAll('article.article-view')||[]);
+     const article=articles.length===1?articles[0]:null;
+     const articleHeading=article?.querySelector('h1.post-title')||null;
+     const articleBody=article?.querySelector('#article-body')||null;
+     return {
+      stamp:Array.from(document.querySelectorAll('head meta[name="theme-build"]'),m=>m.getAttribute('content')),
+      mainValid:mains.length===1&&visible(main),mainText:visibleText(main),
+      headingValid:headings.length===1&&visible(headings[0])&&!!visibleText(headings[0]),
+      articleValid:visible(article)&&visible(articleHeading)&&!!visibleText(articleHeading)&&visible(articleBody)&&!!visibleText(articleBody),
+      canonical:Array.from(document.querySelectorAll('link[rel="canonical"]'),l=>l.getAttribute('href')),
+      older:!!document.querySelector('a.blog-pager-older-link,a.blog-pager-newer-link')
+     };
+    });
+    if(data.stamp.length!==1||data.stamp[0]!==manifest.build||!data.mainValid||!data.mainText||!data.headingValid)throw new Error(view.type+': invalid visible native content/stamp/headings');
+    // The generic populated-publication check accepts either catalog or article. This view must be an article.
+    if(view.type==='article'&&!data.articleValid)throw new Error('article: visible article-view, post title and populated article-body required');
+    if(view.type!=='error'&&(data.canonical.length!==1||!data.canonical[0]||new URL(data.canonical[0],view.url).origin!==manifest.origin.replace(/\/$/,'')))throw new Error(view.type+': invalid canonical');
+    if(view.expectedText&&!data.mainText.includes(view.expectedText.replace(/\s+/g,' ').trim()))throw new Error(view.type+': expected visible content not found');
+    if(view.type==='paged'&&!data.older)throw new Error('Native pagination links missing');
+    console.log(`PASS ${view.type}: expected HTTP, source stamp, visible native content and metadata`);
+   }finally{await context.close();}
   }
  }finally{await browser.close();}
  console.log('Automated eight-view read-only checks passed. Owner import/save evidence, comments interaction, Layout editor and human accessibility remain separate.');

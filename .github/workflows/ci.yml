@@ -1,41 +1,72 @@
-name: FCD technical dependency lock
+name: FCD theme verification
 on:
+  push:
+    branches: [main]
   pull_request:
+  workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: fcd-ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 jobs:
-  lock:
-    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'feat/fcd-technical-content'
-    permissions:
-      contents: write
+  verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
       - uses: actions/setup-node@94196ee1d15439c1b6651cd87ef14e88ec435966
         with:
           node-version-file: .nvmrc
           package-manager-cache: false
-      - run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
-      - name: Audit exact integrated lockfile
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npm run typecheck
+      - run: cp dist/theme.xml "$RUNNER_TEMP/checked-in-theme.xml"
+      - run: npm run build
+      - run: npm run contract:check
+      - run: npx --no-install playwright install --with-deps chromium
+      - run: npm test -- --reporter=default --reporter=json --outputFile=unit-report.json
+      - name: Report regression evidence
+        if: ${{ always() }}
         run: |
-          status=0
-          npm audit --json --audit-level=moderate > audit.json || status=$?
-          node -e "const a=require('./audit.json');console.log('::notice title=Audit details::'+JSON.stringify(a).replace(/[%\r\n]/g,' ').slice(0,15000));"
-          exit "$status"
-      - name: Commit only the approved lockfile to the feature branch
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';if(fs.existsSync('unit-report.json')){const r=JSON.parse(fs.readFileSync('unit-report.json','utf8'));console.log('::notice title=Unit totals::'+JSON.stringify({passed:r.numPassedTests,failed:r.numFailedTests,pending:r.numPendingTests}));for(const s of r.testResults||[])for(const a of s.assertionResults||[])if(a.status==='failed')console.log('::error title=Regression::'+a.fullName);}
+          JS
+      - run: npm run preview -- --build-only
+      - run: npm run test:render
+      - name: Report browser counts
+        if: ${{ always() }}
         run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -- package-lock.json
-          if ! git diff --cached --quiet; then
-            git commit -m 'chore: lock exact Prism and Mermaid dependency graph'
-            git push origin HEAD:refs/heads/feat/fcd-technical-content
+          if [ -f test-results/browser.json ]; then
+            node -e "const r=require('./test-results/browser.json');console.log('::notice title=Browser totals::'+JSON.stringify(r.stats));"
           fi
+      - run: npm audit --audit-level=moderate
+      - name: Reject stale generated XML except historical build stamp
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          def normalized(file):
+              root=ET.fromstring(Path(file).read_bytes());ns='{http://www.w3.org/1999/xhtml}'
+              stamps=[m for m in root.findall('.//'+ns+'meta') if m.get('name')=='theme-build']
+              assert len(stamps)==1
+              stamps[0].set('content','SOURCE_STAMP')
+              return ET.tostring(root)
+          assert normalized(Path(os.environ['RUNNER_TEMP'])/'checked-in-theme.xml')==normalized('dist/theme.xml'),'Regenerate checked-in XML from Actions output'
+          PY
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: ${{ always() }}
         with:
-          name: integrated-audit
-          path: audit.json
+          name: fcd-evidence-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            dist/theme.xml
+            package-lock.json
+            unit-report.json
+            test-results/
+            playwright-report/
+          if-no-files-found: error
+          retention-days: 14

@@ -1,16 +1,14 @@
 # Technical content authoring and runtime policy
 
-Status: first-slice implementation in PR #2, not yet accepted or released. Do not deploy its checked-in XML as the new implementation until it has been regenerated and verified against source.
+Phase 2 first slice, draft PR #2. Acceptance requires the complete Actions check on the exact PR head, including generated XML consistency. A passing fixture suite does not mean the Blogger theme has been imported or deployed.
 
 ## Highlighting
 
-Prism 1.30.0 is bundled with an explicit core/markup/clike/javascript/bash/powershell/python/typescript/sql/json/yaml/docker/http subset. Use `<pre><code class="language-python">...</code></pre>` with HTML-escaped source. Supported aliases include sh/shell, ps1, py, js, ts, yml, dockerfile, xml/html. Unknown languages and blocks over 50,000 characters stay plain. No runtime grammar autoloader, external-file or unescaped-markup plugin is included. Copy controls retain original text before highlighting.
+Prism **1.30.0** is bundled with core/markup/clike/javascript/bash/powershell/python/typescript/sql/json/yaml/docker/http. Use `<pre><code class="language-python">...</code></pre>` with HTML-escaped source. Aliases: sh/shell, ps1, py, js, ts, yml, dockerfile, xml/html. Unknown languages and blocks over 50,000 characters remain plain. No grammar autoloader, external-file or unescaped-markup plugin. Copy text is captured before highlighting; output is restricted to Prism span/text nodes and must match the original text.
 
 ## Diagrams
 
-Use `pre.mermaid` or `pre > code.language-mermaid`. Provide single-line `accTitle:` and `accDescr:`. Original source is retained independently and stays available in an open details section. Configuration frontmatter and init directives are rejected, strict security is enforced and active/external SVG content is rejected or stripped. This is defense in depth around a pinned library, not a claim of universal diagram sanitization.
-
-Mermaid loads only when diagram blocks exist from https://cdn.jsdelivr.net/npm/mermaid@11.17.2/dist/mermaid.esm.min.mjs. This is an optional external dependency: XML import stays one file but diagram rendering requires CDN access. It is not fully self-contained. The ESM bundle imports version-scoped chunks; entry-file SRI does not cover those imports. No SVG download is included.
+Use `pre.mermaid` or `pre > code.language-mermaid`. Provide meaningful single-line `accTitle:` and `accDescr:`. Source is retained separately from rendered SVG and remains visible in a details section. Original source and diagram viewport both have accessible names and keyboard focus. Rendering errors never hide the original source.
 
 Example:
 
@@ -22,14 +20,25 @@ Client --> Policy
 Policy --> Service
 ```
 
-For timeline periods avoid unescaped clock-colon syntax; the library interprets colon as a separator. Preserve invalid source and fix author syntax rather than silently guessing its meaning.
+Configuration frontmatter and init directives are rejected. `securityLevel: strict`, no HTML labels, maximum 200 edges and secure configuration keys are imposed by the theme, not post data. Generated SVG is checked for active elements/event handlers and external references; this is defense in depth around the audited library, not a universal sanitizer guarantee. No callbacks or SVG export/download are provided.
 
-Limits: 20,000 source characters and 200 edges per diagram; ten auto-rendered diagrams per page, later ones require Render diagram. Oversized source remains readable but is not rendered by bypassing the cap. Zoom is bounded to 100%-250% inside a scroll region. Source normalization is off by default; data-legacy-mermaid=true permits narrowly scoped entity/header normalization. No automatic fabricated accessibility text or identity.
+Mermaid **11.17.2** loads only on diagram-bearing pages from:
+https://cdn.jsdelivr.net/npm/mermaid@11.17.2/dist/mermaid.esm.min.mjs
 
-Loading uses a shared promise; a 12-second UI timeout cannot abort ESM import or interrupt synchronous diagram computation. Retries do not create parallel imports. Theme renders are serialized and stale results are discarded. Exact retry recovery, repeated initialization, attack cases and race coverage need final review before completion is claimed.
+This is an optional third-party runtime dependency. Blogger imports one XML, but rendering diagrams requires the version-scoped ESM entry/chunks. XML size does not include those requests. There is no claim that entry-file SRI authenticates all dynamic chunks. The dependency remains exposed to CDN availability/supply-chain risk, explicitly accepted in the first-slice preview.
 
-## Verification
+Limits: 20,000 source characters per diagram; ten auto-rendered diagrams, later blocks require explicit Render diagram. Oversized source stays readable but does not bypass its size cap on click. Zoom/reset stays within 100%-250% in a local scroll region. Above-limit and unknown languages are not fetched dynamically.
 
-All builds/tests run in GitHub Actions. The actual installed pinned Mermaid distribution is served by request interception in the Actions browser, not replaced by a mock renderer. The preflight matched the CDN entry bytes to npm and identified DOMPurify 3.4.12 in the distribution. Runtime chunk bytes/coverage and a complete final acceptance report remain to be finalized.
+The loader deduplicates imports. Its 12-second UI timeout does not cancel import() or interrupt synchronous diagram processing. Retry is explicit; rejected network imports may be retried, but browser module caching can retain failures and a reload may be needed. An unresolved import remains single-flight after UI timeout. No unbounded automatic retry.
 
-Existing foundation tests remain in CI. New tests cover aliases, strict configuration/source boundaries, loader behavior, actual rendering, no-diagram requests, blocked CDN fallback and eight-view staging manifest requirements. Actual Blogger import, human accessibility, complete security/race coverage and final artifact refresh are not yet complete.
+Render operations are serialized; latest theme changes supersede stale output. `aria-busy`, rendered/error states and current rendered theme are explicit. Repeated initialization does not duplicate controls; disconnected diagram state is cleaned when revisited. Original author source remains unchanged across re-rendering.
+
+Legacy entity/header normalization is off by default; `data-legacy-mermaid="true"` enables a narrow migration path, not syntax guessing or security sanitization. Timeline periods cannot contain an unescaped separator colon, so use named periods such as Detection phase rather than raw `09:00`.
+
+## Verification and author responsibility
+
+Actions tests render the actual exact Mermaid distribution via intercepted version-scoped module requests, with no mock renderer. Core and negative-path tests cover languages, source preservation, copy payload, repeated initialization, blocked imports, malformed/oversized/configured diagrams, unsafe links, theme changes during loading, keyboard source access and axe checks. Staging-tool tests exercise eight mocked HTTP view responses with positive/negative cases; these are not actual Blogger results.
+
+Preflight compared the CDN entry with npm and identified bundled DOMPurify **3.4.12**. Integrated audit additionally required upgrading foundation Vitest to patched **4.1.11**. All current dependency audit gates remain mandatory. Rendered library request URLs/byte totals and screenshots are attached to Actions reports.
+
+This slice does not certify all possible Mermaid syntax or all browsers. Only Chromium is in the existing matrix. Input caps mitigate but do not impose a hard CPU deadline on a main-thread parser. Author-provided descriptions are checked for presence, not semantic quality. Human accessibility, actual Blogger import/runtime/native widgets and wider browser/performance evidence remain separate release gates.

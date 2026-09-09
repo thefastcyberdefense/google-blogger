@@ -1,22 +1,22 @@
-# Blogger staging and release gate
+# Blogger staging and deployment boundaries
 
-Foundation verification is not production deployment. Keep main and the production blog untouched until separately approved.
+The foundation is merged on main; Phase 2 is an unmerged feature branch. Neither merge nor production deployment is authorized by technical-content verification.
 
-1. Select a successful check on the exact PR/source commit. Record artifact ID, source stamp and checksum. Check unit/browser reports and XML/source consistency, not just an old green badge.
-2. Export the existing Blogger theme XML and post content; record all Layout widget settings. Store the backup outside public repository history.
-3. Seed a separate staging Blogger blog with representative populated, empty/error, technical-table, code, labels and pagination cases. Use non-sensitive data, not upstream personal posts.
-4. Upload the generated `dist/theme.xml` using Theme > Restore, save through Blogger and inspect the resulting `meta[name="theme-build"]`. Native import/save evidence must be recorded; no Blogger theme-upload API is assumed.
-5. Configure Header1, Blog1, labels/sidebar without cosmetic identity changes. Verify actual homepage/post/label/free-text search/archive/static/error/paginated output, native comments (threaded and unthreaded), feeds and Layout editor behavior.
-6. Run staging automation from GitHub Actions. The current `npm run deploy:check` requires `STAGING_URL`, `EXPECTED_THEME_BUILD`, and installed pinned Chromium (`npx --no-install playwright install --with-deps chromium`). It checks exact unique stamp, visible populated publication DOM, usable links and response/destination bounds. It deliberately rejects empty staging unless seeded; it is a smoke check, not a complete page-type acceptance suite.
-7. Run actual imported-page browser/a11y/performance checks through Actions before release. Fixtures model native wrappers and share markup but cannot prove Blogger expression evaluation or Google-generated DOM. Human screen-reader/inclusive review and 400% browser zoom remain separate evidence gaps until performed.
-8. Request production theme replacement approval only after all release gates pass. If needed, restore the exported theme and recorded widget settings as rollback.
+## Build and artifact
 
-## Table authoring
+Use the exact successful Actions source SHA. Download its regenerated `dist/theme.xml`; validate its full `theme-build` stamp. CI compares committed XML to a fresh build, normalizing only the historic build-stamp value. No other mismatch is accepted. Optional Mermaid assets are exact-version jsDelivr ESM modules, not included in XML bytes; block CDN access to verify readable-source fallback before production.
 
-The foundation contains oversized tables with CSS even when theme JS is disabled. Provide caption and header scope. Add `tabindex="0"` and an informative accessible name to a wide table, or author a named focusable scroll region, for no-JS keyboard access across browsers that do not focus scroll containers automatically. The enhancement supplies a labeled wrapper when JS works. Preserve native table semantics.
+## Staging workflow
 
-## Artifact maintenance
+1. Export the existing Blogger XML/content and record Layout widgets before any live change.
+2. Create/use a dedicated staging Blogger blog with non-sensitive representative posts and page types.
+3. Owner or explicitly authorized operator imports and saves the XML through Blogger. No theme upload API or automated import is claimed.
+4. Copy the structure in `fixtures/staging-views.example.json` into repository variable `FCD_STAGING_MANIFEST_JSON`, using real URLs for home/article/label/search/archive/static/error/paged, exact source build and expected content for search/static/error. Keep credentials out; current workflow supports public read-only views.
+5. Run **Read-only Blogger staging checks** manually after the workflow is available on the selected trusted ref. It installs the locked dependencies and Chromium, writes variable data to a temporary JSON file, and calls `npm run staging:check`. It cannot seed posts, import XML, deploy or merge.
+6. Missing origin/build/view URLs block validation. The checker requires same-origin HTTPS, one of every view type, expected HTTP statuses (404 for error), exact metadata stamp and view-appropriate native content/metadata. Empty search/error/static views use expected text rather than a fabricated populated-post assertion.
+7. Record actual import/save and native threaded/unthreaded comments, feeds, Layout editor and page-type behavior. Automated smoke checks do not replace those acceptance records or human screen-reader/zoom checks.
+8. Request explicit production deployment only after all release gates pass. Rollback restores exported XML and widget configuration.
 
-Generated XML must come from Actions, not manual edits. CI normalizes only `theme-build` for checked-in/source comparison; any other mismatch blocks acceptance. A branch-limited artifact transfer may be used for an approved source change, but its writer must be removed before accepting the final head. Normal CI stays read-only. Never label a run successful when only the artifact upload succeeded.
+All automated project checks remain Actions-based. Main and production stay untouched during PR #2. No staging URL/import evidence has been supplied, so the real checkpoint is pending, not green. Simulated HTTP tests are separate and labeled.
 
-No DNS change, article publication, main-site modification or production import is part of initialization/hardening. Missing staging or human evidence is pending/blocked, not passed.
+For no-JS wide tables use caption/header scopes plus `tabindex="0"` and an accessible name where keyboard scrolling must work across browsers. Diagram source fallback stays keyboard-focusable when enhancements initialize; no-JS author markup must remain plain readable code.

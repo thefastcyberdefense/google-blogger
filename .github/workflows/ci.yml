@@ -12,7 +12,7 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -23,31 +23,22 @@ jobs:
           node-version-file: .nvmrc
           package-manager-cache: false
       - run: npm ci --ignore-scripts --no-audit --no-fund
-      - name: Record exact tested source
-        run: |
-          node --version
-          npm --version
-          git rev-parse HEAD
-          sha256sum package-lock.json
-          echo "Tested source: $(git rev-parse HEAD)" >> "$GITHUB_STEP_SUMMARY"
       - run: npm run typecheck
-      - name: Preserve checked-in artifact for source consistency comparison
-        run: cp dist/theme.xml "$RUNNER_TEMP/checked-in-theme.xml"
+      - run: cp dist/theme.xml "$RUNNER_TEMP/checked-in-theme.xml"
       - run: npm run build
+      - name: Record source and output size
+        run: |
+          git rev-parse HEAD
+          sha256sum dist/theme.xml
+          node -e "const fs=require('node:fs');console.log('::notice title=Built XML bytes::'+fs.statSync('dist/theme.xml').size);"
       - run: npm run contract:check
       - run: npx --no-install playwright install --with-deps chromium
-      # Playwright cleans test-results on startup. Preserve the unit report outside that directory.
       - run: npm test -- --reporter=default --reporter=json --outputFile=unit-report.json
       - name: Report regression evidence
         if: ${{ always() }}
         run: |
           node --input-type=module <<'JS'
-          import fs from 'node:fs';
-          if (fs.existsSync('unit-report.json')) {
-            const r=JSON.parse(fs.readFileSync('unit-report.json','utf8'));
-            console.log('::notice title=Unit and contract totals::'+JSON.stringify({passed:r.numPassedTests,failed:r.numFailedTests,pending:r.numPendingTests}));
-            for(const suite of r.testResults || []) for(const a of suite.assertionResults || []) if(a.status==='failed') console.log('::error title=Regression failed::'+a.fullName.replace(/[%\r\n]/g,' '));
-          }
+          import fs from 'node:fs';if(fs.existsSync('unit-report.json')){const r=JSON.parse(fs.readFileSync('unit-report.json','utf8'));console.log('::notice title=Unit totals::'+JSON.stringify({passed:r.numPassedTests,failed:r.numFailedTests,pending:r.numPendingTests}));for(const s of r.testResults||[])for(const a of s.assertionResults||[])if(a.status==='failed')console.log('::error title=Regression::'+a.fullName);}
           JS
       - run: npm run preview -- --build-only
       - run: npm run test:render
@@ -55,35 +46,33 @@ jobs:
         if: ${{ always() }}
         run: |
           if [ -f test-results/browser.json ]; then
-            node -e "const fs=require('node:fs');const r=JSON.parse(fs.readFileSync('test-results/browser.json','utf8'));console.log('::notice title=Browser test summary::'+JSON.stringify(r.stats));"
+            node -e "const r=require('./test-results/browser.json');console.log('::notice title=Browser totals::'+JSON.stringify(r.stats));"
           fi
       - run: npm audit --audit-level=moderate
-      - name: Reject stale generated XML apart from its historical build stamp
+      - name: Reject stale generated XML except historical build stamp
         run: |
           python3 - <<'PY'
           import os
           from pathlib import Path
           import xml.etree.ElementTree as ET
           def normalized(file):
-              root = ET.fromstring(Path(file).read_bytes())
-              ns = '{http://www.w3.org/1999/xhtml}'
-              stamps = [m for m in root.findall('.//'+ns+'meta') if m.get('name') == 'theme-build']
-              assert len(stamps) == 1, 'exactly one build stamp is required'
-              stamps[0].set('content', 'SOURCE_STAMP')
+              root=ET.fromstring(Path(file).read_bytes());ns='{http://www.w3.org/1999/xhtml}'
+              stamps=[m for m in root.findall('.//'+ns+'meta') if m.get('name')=='theme-build']
+              assert len(stamps)==1
+              stamps[0].set('content','SOURCE_STAMP')
               return ET.tostring(root)
-          assert normalized(Path(os.environ['RUNNER_TEMP'])/'checked-in-theme.xml') == normalized('dist/theme.xml'), 'dist/theme.xml differs from compiled source; regenerate it through Actions'
-          print('PASS: checked-in XML matches current source, excluding source-stamp value only')
+          assert normalized(Path(os.environ['RUNNER_TEMP'])/'checked-in-theme.xml')==normalized('dist/theme.xml'),'Regenerate checked-in XML from Actions output'
+          print('PASS: checked-in XML equals compiled source except historical build stamp')
           PY
-      - name: Upload verification evidence
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: ${{ always() }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: fcd-evidence-${{ github.event.pull_request.head.sha || github.sha }}
           path: |
-            package-lock.json
             dist/theme.xml
+            package-lock.json
             unit-report.json
-            playwright-report/
             test-results/
+            playwright-report/
           if-no-files-found: error
           retention-days: 14

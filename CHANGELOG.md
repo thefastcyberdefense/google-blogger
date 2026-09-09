@@ -1,29 +1,19 @@
 # Changelog
 
-## 0.1.0 - unreleased foundation
+## Unreleased: Phase 2 technical content
 
-### Foundation implementation
+- Added exact Prism 1.30.0 grammar subset, manual article-only highlighting, safe token output and copy-source fidelity.
+- Added Mermaid 11.17.2 pinned optional ESM loading, single-flight lifecycle, strict configuration, source validation/fallback and bounded zoom/reset.
+- Preserved original diagram text, coalesced theme changes and added explicit busy/rendered/error states.
+- Fixed Actions-discovered keyboard-inaccessible original-source regions at mobile widths without suppressing axe rules.
+- Corrected an invalid colon-delimited timeline test fixture rather than weakening diagram parsing.
+- Added real-library Chromium fixtures, request accounting, blocked CDN, unsafe/configured/oversized input, repeated initialization, copy and theme-race tests.
+- Added read-only eight-view staging manifest/workflow and mocked-response tests. Actual Blogger import/save remains pending.
+- Integrated audit found GHSA-82fw-gwwq-j7x9 in foundation Vitest 3.2.7; pinned patched 4.1.11 and generated a genuine audited lockfile in Actions.
+- Dependency preflight confirmed the Mermaid CDN entry matches npm and contains DOMPurify 3.4.12; reports claiming older sanitizer vulnerabilities were checked against primary affected-version ranges.
 
-- Added audited project plan before code, isolated feature branch, Node 24.20.0 and genuine dependency lockfile.
-- Added modular Pug/SCSS/TypeScript Blogger V3/V2 shell, native dispatch and FCD initial header/cards/article/sidebar/search/TOC/copy controls.
-- Saved FCD Superpowers and FCD Accessibility Reviewer ClickUp skills.
-- Added Actions-only build, XML, type/unit/browser/axe and dependency checks, with artifact reports and screenshots.
+No merge or deployment. Accept only after the exact final PR head passes all mandatory checks and regenerated XML consistency. SVG export, broader editorial/search/related-content work and production release remain outside this slice.
 
-### Reviewed blocker fixes
+## 0.1.0 foundation
 
-- Corrected URL validation to accept hyphenated Blogger slugs while rejecting controls, foreign origins, credentials and unsafe schemes.
-- Replaced substring deployment checks with bounded parsed DOM and exact build-stamp validation.
-- Shared production/fixture presentation, modeled wrapper/image/page states, and added structural/negative-control checks.
-- Recorded failing baseline then passing blocker regression suite; details in docs/UPSTREAM-AUDIT.md.
-
-### Approved foundation hardening
-
-- Added scoped XML native-render rules and 14 deliberate invalid-output mutations plus valid/comment-only controls.
-- Added twelve-column table fixture and no-theme-JS local-scroll regression.
-- Added CSS-only table containment and flexible header/search layout for enlarged text at narrow widths.
-- Expanded axe to five initial/expanded page states; verified table and header accessibility roles.
-- Added native search GET submission, clipboard payload/success/denial, storage failure, reduced motion, skip-link focus, keyboard scrolling and 200% text-scaling tests.
-- The red baseline recorded 15 failures. Follow-up testing revealed and addressed 320px text overflow; a mistaken End-key test was corrected to ArrowRight without removing its scrolling assertion.
-- Kept artifact consistency mandatory and documented exact-head acceptance, next-milestone scope and staging/manual gaps.
-
-Acceptance depends on the final PR-head Actions run. No release, merge, production import or independent external approval is implied. Mermaid/highlighting/related content and other advanced publication features stay in the next milestone; actual Blogger and human accessibility gates remain pending.
+Merged in PR #1 with history preserved. Native V3/V2 renderer, initial FCD presentation, hardened XML/parity/no-JS table/keyboard/a11y gates and the earlier three merge-blocker fixes remain required regression coverage. Source and human/runtime evidence boundaries are retained.

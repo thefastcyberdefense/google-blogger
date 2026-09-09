@@ -1,0 +1,23 @@
+doctype html
+html(lang='en')
+  head
+    meta(charset='utf-8')
+    meta(name='viewport' content='width=device-width, initial-scale=1')
+    title FCD real technical-library fixture
+    style!= css
+  body.is-single
+    main#content.container
+      h1 Technical content verification
+      button#theme-toggle(type='button') Theme
+      #article-body.post-body
+        each example in data.code
+          pre
+            code(class='language-'+example.language)= example.source
+        each diagram, i in data.diagrams
+          if i === 1
+            pre
+              code.language-mermaid= diagram.source
+          else
+            pre.mermaid= diagram.source
+      p#fcd-status.sr-only(role='status')
+    script!= script

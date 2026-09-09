@@ -13,17 +13,15 @@ async function setup(page:import('@playwright/test').Page,markup=html,blocked=fa
  await page.route(origin+'/**',r=>r.fulfill({contentType:'text/html',body:markup}));await page.goto(origin+'/technical');return requests;
 }
 test('real pinned libraries render safely with accessible controls and copy fidelity',async({page},info)=>{
- const requests=await setup(page);
- await expect(page.locator('code[data-highlighted="true"]')).toHaveCount(11);
- await expect(page.locator('.fcd-diagram[data-state="rendered"]')).toHaveCount(3,{timeout:30000});
- expect(requests.filter(url=>url===MERMAID_URL)).toHaveLength(1);
- await expect(page.locator('.diagram-output svg')).toHaveCount(3);
+ const requests=await setup(page);await expect(page.locator('code[data-highlighted="true"]')).toHaveCount(11);
+ await expect.poll(()=>page.locator('.fcd-diagram[data-state="rendered"],.fcd-diagram[data-state="error"]').count(),{timeout:30000}).toBe(3);
+ expect(await page.locator('.fcd-diagram[data-state="error"] .diagram-status').allTextContents()).toEqual([]);
+ await expect(page.locator('.fcd-diagram[data-state="rendered"]')).toHaveCount(3);
+ expect(requests.filter(url=>url===MERMAID_URL)).toHaveLength(1);await expect(page.locator('.diagram-output svg')).toHaveCount(3);
  await expect(page.locator('.diagram-output script,.diagram-output foreignObject,.diagram-output a[href^="http"]')).toHaveCount(0);
  await page.getByRole('button',{name:'Zoom in',exact:true}).first().click();await expect(page.locator('.diagram-status').first()).toContainText('125%');
  await page.getByRole('button',{name:'Reset zoom',exact:true}).first().click();await expect(page.locator('.diagram-status').first()).toContainText('100%');
- const before=await page.locator('.diagram-source pre').allTextContents();await page.locator('#theme-toggle').click();
- await expect(page.locator('.diagram-status').first()).toContainText('Diagram ready',{timeout:30000});
- expect(await page.locator('.diagram-source pre').allTextContents()).toEqual(before);
+ const before=await page.locator('.diagram-source pre').allTextContents();await page.locator('#theme-toggle').click();await expect(page.locator('.diagram-status').first()).toContainText('Diagram ready',{timeout:30000});expect(await page.locator('.diagram-source pre').allTextContents()).toEqual(before);
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
  const scan=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']).analyze();await info.attach('technical-axe',{body:JSON.stringify(scan),contentType:'application/json'});expect(scan.violations).toEqual([]);
  await info.attach('library-requests',{body:JSON.stringify(requests),contentType:'application/json'});await page.screenshot({path:info.outputPath('technical-content.png'),fullPage:true});

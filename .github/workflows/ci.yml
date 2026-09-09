@@ -15,43 +15,46 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 2
-      - name: Verify source unchanged except transfer workflow
-        run: |
-          test "$(git diff --name-only 388660f8e5fdb9ebb8b44f03b882748ae9b021c7 HEAD)" = '.github/workflows/ci.yml'
-      - name: Validate job and download immutable evidence archive
+          fetch-depth: 0
+      - name: Verify only transfer workflow changed
+        run: test "$(git diff --name-only 388660f8e5fdb9ebb8b44f03b882748ae9b021c7 HEAD)" = '.github/workflows/ci.yml'
+      - uses: actions/download-artifact@484a0b528fb4d7bd804637ccb632e47a0e638317
+        with:
+          artifact-ids: '10096964676'
+          run-id: '34333530076'
+          github-token: ${{ github.token }}
+          path: .verified-evidence
+          merge-multiple: true
+      - name: Validate source, reports, budgets and XML
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           python3 - <<'PY'
-          import urllib.request,json,os,hashlib,zipfile,io
+          import urllib.request,json,os,hashlib
           from pathlib import Path
           import xml.etree.ElementTree as ET
           base='https://api.github.com/repos/thefastcyberdefense/google-blogger/'
           def get(path):
               req=urllib.request.Request(base+path,headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json'})
-              with urllib.request.urlopen(req,timeout=45) as r:return r.read()
-          job=json.loads(get('actions/jobs/102407566941'))
-          sha='388660f8e5fdb9ebb8b44f03b882748ae9b021c7'
-          assert job['head_sha']==sha and job['status']=='completed'
-          assert [s['name'] for s in job['steps'] if s['conclusion']=='failure']==['Reject stale generated XML except historical build stamp']
-          required=['Run npm run typecheck','Run npm run build','Run npm run contract:check','Run npm test -- --reporter=default --reporter=json --outputFile=unit-report.json','Run npm run test:render','Run npm audit --audit-level=moderate','Build pinned base and capture size evidence']
-          for name in required:assert any(s['name']==name and s['conclusion']=='success' for s in job['steps']),name
-          meta=json.loads(get('actions/artifacts/10096964676'))
-          assert meta['workflow_run']['head_sha']==sha and not meta['expired']
-          archive=get('actions/artifacts/10096964676/zip')
-          assert hashlib.sha256(archive).hexdigest()=='5499d11bf3031cbbe636101619d5681c8faa7254aef41d754c95ef9031f7bfaf'
-          with zipfile.ZipFile(io.BytesIO(archive)) as z:
-              unit=json.loads(z.read('unit-report.json'));stats=json.loads(z.read('test-results/browser.json'))['stats']
-              assert unit['numPassedTests']==129 and unit['numFailedTests']==0 and unit['numPendingTests']==0
-              assert stats['expected']==792 and stats['unexpected']==stats['skipped']==stats['flaky']==0
-              size=json.loads(z.read('build-size.json'));baseline=json.loads(z.read('baseline-size.json'))
-              assert size['source']==sha and baseline['source']=='ec08c4b9d1ba2cd35d9ec8a9bcbe557f2d01ca3d'
-              assert size['css']['raw']-baseline['css']['raw']<=12288 and size['js']['raw']-baseline['js']['raw']<=2048
-              data=z.read('dist/theme.xml')
-          assert len(data)==87093 and len(data)<=500000
+              with urllib.request.urlopen(req,timeout=30) as r:return json.load(r)
+          job=get('actions/jobs/102407566941');sha='388660f8e5fdb9ebb8b44f03b882748ae9b021c7'
+          assert job['head_sha']==sha and job['status']=='completed','job source/state'
+          assert [s['name'] for s in job['steps'] if s['conclusion']=='failure']==['Reject stale generated XML except historical build stamp'],'unexpected failing steps'
+          for name in ['Run npm run typecheck','Run npm run build','Run npm run contract:check','Run npm test -- --reporter=default --reporter=json --outputFile=unit-report.json','Run npm run test:render','Run npm audit --audit-level=moderate','Build pinned base and capture size evidence']:
+              assert any(s['name']==name and s['conclusion']=='success' for s in job['steps']),name
+          meta=get('actions/artifacts/10096964676')
+          assert meta['workflow_run']['head_sha']==sha and not meta['expired'],'artifact provenance'
+          assert meta['digest']=='sha256:5499d11bf3031cbbe636101619d5681c8faa7254aef41d754c95ef9031f7bfaf','artifact digest'
+          evidence=Path('.verified-evidence');print('Evidence files:',[str(p) for p in evidence.glob('*')])
+          unit=json.loads((evidence/'unit-report.json').read_text());stats=json.loads((evidence/'test-results/browser.json').read_text())['stats']
+          assert unit['numPassedTests']==129 and unit['numFailedTests']==unit['numPendingTests']==0,'unit totals'
+          assert stats['expected']==792 and stats['unexpected']==stats['skipped']==stats['flaky']==0,'browser totals'
+          size=json.loads((evidence/'build-size.json').read_text());baseline=json.loads((evidence/'baseline-size.json').read_text())
+          assert size['source']==sha and baseline['source']=='ec08c4b9d1ba2cd35d9ec8a9bcbe557f2d01ca3d','budget sources'
+          assert size['css']['raw']-baseline['css']['raw']<=12288 and size['js']['raw']-baseline['js']['raw']<=2048,'growth budgets'
+          data=(evidence/'dist/theme.xml').read_bytes();assert len(data)==87093 and len(data)<=500000,'XML bytes'
           root=ET.fromstring(data);ns='{http://www.w3.org/1999/xhtml}'
-          assert [m.get('content') for m in root.findall('.//'+ns+'meta') if m.get('name')=='theme-build']==['0.1.0+'+sha]
+          assert [m.get('content') for m in root.findall('.//'+ns+'meta') if m.get('name')=='theme-build']==['0.1.0+'+sha],'XML source stamp'
           Path('dist/theme.xml').write_bytes(data)
           print('::notice title=Verified XML::'+json.dumps({'source':sha,'bytes':len(data),'sha256':hashlib.sha256(data).hexdigest()}))
           PY

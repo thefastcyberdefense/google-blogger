@@ -3,7 +3,7 @@
 <html b:css="false" b:defaultwidgetversion="2" b:layoutsVersion="3" b:responsive="true" b:templateUrl="indie.xml" b:templateVersion="0.0.0" expr:dir="data:blog.languageDirection" expr:lang="data:blog.locale" xmlns="http://www.w3.org/1999/xhtml" xmlns:b="http://www.google.com/2005/gml/b" xmlns:data="http://www.google.com/2005/gml/data" xmlns:expr="http://www.google.com/2005/gml/expr">
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
-    <meta name="theme-build" content="0.1.0+bed1f1351db1cb5620dcf3680c7ab3567da0b9c3"/>
+    <meta name="theme-build" content="0.1.0+ba4c9852803cbfcb60d3536199963af395cd6315"/>
     <meta name="color-scheme" content="light dark"/>
     <title><data:view.title.escaped/></title>
     <b:include data="blog" name="all-head-content"/>
@@ -65,8 +65,10 @@
     </b:if>
     <b:if cond="data:view.isPost">
       <b:with value="data:widgets.Blog.first.posts.first" var="post">
-        <meta property="article:published_time" expr:content="data:post.date.iso8601"/>
-        <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"<data:post.title.jsonEscaped/>","mainEntityOfPage":"<data:view.url.canonical.jsonEscaped/>","datePublished":"<data:post.date.iso8601.jsonEscaped/>","author":{"@type":"Person","name":"<data:post.author.name.jsonEscaped/>"},"publisher":{"@type":"Organization","name":"Fast Cyber Defense","url":"https://fastcyberdefense.com/"}<b:if cond='data:post.lastUpdated'>,"dateModified":"<data:post.lastUpdated.iso8601.jsonEscaped/>"</b:if><b:if cond='data:view.featuredImage'>,"image":"<data:view.featuredImage.jsonEscaped/>"</b:if>}</script>
+        <b:if cond="data:post.date">
+          <meta property="article:published_time" expr:content="data:post.date.iso8601"/>
+        </b:if>
+        <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"<data:post.title.jsonEscaped/>","mainEntityOfPage":"<data:view.url.canonical.jsonEscaped/>","publisher":{"@type":"Organization","name":"Fast Cyber Defense","url":"https://fastcyberdefense.com/"}<b:if cond='data:post.date'>,"datePublished":"<data:post.date.iso8601.jsonEscaped/>"</b:if><b:if cond='data:post.author.name'>,"author":{"@type":"Person","name":"<data:post.author.name.jsonEscaped/>"}</b:if><b:if cond='data:post.lastUpdated'>,"dateModified":"<data:post.lastUpdated.iso8601.jsonEscaped/>"</b:if><b:if cond='data:view.featuredImage'>,"image":"<data:view.featuredImage.jsonEscaped/>"</b:if>}</script>
         <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Fast Cyber Defense Blog","item":"<data:blog.canonicalHomepageUrl.jsonEscaped/>"},{"@type":"ListItem","position":2,"name":"<data:post.title.jsonEscaped/>","item":"<data:view.url.canonical.jsonEscaped/>"}]}</script>
       </b:with>
     </b:if>

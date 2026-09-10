@@ -12,8 +12,9 @@ b:if(cond='data:view.isHomepage')
     {"@context":"https://schema.org","@type":"WebSite","name":"<data:blog.title.jsonEscaped/>","url":"<data:blog.canonicalHomepageUrl.jsonEscaped/>","publisher":{"@type":"Organization","name":"Fast Cyber Defense","url":"https://fastcyberdefense.com/"}}
 b:if(cond='data:view.isPost')
   b:with(value='data:widgets.Blog.first.posts.first' var='post')
-    meta(property='article:published_time' expr:content='data:post.date.iso8601')/
+    b:if(cond='data:post.date')
+      meta(property='article:published_time' expr:content='data:post.date.iso8601')/
     script(type='application/ld+json').
-      {"@context":"https://schema.org","@type":"BlogPosting","headline":"<data:post.title.jsonEscaped/>","mainEntityOfPage":"<data:view.url.canonical.jsonEscaped/>","datePublished":"<data:post.date.iso8601.jsonEscaped/>","author":{"@type":"Person","name":"<data:post.author.name.jsonEscaped/>"},"publisher":{"@type":"Organization","name":"Fast Cyber Defense","url":"https://fastcyberdefense.com/"}<b:if cond='data:post.lastUpdated'>,"dateModified":"<data:post.lastUpdated.iso8601.jsonEscaped/>"</b:if><b:if cond='data:view.featuredImage'>,"image":"<data:view.featuredImage.jsonEscaped/>"</b:if>}
+      {"@context":"https://schema.org","@type":"BlogPosting","headline":"<data:post.title.jsonEscaped/>","mainEntityOfPage":"<data:view.url.canonical.jsonEscaped/>","publisher":{"@type":"Organization","name":"Fast Cyber Defense","url":"https://fastcyberdefense.com/"}<b:if cond='data:post.date'>,"datePublished":"<data:post.date.iso8601.jsonEscaped/>"</b:if><b:if cond='data:post.author.name'>,"author":{"@type":"Person","name":"<data:post.author.name.jsonEscaped/>"}</b:if><b:if cond='data:post.lastUpdated'>,"dateModified":"<data:post.lastUpdated.iso8601.jsonEscaped/>"</b:if><b:if cond='data:view.featuredImage'>,"image":"<data:view.featuredImage.jsonEscaped/>"</b:if>}
     script(type='application/ld+json').
       {"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Fast Cyber Defense Blog","item":"<data:blog.canonicalHomepageUrl.jsonEscaped/>"},{"@type":"ListItem","position":2,"name":"<data:post.title.jsonEscaped/>","item":"<data:view.url.canonical.jsonEscaped/>"}]}

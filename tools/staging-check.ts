@@ -5,14 +5,22 @@ import {chromium} from 'playwright-core';
 import {inspectDeploymentHtml} from './deploy-check.ts';
 import {validateMetadata} from './metadata-check.ts';
 type ViewType='home'|'article'|'label'|'search'|'archive'|'static'|'error'|'paged';
-type Manifest={origin:string;build:string;views:{type:ViewType;url:string;expectedText?:string}[]};
+type Manifest={origin:string;build:string;views:{type:ViewType;url:string;expectedText?:string;expectedCanonical?:string}[]};
 const required:ViewType[]=['home','article','label','search','archive','static','error','paged'];
 export function validateManifest(value:unknown):Manifest{
  if(!value||typeof value!=='object')throw new Error('BLOCKED: staging manifest required');
  const m=value as Manifest;let origin:URL;try{origin=new URL(m.origin);}catch{throw new Error('BLOCKED: staging origin missing');}
  if(origin.protocol!=='https:'||origin.username||origin.password||origin.pathname!=='/'||!/^0\.1\.0\+[a-f0-9]{40}$/i.test(m.build||''))throw new Error('BLOCKED: HTTPS origin and full expected build required');
  if(!Array.isArray(m.views)||m.views.length!==required.length||new Set(m.views.map(v=>v.type)).size!==required.length)throw new Error('BLOCKED: all eight native view types required exactly once');
- for(const type of required){const v=m.views.find(v=>v.type===type);if(!v)throw new Error('Missing view '+type);const url=new URL(v.url);if(url.origin!==origin.origin||url.username||url.password||url.hash)throw new Error('Staging views must use the exact configured origin');if(['search','error','static'].includes(type)&&!v.expectedText?.trim())throw new Error('Expected text required for '+type);}
+ for(const type of required){
+  const v=m.views.find(v=>v.type===type);if(!v)throw new Error('Missing view '+type);const url=new URL(v.url);
+  if(url.origin!==origin.origin||url.username||url.password||url.hash)throw new Error('Staging views must use the exact configured origin');
+  if(['search','error','static'].includes(type)&&!v.expectedText?.trim())throw new Error('Expected text required for '+type);
+  if(v.expectedCanonical!==undefined){
+   if(typeof v.expectedCanonical!=='string'||!v.expectedCanonical.trim()||Array.from(v.expectedCanonical).some(c=>c.charCodeAt(0)<=31||c.charCodeAt(0)===127))throw new Error('Invalid expected canonical');
+   const expected=new URL(v.expectedCanonical);if(expected.protocol!=='https:'||expected.origin!==origin.origin||expected.username||expected.password||expected.hash)throw new Error('Expected canonical must be credential-free same-origin HTTPS without fragment');
+  }
+ }
  return m;
 }
 export async function runStaging(manifest:Manifest){
@@ -47,7 +55,7 @@ export async function runStaging(manifest:Manifest){
     if(view.type!=='error'&&(data.canonical.length!==1||!data.canonical[0]||new URL(data.canonical[0],view.url).origin!==manifest.origin.replace(/\/$/,'')))throw new Error(view.type+': invalid canonical');
     if(view.expectedText&&!data.mainText.includes(view.expectedText.replace(/\s+/g,' ').trim()))throw new Error(view.type+': expected visible content not found');
     if(view.type==='paged'&&!data.older)throw new Error('Native pagination links missing');
-    const metadataErrors=await page.evaluate(validateMetadata,{html,view:view.type,url:view.url});if(metadataErrors.length)throw new Error(view.type+': '+metadataErrors.join('; '));
+    const metadataErrors=await page.evaluate(validateMetadata,{html,view:view.type,url:view.url,expectedCanonical:view.expectedCanonical});if(metadataErrors.length)throw new Error(view.type+': '+metadataErrors.join('; '));
     console.log(`PASS ${view.type}: HTTP, source stamp, visible native content and parsed metadata`);
    }finally{await context.close();}
   }

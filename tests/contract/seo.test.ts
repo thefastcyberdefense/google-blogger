@@ -13,20 +13,26 @@ it('validates rendered eight-view metadata with positive and adversarial control
  const browser=await chromium.launch();try{const page=await browser.newPage();await page.route('**/*',r=>r.abort());
  const check=(text:string,view='article')=>page.evaluate(validateMetadata,{html:text,view,url:data.url});
  for(const view of data.views)expect(await check(html(view),view)).toEqual([]);
- for(const bad of [
- html('article').replace('</head>','<link rel="canonical" href="https://evil.example/"></head>'),
- html('article').replace('href="'+data.url+'"','href="javascript:alert(1)"'),
- html('article').replace(data.title.replace(/"/g,'\\"'),'Wrong headline'),
- html('article').replace(data.date,'not-a-date'),
- html('article').replace(data.author,''),
- html('article').replace('"mainEntityOfPage":"'+data.url+'"','"mainEntityOfPage":"https://stage.example/other"'),
- html('article').replace('"@context"','broken "@context"'),
- html('article').replace('<title>','<title></title><title>'),
- html('article').replace('</head>','<meta property="og:type" content="website"></head>')
- ])expect((await check(bad)).length).toBeGreaterThan(0);
- expect((await check(html('article'),'static')).length).toBeGreaterThan(0);
- expect((await check(html('static'),'article')).length).toBeGreaterThan(0);
+ for(const bad of [html('article').replace('</head>','<link rel="canonical" href="https://evil.example/"></head>'),html('article').replace('href="'+data.url+'"','href="javascript:alert(1)"'),html('article').replace(data.title.replace(/"/g,'\\"'),'Wrong headline'),html('article').replace(data.date,'not-a-date'),html('article').replace(data.author,''),html('article').replace('"mainEntityOfPage":"'+data.url+'"','"mainEntityOfPage":"https://stage.example/other"'),html('article').replace('"@context"','broken "@context"'),html('article').replace('<title>','<title></title><title>'),html('article').replace('</head>','<meta property="og:type" content="website"></head>')])expect((await check(bad)).length).toBeGreaterThan(0);
+ expect((await check(html('article'),'static')).length).toBeGreaterThan(0);expect((await check(html('static'),'article')).length).toBeGreaterThan(0);
  const optional={...schema};delete (optional as Partial<typeof schema>).author;delete (optional as Partial<typeof schema>).datePublished;delete (optional as Partial<typeof schema>).image;
  expect(await check(html('article').replace(ld(schema),ld(optional)))).toEqual([]);
  }finally{await browser.close();}
 },30000);
+const url='https://stage.example/article';
+function specimen(view='article',canonical=url,schema:unknown={'@context':'https://schema.org','@type':'BlogPosting',headline:'Article',mainEntityOfPage:canonical}){
+ return `<html><head><title>Article</title><link rel="canonical" href="${canonical}"><meta property="og:type" content="${view==='article'?'article':'website'}"><meta name="twitter:card" content="summary">${view==='article'?'<script type="application/ld+json">'+JSON.stringify(schema).replace(/</g,'\\u003c')+'</script>':''}</head><body><main id="content"><h1>Article</h1></main></body></html>`;
+}
+it.each(['article','home','label','search','archive','static','paged'])('rejects jointly wrong canonical/schema identity on %s',async view=>{
+ const browser=await chromium.launch();try{const page=await browser.newPage();const errors=await page.evaluate(validateMetadata,{html:specimen(view,'https://stage.example/wrong'),view,url});expect(errors.some(x=>/canonical/i.test(x))).toBe(true);}finally{await browser.close();}
+},15000);
+it.each(['https://example.invalid/vocab',null,{'@vocab':'https://example.invalid/'}])('rejects unsupported schema context %j',async context=>{
+ const browser=await chromium.launch();try{const page=await browser.newPage();const errors=await page.evaluate(validateMetadata,{html:specimen('article',url,{'@context':context,'@type':'BlogPosting',headline:'Article',mainEntityOfPage:url}),view:'article',url});expect(errors.some(x=>/context/i.test(x))).toBe(true);}finally{await browser.close();}
+},15000);
+it('requires context but accepts schema.org graph inheritance and rejects a child override',async()=>{
+ const browser=await chromium.launch();try{const page=await browser.newPage();const article={'@type':'BlogPosting',headline:'Article',mainEntityOfPage:url};const check=(schema:unknown)=>page.evaluate(validateMetadata,{html:specimen('article',url,schema),view:'article',url});
+ expect((await check(article)).some(x=>/context/i.test(x))).toBe(true);
+ expect(await check({'@context':'https://schema.org','@graph':[article]})).toEqual([]);
+ expect((await check({'@context':'https://schema.org','@graph':[{'@context':'https://evil.example',...article}]})).some(x=>/context/i.test(x))).toBe(true);
+ }finally{await browser.close();}
+},15000);

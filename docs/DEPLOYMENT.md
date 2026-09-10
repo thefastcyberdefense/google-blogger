@@ -1,21 +1,34 @@
 # Staging and deployment boundaries
 
-PR #1 through PR #3 merged without deployment. PR B discovery is draft PR #4. Merge and release approvals remain separate; no Blogger import, publishing, DNS changes or deletions are authorized by implementation.
+PRs1-4 are merged without deployment; PR C is acceptance hardening. Never equate green source CI or a merged PR with a Blogger import.
 
-## Artifact
+## Artifact selection
 
-Use XML from the latest complete successful exact-head Actions run. Discovery XML was generated from bed1f1351db1cb5620dcf3680c7ab3567da0b9c3 and committed only after artifact/source/report validation in 13e5d4220eb95122bc136517e6bd02714779e77d. Full read-only CI must confirm consistency, normalizing only historical theme-build metadata. Temporary artifact writers are removed before acceptance. Optional pinned Mermaid CDN bytes remain external to XML.
+Use fresh XML from a complete successful exact-head Actions run, record its full theme-build stamp and digest. Checked-in XML retains its actual generating stamp; CI normalizes only that metadata value for comparison. Any other stale output fails. XML is generated in Actions and transferred only through an explicitly approved source-bound feature-branch operation. Remove temporary write permission before final acceptance.
 
-## Native Blogger checks
+Only total raw XML is capped at500000 bytes. JS/CSS raw/gzip reports are informational, with no fixed component/growth cap. Optional pinned Mermaid CDN modules are external to XML size and remain a separate supply-chain/availability dependency.
 
-Export existing XML/content and record widget settings first. An owner or explicitly authorized operator imports/saves to a dedicated staging Blogger blog. Record blog identity, exact build stamp and eight real view URLs in FCD_STAGING_MANIFEST_JSON. The separate read-only staging workflow validates configured views; it never uploads XML or publishes content. Missing configuration stays blocked.
+## Metadata acceptance matrix
 
-Check post-only recommendations, canonical post identity, label encoding, current-post exclusion and related/latest/empty/failure states on native Blogger output. Static pages must have no related shell. Confirm native comments, widgets, Layout editor, labels and cursors remain correct. Fixtures are not expression interpreters.
+All views: one meaningful title, no unintended duplicate canonical/description/social fields, safe HTTPS metadata destinations. Non-error views: unique same-origin canonical. Error views may omit canonical; any supplied canonical must still be valid. Article views: exactly one article schema, headline matching article heading and mainEntityOfPage matching canonical. Other views must not carry article schema. When present, authors have valid types/nonempty names, dates are valid ISO timestamps, modification is not before publication, and images are safe URLs. Optional fields are omitted when native values are unavailable. Do not invent dates, image URLs or author profiles. Do not add a second canonical alongside native all-head-content.
 
-## Feed policy
+home: website metadata; article: article metadata; label/search/archive/paged/static/error: website metadata. Existing robots/search/archive indexing policy is recorded, not changed automatically. This is the FCD acceptance policy, not a statement that every checked field is required for Google eligibility. Rich-results/indexing success is not guaranteed.
 
-Public site feeds can be Full, Short, Until Jump Break, Custom, None or redirected. Private blogs do not support public feeds. PR B does not change these settings. Requests are fixed same-origin JSON feed requests, reject redirects, omit credentials and accept at most 500000 decoded bytes with an 8-second deadline. Post candidate count 50; non-post Recent Posts 8; one automatic attempt plus one shared explicit retry. Full feeds may exceed the byte cap: retain native fallback rather than silently increasing limits. No full-archive search claim, JSONP/proxy or persistent cache.
+The checker parses returned HTML with scripts/resources blocked and enforces a2MB response cap. It does not execute Blogger expressions, fetch image accessibility, certify native widgets, or prove SEO indexing. Duplicate metadata from native all-head-content can only be conclusively assessed on actual rendered Blogger output.
 
-## Human and production gates
+## Owner-assisted native acceptance
 
-Authors may use fcd-article-cover on an existing meaningful figure; no auto-generated duplicate cover. Verify human keyboard, zoom/print and screen-reader behavior separately. Discovery navigation is hidden for print; article technical source remains readable. Record actual Blogger import/save and human results before release. Request explicit production approval after all applicable gates pass. Rollback restores exported XML/widget settings. No credentials in theme or chat.
+1. Export existing theme/content and record widget settings.
+2. Owner or explicitly authorized operator imports/saves the chosen XML into a dedicated non-sensitive staging blog.
+3. Record blog identity, artifact source/stamp and eight real home/article/label/search/archive/static/error/paged URLs. Configure FCD_STAGING_MANIFEST_JSON with expected visible text for search/static/error, without credentials.
+4. Run the existing manual read-only staging workflow. Missing configuration blocks checks. Metadata and visible-content checks must both pass; catalog-as-article/hidden-content safeguards remain.
+5. Verify real canonical/social/JSON-LD output, native feed and escaped labels/current identity; inspect actual comments, Layout editor, labels and pagination.
+6. Record human keyboard, meaningful alt/diagram descriptions, screen-reader, true browser zoom and print evidence separately. Playwright WebKit is not every Safari/iOS device. Axe alone does not certify WCAG.
+7. Measure real staging load/interaction/layout behavior. Synthetic fixture timings/request logs are diagnostics, not field75th-percentile CWV. No analytics installation is implied.
+8. Obtain separate production authorization; rollback restores exported XML and widget settings.
+
+No staging import/save evidence or real eight-view configuration is supplied yet. Native platform and production-readiness gates remain pending. Do not modify blog settings, publish posts, deploy or delete branches as part of verification.
+
+## Feed and author policies retained
+
+Public feeds may be Full/Short/Until Jump Break/Custom/None or redirected; private feeds are unavailable. Existing500000 accepted decoded byte/8-second request and bounded retry limits stay in effect. Never silently broaden them because CSS/JS caps were removed. Native latest/topic links remain fallback. Covers are existing author figures using fcd-article-cover, not automatic duplicate images.

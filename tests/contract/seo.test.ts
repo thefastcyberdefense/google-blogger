@@ -1,6 +1,7 @@
-import{expect,it}from'vitest';import{readFileSync}from'node:fs';
+import{expect,it,vi}from'vitest';import{readFileSync}from'node:fs';
 import {chromium} from 'playwright-core';
-import {validateMetadata} from '../../tools/metadata-check.ts';
+import {validateMetadata,type MetadataInput} from '../../tools/metadata-check.ts';
+import {validateManifest,runStaging} from '../../tools/staging-check.ts';
 it('keeps one native head owner and escaped structured data templates',()=>{const xml=readFileSync('dist/theme.xml','utf8');expect(xml.match(/name="all-head-content"/g)).toHaveLength(1);expect(xml).toContain('BlogPosting');expect(xml).toContain('BreadcrumbList');expect(xml).toContain('data:post.title.jsonEscaped');});
 it('omits unavailable native author and publication date rather than emitting empty metadata',()=>{const source=readFileSync('src/partials/head-meta.pug','utf8');expect(source).toContain("b:if cond='data:post.author.name'");expect(source).toContain("b:if cond='data:post.date'");});
 it('has no fixed component or growth size limits, retaining total XML cap',()=>{const source=readFileSync('tools/generate.ts','utf8');expect(source).toContain('bytes>500000');expect(source).not.toContain('size.css.raw-base.css.raw');expect(source).not.toContain('size.js.raw-base.js.raw');});
@@ -10,29 +11,31 @@ it('validates rendered eight-view metadata with positive and adversarial control
  const schema={ '@context':'https://schema.org','@type':'BlogPosting',headline:data.title,mainEntityOfPage:data.url,datePublished:data.date,author:{'@type':'Person',name:data.author},image:data.image};
  const ld=(o:unknown)=>'<script type="application/ld+json">'+JSON.stringify(o).replace(/</g,'\\u003c')+'</script>';
  const html=(view:string)=>`<html><head><title>${esc(data.title)}</title><link rel="canonical" href="${data.url}"><meta property="og:type" content="${view==='article'?'article':'website'}"><meta name="twitter:card" content="summary">${view==='article'?ld(schema):''}</head><body><main id="content"><h1>${esc(data.title)}</h1></main></body></html>`;
- const browser=await chromium.launch();try{const page=await browser.newPage();await page.route('**/*',r=>r.abort());
- const check=(text:string,view='article')=>page.evaluate(validateMetadata,{html:text,view,url:data.url});
+ const browser=await chromium.launch();try{const page=await browser.newPage();await page.route('**/*',r=>r.abort());const check=(text:string,view='article')=>page.evaluate(validateMetadata,{html:text,view,url:data.url});
  for(const view of data.views)expect(await check(html(view),view)).toEqual([]);
  for(const bad of [html('article').replace('</head>','<link rel="canonical" href="https://evil.example/"></head>'),html('article').replace('href="'+data.url+'"','href="javascript:alert(1)"'),html('article').replace(data.title.replace(/"/g,'\\"'),'Wrong headline'),html('article').replace(data.date,'not-a-date'),html('article').replace(data.author,''),html('article').replace('"mainEntityOfPage":"'+data.url+'"','"mainEntityOfPage":"https://stage.example/other"'),html('article').replace('"@context"','broken "@context"'),html('article').replace('<title>','<title></title><title>'),html('article').replace('</head>','<meta property="og:type" content="website"></head>')])expect((await check(bad)).length).toBeGreaterThan(0);
  expect((await check(html('article'),'static')).length).toBeGreaterThan(0);expect((await check(html('static'),'article')).length).toBeGreaterThan(0);
- const optional={...schema};delete (optional as Partial<typeof schema>).author;delete (optional as Partial<typeof schema>).datePublished;delete (optional as Partial<typeof schema>).image;
- expect(await check(html('article').replace(ld(schema),ld(optional)))).toEqual([]);
+ const optional={...schema};delete (optional as Partial<typeof schema>).author;delete (optional as Partial<typeof schema>).datePublished;delete (optional as Partial<typeof schema>).image;expect(await check(html('article').replace(ld(schema),ld(optional)))).toEqual([]);
  }finally{await browser.close();}
 },30000);
 const url='https://stage.example/article';
-function specimen(view='article',canonical=url,schema:unknown={'@context':'https://schema.org','@type':'BlogPosting',headline:'Article',mainEntityOfPage:canonical}){
- return `<html><head><title>Article</title><link rel="canonical" href="${canonical}"><meta property="og:type" content="${view==='article'?'article':'website'}"><meta name="twitter:card" content="summary">${view==='article'?'<script type="application/ld+json">'+JSON.stringify(schema).replace(/</g,'\\u003c')+'</script>':''}</head><body><main id="content"><h1>Article</h1></main></body></html>`;
-}
-it.each(['article','home','label','search','archive','static','paged'])('rejects jointly wrong canonical/schema identity on %s',async view=>{
- const browser=await chromium.launch();try{const page=await browser.newPage();const errors=await page.evaluate(validateMetadata,{html:specimen(view,'https://stage.example/wrong'),view,url});expect(errors.some(x=>/canonical/i.test(x))).toBe(true);}finally{await browser.close();}
-},15000);
-it.each(['https://example.invalid/vocab',null,{'@vocab':'https://example.invalid/'}])('rejects unsupported schema context %j',async context=>{
- const browser=await chromium.launch();try{const page=await browser.newPage();const errors=await page.evaluate(validateMetadata,{html:specimen('article',url,{'@context':context,'@type':'BlogPosting',headline:'Article',mainEntityOfPage:url}),view:'article',url});expect(errors.some(x=>/context/i.test(x))).toBe(true);}finally{await browser.close();}
-},15000);
-it('requires context but accepts schema.org graph inheritance and rejects a child override',async()=>{
- const browser=await chromium.launch();try{const page=await browser.newPage();const article={'@type':'BlogPosting',headline:'Article',mainEntityOfPage:url};const check=(schema:unknown)=>page.evaluate(validateMetadata,{html:specimen('article',url,schema),view:'article',url});
- expect((await check(article)).some(x=>/context/i.test(x))).toBe(true);
- expect(await check({'@context':'https://schema.org','@graph':[article]})).toEqual([]);
- expect((await check({'@context':'https://schema.org','@graph':[{'@context':'https://evil.example',...article}]})).some(x=>/context/i.test(x))).toBe(true);
- }finally{await browser.close();}
-},15000);
+function specimen(view='article',canonical=url,schema:unknown={'@context':'https://schema.org','@type':'BlogPosting',headline:'Article',mainEntityOfPage:canonical}){return `<html><head><title>Article</title><link rel="canonical" href="${canonical}"><meta property="og:type" content="${view==='article'?'article':'website'}"><meta name="twitter:card" content="summary">${view==='article'?'<script type="application/ld+json">'+JSON.stringify(schema).replace(/</g,'\\u003c')+'</script>':''}</head><body><main id="content"><h1>Article</h1></main></body></html>`;}
+it.each(['article','home','label','search','archive','static','paged'])('rejects jointly wrong canonical/schema identity on %s',async view=>{const browser=await chromium.launch();try{const page=await browser.newPage();const errors=await page.evaluate(validateMetadata,{html:specimen(view,'https://stage.example/wrong'),view,url});expect(errors.some(x=>/canonical/i.test(x))).toBe(true);}finally{await browser.close();}},15000);
+it.each(['https://example.invalid/vocab',null,{'@vocab':'https://example.invalid/'}])('rejects unsupported schema context %j',async context=>{const browser=await chromium.launch();try{const page=await browser.newPage();const errors=await page.evaluate(validateMetadata,{html:specimen('article',url,{'@context':context,'@type':'BlogPosting',headline:'Article',mainEntityOfPage:url}),view:'article',url});expect(errors.some(x=>/context/i.test(x))).toBe(true);}finally{await browser.close();}},15000);
+it('requires context but accepts schema.org graph inheritance and rejects a child override',async()=>{const browser=await chromium.launch();try{const page=await browser.newPage();const article={'@type':'BlogPosting',headline:'Article',mainEntityOfPage:url};const check=(schema:unknown)=>page.evaluate(validateMetadata,{html:specimen('article',url,schema),view:'article',url});expect((await check(article)).some(x=>/context/i.test(x))).toBe(true);expect(await check({'@context':'https://schema.org','@graph':[article]})).toEqual([]);expect((await check({'@context':'https://schema.org','@graph':[{'@context':'https://evil.example',...article}]})).some(x=>/context/i.test(x))).toBe(true);for(const context of ['http://schema.org/','https://schema.org/',{'@vocab':'https://schema.org/'}])expect(await check({'@context':context,...article})).toEqual([]);expect((await check({'@context':['https://schema.org',{'BlogPosting':'https://evil.example/Type'}],...article})).some(x=>/context/i.test(x))).toBe(true);expect((await check({'@context':'https://schema.org',...article,author:{'@context':'https://evil.example','@type':'Person',name:'Name'}})).some(x=>/context/i.test(x))).toBe(true);expect((await check({'@context':'https://schema.org','@graph':Array.from({length:200},()=>article)})).some(x=>/budget/.test(x))).toBe(true);}finally{await browser.close();}},15000);
+it('accepts documented aliases and explicit canonical expectation without dropping meaningful query values',async()=>{const browser=await chromium.launch();try{const page=await browser.newPage();const check=(input:MetadataInput)=>page.evaluate(validateMetadata,input);
+ expect(await check({html:specimen(),view:'article',url:url+'?m=1&utm_source=test&gclid=123#heading'})).toEqual([]);
+ expect((await check({html:specimen(),view:'article',url:url+'?q=meaningful'})).length).toBeGreaterThan(0);
+ expect((await check({html:specimen(),view:'article',url:url.replace('article','Article')})).length).toBeGreaterThan(0);
+ expect((await check({html:specimen(),view:'article',url:url+'?m=1&m=meaningful'})).length).toBeGreaterThan(0);
+ expect(await check({html:specimen('search','https://stage.example/search'),view:'search',url:'https://stage.example/search?q=cloud',expectedCanonical:'https://stage.example/search'})).toEqual([]);
+ expect((await check({html:specimen(),view:'article',url,expectedCanonical:'https://evil.example/'})).length).toBeGreaterThan(0);
+ const wrongOg=specimen().replace('</head>','<meta property="og:url" content="https://stage.example/other"></head>');expect((await check({html:wrongOg,view:'article',url})).some(x=>/OpenGraph URL/.test(x))).toBe(true);
+ }finally{await browser.close();}},15000);
+it('staging validates and forwards independently configured canonical expectations',async()=>{
+ const origin='https://stage.example';const stamp='0.1.0+'+'a'.repeat(40);const raw=()=>({origin,build:stamp,views:['home','article','label','search','archive','static','error','paged'].map(type=>({type,url:origin+'/'+type,expectedText:['search','static','error'].includes(type)?'Article':undefined,expectedCanonical:undefined as string|undefined}))});
+ for(const value of ['https://evil.example/','http://stage.example/','https://user:pass@stage.example/','https://stage.example/#fragment','']){const m=raw();m.views[3].expectedCanonical=value;expect(()=>validateManifest(m)).toThrow();}
+ const m=raw();m.views[3].url=origin+'/search?q=cloud';m.views[3].expectedCanonical=origin+'/search';const manifest=validateManifest(m);manifest.views=manifest.views.filter(v=>v.type==='search');
+ const body=specimen('search',origin+'/search').replace('</head>',`<meta name="theme-build" content="${stamp}"></head>`);const mock=vi.spyOn(globalThis,'fetch').mockImplementation(async()=>new Response(body,{status:200}));
+ try{await runStaging(manifest);delete manifest.views[0].expectedCanonical;await expect(runStaging(manifest)).rejects.toThrow(/Canonical disagrees/);}finally{mock.mockRestore();}
+},30000);

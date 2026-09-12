@@ -1,5 +1,4 @@
 """Deterministic verifier contracts; execute only in GitHub Actions."""
-import copy
 import hashlib
 import importlib.util
 import io
@@ -8,6 +7,7 @@ from pathlib import Path
 import stat
 import struct
 import unittest
+from unittest.mock import patch, Mock
 import warnings
 import zipfile
 from datetime import datetime, timezone
@@ -30,8 +30,7 @@ def evidence():
 def packed(files):
     stream = io.BytesIO()
     with zipfile.ZipFile(stream, 'w', zipfile.ZIP_DEFLATED) as z:
-        for name, data in files.items():
-            z.writestr(name, data)
+        for name, data in files.items(): z.writestr(name, data)
     return stream.getvalue()
 
 def candidate(blob=None):
@@ -76,6 +75,11 @@ class MetadataTests(unittest.TestCase):
                 c=candidate(); r,j,a=metadata(c); change(r,j,a)
                 with self.assertRaises(v.VerificationError): v.validate_metadata(r,j,a,c,NOW)
 
+    def test_actual_expiry_without_metadata_change(self):
+        c=candidate()
+        with self.assertRaises(v.VerificationError):
+            v.validate_metadata(*metadata(c),c,datetime(2027,1,1,tzinfo=timezone.utc))
+
 class ArchiveTests(unittest.TestCase):
     def test_positive(self):
         blob=packed(evidence()); self.assertEqual(v.inspect_archive(blob,candidate(blob)),evidence())
@@ -117,10 +121,43 @@ class ArchiveTests(unittest.TestCase):
         with self.assertRaises(v.VerificationError): v.inspect_archive(blob,candidate(blob))
 
     def test_expansion_limit(self):
-        from unittest.mock import patch
         blob=packed(evidence())
-        with patch.object(v,'MAX_EXPANDED_BYTES',1,create=True):
+        with patch.object(v,'MAX_EXPANDED_BYTES',1):
             with self.assertRaises(v.VerificationError): v.inspect_archive(blob,candidate(blob))
+
+    def test_browser_only_limit(self):
+        self.assertEqual(v.MAX_BROWSER_REPORT_BYTES,80*1024*1024)
+        self.assertEqual(v.MAX_REPORT_BYTES,64*1024*1024)
+        # Scale limits for cheap deterministic boundary tests; real artifact is verified separately.
+        with patch.object(v,'MAX_REPORT_BYTES',1024),patch.object(v,'MAX_BROWSER_REPORT_BYTES',1280):
+            files=evidence(); files['test-results/browser.json']=b'x'*1280
+            blob=packed(files)
+            self.assertEqual(v.inspect_archive(blob,candidate(blob))['test-results/browser.json'],b'x'*1280)
+            files['test-results/browser.json']+=b'x'; blob=packed(files)
+            with self.assertRaises(v.VerificationError): v.inspect_archive(blob,candidate(blob))
+            for name in ['unit-report.json','build-size.json']:
+                with self.subTest(name=name):
+                    files=evidence(); files[name]=b'x'*1025; blob=packed(files)
+                    with self.assertRaises(v.VerificationError): v.inspect_archive(blob,candidate(blob))
+
+    def test_other_limits_unchanged(self):
+        self.assertEqual(v.MAX_ARCHIVE_BYTES,160*1024*1024)
+        self.assertEqual(v.MAX_EXPANDED_BYTES,1024*1024*1024)
+        self.assertEqual(v.MAX_MEMBER_BYTES,256*1024*1024)
+        self.assertEqual(v.MAX_LOG_BYTES,32*1024*1024)
+        self.assertEqual(v.MAX_JSON_BYTES,8*1024*1024)
+        self.assertEqual(v.MAX_ENTRIES,10000)
+        blob=packed(evidence())
+        for key in ['MAX_ARCHIVE_BYTES','MAX_MEMBER_BYTES','MAX_ENTRIES']:
+            with self.subTest(key=key),patch.object(v,key,1):
+                with self.assertRaises(v.VerificationError): v.inspect_archive(blob,candidate(blob))
+
+    def test_crc_corruption_with_matching_archive_digest(self):
+        stream=io.BytesIO()
+        with zipfile.ZipFile(stream,'w',zipfile.ZIP_STORED) as z:
+            for name,raw in evidence().items(): z.writestr(name,raw)
+        blob=bytearray(stream.getvalue()); offset=blob.index(XML); blob[offset]^=1; blob=bytes(blob)
+        with self.assertRaises(v.VerificationError): v.inspect_archive(blob,candidate(blob))
 
 class EvidenceTests(unittest.TestCase):
     def test_positive(self):
@@ -159,6 +196,11 @@ class EvidenceTests(unittest.TestCase):
                 files=evidence(); value=json.loads(files[path]); change(value); files[path]=json.dumps(value).encode()
                 with self.assertRaises(v.VerificationError): v.validate_evidence(files,hashlib.sha256(XML).hexdigest(),candidate())
 
+    def test_strict_json(self):
+        for raw in [b'{"key":1,"key":2}',b'{"key":NaN}',b'{"key":Infinity}',b'not json']:
+            with self.subTest(raw=raw):
+                with self.assertRaises(v.VerificationError): v.strict_json(raw)
+
 class LogTests(unittest.TestCase):
     def test_checksum(self):
         digest=hashlib.sha256(XML).hexdigest()
@@ -167,5 +209,50 @@ class LogTests(unittest.TestCase):
         for text in ['no checksum','a'*64+'  other.xml','2026-09-12T04:16:48Z '+'a'*64+'  dist/theme.xml\n2026-09-12T04:16:48Z '+'b'*64+'  dist/theme.xml\n']:
             with self.subTest(text=text):
                 with self.assertRaises(v.VerificationError): v.checksum_from_log(text)
+
+class Response(io.BytesIO):
+    def __init__(self,body=b'',code=200,headers=None):
+        super().__init__(body); self.code=code; self.headers=headers or {}
+
+class TransportTests(unittest.TestCase):
+    def test_storage_allowlist(self):
+        self.assertTrue(v.allowed_download('https://sample.blob.core.windows.net/container/file?sig=example'))
+        self.assertTrue(v.allowed_download('https://sample.actions.githubusercontent.com/file'))
+        for url in ['http://sample.blob.core.windows.net/file','https://sample.blob.core.windows.net.evil.example/file','https://evil.example/file','https://user:pass@sample.blob.core.windows.net/file','https://sample.blob.core.windows.net:444/file','https://sample.blob.core.windows.net/file#fragment']:
+            with self.subTest(url=url): self.assertFalse(v.allowed_download(url))
+
+    def test_auth_not_forwarded_to_storage(self):
+        transport=v.Transport('test-token-not-a-secret'); seen=[]
+        def opened(request,timeout):
+            seen.append({key.lower():value for key,value in request.header_items()})
+            if len(seen)==1: return Response(code=302,headers={'Location':'https://sample.blob.core.windows.net/file'})
+            return Response(b'abc',headers={'Content-Length':'3'})
+        transport.opener=Mock();transport.opener.open.side_effect=opened
+        self.assertEqual(transport.download('/actions/artifacts/1/zip',10),b'abc')
+        self.assertEqual(seen[0]['authorization'],'Bearer test-token-not-a-secret')
+        self.assertNotIn('authorization',seen[1])
+        self.assertIsNone(v.NoRedirect().redirect_request(None,None,302,'',{},'https://evil.example'))
+
+    def test_storage_redirect_rejected_before_request(self):
+        transport=v.Transport('test');transport.opener=Mock()
+        transport.opener.open.return_value=Response(code=302,headers={'Location':'https://evil.example/file'})
+        with self.assertRaises(v.VerificationError): transport.download('/actions/artifacts/1/zip',10)
+        self.assertEqual(transport.opener.open.call_count,1)
+
+    def test_content_length_and_stream_bounds(self):
+        for response in [Response(b'abc',headers={'Content-Length':'2'}),Response(b'abc',headers={'Content-Length':'4'}),Response(b'abc'),Response(code=404)]:
+            with self.subTest(response=response):
+                with self.assertRaises(v.VerificationError): v.Transport('test').read(response,2)
+
+    def test_deadline_blocks_network(self):
+        transport=v.Transport('test');transport.deadline=0;transport.opener=Mock()
+        with self.assertRaises(v.VerificationError): transport.request('https://sample.blob.core.windows.net/file')
+        transport.opener.open.assert_not_called()
+
+    def test_redirect_count_bounded(self):
+        transport=v.Transport('test');transport.opener=Mock()
+        transport.opener.open.side_effect=lambda *a,**kw:Response(code=302,headers={'Location':'https://sample.blob.core.windows.net/file'})
+        with self.assertRaises(v.VerificationError): transport.download('/actions/artifacts/1/zip',10)
+        self.assertEqual(transport.opener.open.call_count,4)
 
 if __name__=='__main__': unittest.main(verbosity=2)

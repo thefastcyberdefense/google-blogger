@@ -1,0 +1,63 @@
+name: Pinned artifact verification
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: fcd-artifact-verification-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Run verifier contracts
+        run: |
+          python3 - <<'PY'
+          import unittest
+          class Result(unittest.TextTestResult):
+              def addFailure(self, test, err):
+                  super().addFailure(test, err)
+                  print('::error title=Verifier contract::' + test.id().replace('%','%25').replace('\n','%0A') + ': ' + str(err[1]).replace('%','%25').replace('\n','%0A').replace('\r','%0D'))
+              def addSubTest(self, test, subtest, err):
+                  super().addSubTest(test, subtest, err)
+                  if err:
+                      print('::error title=Verifier subtest::' + str(subtest).replace('%','%25').replace('\n','%0A').replace('\r','%0D') + ': ' + str(err[1]).replace('%','%25').replace('\n','%0A').replace('\r','%0D'))
+          suite=unittest.defaultTestLoader.discover('tests/artifact',pattern='test_*.py')
+          result=unittest.TextTestRunner(verbosity=2,resultclass=Result).run(suite)
+          print(f'::notice title=Verifier totals::tests={result.testsRun}, failures={len(result.failures)}, errors={len(result.errors)}, skipped={len(result.skipped)}')
+          raise SystemExit(0 if result.wasSuccessful() and not result.skipped and result.testsRun > 0 else 1)
+          PY
+  verify-candidate:
+    needs: contracts
+    if: >-
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'feat/fcd-artifact-verification') ||
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Verify pinned candidate without executing artifact code
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERIFIER_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: timeout 360s python3 tools/verify-artifact.py
+      - name: Upload verified handoff only after success
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: fcd-verified-handoff-${{ github.event.pull_request.head.sha || github.sha }}
+          path: verified-handoff/
+          if-no-files-found: error
+          retention-days: 14

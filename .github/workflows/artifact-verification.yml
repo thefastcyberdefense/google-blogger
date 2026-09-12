@@ -1,0 +1,48 @@
+name: Pinned artifact verification
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: fcd-artifact-verification-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Run verifier contracts
+        run: python3 -m unittest discover -s tests/artifact -p 'test_*.py' -v
+  verify-candidate:
+    needs: contracts
+    if: >-
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'feat/fcd-artifact-verification') ||
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Verify pinned candidate without executing artifact code
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERIFIER_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: timeout 360s python3 tools/verify-artifact.py
+      - name: Upload verified handoff only after success
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: fcd-verified-handoff-${{ github.event.pull_request.head.sha || github.sha }}
+          path: verified-handoff/
+          if-no-files-found: error
+          retention-days: 14

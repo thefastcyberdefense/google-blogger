@@ -83,21 +83,17 @@ class MetadataTests(unittest.TestCase):
 class ArchiveTests(unittest.TestCase):
     def test_positive(self):
         blob=packed(evidence()); self.assertEqual(v.inspect_archive(blob,candidate(blob)),evidence())
-
     def test_digest_mismatch(self):
         blob=packed(evidence()); c=candidate(blob); c['archive_sha256']='0'*64
         with self.assertRaises(v.VerificationError): v.inspect_archive(blob,c)
-
     def test_missing_file(self):
         files=evidence(); del files['unit-report.json']; blob=packed(files)
         with self.assertRaises(v.VerificationError): v.inspect_archive(blob,candidate(blob))
-
     def test_unsafe_names(self):
         for name in ['../escape','/absolute','test-results/../../escape','test-results\\escape','C:/escape','test-results//alias','test-results/./alias','script.py']:
             with self.subTest(name=name):
                 files=evidence(); files[name]=b'bad'; blob=packed(files)
                 with self.assertRaises(v.VerificationError): v.inspect_archive(blob,candidate(blob))
-
     def test_duplicate(self):
         out=io.BytesIO(packed(evidence()))
         with warnings.catch_warnings():
@@ -105,33 +101,27 @@ class ArchiveTests(unittest.TestCase):
             with zipfile.ZipFile(out,'a') as z: z.writestr('dist/theme.xml',XML)
         blob=out.getvalue()
         with self.assertRaises(v.VerificationError): v.inspect_archive(blob,candidate(blob))
-
     def test_symlink(self):
         out=io.BytesIO(packed(evidence()))
         with zipfile.ZipFile(out,'a') as z:
             info=zipfile.ZipInfo('test-results/link'); info.create_system=3; info.external_attr=(stat.S_IFLNK|0o777)<<16; z.writestr(info,'/tmp/escape')
         blob=out.getvalue()
         with self.assertRaises(v.VerificationError): v.inspect_archive(blob,candidate(blob))
-
     def test_encrypted_flag(self):
         blob=bytearray(packed(evidence()))
         local=blob.index(b'PK\x03\x04'); central=blob.index(b'PK\x01\x02')
         for offset in [local+6,central+8]: struct.pack_into('<H',blob,offset,struct.unpack_from('<H',blob,offset)[0]|1)
         blob=bytes(blob)
         with self.assertRaises(v.VerificationError): v.inspect_archive(blob,candidate(blob))
-
     def test_expansion_limit(self):
         blob=packed(evidence())
         with patch.object(v,'MAX_EXPANDED_BYTES',1):
             with self.assertRaises(v.VerificationError): v.inspect_archive(blob,candidate(blob))
-
     def test_browser_only_limit(self):
         self.assertEqual(v.MAX_BROWSER_REPORT_BYTES,80*1024*1024)
         self.assertEqual(v.MAX_REPORT_BYTES,64*1024*1024)
-        # Scale limits for cheap deterministic boundary tests; real artifact is verified separately.
         with patch.object(v,'MAX_REPORT_BYTES',1024),patch.object(v,'MAX_BROWSER_REPORT_BYTES',1280):
-            files=evidence(); files['test-results/browser.json']=b'x'*1280
-            blob=packed(files)
+            files=evidence(); files['test-results/browser.json']=b'x'*1280; blob=packed(files)
             self.assertEqual(v.inspect_archive(blob,candidate(blob))['test-results/browser.json'],b'x'*1280)
             files['test-results/browser.json']+=b'x'; blob=packed(files)
             with self.assertRaises(v.VerificationError): v.inspect_archive(blob,candidate(blob))
@@ -139,7 +129,6 @@ class ArchiveTests(unittest.TestCase):
                 with self.subTest(name=name):
                     files=evidence(); files[name]=b'x'*1025; blob=packed(files)
                     with self.assertRaises(v.VerificationError): v.inspect_archive(blob,candidate(blob))
-
     def test_other_limits_unchanged(self):
         self.assertEqual(v.MAX_ARCHIVE_BYTES,160*1024*1024)
         self.assertEqual(v.MAX_EXPANDED_BYTES,1024*1024*1024)
@@ -151,7 +140,6 @@ class ArchiveTests(unittest.TestCase):
         for key in ['MAX_ARCHIVE_BYTES','MAX_MEMBER_BYTES','MAX_ENTRIES']:
             with self.subTest(key=key),patch.object(v,key,1):
                 with self.assertRaises(v.VerificationError): v.inspect_archive(blob,candidate(blob))
-
     def test_crc_corruption_with_matching_archive_digest(self):
         stream=io.BytesIO()
         with zipfile.ZipFile(stream,'w',zipfile.ZIP_STORED) as z:
@@ -163,18 +151,14 @@ class EvidenceTests(unittest.TestCase):
     def test_positive(self):
         files=evidence(); digest=hashlib.sha256(XML).hexdigest()
         self.assertEqual(v.validate_evidence(files,digest,candidate())['xml_sha256'],digest)
-
     def test_xml_digest(self):
         with self.assertRaises(v.VerificationError): v.validate_evidence(evidence(),'0'*64,candidate())
-
     def test_stamp(self):
         files=evidence(); files['dist/theme.xml']=XML.replace(SHA.encode(),b'b'*40)
         with self.assertRaises(v.VerificationError): v.validate_evidence(files,hashlib.sha256(files['dist/theme.xml']).hexdigest(),candidate())
-
     def test_duplicate_stamp(self):
         files=evidence(); raw=XML.replace(b'</head>',b'<meta name="theme-build" content="0.1.0+'+SHA.encode()+b'"/></head>'); files['dist/theme.xml']=raw; c=candidate();c['xml_bytes']=len(raw)
         with self.assertRaises(v.VerificationError): v.validate_evidence(files,hashlib.sha256(raw).hexdigest(),c)
-
     def test_report_mutations(self):
         mutations=[
             ('build-size.json',lambda x:x.update(source='b'*40)),
@@ -195,11 +179,25 @@ class EvidenceTests(unittest.TestCase):
             with self.subTest(path=path,change=change):
                 files=evidence(); value=json.loads(files[path]); change(value); files[path]=json.dumps(value).encode()
                 with self.assertRaises(v.VerificationError): v.validate_evidence(files,hashlib.sha256(XML).hexdigest(),candidate())
-
     def test_strict_json(self):
         for raw in [b'{"key":1,"key":2}',b'{"key":NaN}',b'{"key":Infinity}',b'not json']:
             with self.subTest(raw=raw):
                 with self.assertRaises(v.VerificationError): v.strict_json(raw)
+    def test_benign_doctype_and_inert_prism_text(self):
+        raw=XML.replace(b'?>',b'?><!DOCTYPE html>').replace(b'<body/>',b'<body><script><![CDATA[const sample="<!DOCTYPE html> <!ENTITY inert>";]]></script><!-- <!DOCTYPE html> --></body>')
+        files=evidence(); files['dist/theme.xml']=raw
+        size=json.loads(files['build-size.json']);size['xml']['raw']=len(raw);files['build-size.json']=json.dumps(size).encode()
+        c=candidate();c['xml_bytes']=len(raw);digest=hashlib.sha256(raw).hexdigest()
+        self.assertEqual(v.validate_evidence(files,digest,c)['xml_sha256'],digest)
+    def test_reject_external_and_internal_dtd(self):
+        declarations=[b'<!DOCTYPE html SYSTEM "https://evil.example/external.dtd">',b'<!DOCTYPE html PUBLIC "public-id" "file:///etc/passwd">',b'<!DOCTYPE html [<!ENTITY x "expanded">]>',b'<!DOCTYPE html [<!ENTITY % p SYSTEM "file:///etc/passwd">%p;]>',b'<!DOCTYPE other>',b'<!DOCTYPE html []>']
+        for declaration in declarations:
+            with self.subTest(declaration=declaration):
+                with self.assertRaises(v.VerificationError): v.parse_xml(XML.replace(b'?>',b'?>'+declaration))
+    def test_reject_malformed_xml_and_undefined_entities(self):
+        for raw in [b'<html>',XML.replace(b'<body/>',b'<body>&unknown;</body>')]:
+            with self.subTest(raw=raw):
+                with self.assertRaises(v.VerificationError): v.parse_xml(raw)
 
 class LogTests(unittest.TestCase):
     def test_checksum(self):
@@ -220,7 +218,6 @@ class TransportTests(unittest.TestCase):
         self.assertTrue(v.allowed_download('https://sample.actions.githubusercontent.com/file'))
         for url in ['http://sample.blob.core.windows.net/file','https://sample.blob.core.windows.net.evil.example/file','https://evil.example/file','https://user:pass@sample.blob.core.windows.net/file','https://sample.blob.core.windows.net:444/file','https://sample.blob.core.windows.net/file#fragment']:
             with self.subTest(url=url): self.assertFalse(v.allowed_download(url))
-
     def test_auth_not_forwarded_to_storage(self):
         transport=v.Transport('test-token-not-a-secret'); seen=[]
         def opened(request,timeout):
@@ -232,23 +229,19 @@ class TransportTests(unittest.TestCase):
         self.assertEqual(seen[0]['authorization'],'Bearer test-token-not-a-secret')
         self.assertNotIn('authorization',seen[1])
         self.assertIsNone(v.NoRedirect().redirect_request(None,None,302,'',{},'https://evil.example'))
-
     def test_storage_redirect_rejected_before_request(self):
         transport=v.Transport('test');transport.opener=Mock()
         transport.opener.open.return_value=Response(code=302,headers={'Location':'https://evil.example/file'})
         with self.assertRaises(v.VerificationError): transport.download('/actions/artifacts/1/zip',10)
         self.assertEqual(transport.opener.open.call_count,1)
-
     def test_content_length_and_stream_bounds(self):
         for response in [Response(b'abc',headers={'Content-Length':'2'}),Response(b'abc',headers={'Content-Length':'4'}),Response(b'abc'),Response(code=404)]:
             with self.subTest(response=response):
                 with self.assertRaises(v.VerificationError): v.Transport('test').read(response,2)
-
     def test_deadline_blocks_network(self):
         transport=v.Transport('test');transport.deadline=0;transport.opener=Mock()
         with self.assertRaises(v.VerificationError): transport.request('https://sample.blob.core.windows.net/file')
         transport.opener.open.assert_not_called()
-
     def test_redirect_count_bounded(self):
         transport=v.Transport('test');transport.opener=Mock()
         transport.opener.open.side_effect=lambda *a,**kw:Response(code=302,headers={'Location':'https://sample.blob.core.windows.net/file'})

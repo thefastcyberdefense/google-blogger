@@ -1,8 +1,4 @@
-"""Read-only, pinned Actions artifact verification. Standard library only.
-
-The CLI runs only in GitHub Actions. Archive members are never extracted or
-executed. A handoff is written only after every provenance/content check passes.
-"""
+"""Pinned Actions artifact verifier; standard library only, no archive execution."""
 import hashlib
 import io
 import json
@@ -17,6 +13,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
+from xml.parsers import expat
 import zipfile
 from datetime import datetime, timezone
 
@@ -31,13 +28,12 @@ CANDIDATE = {
     'unit_passed': 203, 'browser_passed': 1170,
     'expires_at': '2026-09-26T04:28:06Z'
 }
-# Transport/archive safety bounds, NOT theme component budgets.
+# Transport/archive safety limits, NOT theme component budgets.
 MAX_ARCHIVE_BYTES = 160 * 1024 * 1024
 MAX_EXPANDED_BYTES = 1024 * 1024 * 1024
 MAX_MEMBER_BYTES = 256 * 1024 * 1024
 MAX_REPORT_BYTES = 64 * 1024 * 1024
-# Owner-approved exception for the observed 69,523,303-byte browser report only.
-MAX_BROWSER_REPORT_BYTES = 80 * 1024 * 1024
+MAX_BROWSER_REPORT_BYTES = 80 * 1024 * 1024  # Owner approved for browser.json only.
 MAX_ENTRIES = 10000
 MAX_JSON_BYTES = 8 * 1024 * 1024
 MAX_LOG_BYTES = 32 * 1024 * 1024
@@ -137,14 +133,13 @@ def inspect_archive(blob, candidate):
                 require(mode in (0, stat.S_IFREG, stat.S_IFDIR), 'special archive entry rejected')
                 require(mode != stat.S_IFDIR or info.is_dir(), 'directory metadata mismatch')
                 require(mode != stat.S_IFREG or not info.is_dir(), 'file metadata mismatch')
-                allowed = name in REQUIRED_FILES or name == 'package-lock.json' or name.startswith(('test-results/', 'playwright-report/')) or name in ('dist/',)
+                allowed = name in REQUIRED_FILES or name == 'package-lock.json' or name.startswith(('test-results/', 'playwright-report/')) or name == 'dist/'
                 require(allowed, 'unexpected artifact layout')
                 total += info.file_size
                 require(0 <= info.file_size <= MAX_MEMBER_BYTES and total <= MAX_EXPANDED_BYTES, 'archive expansion limit exceeded')
                 if name in REQUIRED_FILES:
                     limit = 500000 if name == 'dist/theme.xml' else (MAX_BROWSER_REPORT_BYTES if name == 'test-results/browser.json' else MAX_REPORT_BYTES)
                     require(info.file_size <= limit, 'evidence member size exceeded')
-            # Stream every member to verify CRC/actual lengths; never extract or execute.
             actual_total = 0
             for info in infos:
                 if info.is_dir():
@@ -169,11 +164,29 @@ def inspect_archive(blob, candidate):
         raise VerificationError('invalid archive structure or CRC') from None
 
 def checksum_from_log(text):
-    # Accept a checksum output line, never a command, notice, or arbitrary substring.
     clean = re.sub(r'\x1b\[[0-9;]*m', '', text)
     matches = re.findall(r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z\s+([a-f0-9]{64})\s+\*?dist/theme\.xml\s*$', clean, re.MULTILINE)
     require(len(matches) == 1, 'generating XML checksum missing or ambiguous')
     return matches[0]
+
+def parse_xml(raw):
+    # Expat distinguishes real declarations from inert CDATA/comments. The theme
+    # has a plain HTML doctype and Prism contains declaration-like regex text.
+    # Reject subsets and external identifiers BEFORE any entity can be processed.
+    def doctype(name, system_id, public_id, has_subset):
+        require(name == 'html' and system_id is None and public_id is None and not has_subset, 'XML DTD/entity declarations rejected')
+    def reject(*args):
+        raise VerificationError('XML DTD/entity declarations rejected')
+    parser = expat.ParserCreate()
+    parser.StartDoctypeDeclHandler = doctype
+    parser.EntityDeclHandler = reject
+    parser.ExternalEntityRefHandler = reject
+    parser.SetParamEntityParsing(expat.XML_PARAM_ENTITY_PARSING_NEVER)
+    try:
+        parser.Parse(raw, True)
+        return ET.fromstring(raw)
+    except (expat.ExpatError, ET.ParseError):
+        raise VerificationError('invalid XML') from None
 
 def validate_evidence(files, xml_digest, candidate):
     c = candidate
@@ -182,15 +195,13 @@ def validate_evidence(files, xml_digest, candidate):
     require(len(raw) == c['xml_bytes'] and len(raw) <= 500000, 'XML size mismatch')
     digest = hashlib.sha256(raw).hexdigest()
     require(re.fullmatch('[a-f0-9]{64}', xml_digest or '') and digest == xml_digest, 'XML checksum differs from generating log')
-    require(b'<!doctype' not in raw.lower() and b'<!entity' not in raw.lower(), 'XML DTD/entity declarations rejected')
-    try:
-        tree = ET.fromstring(raw)
-    except ET.ParseError:
-        raise VerificationError('invalid XML') from None
+    tree = parse_xml(raw)
     ns = '{http://www.w3.org/1999/xhtml}'
     require(tree.tag == ns + 'html', 'unexpected XML root')
+    head = tree.find(ns + 'head')
+    require(head is not None, 'XML head missing')
     stamps = [el for el in tree.iter(ns + 'meta') if el.get('name') == 'theme-build']
-    require(len(stamps) == 1 and stamps[0] in list(tree.find(ns + 'head')) and stamps[0].get('content') == '0.1.0+' + c['source'], 'XML build stamp mismatch')
+    require(len(stamps) == 1 and stamps[0] in list(head) and stamps[0].get('content') == '0.1.0+' + c['source'], 'XML build stamp mismatch')
     size = strict_json(files['build-size.json'])
     require(size.get('source') == c['source'] and size.get('xml', {}).get('raw') == len(raw), 'build-size report mismatch')
     unit = strict_json(files['unit-report.json'])
@@ -279,7 +290,7 @@ class Transport:
         with response:
             require(response.code == 302, 'expected GitHub download redirect')
             location = response.headers.get('Location', '')
-        # Separate unauthenticated requests: never forward Authorization to storage.
+        # Storage requests are newly constructed without API credentials.
         for _ in range(3):
             response = self.request(location, False)
             if response.code == 200: return self.read(response, limit)
@@ -308,7 +319,6 @@ def main():
     files = inspect_archive(blob, c)
     print('PASS: archive digest, paths, entry types, byte bounds and CRCs')
     evidence = validate_evidence(files, xml_digest, c)
-    # Recheck expiry/association before producing a handoff.
     validate_metadata(run, jobs, transport.api(f"/actions/artifacts/{c['artifact_id']}"), c, datetime.now(timezone.utc))
     report = {'status': 'verified', 'verified_at': datetime.now(timezone.utc).isoformat(), 'verifier_revision': verifier_sha, 'verification_run': os.environ.get('GITHUB_RUN_ID'), 'candidate': c, 'generating_run_url': f"https://github.com/{c['repository']}/actions/runs/{c['run_id']}", 'evidence': evidence, 'limits': {'archive_bytes': MAX_ARCHIVE_BYTES, 'expanded_bytes': MAX_EXPANDED_BYTES, 'entry_count': MAX_ENTRIES, 'report_bytes': MAX_REPORT_BYTES, 'browser_report_bytes': MAX_BROWSER_REPORT_BYTES, 'theme_xml_bytes': 500000}, 'limitations': ['Not a signed build attestation', 'No Blogger import/save or native compatibility validation', 'No human accessibility or field performance approval', 'XML copied byte-for-byte; not regenerated']}
     out = Path('verified-handoff')
@@ -330,6 +340,5 @@ if __name__ == '__main__':
         print('::error title=Artifact verification blocked::'+str(error))
         sys.exit(1)
     except Exception:
-        # Never expose tokens, signed URLs, raw HTTP errors or untrusted content.
         print('::error title=Artifact verification blocked::unexpected evidence or transport structure; no handoff approved')
         sys.exit(1)

@@ -36,6 +36,8 @@ MAX_ARCHIVE_BYTES = 160 * 1024 * 1024
 MAX_EXPANDED_BYTES = 1024 * 1024 * 1024
 MAX_MEMBER_BYTES = 256 * 1024 * 1024
 MAX_REPORT_BYTES = 64 * 1024 * 1024
+# Owner-approved exception for the observed 69,523,303-byte browser report only.
+MAX_BROWSER_REPORT_BYTES = 80 * 1024 * 1024
 MAX_ENTRIES = 10000
 MAX_JSON_BYTES = 8 * 1024 * 1024
 MAX_LOG_BYTES = 32 * 1024 * 1024
@@ -140,7 +142,7 @@ def inspect_archive(blob, candidate):
                 total += info.file_size
                 require(0 <= info.file_size <= MAX_MEMBER_BYTES and total <= MAX_EXPANDED_BYTES, 'archive expansion limit exceeded')
                 if name in REQUIRED_FILES:
-                    limit = 500000 if name == 'dist/theme.xml' else MAX_REPORT_BYTES
+                    limit = 500000 if name == 'dist/theme.xml' else (MAX_BROWSER_REPORT_BYTES if name == 'test-results/browser.json' else MAX_REPORT_BYTES)
                     require(info.file_size <= limit, 'evidence member size exceeded')
             # Stream every member to verify CRC/actual lengths; never extract or execute.
             actual_total = 0
@@ -308,7 +310,7 @@ def main():
     evidence = validate_evidence(files, xml_digest, c)
     # Recheck expiry/association before producing a handoff.
     validate_metadata(run, jobs, transport.api(f"/actions/artifacts/{c['artifact_id']}"), c, datetime.now(timezone.utc))
-    report = {'status': 'verified', 'verified_at': datetime.now(timezone.utc).isoformat(), 'verifier_revision': verifier_sha, 'verification_run': os.environ.get('GITHUB_RUN_ID'), 'candidate': c, 'generating_run_url': f"https://github.com/{c['repository']}/actions/runs/{c['run_id']}", 'evidence': evidence, 'limits': {'archive_bytes': MAX_ARCHIVE_BYTES, 'expanded_bytes': MAX_EXPANDED_BYTES, 'entry_count': MAX_ENTRIES, 'report_bytes': MAX_REPORT_BYTES, 'theme_xml_bytes': 500000}, 'limitations': ['Not a signed build attestation', 'No Blogger import/save or native compatibility validation', 'No human accessibility or field performance approval', 'XML copied byte-for-byte; not regenerated']}
+    report = {'status': 'verified', 'verified_at': datetime.now(timezone.utc).isoformat(), 'verifier_revision': verifier_sha, 'verification_run': os.environ.get('GITHUB_RUN_ID'), 'candidate': c, 'generating_run_url': f"https://github.com/{c['repository']}/actions/runs/{c['run_id']}", 'evidence': evidence, 'limits': {'archive_bytes': MAX_ARCHIVE_BYTES, 'expanded_bytes': MAX_EXPANDED_BYTES, 'entry_count': MAX_ENTRIES, 'report_bytes': MAX_REPORT_BYTES, 'browser_report_bytes': MAX_BROWSER_REPORT_BYTES, 'theme_xml_bytes': 500000}, 'limitations': ['Not a signed build attestation', 'No Blogger import/save or native compatibility validation', 'No human accessibility or field performance approval', 'XML copied byte-for-byte; not regenerated']}
     out = Path('verified-handoff')
     out.mkdir(exist_ok=False)
     (out/'theme.xml').write_bytes(files['dist/theme.xml'])

@@ -49,6 +49,30 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
+      - name: Inspect pinned archive inventory without extracting
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          timeout 360s python3 - <<'PY'
+          import hashlib, importlib.util, io, os, zipfile
+          spec=importlib.util.spec_from_file_location('verifier','tools/verify-artifact.py')
+          v=importlib.util.module_from_spec(spec);spec.loader.exec_module(v)
+          try:
+              c=v.CANDIDATE;t=v.Transport(os.environ['GH_TOKEN'])
+              blob=t.download(f"/actions/artifacts/{c['artifact_id']}/zip",v.MAX_ARCHIVE_BYTES)
+              v.require(len(blob)==c['archive_bytes'] and hashlib.sha256(blob).hexdigest()==c['archive_sha256'],'pinned archive checksum/size mismatch')
+              with zipfile.ZipFile(io.BytesIO(blob)) as z:
+                  infos=z.infolist()
+                  v.require(len(infos)<=v.MAX_ENTRIES,'entry limit exceeded')
+                  print('::notice title=Archive inventory::entries='+str(len(infos))+'; expanded_bytes='+str(sum(i.file_size for i in infos)))
+                  for name in v.REQUIRED_FILES:
+                      matches=[i for i in infos if i.filename==name]
+                      v.require(len(matches)==1,'required member missing or duplicate')
+                      print('::notice title=Evidence member::'+name+'; bytes='+str(matches[0].file_size))
+          except Exception:
+              print('::error title=Inventory blocked::pinned archive inventory unavailable; no raw transport detail logged')
+              raise SystemExit(1)
+          PY
       - name: Verify pinned candidate without executing artifact code
         env:
           GH_TOKEN: ${{ github.token }}

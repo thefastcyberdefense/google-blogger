@@ -13,10 +13,6 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    outputs:
-      artifact_id: ${{ steps.evidence.outputs.artifact-id }}
-      artifact_digest: ${{ steps.evidence.outputs.artifact-digest }}
-      xml_digest: ${{ steps.xml.outputs.digest }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -31,10 +27,8 @@ jobs:
       - run: cp dist/theme.xml "$RUNNER_TEMP/checked-in-theme.xml"
       - run: npm run build
       - name: Report size evidence (only total XML capped)
-        id: xml
         run: |
           sha256sum dist/theme.xml
-          echo "digest=$(sha256sum dist/theme.xml | cut -d ' ' -f1)" >> "$GITHUB_OUTPUT"
           node -e "const fs=require('node:fs');const s=JSON.parse(fs.readFileSync('build-size.json'));if(s.xml.raw>500000)throw Error('Total theme exceeds 500KB');console.log('::notice title=Asset sizes (JS/CSS informational)::'+JSON.stringify(s));"
       - run: npm run contract:check
       - run: npx --no-install playwright install --with-deps chromium firefox webkit
@@ -55,7 +49,6 @@ jobs:
           fi
       - run: npm audit --audit-level=moderate
       - name: Reject stale generated XML except historical build stamp
-        if: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'feat/fcd-native-states') }}
         run: |
           python3 - <<'PY'
           import os
@@ -71,7 +64,6 @@ jobs:
           print('PASS: checked-in XML equals compiled source except historical build stamp')
           PY
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        id: evidence
         if: ${{ always() }}
         with:
           name: fcd-evidence-${{ github.event.pull_request.head.sha || github.sha }}
@@ -84,68 +76,3 @@ jobs:
             playwright-report/
           if-no-files-found: error
           retention-days: 14
-  # Temporary owner-approved transfer. Remove this job and stale-check exception before acceptance.
-  transfer-native-state-xml:
-    needs: verify
-    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'feat/fcd-native-states' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: write
-      actions: read
-    env:
-      GH_TOKEN: ${{ github.token }}
-      SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
-      ARTIFACT_ID: ${{ needs.verify.outputs.artifact_id }}
-      ARCHIVE_DIGEST: ${{ needs.verify.outputs.artifact_digest }}
-      XML_DIGEST: ${{ needs.verify.outputs.xml_digest }}
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
-      - name: Verify source-bound artifact and copy only XML
-        run: |
-          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
-          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$ARTIFACT_ID" > "$RUNNER_TEMP/artifact-metadata.json"
-          timeout 180s gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$ARTIFACT_ID/zip" > "$RUNNER_TEMP/native-state-artifact.zip"
-          python3 - <<'PY'
-          import os,json,re,hashlib,zipfile,stat
-          from pathlib import Path
-          import xml.etree.ElementTree as E
-          tmp=Path(os.environ['RUNNER_TEMP']); sha=os.environ['SOURCE_SHA']
-          assert re.fullmatch('[a-f0-9]{40}',sha)
-          m=json.loads((tmp/'artifact-metadata.json').read_text()); w=m['workflow_run']
-          assert str(m['id'])==os.environ['ARTIFACT_ID'] and not m['expired']
-          assert m['name']=='fcd-evidence-'+sha
-          assert str(w['id'])==os.environ['GITHUB_RUN_ID'] and w['head_sha']==sha
-          assert w['repository_id']==1361530973 and w['head_repository_id']==1361530973
-          assert w['head_branch']=='feat/fcd-native-states'
-          digest=os.environ['ARCHIVE_DIGEST'].removeprefix('sha256:')
-          archive=tmp/'native-state-artifact.zip'
-          assert 0<archive.stat().st_size<=160*1024*1024 and archive.stat().st_size==m['size_in_bytes']
-          assert hashlib.file_digest(archive.open('rb'),'sha256').hexdigest()==digest
-          assert m['digest']=='sha256:'+digest
-          with zipfile.ZipFile(archive) as z:
-              entries=z.infolist(); assert len(entries)<=10000
-              selected=[i for i in entries if i.filename=='dist/theme.xml']
-              assert len(selected)==1
-              i=selected[0]; assert i.orig_filename==i.filename and not i.is_dir() and not i.flag_bits&1
-              assert stat.S_IFMT(i.external_attr>>16) in (0,stat.S_IFREG) and 0<i.file_size<=500000
-              with z.open(i) as stream: raw=stream.read(500001)
-              assert len(raw)==i.file_size and hashlib.sha256(raw).hexdigest()==os.environ['XML_DIGEST']
-          root=E.fromstring(raw); ns='{http://www.w3.org/1999/xhtml}'
-          stamps=[x for x in root.iter(ns+'meta') if x.get('name')=='theme-build']
-          assert len(stamps)==1 and stamps[0].get('content')=='0.1.0+'+sha
-          Path('dist/theme.xml').write_bytes(raw)
-          print('PASS: verified same-run archive and XML checksums, generating stamp and source association')
-          PY
-      - name: Commit only verified XML without rewriting branch history
-        run: |
-          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -- dist/theme.xml
-          test "$(git diff --cached --name-only)" = 'dist/theme.xml'
-          git commit -m "build: preserve Actions-generated native-state XML from $SOURCE_SHA"
-          git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)" push origin HEAD:refs/heads/feat/fcd-native-states

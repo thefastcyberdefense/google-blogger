@@ -1,166 +1,125 @@
-# Artifact handoff, staging and release boundaries
+# Artifact handoff, native acceptance and release boundaries
 
-## Current status and authority (2026-09-16)
+## Current status (2026-09-18 Asia/Dhaka)
 
-PRs #1 through #8 are merged without deployment in this work. Current main `0aedbcf5d8b583669631509b2c0852faf4bd612d` passed every stage of [post-merge verification](https://github.com/thefastcyberdefense/google-blogger/actions/runs/34680616793/job/103518470521), completed 2026-09-12 07:34:40 UTC:203 unit/contract and1170 browser passes, no reported failed/pending/skipped/unexpected/flaky results,95157 raw XML bytes, audit and generated XML consistency. [Post-merge CodeQL](https://github.com/thefastcyberdefense/google-blogger/actions/runs/34680616422) successfully analyzed Python, Actions and JavaScript/TypeScript; successful analysis is not zero-alert or release assurance.
+Main baseline is `e1e7bb3cee62ec03cfcc290fa85fb473191eb9b4`, with PRs #1-9 merged. [PR #9 post-merge CI](https://github.com/thefastcyberdefense/google-blogger/actions/runs/35079121123/job/104738565032) completed2026-09-16 09:33:49 UTC: all stages successful,203 unit/contract and1170 browser passes,0 reported failed/pending/skipped/unexpected/flaky results,95157-byte XML, audit and generated consistency. [Post-merge CodeQL](https://github.com/thefastcyberdefense/google-blogger/actions/runs/35079120069) analyzed Python, Actions and JavaScript/TypeScript successfully; this is not zero-alert or release assurance.
 
-Phase1A is complete and merged through [PR #8](https://github.com/thefastcyberdefense/google-blogger/pull/8). Its final verifier revision, Actions evidence and approved handoff are recorded below. Main's post-merge CI did not dispatch the separate pinned-artifact verifier. Current main, the verifier revision and the generating theme revision must not be conflated.
+[PR #10](https://github.com/thefastcyberdefense/google-blogger/pull/10) is the owner-approved distinct native-state implementation on feat/fcd-native-states. Owner approved an eleven-file boundary after the existing no-JS search test needed a selector correction. Source development, Actions verification, sequential review and branch-only generated XML transfer are approved. Merge, import, live requests, publishing, settings, DNS, release/tag creation and branch deletion/restoration are not.
 
-The owner approved only a fresh `docs/fcd-native-staging-baseline` preparation branch and changes to this document and docs/PROJECT-PLAN.md on 2026-09-16. Ordinary PR verification is required; final preparation evidence belongs in its PR. Artifact-verifier dispatch, evidence preservation to an unspecified destination, staging import/save, repository variables, staging requests, content/widget/comment mutations, defect implementation, merge, production deployment, DNS and branch restoration/deletion are not authorized by this approval. No staging or production operation is performed by these instructions.
+Owner will handle Blogger uploads and share save/render evidence. Supplied https://blogs.fastcyberdefense.com/ is the production target, not disposable staging; only controlled-production test planning was selected. No backup/save/build-stamp evidence has yet been supplied in this work. Ledger's https://blogs.redwan.work/ is the reference site, not the FCD target. Existing staging-only checks must not be silently redirected to production. Do not request OAuth credentials or introduce a publisher merely for owner-assisted theme uploads.
 
-## Approved replacement candidate (unchanged by preparation)
+## Native-state XML: generated, not yet selected for import
+
+The corrected [run35259136763](https://github.com/thefastcyberdefense/google-blogger/actions/runs/35259136763) at source `bcb5b82706568c2f6f29cd1795b2589767e42146` passed211 unit/contract and1434 browser tests, no reported failures/pending/skips/unexpected/flaky, and dependency audit. The temporary stale-XML step was skipped for source-bound generation, not counted as a pass. [Transfer job105334684908](https://github.com/thefastcyberdefense/google-blogger/actions/runs/35259136763/job/105334684908) verified same-run artifact identity/repository/source, archive digest and size, selected XML type/length/CRC/checksum and full stamp, then committed only dist/theme.xml without force-pushing.
+
+Generated-output commit: `03e473c55672bcce418552b5b7603ae18f4db989`. Actual XML source stamp: `0.1.0+bcb5b82706568c2f6f29cd1795b2589767e42146`; size101248 raw bytes. XML is copied from Actions, not edited locally. Subsequent documentation/workflow commits do not change its generating stamp. The temporary transfer job, write permission and stale-output exception have been removed; final exact-head CI must pass the restored consistency check, normal tests/audit, contracts and CodeQL. Final observed evidence and review belong in PR #10 rather than predeclaring pending runs successful here.
+
+This source update does NOT replace the Phase1A candidate below. That older candidate lacks these new states. Before any upload of the new implementation, explicitly select and record the exact source/run/attempt/artifact/archive digest/XML digest/size/stamp tuple and verify the downloaded bytes. A documentation or cleanup commit's generated artifact is not implicitly preferred. The existing pinned artifact verifier still verifies only9a6f484 and must not be represented as verifying PR #10's new XML. No verifier pin change or dispatch is part of this slice.
+
+## Previously approved Phase1A candidate (unchanged)
 
 | Field | Pinned value |
 | --- | --- |
-| Repository | thefastcyberdefense/google-blogger (1361530973) |
-| Generating source | `9a6f484a2c389c3b256dcd58d88742118fc01905` |
-| Workflow | `.github/workflows/ci.yml`, FCD theme verification |
-| Run / attempt | [34672572631](https://github.com/thefastcyberdefense/google-blogger/actions/runs/34672572631) /1, push to main |
-| Generating job | [103496602996](https://github.com/thefastcyberdefense/google-blogger/actions/runs/34672572631/job/103496602996), completed2026-09-12 04:28:15 UTC |
-| Artifact metadata | [10291252454](https://api.github.com/repos/thefastcyberdefense/google-blogger/actions/artifacts/10291252454) |
-| Artifact name | `fcd-evidence-9a6f484a2c389c3b256dcd58d88742118fc01905` |
-| Archive SHA256 | `1fedb62352c275addd266e83b3955ada49341b176114ea269884e9d0ca2bd069` |
+| Repository |thefastcyberdefense/google-blogger (1361530973)|
+| Generating source |`9a6f484a2c389c3b256dcd58d88742118fc01905`|
+| Workflow |.github/workflows/ci.yml, FCD theme verification|
+| Run / attempt |[34672572631](https://github.com/thefastcyberdefense/google-blogger/actions/runs/34672572631) /1, push/main|
+| Generating job |[103496602996](https://github.com/thefastcyberdefense/google-blogger/actions/runs/34672572631/job/103496602996), completed2026-09-12 04:28:15 UTC|
+| Artifact |[10291252454](https://api.github.com/repos/thefastcyberdefense/google-blogger/actions/artifacts/10291252454)|
+| Name |fcd-evidence-9a6f484a2c389c3b256dcd58d88742118fc01905|
+| Verified archive SHA256 |`1fedb62352c275addd266e83b3955ada49341b176114ea269884e9d0ca2bd069`|
 | Archive bytes |99701644|
-| Source-artifact expiry |2026-09-26 04:28:06 UTC (10:28:06 AM Asia/Dhaka), subject to earlier deletion|
+| Source expiry |2026-09-26 04:28:06 UTC (10:28:06 AM Asia/Dhaka), subject to earlier deletion|
 | Verified XML bytes |95157|
-| Required XML build stamp |`0.1.0+9a6f484a2c389c3b256dcd58d88742118fc01905`|
-| Verified source reports |203 unit/contract passes,1170 browser passes; zero failures/pending/skips/unexpected/flaky|
-| Individual XML SHA256 |`25b06c6c3414a3c4094153ba272de2445cd801318d38541a4edfc0fdffce4ce3`, computed from downloaded XML and matched with the generating job's unique checksum output in Phase1A|
+| Actual stamp |`0.1.0+9a6f484a2c389c3b256dcd58d88742118fc01905`|
+| Verified XML SHA256 |`25b06c6c3414a3c4094153ba272de2445cd801318d38541a4edfc0fdffce4ce3`|
+| Reports |203 unit/contract and1170 browsers,0 failures/pending/skips/unexpected/flaky/retries|
 
-The archive digest is not the XML digest or a signed build attestation. Approval explicitly selected this replacement; never substitute another run because its artifact name looks similar. Verification code revisions and generated theme source revisions are intentionally different. The newer post-merge artifact for0aedbcf is source-CI evidence, not an automatically approved import candidate.
+The individual XML checksum was computed from downloaded bytes and matched the generating job's unique checksum line. Archive digest, XML digest and signed provenance are different concepts. This handoff is not a signed build attestation.
 
-### Verified Phase1A handoff and retention
+[Final Phase1A verification](https://github.com/thefastcyberdefense/google-blogger/actions/runs/34676925901) at verifier81a8f111e44808a246eea6a9c145187112fb866c passed31 contracts with0 failures/errors/skips and live-candidate verification/upload. Output [artifact10291819197](https://api.github.com/repos/thefastcyberdefense/google-blogger/actions/artifacts/10291819197), named fcd-verified-handoff-81a8f111e44808a246eea6a9c145187112fb866c, contains theme.xml, theme.xml.sha256, verification.json. GitHub-reported output archive:32055 bytes, SHA256 `549b19b099b2d23e70ad2a8bf59d8bdfc50edcbe9d883603af1b33cad51fdb0a`, expiry2026-09-26 05:58:38 UTC (11:58:38 AM Asia/Dhaka).
 
-[Final verification run34676925901](https://github.com/thefastcyberdefense/google-blogger/actions/runs/34676925901) at verifier revision `81a8f111e44808a246eea6a9c145187112fb866c` passed31 verifier test methods with zero failures/errors/skips and the real-candidate verification/upload. The generating source remains9a6f484 as pinned above.
+Both original/handoff metadata matched and reported unexpired on2026-09-16; handoff availability was checked again2026-09-17. Those are metadata checks, not fresh archive downloads. Phase1A verified original archive bytes in Actions; no independent redownload-byte validation of its re-uploaded handoff archive is claimed. Verify downloaded XML against the recorded digest before separately authorized use.
 
-| Field | Recorded handoff |
-| --- | --- |
-| Artifact |[10291819197](https://api.github.com/repos/thefastcyberdefense/google-blogger/actions/artifacts/10291819197)|
-| Name |`fcd-verified-handoff-81a8f111e44808a246eea6a9c145187112fb866c`|
-| Files |theme.xml, theme.xml.sha256, verification.json|
-| Archive bytes |32055|
-| GitHub-reported output archive SHA256 |`549b19b099b2d23e70ad2a8bf59d8bdfc50edcbe9d883603af1b33cad51fdb0a`|
-| Expiry |2026-09-26 05:58:38 UTC (11:58:38 AM Asia/Dhaka), subject to earlier deletion|
+Preserve evidence in an approved durable location before expiry; no destination has been supplied. A new handoff does not extend the original artifact lifetime. Missing/expired logs or artifacts block re-verification; stop and obtain a reviewed replacement rather than silently selecting another run or relaxing checks. A separately approved main workflow_dispatch can reverify this old candidate while evidence remains available, but cannot validate PR #10's new states.
 
-On 2026-09-16 both original and handoff artifact metadata reported unexpired and matched the recorded identity/digest/size. This was a metadata refresh, not a fresh byte download or verification run. Phase1A verified original archive bytes in Actions; no separate redownload-byte validation of the re-uploaded output archive is claimed. Consumers must verify downloaded XML against the recorded individual digest before separately authorized import. The approved XML is copied byte-for-byte, not regenerated.
+### Historical candidates and checked-in XML
 
-Proposed next evidence operation: after separate approval, dispatch the existing artifact-verification workflow on main to reverify this same candidate and record the resolved verifier SHA, run/attempt, contract and live-job outcomes. Do not change pins or lower limits. Preserve original evidence and verified handoff in an explicitly approved durable location before expiry. No evidence destination has been supplied. A newly uploaded handoff does not extend the original source artifact lifetime. If original artifacts/logs expire or become unavailable, stop and obtain a separately approved replacement with a complete new tuple and verification; do not substitute silently.
+Previous candidate: source8e37eb53c9cc4c13dd3d5baf1d07fe71e984f312, run34426823783 attempt1, job102713723132, artifact10133169422, archive SHA256 `01cbf0d6abcf65a494b5c091d094628f4fadd230af3242a048efc03c36b024be`, expiry2026-09-24 01:55:41 UTC;185/1126 tests and95157-byte XML. Only metadata verification was recorded then; owner explicitly replaced it in Phase1A. See [historical pre-slice procedure](https://github.com/thefastcyberdefense/google-blogger/blob/e1e7bb3cee62ec03cfcc290fa85fb473191eb9b4/docs/DEPLOYMENT.md).
 
-### Historical candidates (not selected)
+Before PR #10, checked-in XML carried historical stamp0.1.0+ba4c9852803cbfcb60d3536199963af395cd6315. This branch's Actions-generated XML now carries bcb5b827 as recorded above. Normal CI normalizes only the build stamp when comparing generated versus checked-in XML; do not modify a stamp manually. Preparation/regression branch artifacts were never implicit import candidates.
 
-Previous candidate: source8e37eb53c9cc4c13dd3d5baf1d07fe71e984f312, run34426823783 attempt1, job102713723132, artifact10133169422, archive SHA256 `01cbf0d6abcf65a494b5c091d094628f4fadd230af3242a048efc03c36b024be`, expiry2026-09-24 01:55:41 UTC. It had185/1126 passing tests and95157-byte XML; only metadata verification was recorded during preparation. This is superseded by the owner's Phase1A candidate replacement, not erased history.
+## Retained artifact-verifier safety boundaries
 
-Preparation and later regression branch artifacts are not implicit import candidates. Checked-in dist/theme.xml retains its original source stamp `0.1.0+ba4c9852803cbfcb60d3536199963af395cd6315`; normal CI compares generated content after normalizing only that historical stamp. Do not confuse checked-in XML with the replacement artifact or edit its stamp manually.
+The unchanged .github/workflows/artifact-verification.yml runs contracts on PRs; its real-candidate job is restricted to the original same-repository feat/fcd-artifact-verification branch or explicit dispatch on main. The real-candidate job is intentionally skipped on feat/fcd-native-states: not a live verification pass. Checkout is nonpersistent; permissions contents:read/actions:read; no publisher or production credentials.
 
-## Verification process and safety limits
+The verifier pins repository and head repository IDs/names, source SHA, workflow ID/path, event, run attempt, generating job/stages, artifact identity/association, size/digest/expiry. Bounded authenticated API downloads are separated from unauthenticated allowlisted HTTPS storage requests; tokens and signed URLs are not forwarded/logged. All ZIP members undergo path/type/CRC/actual-length checks without extraction/execution; only four evidence files are retained. XML parsing allows plain html doctype and inert CDATA/comments, rejects external identifiers/internal subsets/entities, requires correct head stamp and unique generating-log checksum. Strict JSON and bounded result traversal validate totals and individual outcomes before artifact expiry/association recheck and fresh output creation. Upload requires verification success.
 
-`.github/workflows/artifact-verification.yml` runs deterministic standard-library contracts on PRs targeting main. The real pinned-candidate job runs after successful contracts only for the same-repository approved feature branch, or a later explicit workflow_dispatch on main. No automatic production/staging operation. Candidate job uses contents:read and actions:read; checkout does not persist credentials. The verifier is guarded to run in Actions and receives its exact source revision separately. On the current preparation branch, real-candidate verification is expected to be skipped by that branch gate; do not count the skip as a verification pass. No workflow change or dispatch is part of this preparation.
-
-Verification checks exact repository/head repository IDs and names, source SHA, workflow ID/path, event, run attempt, generating job and complete successful mandatory stages. It requires exact artifact identity/association, size, pinned digest and unexpired metadata. It then retrieves the generating job log and the archive using bounded HTTPS reads, explicitly separating authenticated API requests from unauthenticated allowlisted storage requests. No Authorization header is forwarded to storage; no signed URLs, tokens or raw transport errors appear in the handoff.
-
-| Safety boundary | Limit |
+| Boundary | Limit |
 | --- | --- |
 | Compressed archive |160 MiB|
-| Total expanded members |1 GiB|
+| Expanded members |1 GiB|
 | Any member |256 MiB|
-| Browser JSON only |80 MiB (83886080 bytes), owner approved|
+| Browser JSON only |80 MiB, explicitly owner approved|
 | Other selected reports |64 MiB|
 | API JSON / job log |8 MiB /32 MiB|
 | ZIP entries |10000|
-| Storage requests per download |At most3 after the API redirect|
-| Network deadline / request timeout |300 seconds total per transport / at most30 seconds per request|
-| Verifier process |330-second alarm,360-second outer timeout,10-minute job ceiling|
-| Raw theme XML |500000 bytes, the sole theme size cap|
+| Storage requests per download |At most3 after API redirect|
+| Network deadline / request timeout |300 seconds total per transport /at most30 seconds each|
+| Process / outer timeout / job |330 seconds /360 seconds /10 minutes|
+| Raw XML |500000 bytes, sole theme-size cap|
 
-The actual candidate inventory observed in Actions was396 entries,172591716 expanded bytes; browser.json69523303 bytes. The initial64 MiB report limit blocked it. Only browser.json was increased to80 MiB; no other limit was loosened. JS/CSS raw/gzip are informational and are not capped by these archive-processing limits.
+Original verified archive inventory:396 entries,172591716 expanded bytes,69523303-byte browser.json. Only the browser-report limit was raised from64 to80MiB. These processing limits are not CSS/JS growth caps. Output XML is byte-identical, not regenerated; no artifact code is executed.
 
-No archive path is extracted. Before reading members, reject traversal/absolute/ambiguous/control-character paths, duplicate case-folded entries, encrypted entries, symlinks/special types and unexpected top-level layout. Stream every member to check CRC and actual length under expansion limits; retain only the four selected evidence files in memory. Never execute archive scripts, HTML, report attachments or lockfile code.
+## Operator inputs and eight-view worksheet
 
-Verify XML byte length and SHA256 against the unique checksum output in the pinned generating job; parse well-formed XML and require one correct stamp in head. A plain `<!DOCTYPE html>` is allowed, but external identifiers, internal DTD subsets and entities are rejected by parser callbacks before processing. Declaration-like literals inside Prism CDATA/comments are inert, not XML declarations. No theme content is rewritten.
+Reuse [fixtures/staging-views.example.json](../fixtures/staging-views.example.json), not a new schema. Its blank fields are intentionally blocked. The owner supplied the FCD production URL and blog identity in conversation, but that does not establish import or authorize live changes. Keep owner-specific records outside public source unless approved. Public checks need publicly readable non-sensitive pages; no passwords, OAuth tokens or private content in the manifest.
 
-Validate build-size source and raw XML length, unit totals and every assertion, browser totals and individual outcomes with bounded traversal. Nonzero failed/pending/skipped/unexpected/flaky cases, retries, missing tests or inconsistent evidence fail. Recheck artifact association/expiry before writing the output.
+Required operator inputs: confirmed target blog name/ID and exact public HTTPS origin, authorized operator, backup date/location for theme and content separately, Layout/widget settings, durable evidence destination, selected XML digest/stamp, import/save time/result and rendered-stamp evidence. Inventory existing content first; creating/publishing sample articles/pages or mutating comments/widgets requires separate scope. Have real content sufficient for label/search/archive/pagination and representative technical article behavior.
 
-### Verified handoff output
-
-Only after all checks pass, create `verified-handoff/theme.xml`, `theme.xml.sha256` and `verification.json`, then upload as `fcd-verified-handoff-<verifier-sha>` with14-day retention. The report identifies generating source/run/artifact, verifier revision/run, actual XML digest/stamp/counts, limits and limitations. The output XML is copied byte-for-byte, not regenerated. Output publication is skipped on a failed verification step; partial files are not an approved handoff.
-
-Download the handoff from the exact fully successful final verification run linked in PR #8. Confirm the verifier revision and original candidate tuple; verify the downloaded XML checksum against its recorded digest before any separately authorized import. Preserve source and handoff evidence in an approved location before expiration. If an artifact/log expires or a download is unavailable, stop: do not use an arbitrary replacement, weaken checks or claim a pass. A verified handoff is not a signed attestation, native acceptance or release approval.
-
-## Eight-view manifest worksheet
-
-Use [fixtures/staging-views.example.json](../fixtures/staging-views.example.json); empty fields intentionally block execution. Keep owner-specific configuration outside the public repository unless explicitly approved for publication. Do not invent staging URLs or results. The example and runtime schema remain unchanged by this preparation.
-
-| Input | Required value |
+| View | Native URL / expected evidence |
 | --- | --- |
-| Blog identity |Dedicated non-sensitive staging blog name and ID, kept with handoff outside manifest|
-| Operator |Named authorized owner/operator and confirmed access to the selected staging blog|
-| origin |Exact public HTTPS origin, no credentials, path beyond slash, query or fragment; not production|
-| build |Full verified XML stamp of the actual imported candidate|
-| views |All eight types exactly once; real absolute URLs on configured origin without credentials/fragments|
-| expectedText |Nonempty intended visible main-content excerpt for search/static/error|
-| expectedCanonical |Optional independent same-origin HTTPS expectation for intentional canonicalization; omit unless known and justified|
-| Evidence location |Approved destination for backups, operator records, XML/checksum/report and run/log references; do not commit private records|
+| home |Initial populated catalog;HTTP200,visible main and heading|
+| article |Actual permalink;HTTP200,visible article-view/title/populated body|
+| label |Existing populated label;HTTP200|
+| search |Native results;HTTP200,independent expected visible text|
+| archive |Populated archive;HTTP200|
+| static |Actual page;HTTP200,independent expected visible text|
+| error |Nonexistent URL returning themed HTTP404 and expected text, not soft404|
+| paged |Actual older/newer results;HTTP200 and native navigation links|
 
-Inventory existing staging content before requesting changes. Enough approved content must exist to exercise a real article, label, search, archive, static page and pagination. Representative technical content should include headings, code, tables and images, with an existing approved diagram where appropriate. Creating or publishing test content needs separate staging authorization. Publicly readable staging must contain no sensitive data; a private/login-only blog cannot satisfy the current checker. Do not modify indexing or feed settings implicitly.
+All views exactly once, URLs from observed native output, same configured HTTPS origin, no credentials/fragments or redirects. Origin has no query/fragment/path beyond slash. build is the imported full stamp, not necessarily checker HEAD. expectedText is mandatory for search/static/error, never hidden/script text. Optional expectedCanonical requires an independently justified credential-free same-origin HTTPS URL without fragments/control characters; do not infer it from the tested response or insert empty optional values. Preserve robots/indexing policy rather than changing it to make checks pass.
 
-| View | Real native URL requirements |
-| --- | --- |
-| home |Initial populated catalog, HTTP200, visible main/heading|
-| article |Actual permalink, HTTP200, visible article-view/title/populated body, not catalog|
-| label |Existing populated label view, HTTP200|
-| search |Native search, HTTP200, expected visible text|
-| archive |Existing populated archive, HTTP200|
-| static |Actual page, HTTP200, expected visible text|
-| error |Nonexistent URL with actual HTTP404 themed output and expected text, not soft404|
-| paged |Real older/newer catalog URL, HTTP200 and native pagination links|
+After separately authorized import and complete inputs, obtain approval for FCD_STAGING_MANIFEST_JSON configuration and dispatch of the existing read-only staging workflow. Current approval does not adapt that workflow for production. Record checker SHA/run and imported source separately. Require all eight outcomes and full successful completion. Existing workflow logs results rather than uploading a dedicated evidence artifact. It had zero recorded runs on2026-09-16; this does not rule out unreported owner activity.
 
-Obtain URLs from actual staging, not guessed paths. Existing checker rejects redirects. Default canonical expectation uses the requested URL under existing normalization. Independently justified expectedCanonical must be credential-free same-origin HTTPS without fragments/control characters; do not infer it from returned HTML or insert an empty optional value. Do not change robots/indexing policy to pass.
+## Controlled import, native feedback and rollback plan
 
-## Owner-assisted native acceptance (separate approvals required)
+1. Before a separately approved import, export the existing theme, back up content separately, record Layout/widget settings and a recovery location. Use Blogger theme controls, never Settings > Import Content for theme XML; do not enable automatic content publication.
+2. Select and verify the exact XML tuple; agree target/operator, maintenance window and rollback triggers such as save failure, missing posts or broken navigation. For production, the exact import and any rollback require explicit authorization.
+3. Owner/operator imports and records UTC save result/errors and rendered stamp. A successful upload alone is not a pass. If save fails or stamp differs, preserve evidence; do not patch generated XML manually.
+4. After separate read-only test authorization, assess the real views and native HTTP statuses, metadata, labels/archives/pagination, selected feed mode, no-JS reading/fallback, Header1/Blog1/Layout, menu/search/TOC/copy/theme and comment rendering. Comment submission, moderation and Layout changes remain scoped mutations. Untested feed modes remain pending.
+5. For PR #10 specifically, record actual error, empty search, empty label, empty archive, initial-empty-home and generic-empty behavior where safely available. Never delete/unpublish production posts to manufacture empty-home coverage. If a scenario cannot safely exist on production, use a separately authorized disposable blog or leave that native scenario pending. Fixture coverage is not a substitute.
+6. Record defects by view/state/environment with exact reproduction, expected/actual result, evidence, severity and owner. Distinguish theme versus checker versus content/configuration/platform failures. Propose bounded changes; Actions regressions, generated XML, review, merge and replacement/reimport approvals remain separate.
+7. For an authorized rollback, restore recorded theme/widget settings, confirm save/rendered identity and native views, and treat content recovery separately. This implementation performs no restore.
 
-1. Identify staging blog/operator. Before a separately approved import, export existing theme, back up content and record widget settings/rollback references in an approved non-public location. Theme backup and content import are different. Never send theme XML through Settings > Import Content or enable automatic content publication.
-2. Obtain approval for the exact blog and verified XML. Owner or authorized operator imports/saves through Blogger theme controls; record UTC time, save success/errors and rendered stamp. Never substitute production. If save fails or stamp differs, preserve evidence and stop; do not patch generated XML manually.
-3. Complete the eight-view manifest; with separate go-ahead set FCD_STAGING_MANIFEST_JSON and dispatch existing Read-only Blogger staging checks. Record checker commit separately from theme stamp. Require complete run, all eight outcomes, metadata and visible-content checks. Current staging workflow logs results, not a dedicated evidence artifact.
-4. Record actual feeds under intended Full/Short/Until Jump Break/Custom/None/redirect settings, labels, archives, pagination, Blog1/Header1 and Layout editor behavior. Mutating widget/comment tests need approved staging scope. Initial smoke coverage targets the selected configuration; untested modes remain pending. Check native reading/navigation with theme JavaScript disabled and honest fallback for unavailable/empty-safe feed responses.
-5. Record human keyboard/screen-reader evidence with reviewer/date/browser/OS/assistive technology/view/state/theme and evidence links: landmarks, headings, skip link, focus order/visibility/return, menu/search/TOC/copy/comments, meaningful alt/diagram descriptions, no traps. Axe violations/incomplete results remain separate; no automated conformance claim. Phase1B's basic keyboard/narrow-screen smoke is not the later full human accessibility gate.
-6. Record visual/contrast, narrow reflow, text spacing,200% enlargement, actual400% browser zoom where applicable, local code/table/diagram scroll and print output. Fixture width is not true zoom; WebKit is not every Safari/iOS device. Fix confirmed theme-owned WCAG A/AA failures, never globally suppress them.
-7. Measure staging load/interaction/layout behavior and document methods/limitations. Synthetic observations are not field p75 CLS/INP. Field evidence remains pending; analytics installation is not implied.
-8. Obtain separate production approval only after applicable gates; rehearse authorized staging rollback using backups and widget settings. Preparation deploys/restores nothing. For a later approved restore, use recorded theme/widget backups, validate save/rendered identity and native views afterward, and treat content recovery separately from theme recovery.
+## Human and release gates
 
-For every finding, record view/state, reproduction, expected/actual behavior, evidence, severity and ownership. Distinguish theme defects from checker, content, configuration and platform issues. Propose a bounded source/test fix before implementing. A changed theme requires reviewed Actions-generated output, explicit replacement-candidate approval and separately authorized reimport/retest; a passing documentation-branch build does not select a new theme.
+Human keyboard/screen-reader review needs named reviewer/date/browser/OS/assistive technology/view/state/theme and evidence. Check headings/landmarks/skip-link/focus order/visibility/return, menu/search/TOC/copy/comments, meaningful image and diagram descriptions, no traps. Axe violations and incomplete results remain separate; no automated conformance claim.
 
-## Metadata and retained policies
+Require light/dark contrast, narrow reflow/text spacing,200% enlargement,true400% zoom where applicable, local code/table/diagram scrolling and print. Fixture width is not true zoom; WebKit is not all Safari/iOS devices. Fix confirmed theme-owned WCAG A/AA defects without global suppression. Record lab methods/limits; synthetic timings are not field p75 CLS/INP. No analytics install is implied.
 
-Every view requires meaningful title and no unintended duplicate canonical/description/social fields. Non-error views require unique same-origin canonical; error may omit it. Article schema is post-only, with headline and identity matching independent expectation. Validate optional author/date/image values; omit unavailable native values rather than inventing them. Retain all-head-content ownership, explicit Schema.org contexts, existing robots policy and native visible-content checks. Rich-results/indexing success is not guaranteed.
+All views require meaningful title, no unintended duplicate canonical/description/social fields; non-error views require valid unique same-origin canonical, error may omit it. Article schema is post-only with headline/identity matching independent expectation; optional native author/date/image values must be valid or omitted, not invented. Retain all-head-content ownership and current robots policy. Parsed checks bound responses to2MB and block scripts/resources; they do not prove interactive widgets or search-engine eligibility.
 
-Parsed HTML checks block scripts/resources and bound responses to2MB; they do not evaluate Blogger expressions, prove interactive widgets, check meaningful image descriptions or certify production SEO. Native import/save and real views remain mandatory, not waived by the old inaccessible-live-blog audit decision.
+Retain public feed fallbacks and500000 accepted decoded byte/8-second request bounds with bounded retries. Author covers remain existing fcd-article-cover figures, not synthesized/duplicated images. Preserve FCD identity and upstream licenses, native V3/V2 and500000 raw XML cap; CSS/JS sizes remain informational.
 
-Public feed modes and native fallback remain. Retain500000 accepted decoded bytes/8-second request bounds and bounded retries. Covers remain author-controlled existing figures using fcd-article-cover, not auto-duplicated images. Preserve native V3/V2 and FCD branding/license notices.
+Source readiness, exact final-head CI, artifact verification, native import/views, human review and release approval are separate. No known passing fixture result proves Blogger compatibility. The old inaccessible-live-blog waiver does not waive these gates. Sequential specialist self-review is not independent approval. Production release and deployment remain unauthorized/unperformed in this work.
 
-## Evidence state and phase exit
+## References
 
-| Gate | Current evidence / required next record |
-| --- | --- |
-| PR #8 source/main verification |Passed at0aedbcf; complete post-merge CI and CodeQL links above|
-| Phase1A verifier and handoff |Passed at81a8f111; approved generating source9a6f484; digest/stamp/report tuple above|
-| Current preparation |Two-document changes only; final exact-head Actions/review to be recorded in its PR|
-| Fresh main artifact-verifier dispatch |Not performed by this preparation; requires separate approval|
-| Evidence preservation |Destination not supplied; no transfer authorized by this preparation|
-| Staging identity/import/save |No supplied blog/operator/backup/save/rendered-stamp record in this work|
-| Eight native views |Zero staging-workflow runs returned on2026-09-16; real manifest and successful run remain pending|
-| Native interactions |Feed/navigation/widget/comment/Layout evidence pending within approved scope|
-| Human accessibility/visual/print/true zoom |Pending; basic smoke or fixture automation does not satisfy these gates|
-| Field performance |Pending; no field-data claim|
-| Production release/deployment |Not authorized or performed in this work|
+- [Blogger widget conditional/include tags](https://support.google.com/blogger/answer/46995?hl=en), rechecked2026-09-18 Asia/Dhaka for exclusive conditional syntax; field-level native runtime behavior still needs Blogger evidence.
+- [Blogger backup versus content import](https://support.google.com/blogger/answer/41387?hl=en), rechecked2026-09-16.
+- [Blogger theme controls](https://support.google.com/blogger/answer/1227173?hl=en).
+- [GitHub artifact API](https://docs.github.com/en/rest/actions/artifacts) and [workflow job logs](https://docs.github.com/en/rest/actions/workflow-jobs), references checked2026-09-12.
+- [GitHub artifact validation](https://docs.github.com/en/actions/tutorials/store-and-share-data).
 
-Phase1B closure requires the selected XML's successful native import/save, correct rendered stamp, all eight automated views passing and no unresolved critical native-functionality blocker, with native smoke results and limitations recorded. An untested area remains pending. This is a native-baseline gate, not production release approval. Sequential specialist self-review is not independent approval.
-
-## Official references
-
-- [Blogger backup versus content import](https://support.google.com/blogger/answer/41387?hl=en)
-- [Blogger theme controls](https://support.google.com/blogger/answer/1227173?hl=en)
-- [GitHub artifact API](https://docs.github.com/en/rest/actions/artifacts)
-- [GitHub workflow job logs](https://docs.github.com/en/rest/actions/workflow-jobs)
-- [GitHub artifact download/validation](https://docs.github.com/en/actions/tutorials/store-and-share-data)
-
-Blogger backup guidance rechecked2026-09-16: theme backup uses Theme controls; content backup/import is a separate procedure. API references checked2026-09-12 and artifact availability refreshed2026-09-16; theme-controls reference checked2026-09-10. No new runtime dependency or theme technology decision.
+No new runtime dependency or theme technology decision is part of this slice.

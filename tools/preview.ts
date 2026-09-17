@@ -18,6 +18,11 @@ for(const wrapper of data.wrappers)for(const count of data.counts){
  await writeFile(path.join(root,`.preview/${name}.html`),pug.renderFile(path.join(root,'fixtures/home.pug'),{...compiled,fixtureView:'home',fixtureWrapper:wrapper,fixturePosts,pretty:true}));
 }
 for(const view of ['label','search','archive']){views.push(view);await writeFile(path.join(root,`.preview/${view}.html`),pug.renderFile(path.join(root,'fixtures/home.pug'),{...compiled,fixtureView:view,pretty:true}));}
+// Shared presentation only: this models states, not native Blogger evaluation or HTTP behavior.
+for(const state of ['error','label','search','archive','home','generic']){
+ const name=`state-${state}`;views.push(name);
+ await writeFile(path.join(root,`.preview/${name}.html`),pug.renderFile(path.join(root,'fixtures/home.pug'),{...compiled,fixtureView:state==='generic'?'paged':state,fixturePosts:[],fixtureEmptyState:state,fixtureEmptyContext:'<img src=x onerror=alert(1)> & "quoted"',pretty:true}));
+}
 if (!process.argv.includes('--build-only')) createServer(async (req,res) => {
   try { const pathname = new URL(req.url || '/', 'http://127.0.0.1:4173').pathname.slice(1); const view = views.includes(pathname) ? pathname : 'home'; res.setHeader('content-type','text/html; charset=utf-8'); res.end(await readFile(path.join(root, `.preview/${view}.html`))); }
   catch { res.writeHead(500); res.end('Preview unavailable'); }

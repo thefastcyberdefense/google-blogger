@@ -149,3 +149,44 @@ mixin fcdArticle(post = {}, fixture = false)
       b:if(cond='data:view.isPost')
         +fcdRelated({}, false)
         +fcdShareAndCta({}, false)
+
+//- Copy and recovery markup are shared; Blogger decides native state at render time.
+//- Fixture state selection is a simulation, not an evaluator of Blogger expressions.
+mixin fcdEmptyPanel(state, fixture = false, context = '')
+  - var titles = {error:'Page not found',label:'No articles under this label',search:'No matching articles',archive:'No articles in this period',home:'No articles published yet',generic:'No articles on this page'}
+  - var descriptions = {error:'The page may have moved or the address may be incorrect.',label:'Try another topic or search the publication.',search:'Try fewer words or a different search term.',archive:'Try another period or search the publication.',home:'New security research will appear here when it is published.',generic:'Return to the publication or try a different search.'}
+  - var nativeContext = {label:'data:view.search.label',search:'data:view.search.query',archive:'data:view.archive.rangeMessage'}
+  section.empty-state(data-empty-state=state)
+    h2= titles[state]
+    p= descriptions[state]
+    if nativeContext[state]
+      if fixture
+        if context
+          p.empty-context= context
+      else
+        b:if(cond=nativeContext[state])
+          p.empty-context
+            b:eval(expr=nativeContext[state]+'.escaped')/
+    form.search-form(action=fixture ? '/search' : undefined expr:action=fixture ? undefined : 'data:blog.searchUrl' method='get' role='search' aria-label='Recovery search')
+      label.sr-only(for='empty-state-query-'+state) Search the publication
+      input(id='empty-state-query-'+state type='search' name='q' placeholder='Search the publication')/
+      button(type='submit') Search
+    p
+      a(href=fixture ? '/' : undefined expr:href=fixture ? undefined : 'data:blog.homepageUrl') Return to publication
+
+mixin fcdEmptyState(fixture = false, state = 'generic', context = '')
+  if fixture
+    +fcdEmptyPanel(state, true, context)
+  else
+    b:if(cond='data:view.isError')
+      +fcdEmptyPanel('error')
+      b:elseif(cond='data:view.isLabelSearch')/
+      +fcdEmptyPanel('label')
+      b:elseif(cond='data:view.isSearch')/
+      +fcdEmptyPanel('search')
+      b:elseif(cond='data:view.isArchive')/
+      +fcdEmptyPanel('archive')
+      b:elseif(cond='data:view.isHomepage and not data:newerPageUrl')/
+      +fcdEmptyPanel('home')
+      b:else/
+      +fcdEmptyPanel('generic')

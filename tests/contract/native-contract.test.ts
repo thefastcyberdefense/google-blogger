@@ -25,3 +25,36 @@ const mutations:[string,(s:string)=>string][]=[
 ];
 it.each(mutations)('rejects %s',(_name,mutate)=>{const changed=mutate(original);expect(changed).not.toBe(original);const r=check(changed);expect(r.status,r.stdout).not.toBe(0);});
 it('does not flag comments describing banned syntax',()=>{const r=check(original.replace('<head>','<head><!-- data:posts.size gt 0; b:version is forbidden guidance, not executable markup -->'));expect(r.status,r.stderr).toBe(0);});
+
+const states=['error','label','search','archive','home','generic'];
+it.each(states)('ships a distinct native %s empty state',state=>{
+ expect(original).toContain(`data-empty-state="${state}"`);
+});
+it('uses an exclusive error-first native dispatch with label before search and a generic fallback',()=>{
+ const result=spawnSync('python3',['-c',`
+import xml.etree.ElementTree as E
+r=E.parse('dist/theme.xml').getroot(); b='{http://www.google.com/2005/gml/b}'; h='{http://www.w3.org/1999/xhtml}'
+w=next(x for x in r.iter(b+'widget') if x.get('id')=='Blog1')
+p=next(x for x in w.findall(b+'includable') if x.get('id')=='noContentPlaceholder')
+chain=p.find(b+'if')
+assert chain is not None, 'missing exclusive native state dispatch'
+assert chain.get('cond')=='data:view.isError'
+assert [x.get('cond') for x in chain.findall(b+'elseif')]==['data:view.isLabelSearch','data:view.isSearch','data:view.isArchive','data:view.isHomepage and not data:newerPageUrl']
+assert len(chain.findall(b+'else'))==1
+assert [x.get('data-empty-state') for x in chain.findall(h+'section')]==['error','label','search','archive','home','generic']
+assert not list(p.iter(h+'h1')), 'empty state must not duplicate page h1'
+for section in chain.findall(h+'section'):
+ assert len(section.findall(h+'h2'))==1
+ form=section.find(h+'form'); assert form is not None
+ assert form.get('method')=='get' and form.get('{http://www.google.com/2005/gml/expr}action')=='data:blog.searchUrl'
+ assert any(x.get('name')=='q' and x.get('type')=='search' for x in form.iter(h+'input'))
+ assert any(x.get('{http://www.google.com/2005/gml/expr}href')=='data:blog.homepageUrl' for x in section.iter(h+'a'))
+for expr in ['data:view.search.query.escaped','data:view.search.label.escaped','data:view.archive.rangeMessage.escaped']:
+ assert any(x.get('expr')==expr for x in p.iter(b+'eval')), 'missing escaped native context: '+expr
+`],{encoding:'utf8'});
+ expect(result.status,result.stderr+result.stdout).toBe(0);
+});
+it('shares state content between production and fixture instead of duplicating copy',()=>{
+ expect(readFileSync('src/widgets/blog.pug','utf8')).toContain('+fcdEmptyState(false)');
+ expect(readFileSync('fixtures/home.pug','utf8')).toContain('+fcdEmptyState(true,');
+});

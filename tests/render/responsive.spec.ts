@@ -30,12 +30,20 @@ for(const view of ['home','article','paged','empty','error'])test(`${view} share
 });
 for(const view of ['home','article','paged','empty','error'])test(`${view} core content survives theme JavaScript disabled`,async({browser},info)=>{
   const context=await browser.newContext({javaScriptEnabled:false,viewport:info.project.use.viewport,colorScheme:info.project.use.colorScheme});const page=await context.newPage();
-  await page.route(`${origin}/**`,async route=>route.fulfill({status:view==='error'?404:200,contentType:'text/html',body:await readFile(`.preview/${view}.html`,'utf8')}));
-  await page.goto(`${origin}/${view}`);
-  await expect(page.locator('main#content')).toBeVisible();await expect(page.locator('form[role="search"]')).toBeVisible();
-  await expect(page.locator('label[for="search-query"]')).toHaveText('Search articles');
-  if(view==='article')await expect(page.locator('#article-body')).toBeVisible();
-  if(view==='home'||view==='paged')await expect(page.locator('.post-card')).toHaveCount(4);
-  if(view==='empty'||view==='error')await expect(page.locator('.empty-state')).toBeVisible();
-  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1)).toBe(true);await context.close();
+  try{
+    await page.route(`${origin}/**`,async route=>route.fulfill({status:view==='error'?404:200,contentType:'text/html',body:await readFile(`.preview/${view}.html`,'utf8')}));
+    await page.goto(`${origin}/${view}`);
+    await expect(page.locator('main#content')).toBeVisible();await expect(page.locator('#site-search[role="search"]')).toBeVisible();
+    await expect(page.locator('label[for="search-query"]')).toHaveText('Search articles');
+    if(view==='article')await expect(page.locator('#article-body')).toBeVisible();
+    if(view==='home'||view==='paged')await expect(page.locator('.post-card')).toHaveCount(4);
+    if(view==='empty'||view==='error'){
+      await expect(page.locator('.empty-state')).toBeVisible();
+      const recovery=page.getByRole('search',{name:'Recovery search',exact:true});
+      await expect(recovery).toBeVisible();await expect(recovery).toHaveAttribute('method','get');await expect(recovery).toHaveAttribute('action','/search');
+      await expect(recovery.getByRole('searchbox',{name:'Search the publication',exact:true})).toBeVisible();
+      await expect(page.locator('form[role="search"]')).toHaveCount(2);
+    }else await expect(page.locator('form[role="search"]')).toHaveCount(1);
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1)).toBe(true);
+  }finally{await context.close();}
 });

@@ -9,10 +9,7 @@ b:section(id='page_body' class='main' name='Posts' showaddelement='false')
       b:if(cond='not data:posts.any or data:view.isError')
         b:include(name='noContentPlaceholder')/
     b:includable(id='noContentPlaceholder')
-      section.empty-state
-        h2 No articles to show
-        p Try another search or explore the latest publications.
-        a(expr:href='data:blog.homepageUrl') Visit the publication
+      +fcdEmptyState(false)
     b:includable(id='postCommentsAndAd' var='post')
       b:include(name='post' data='post')/
       b:if(cond='data:view.isSingleItem')

@@ -3,7 +3,7 @@
 <html b:css="false" b:defaultwidgetversion="2" b:layoutsVersion="3" b:responsive="true" b:templateUrl="indie.xml" b:templateVersion="0.0.0" expr:dir="data:blog.languageDirection" expr:lang="data:blog.locale" xmlns="http://www.w3.org/1999/xhtml" xmlns:b="http://www.google.com/2005/gml/b" xmlns:data="http://www.google.com/2005/gml/data" xmlns:expr="http://www.google.com/2005/gml/expr">
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
-    <meta name="theme-build" content="0.1.0+ba4c9852803cbfcb60d3536199963af395cd6315"/>
+    <meta name="theme-build" content="0.1.0+bcb5b82706568c2f6f29cd1795b2589767e42146"/>
     <meta name="color-scheme" content="light dark"/>
     <title><data:view.title.escaped/></title>
     <b:include data="blog" name="all-head-content"/>
@@ -143,10 +143,88 @@
                 </b:if>
               </b:includable>
               <b:includable id="noContentPlaceholder">
-                <section class="empty-state">
-                  <h2>No articles to show</h2>
-                  <p>Try another search or explore the latest publications.</p><a expr:href="data:blog.homepageUrl">Visit the publication</a>
-                </section>
+                    <b:if cond="data:view.isError">
+                          <section class="empty-state" data-empty-state="error">
+                            <h2>Page not found</h2>
+                            <p>The page may have moved or the address may be incorrect.</p>
+                            <form class="search-form" expr:action="data:blog.searchUrl" method="get" role="search" aria-label="Recovery search">
+                              <label class="sr-only" for="empty-state-query-error">Search the publication</label>
+                              <input id="empty-state-query-error" type="search" name="q" placeholder="Search the publication"/>
+                              <button type="submit">Search</button>
+                            </form>
+                            <p><a expr:href="data:blog.homepageUrl">Return to publication</a></p>
+                          </section>
+                      <b:elseif cond="data:view.isLabelSearch"/>
+                          <section class="empty-state" data-empty-state="label">
+                            <h2>No articles under this label</h2>
+                            <p>Try another topic or search the publication.</p>
+                            <b:if cond="data:view.search.label">
+                              <p class="empty-context">
+                                <b:eval expr="data:view.search.label.escaped"/>
+                              </p>
+                            </b:if>
+                            <form class="search-form" expr:action="data:blog.searchUrl" method="get" role="search" aria-label="Recovery search">
+                              <label class="sr-only" for="empty-state-query-label">Search the publication</label>
+                              <input id="empty-state-query-label" type="search" name="q" placeholder="Search the publication"/>
+                              <button type="submit">Search</button>
+                            </form>
+                            <p><a expr:href="data:blog.homepageUrl">Return to publication</a></p>
+                          </section>
+                      <b:elseif cond="data:view.isSearch"/>
+                          <section class="empty-state" data-empty-state="search">
+                            <h2>No matching articles</h2>
+                            <p>Try fewer words or a different search term.</p>
+                            <b:if cond="data:view.search.query">
+                              <p class="empty-context">
+                                <b:eval expr="data:view.search.query.escaped"/>
+                              </p>
+                            </b:if>
+                            <form class="search-form" expr:action="data:blog.searchUrl" method="get" role="search" aria-label="Recovery search">
+                              <label class="sr-only" for="empty-state-query-search">Search the publication</label>
+                              <input id="empty-state-query-search" type="search" name="q" placeholder="Search the publication"/>
+                              <button type="submit">Search</button>
+                            </form>
+                            <p><a expr:href="data:blog.homepageUrl">Return to publication</a></p>
+                          </section>
+                      <b:elseif cond="data:view.isArchive"/>
+                          <section class="empty-state" data-empty-state="archive">
+                            <h2>No articles in this period</h2>
+                            <p>Try another period or search the publication.</p>
+                            <b:if cond="data:view.archive.rangeMessage">
+                              <p class="empty-context">
+                                <b:eval expr="data:view.archive.rangeMessage.escaped"/>
+                              </p>
+                            </b:if>
+                            <form class="search-form" expr:action="data:blog.searchUrl" method="get" role="search" aria-label="Recovery search">
+                              <label class="sr-only" for="empty-state-query-archive">Search the publication</label>
+                              <input id="empty-state-query-archive" type="search" name="q" placeholder="Search the publication"/>
+                              <button type="submit">Search</button>
+                            </form>
+                            <p><a expr:href="data:blog.homepageUrl">Return to publication</a></p>
+                          </section>
+                      <b:elseif cond="data:view.isHomepage and not data:newerPageUrl"/>
+                          <section class="empty-state" data-empty-state="home">
+                            <h2>No articles published yet</h2>
+                            <p>New security research will appear here when it is published.</p>
+                            <form class="search-form" expr:action="data:blog.searchUrl" method="get" role="search" aria-label="Recovery search">
+                              <label class="sr-only" for="empty-state-query-home">Search the publication</label>
+                              <input id="empty-state-query-home" type="search" name="q" placeholder="Search the publication"/>
+                              <button type="submit">Search</button>
+                            </form>
+                            <p><a expr:href="data:blog.homepageUrl">Return to publication</a></p>
+                          </section>
+                      <b:else/>
+                          <section class="empty-state" data-empty-state="generic">
+                            <h2>No articles on this page</h2>
+                            <p>Return to the publication or try a different search.</p>
+                            <form class="search-form" expr:action="data:blog.searchUrl" method="get" role="search" aria-label="Recovery search">
+                              <label class="sr-only" for="empty-state-query-generic">Search the publication</label>
+                              <input id="empty-state-query-generic" type="search" name="q" placeholder="Search the publication"/>
+                              <button type="submit">Search</button>
+                            </form>
+                            <p><a expr:href="data:blog.homepageUrl">Return to publication</a></p>
+                          </section>
+                    </b:if>
               </b:includable>
               <b:includable id="postCommentsAndAd" var="post">
                 <b:include name="post" data="post"/>

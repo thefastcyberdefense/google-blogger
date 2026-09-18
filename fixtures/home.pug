@@ -6,6 +6,8 @@ block config
 - var labels = [{name:'Cloud Security',url:'/search/label/Cloud'},{name:'Research',url:'/search/label/Research'}]
 - var fixturePost = {title:'A practical guide to strengthening cloud identity boundaries',url:'/article',author:'Fixture author',date:'2026-09-08',dateLabel:'September 8, 2026',updated:'2026-09-09',updatedLabel:'September 9, 2026',labels,excerpt:'Synthetic technical content for responsive and interaction tests, not a published article.'}
 - var posts = typeof fixturePosts !== 'undefined' ? fixturePosts : titles.map((title,i)=>({title,url:'/2026/09/fixture-'+i+'.html',labels,author:'Fixture author',date:'2026-09-08',dateLabel:'September 8, 2026',excerpt:'Synthetic test fixture: security guidance with long titles, labels and text. This content is not shipped as Blogger posts.',image:i % 2 === 0 ? image : null}))
+- var emptyState = typeof fixtureEmptyState === 'string' ? fixtureEmptyState : view === 'error' ? 'error' : view === 'empty' || view === 'search' ? 'search' : view === 'label' ? 'label' : view === 'archive' ? 'archive' : view === 'home' ? 'home' : 'generic'
+- var emptyContext = typeof fixtureEmptyContext === 'string' ? fixtureEmptyContext : ''
 mixin fixtureCard(post, i)
   .post-outer-container
     .post-outer
@@ -37,10 +39,7 @@ html(lang='en')
             #Blog1.widget.Blog
               block stream
                 if view === 'empty' || view === 'error' || !posts.length
-                  section.empty-state
-                    h2 No articles to show
-                    p Try another search or explore the latest publications.
-                    a(href='/') Visit the publication
+                  +fcdEmptyState(true, emptyState, emptyContext)
                 else
                   p#filter-status.filter-status(role='status' hidden)
                   .blog-posts

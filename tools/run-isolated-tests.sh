@@ -7,6 +7,9 @@ source_sha=$(git rev-parse HEAD)
 node_bin=$(command -v node)
 uid=$(id -u); gid=$(id -g)
 probe="$PWD/tests/isolation/egress-probe.mjs"
+# Runner variables exist at execution time, not in the job-level env context.
+# Nested harness invocations inherit the same already validated directory.
+export FCD_ISOLATION_EVIDENCE=${FCD_ISOLATION_EVIDENCE:-"${RUNNER_TEMP:?}/fcd-isolation-${GITHUB_RUN_ID:?}-${GITHUB_RUN_ATTEMPT:?}"}
 
 # Only reviewed setup runs privileged. The harness has no network interfaces
 # except loopback; payloads run as the original non-root user. PID namespaces

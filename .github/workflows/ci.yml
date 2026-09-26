@@ -32,7 +32,12 @@ jobs:
           node -e "const fs=require('node:fs');const s=JSON.parse(fs.readFileSync('build-size.json'));if(s.xml.raw>500000)throw Error('Total theme exceeds 500KB');console.log('::notice title=Asset sizes (JS/CSS informational)::'+JSON.stringify(s));"
       - run: npm run contract:check
       - run: npx --no-install playwright install --with-deps chromium firefox webkit
-      - run: npm test -- --reporter=default --reporter=json --outputFile=unit-report.json
+      # Explicit names retain the existing stage inventory. These commands now
+      # include a mandatory isolation gate; a draft PR is not an execution guard.
+      - name: Run npm test -- --reporter=default --reporter=json --outputFile=unit-report.json
+        run: |
+          bash tools/run-isolated-tests.sh self-test
+          bash tools/run-isolated-tests.sh run unit 300 npm test -- --reporter=default --reporter=json --outputFile=unit-report.json
       - name: Report regression evidence
         if: ${{ always() }}
         run: |
@@ -40,10 +45,12 @@ jobs:
           import fs from 'node:fs';if(fs.existsSync('unit-report.json')){const r=JSON.parse(fs.readFileSync('unit-report.json','utf8'));console.log('::notice title=Unit totals::'+JSON.stringify({passed:r.numPassedTests,failed:r.numFailedTests,pending:r.numPendingTests}));for(const s of r.testResults||[])for(const a of s.assertionResults||[])if(a.status==='failed')console.log('::error title=Regression::'+a.fullName);}
           JS
       - run: npm run preview -- --build-only
-      - run: npm run test:render
+      - name: Run npm run test:render
+        run: bash tools/run-isolated-tests.sh run render 1100 npm run test:render
       - name: Report browser counts
         if: ${{ always() }}
         run: |
+          bash tools/run-isolated-tests.sh finalize
           if [ -f test-results/browser.json ]; then
             node -e "const r=require('./test-results/browser.json');console.log('::notice title=Browser totals::'+JSON.stringify(r.stats));"
           fi

@@ -1,6 +1,42 @@
 # Artifact handoff, native acceptance and release boundaries
 
-## Current status (2026-09-18 Asia/Dhaka)
+## Current status and bootstrap boundary (2026-09-27 Asia/Dhaka)
+
+This section supersedes the dated preparation snapshot below while preserving its candidate tuples and historical procedures. [PR #10](https://github.com/thefastcyberdefense/google-blogger/pull/10) was merged on explicit approval. Current main is `ecb1d438e8b3227911dc76359b9e05f127867b27`; [post-merge run 35303993418](https://github.com/thefastcyberdefense/google-blogger/actions/runs/35303993418/job/105472311414) completed 2026-09-18 03:52:09 UTC with all stages successful, 211 unit/contract and 1434 browser passes, audit and XML consistency. This is source evidence, not native/import/human/release acceptance. CodeQL analysis also succeeded, not a guarantee of zero alerts.
+
+The owner approved B0+N0 in [PR #11](https://github.com/thefastcyberdefense/google-blogger/pull/11), branch `feat/fcd-safe-verification-bootstrap`: only the two existing records, existing CI workflow and two new isolation files listed in docs/PROJECT-PLAN.md. This approval permits bounded source implementation, one PR and Actions verification, not a merge, candidate replacement, import, live request, settings change, publishing, DNS change, release/tag, rollback or branch cleanup. No product, lockfile or generated XML modification is part of bootstrap.
+
+Accepted Errata v2 closes reporting corrections R1 through R6 only. Product fixes, native Blogger checks and human accessibility acceptance remain open; the accepted reports need no additional rewrite. The project ledger retains canonical defect identities and exact accepted archive hash.
+
+### Retention and candidate status
+
+[Post-merge artifact 10531587199](https://api.github.com/repos/thefastcyberdefense/google-blogger/actions/artifacts/10531587199) metadata was refreshed for this bootstrap. Name: `fcd-evidence-ecb1d438e8b3227911dc76359b9e05f127867b27`; run 35303993418; source/head main `ecb1d438e8b3227911dc76359b9e05f127867b27`; size 104472550 bytes; GitHub-reported archive digest `8ffe382c3cefa4c447b5a38c523f718a80e8e6ef1a25cdc8d70d4ef825d0a28e`; `expired: false`; recorded expiry 2026-10-02 03:52:02 UTC (09:52:02 Asia/Dhaka), subject to earlier deletion. This is a metadata refresh, not fresh downloaded-byte verification or selection for Blogger import. An approved durable destination is still required for preservation.
+
+The Phase1A source/handoff retention timestamps below, 2026-09-26 04:28:06 and 05:58:38 UTC, have elapsed. Earlier availability statements remain historical, not current availability claims. No fresh availability or downloaded-byte re-verification of those archives is claimed. Do not silently repin, dispatch, weaken expiry checks, or substitute PR #10/bootstrap artifacts. The checked-in XML still has the genuine source stamp `0.1.0+bcb5b82706568c2f6f29cd1795b2589767e42146` and 101248-byte size, without any manual stamp edit.
+
+### Isolation and provenance compatibility
+
+Bootstrap adds a mandatory fail-closed namespace gate before application tests; its protected behavioral red and current verification status are recorded in docs/PROJECT-PLAN.md and PR #11. Dependency/browser installs, audit and upload remain separate from the no-egress application boundary. Each Vitest/Playwright payload and its children get loopback-only networking and non-root/no-new-privilege execution. No live site is used to prove the regression; no host firewall/AppArmor or privileged Docker-socket workaround is approved.
+
+The existing source verify job, exact stage inventory, read-only checkout/permissions, install flags, upload layout and retention are retained. Existing npm stage labels now include mandatory isolation execution, not skipped commands. A run/attempt-specific temporary directory preserves isolation records across Playwright output cleanup; the always-run browser report stage finalizes them under `test-results/isolation` and rejects missing/stale/failed required evidence. Original nonzero payload status is preserved even if receipt writing fails. Partial artifacts still upload after failure, and are not passing evidence.
+
+The pinned verifier remains unchanged: `CANDIDATE` and `REQUIRED_STEPS` are in tools/verify-artifact.py; it expects one successful verify job from a pinned push/main source/run attempt, exact repository association and artifact metadata. PR-head artifacts are not that candidate class. Only dist/theme.xml, build-size.json, unit-report.json and test-results/browser.json are semantically selected. New isolation JSON members receive archive integrity checking, not automatic semantic acceptance from that verifier. Their source acceptance comes from mandatory CI checks and substantive review. Any new stage/topology, future schema or candidate repin requires separate scope and negative tests.
+
+No native/public requests, uploads or production mutation occurred in bootstrap. The owner remains the Blogger operator; production is not disposable staging. Source merge readiness, selected/download-verified artifact readiness, native save/build-stamped views, human acceptance and release permission remain separate.
+
+### Operational references checked for this slice
+
+- [Linux unshare](https://man7.org/linux/man-pages/man1/unshare.1.html): network/PID/mount namespace lifetime and kill-child semantics.
+- [Linux setpriv](https://man7.org/linux/man-pages/man1/setpriv.1.html): non-root identities, capability removal and no-new-privileges inheritance.
+- [GitHub workflow triggers](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows): opening/updating a PR executes source CI; draft is not a safety guard.
+
+No dependency upgrade or platform migration is implied by these checks. Runner capability and browser behavior require exact-commit Actions evidence, not an assumed feasibility pass.
+
+---
+
+## Historical preparation snapshot (2026-09-18 Asia/Dhaka)
+
+The remainder preserves the earlier candidate/history/operator record. Prospective PR #10 statements are historical and superseded by the current section above; candidate values and native/release controls remain unchanged.
 
 Main baseline is `e1e7bb3cee62ec03cfcc290fa85fb473191eb9b4`, with PRs #1-9 merged. [PR #9 post-merge CI](https://github.com/thefastcyberdefense/google-blogger/actions/runs/35079121123/job/104738565032) completed2026-09-16 09:33:49 UTC: all stages successful,203 unit/contract and1170 browser passes,0 reported failed/pending/skipped/unexpected/flaky results,95157-byte XML, audit and generated consistency. [Post-merge CodeQL](https://github.com/thefastcyberdefense/google-blogger/actions/runs/35079120069) analyzed Python, Actions and JavaScript/TypeScript successfully; this is not zero-alert or release assurance.
 

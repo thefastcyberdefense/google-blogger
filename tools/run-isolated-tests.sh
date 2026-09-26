@@ -9,7 +9,8 @@ uid=$(id -u); gid=$(id -g)
 probe="$PWD/tests/isolation/egress-probe.mjs"
 
 # Only reviewed setup runs privileged. The harness has no network interfaces
-# except loopback; payloads run as the original non-root user.
+# except loopback; payloads run as the original non-root user. PID namespaces
+# destroy remaining descendants when their init process exits.
 namespace() {
   local mode=$1 seconds=$2 label=$3; shift 3
   local parent_ns; parent_ns=$(readlink /proc/self/ns/net)
@@ -25,25 +26,34 @@ namespace() {
   ' fcd-isolation "$mode" "$uid" "$gid" "$parent_ns" "$node_bin" "$probe" "$PATH" "$HOME" "${FCD_ISOLATION_EVIDENCE:?}" "$source_sha" "$label" "$@"
 }
 
+receipt_and_exit() {
+  local label=$1 result=$2 receipt_result=0
+  FCD_SOURCE=$source_sha "$node_bin" "$probe" receipt "$label" "$result" || receipt_result=$?
+  # Evidence errors fail successful runs, but never replace the original failure.
+  if [[ $result -ne 0 ]]; then exit "$result"; fi
+  exit "$receipt_result"
+}
+
 case ${1:-} in
   self-test)
-    export FCD_ISOLATION_EVIDENCE
-    FCD_ISOLATION_EVIDENCE=$(mktemp -d "${RUNNER_TEMP:?}/fcd-isolation.XXXXXX")
-    printf 'FCD_ISOLATION_EVIDENCE=%s\n' "$FCD_ISOLATION_EVIDENCE" >> "${GITHUB_ENV:?}"
+    # A job-scoped path is available to this step and all later steps. Never
+    # reuse an existing directory, including a stale rerun's evidence.
+    mkdir -m 700 "${FCD_ISOLATION_EVIDENCE:?}"
     set +e
     namespace suite 120 bootstrap
     result=$?
     set -e
-    FCD_SOURCE=$source_sha "$node_bin" "$probe" receipt bootstrap "$result"
-    exit "$result"
+    receipt_and_exit bootstrap "$result"
     ;;
   run)
     label=${2:-}; seconds=${3:-}; shift 3
     [[ $label =~ ^[a-z][a-z0-9-]{0,40}$ && $seconds =~ ^[1-9][0-9]{0,3}$ && $seconds -le 1200 && $# -gt 0 ]] || exit 78
-    # Test-first checkpoint: model the old direct-execution behavior only inside
-    # the protected harness. Actual application test invocations fail closed.
-    [[ ${FCD_HARNESS_NS:-} == "$(readlink /proc/self/ns/net)" && ${FCD_PARENT_NS:-} != "$FCD_HARNESS_NS" ]] || exit 78
-    exec "$@"
+    [[ -d ${FCD_ISOLATION_EVIDENCE:?} ]] || exit 78
+    set +e
+    namespace exec "$seconds" "$label" "$@"
+    result=$?
+    set -e
+    receipt_and_exit "$label" "$result"
     ;;
   finalize)
     FCD_SOURCE=$source_sha "$node_bin" "$probe" finalize

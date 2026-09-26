@@ -1,12 +1,73 @@
 # FCD development plan
 
-## Current baseline and approved development loop (2026-09-18 Asia/Dhaka)
+## Current baseline and approved B0+N0 bootstrap (2026-09-27 Asia/Dhaka)
+
+This section supersedes the dated PR #10 preparation snapshot below; that snapshot is retained as history, not current status. Main is `ecb1d438e8b3227911dc76359b9e05f127867b27`. PRs #1 through #10 are merged. [PR #10 post-merge CI](https://github.com/thefastcyberdefense/google-blogger/actions/runs/35303993418/job/105472311414) completed 2026-09-18 03:52:09 UTC with all stages successful: 211 unit/contract and 1434 browser passes, no reported failures/pending/skips/unexpected/flaky outcomes, audit and restored XML consistency. The checked-in XML remains 101248 bytes with its real generating stamp `0.1.0+bcb5b82706568c2f6f29cd1795b2589767e42146`. [Post-merge CodeQL](https://github.com/thefastcyberdefense/google-blogger/actions/runs/35303992974) and [inspected scheduled analysis](https://github.com/thefastcyberdefense/google-blogger/actions/runs/35542582610) succeeded; analysis success is not a zero-alert claim.
+
+At bootstrap start, the branch listing contained main and `qa/local-evidence-ecb1d438` at `2852768d139c9106943d884155dcabfc0246b7ef`, with no open PRs. The old native-state branch was retained at merge but is absent from that listing; no cause is inferred and no restoration is approved. The new branch is `feat/fcd-safe-verification-bootstrap`, tracked in [PR #11](https://github.com/thefastcyberdefense/google-blogger/pull/11).
+
+The owner accepted Reviewed Master Plan v2 (54525 bytes, SHA256 `f70d5ed9890e02ea4e95dea0f4eb15e97bb243df552fdc62700d9cc1e231c186`) and explicitly approved only this initial five-file implementation/PR/Actions boundary:
+
+1. docs/PROJECT-PLAN.md: reconcile the baseline and shared work ledger.
+2. docs/DEPLOYMENT.md: reconcile merge/evidence/retention and retain candidate boundaries.
+3. .github/workflows/ci.yml: mandatory safe application-test execution and evidence finalization.
+4. tools/run-isolated-tests.sh: fail-closed namespace runner, bounded execution and status preservation.
+5. tests/isolation/egress-probe.mjs: controlled safety regressions and evidence validation.
+
+No product source, fixture, dependency, lockfile, generated XML, candidate pin, job topology, permission, repository setting, merge or production change is authorized here. FCD Superpowers, Ralph and GSD remain the workflow; all project builds/tests run in GitHub Actions. Review is sequential AI specialist self-review, not independent approval.
+
+### Accepted reporting and canonical open work
+
+Reporting corrections R1 through R6 are accepted through Errata v2. The accepted archive is 31003 bytes, SHA256 `a06b265ecb4d55d5467a001b68021eb9fdbdd6e3c810d73b240bb1964407896e`; its integrity, manifest, repaired 21-row/eight-column CSV, restored defect identities and conservative claims were verified. No further historical evidence rewrite is required. This closes reporting scope only, not product/native/human acceptance. The withdrawn advisory remains withdrawn; the cited original audit reported zero vulnerabilities.
+
+| Canonical defect | Current disposition |
+| --- | --- |
+| DEFECT-01 | CRLF-sensitive source contract: portability fix pending, diagnostics are not committed fixes |
+| DEFECT-02 | Windows ZIP fixture normalization: raw-name fixture correction pending |
+| DEFECT-03 | Roleless ARIA naming: source correction and direct accessibility assertions pending |
+| DEFECT-04 | Mixed-Mermaid order: DOM-order correction pending; retain registration-based ten-slot automatic admission and manual opt-in beyond ten |
+| DEFECT-05 | Network-guard coverage: N0 outer boundary in progress; N1/N2A/N2B/N2C browser attribution/adoption still required |
+| DEFECT-06 | Sampled target-size observations: node-specific WCAG disposition pending, no universal 44px requirement |
+| DEFECT-07 | Historical host Node/Python limitation: environment evidence, not a theme defect |
+| DEFECT-08 | Contrast incompletes: actual rendered-node/human disposition pending |
+| DEFECT-09 | Old diagnostic wrapper non-gating exit: historical limitation, not reused as an acceptance gate |
+| DEFECT-10 | Reporting traceability: accepted Errata v2 scope closed |
+
+The historical 48 supplemental axe scans include 12 with incompletes; scan-node occurrences are not unique defects. Missing network records establish neither universal isolation nor proven production contact.
+
+### Bootstrap implementation and test-first evidence
+
+[Initial checkpoint](https://github.com/thefastcyberdefense/google-blogger/actions/runs/36267578570) at `5719ee9043536ae27b69d357fec7b313f5f24f81` stopped before application tests. Its first externally readable annotations were insufficient to classify the cause. The next checkpoint added diagnostic annotations without changing the regression. [Behavioral red](https://github.com/thefastcyberdefense/google-blogger/actions/runs/36267724660/job/108475489612) at `3f1e81fa9cfa750624beda730ae3dd4b50fa1b2c` explicitly reported the outer safety namespace, protected parent positive controls, successful negative control, and `EGRESS_POLICY: controlled parent canary reachable`. This is a controlled loopback failure inside an already no-egress namespace, not a public/production/metadata request or missing-package failure. Unit/browser application suites were not reached.
+
+The implementation replaces that harness-only direct executor with a fresh Linux network/PID namespace for every application test invocation. Only loopback is enabled; the payload guard rejects other interfaces/routes. Test processes run as the original non-root runner with empty supplementary groups, zero capability sets and no-new-privileges. The environment is allowlisted rather than forwarding credentials or proxies. The parent harness can create child namespaces but has no external network; application payloads cannot acquire sudo privileges. This is accidental-egress defense, not a complete hostile-code/filesystem sandbox.
+
+Mandatory regressions cover controlled parent IPv4/IPv6 denial, local fixtures, Node descendants, Chromium/Firefox/WebKit, explicit browser proxy attempts, TCP/UDP no-route denial, success/nonzero status propagation, bounded timeout, failed privileged setup without payload execution, and orphan cleanup. Namespace setup failure stops before application tests. No AppArmor/host firewall change, privileged Docker socket, dependency or runtime-stack change is used.
+
+Dependency/browser installation, static compilation/contracts, fixture build-only generation, approved audit and artifact upload retain their separate original stages. All browser-bearing Vitest and Playwright application processes and their fixture servers/children execute inside the namespace. The existing single verify job, stage names, read-only permission, exact-head checkout and package-install flags remain. Explicit stage names describe the same npm commands now run behind a mandatory gate.
+
+Isolation records are source-bound and staged under a fresh run/attempt-specific runner-temporary directory, outside Playwright startup cleanup. The always-run browser reporting stage copies them to `test-results/isolation`, rejects missing/stale/failed required records and retains nonzero application outcomes. Upload remains always-run, so an artifact on a failed run is not acceptance. The existing pinned verifier accepts those member paths for integrity, but does not semantically validate new isolation JSON and does not select PR-head artifacts.
+
+**Status at this implementation commit:** behavioral red observed; implementation and B0 reconciliation written; fresh exact-head full verification and substantive review still pending. Follow PR #11 for actual head/run outcomes rather than treating this document commit as a pass. **Next action:** inspect the new head's isolation assertions, full normal CI, verifier contracts and CodeQL; fix only in-scope causes without weakening tests; obtain separate merge approval only after source acceptance. If namespace feasibility requires a new file, stage inventory, privilege workaround or other scope expansion, stop for approval.
+
+### Remaining phase order and non-goals
+
+After separately accepted bootstrap: U0 bounded upstream applicability; N1 then N2A/N2B/N2C; P3A Windows/Linux red before P1/P2 fixes and P3B green; A1/D1/A2 hardening; L0 design then bounded Layout stories with early owner-authorized native pattern proof; C0 native comments observation before any justified C1 change; R0/R1/R2 artifact/native/human gates. These later manifests are not approved for implementation by the bootstrap click.
+
+Preserve the reviewed v2 corrections: no docs-only PR before safe CI, Windows regression before fixes, all browser-bearing contracts/checker tests inventoried, isolation evidence survives Playwright cleanup, diagram admission is not a hard ten-render limit, Layout changes include native/fixture/parity contracts, the existing native checker does not prove interactive comments/Layout, and exact install/preview flags remain in use. No LeadPilot infrastructure, generic full-stack framework, duplicate CodeQL, automatic dependency upgrade or restoration of the owner-deleted docs/fcd-env-example.
+
+Post-merge artifact metadata and elapsed Phase1A retention are recorded in docs/DEPLOYMENT.md. No evidence destination, replacement candidate, import, live request, human acceptance or release is inferred.
+
+---
+
+## Historical snapshot: baseline and development loop (2026-09-18 Asia/Dhaka)
+
+The remainder preserves the PR #10 preparation record. Its prospective wording is historical and superseded by the current section above.
 
 PRs #1 through #9 are merged with history preserved. Main at the start of this batch is `e1e7bb3cee62ec03cfcc290fa85fb473191eb9b4`. [PR #9 post-merge verification](https://github.com/thefastcyberdefense/google-blogger/actions/runs/35079121123/job/104738565032) completed 2026-09-16 09:33:49 UTC: every stage successful,203 unit/contract passes,1170 browser passes,0 reported failed/pending/skipped/unexpected/flaky results,95157 raw XML bytes. [Post-merge CodeQL](https://github.com/thefastcyberdefense/google-blogger/actions/runs/35079120069) successfully analyzed Python, Actions and JavaScript/TypeScript; analysis success is not a zero-vulnerability guarantee.
 
 The owner requested the loop: compare Ledger/current FCD, research, implement a bounded story, test in GitHub Actions, review/audit, fix failures and repeat, then propose the next scoped story. Owner handles Blogger uploads and supplies actual save/render evidence; source gates do not imply native acceptance. Merge, live-site tests, imports, publishing and settings remain separately authorized. The supplied FCD URL https://blogs.fastcyberdefense.com/ is the production target, not disposable staging; a controlled-production test plan was selected, but no live execution was authorized. https://blogs.redwan.work/ is the owner's Ledger reference, not the FCD deployment target.
 
-## Active approved slice: distinct native empty/error states
+## Historical approved slice: distinct native empty/error states
 
 Branch: `feat/fcd-native-states`, from exact main above. [PR #10](https://github.com/thefastcyberdefense/google-blogger/pull/10) holds final revision, Actions evidence and review decision; remains unmerged unless explicitly approved later.
 
@@ -53,7 +114,7 @@ Implementation run35257043409 at1ea629a2332d492639d733ed1a9b37f1675bcdcf passed 
 
 Final acceptance still requires the exact final head's full CI after temporary writer removal, including restored stale-XML check, full browser suite, existing verifier contracts, CodeQL and scoped sequential code/security/accessibility review. Record observed results in PR #10 rather than predeclaring them in this commit. No tests/builds run locally. No independent-review claim for sequential self-review.
 
-## Next source slices and native feedback
+## Historical next source slices and native feedback
 
 After this bounded slice passes, propose Layout-configurable navigation/intro/CTA/footer and supported gadget boundaries, then native comment usability. Richer year/month/category filtering, narration and SVG export remain later optional features, not a mandate to clone Ledger. Do not copy Ledger's raw cached HTML restoration, unrestricted full-feed traversal, permissive Mermaid settings, publisher or personal identity mappings.
 

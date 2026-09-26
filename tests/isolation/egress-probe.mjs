@@ -5,6 +5,7 @@ import path from 'node:path';
 import http from 'node:http';
 import net from 'node:net';
 import dgram from 'node:dgram';
+import { constants } from 'node:os';
 import { spawn, execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
@@ -40,13 +41,21 @@ function guard(payload = false) {
     const status = fs.readFileSync('/proc/self/status', 'utf8');
     assert.match(status, /^NoNewPrivs:\s+1$/m);
     for (const cap of ['CapInh', 'CapPrm', 'CapEff', 'CapBnd', 'CapAmb']) assert.match(status, new RegExp(`^${cap}:\\s+0+$`, 'm'));
+    for (const variable of ['HTTP_PROXY', 'HTTPS_PROXY', 'ALL_PROXY', 'http_proxy', 'https_proxy', 'all_proxy']) assert.equal(process.env[variable], undefined, 'ambient proxy must not enter the payload');
   }
 }
 async function execute(command, args, options = {}) {
   return await new Promise((resolve, reject) => {
     const child = spawn(command, args, { stdio: 'inherit', ...options });
     child.once('error', reject);
-    child.once('close', (code, signal) => resolve(signal ? 128 + (signal === 'SIGKILL' ? 9 : 15) : code));
+    child.once('close', (code, signal) => {
+      if (signal) {
+        const number = constants.signals[signal];
+        if (!Number.isInteger(number)) return reject(new Error('unknown child termination signal'));
+        resolve(128 + number);
+      } else if (Number.isInteger(code)) resolve(code);
+      else reject(new Error('missing child exit status'));
+    });
   });
 }
 async function server(host) {
@@ -81,17 +90,37 @@ async function udpDenied(host, type) {
     assert.ok(['ENETUNREACH', 'EHOSTUNREACH', 'EACCES'].includes(code), 'UDP must fail without a route');
   } finally { socket.close(); }
 }
+const boundaryNames = [
+  'parent IPv4 and IPv6 canaries inaccessible',
+  'Node descendant namespace inheritance',
+  'chromium local fixture and parent denial',
+  'firefox local fixture and parent denial',
+  'webkit local fixture and parent denial',
+  'explicit browser proxy cannot reach parent',
+  'IPv4 IPv6 TCP and UDP no-route denial'
+];
+const bootstrapNames = [
+  'outer safety namespace established',
+  'protected parent positive controls',
+  'unisolated negative control detected',
+  'fresh process boundary',
+  'zero nonzero and signal statuses preserved',
+  'bounded timeout',
+  'failed privileged setup stops payload',
+  'descendant cleanup after parent exit'
+];
 async function boundaryChild(canaries) {
   // Probe the controlled parent first: the red checkpoint fails here, not on
   // missing infrastructure, and never has access to the host network.
   for (const c of canaries) assert.equal(await reachable(c.host, c.port), false, 'EGRESS_POLICY: controlled parent canary reachable');
   guard(true);
-  record('parent IPv4 and IPv6 canaries inaccessible');
+  record(boundaryNames[0]);
   const local = await server('127.0.0.1');
   try {
-    assert.equal(await (await fetch(`http://127.0.0.1:${local.port}`)).text(), 'fcd-controlled-canary');
+    assert.equal(await (await fetch(`http://127.0.0.1:${local.port}`, { signal: AbortSignal.timeout(2000) })).text(), 'fcd-controlled-canary');
     const childNs = execFileSync(process.execPath, ['-e', "process.stdout.write(require('node:fs').readlinkSync('/proc/self/ns/net'))"], { encoding: 'utf8' });
     assert.equal(childNs, namespace(), 'Node descendants inherit the boundary');
+    record(boundaryNames[1]);
     const { chromium, firefox, webkit } = await import('playwright-core');
     for (const [name, engine] of Object.entries({ chromium, firefox, webkit })) {
       const browser = await engine.launch({ headless: true });
@@ -112,49 +141,55 @@ async function boundaryChild(canaries) {
       const page = await browser.newPage();
       await assert.rejects(page.goto('http://fcd-proxy-probe.invalid/', { timeout: 3000 }));
     } finally { await browser.close(); }
-    record('explicit browser proxy cannot reach parent');
+    record(boundaryNames[5]);
     // Documentation-only addresses, attempted only after no-route guard passes.
     assert.equal(await reachable('192.0.2.1', 9), false);
     assert.equal(await reachable('2001:db8::1', 9), false);
     await udpDenied('192.0.2.1', 'udp4');
     await udpDenied('2001:db8::1', 'udp6');
-    record('IPv4 IPv6 TCP and UDP no-route denial');
-  } finally { await close(local); }
+    record(boundaryNames[6]);
+  } finally {
+    await close(local);
+    write('boundary-checks', { records });
+  }
 }
 async function suite() {
   guard();
-  record('outer safety namespace established');
+  record(bootstrapNames[0]);
   const canaries = [await server('127.0.0.1')];
   try {
     canaries.push(await server('::1'));
     for (const c of canaries) assert.equal(await reachable(c.host, c.port), true, 'parent canary positive control');
-    record('protected parent positive controls');
+    record(bootstrapNames[1]);
     const args = JSON.stringify(canaries.map(({ host, port }) => ({ host, port })));
-    const env = { ...process.env, FCD_HARNESS_NS: namespace() };
-    // Direct execution models the former workflow. It must detect the local
-    // leak even after implementation, keeping the negative control meaningful.
+    const proxy = `http://127.0.0.1:${canaries[0].port}`;
+    const env = { ...process.env, HTTP_PROXY: proxy, HTTPS_PROXY: proxy, ALL_PROXY: proxy, http_proxy: proxy, https_proxy: proxy, all_proxy: proxy };
+    // Exit 42 is reserved for this precise controlled leak. An unrelated
+    // syntax/setup/browser failure cannot satisfy the negative control.
     const negative = await execute(process.execPath, [self, 'child', args], { env: { ...env, FCD_EXPECTED_NEGATIVE: 'true' } });
-    assert.equal(negative, 1, 'unisolated negative control must fail');
-    record('unisolated negative control detected');
+    assert.equal(negative, 42, 'unisolated negative control must detect the controlled leak');
+    record(bootstrapNames[2]);
     const run = async (label, seconds, command) => execute('/bin/bash', [wrapper, 'run', label, String(seconds), ...command], { env });
     assert.equal(await run('check-boundary', 60, [process.execPath, self, 'child', args]), 0, 'isolated policy regression failed');
-    record('fresh process boundary');
+    record(bootstrapNames[3]);
     assert.equal(await run('check-zero', 5, [process.execPath, '-e', 'process.exit(0)']), 0);
     assert.equal(await run('check-exit', 5, [process.execPath, '-e', 'process.exit(37)']), 37, 'child exit status must be preserved');
-    record('zero and nonzero child statuses preserved');
+    assert.equal(await run('check-signal', 5, [process.execPath, '-e', "process.kill(process.pid,'SIGHUP')"]), 129, 'child signal status must be preserved');
+    record(bootstrapNames[4]);
     assert.equal(await run('check-timeout', 1, [process.execPath, '-e', 'setInterval(()=>{},1000)']), 124, 'timeout must stay nonzero and bounded');
-    record('bounded timeout');
+    record(bootstrapNames[5]);
     const marker = path.join(evidence, 'must-not-run');
     const blocked = await execute('/usr/bin/setpriv', ['--no-new-privs', '/bin/bash', wrapper, 'run', 'check-setup', '5', process.execPath, '-e', `require('node:fs').writeFileSync(${JSON.stringify(marker)},'unsafe')`], { env });
     assert.notEqual(blocked, 0, 'failed namespace setup must be nonzero');
     assert.equal(fs.existsSync(marker), false, 'payload ran after failed setup');
-    record('failed privileged setup stops payload');
+    record(bootstrapNames[6]);
     const orphan = path.join(evidence, 'orphan-must-not-survive');
-    const code = `const {spawn}=require('node:child_process');const c=spawn(process.execPath,['-e',${JSON.stringify(`setTimeout(()=>require('node:fs').writeFileSync(${JSON.stringify(orphan)},'unsafe'),2500)`)}],{detached:true,stdio:'ignore'});c.unref()`;
+    const orphanCode = `process.send('ready');setTimeout(()=>require('node:fs').writeFileSync(${JSON.stringify(orphan)},'unsafe'),2500)`;
+    const code = `const {spawn}=require('node:child_process');const c=spawn(process.execPath,['-e',${JSON.stringify(orphanCode)}],{detached:true,stdio:['ignore','ignore','ignore','ipc']});const t=setTimeout(()=>process.exit(2),1500);c.once('message',m=>{if(m!=='ready')process.exit(3);clearTimeout(t);c.disconnect();c.unref()});c.once('error',()=>process.exit(4))`;
     assert.equal(await run('check-cleanup', 5, [process.execPath, '-e', code]), 0);
-    await new Promise(resolve => setTimeout(resolve, 3500)); // Deliberate child-lifetime assertion.
+    await new Promise(resolve => setTimeout(resolve, 3500)); // Deliberate child-lifetime assertion after an IPC readiness acknowledgment.
     assert.equal(fs.existsSync(orphan), false, 'orphan survived namespace shutdown');
-    record('descendant cleanup after parent exit');
+    record(bootstrapNames[7]);
   } finally {
     for (const c of canaries) await close(c);
     write('bootstrap-checks', { records });
@@ -180,24 +215,39 @@ async function main() {
     assert.ok(evidence && fs.statSync(evidence).isDirectory(), 'missing isolation evidence');
     const destination = path.resolve('test-results/isolation');
     fs.mkdirSync(destination, { recursive: true });
+    const reports = new Map();
     for (const filename of fs.readdirSync(evidence)) {
       assert.match(filename, /^[a-z][a-z0-9-]{0,40}\.json$/);
       const value = JSON.parse(fs.readFileSync(path.join(evidence, filename), 'utf8'));
       assert.equal(value.source, source, 'stale isolation evidence');
+      reports.set(filename, value);
       fs.copyFileSync(path.join(evidence, filename), path.join(destination, filename), fs.constants.COPYFILE_EXCL);
     }
-    for (const label of ['bootstrap', 'unit', 'render']) {
-      const result = JSON.parse(fs.readFileSync(path.join(evidence, `${label}.json`), 'utf8'));
-      assert.equal(result.exitCode, 0, `${label} did not succeed`);
+    for (const [label, expected] of Object.entries({ bootstrap: 0, unit: 0, render: 0, 'check-boundary': 0, 'check-zero': 0, 'check-exit': 37, 'check-signal': 129, 'check-timeout': 124, 'check-cleanup': 0 })) {
+      assert.equal(reports.get(`${label}.json`)?.exitCode, expected, `${label} evidence missing or unexpected`);
     }
-    for (const label of ['unit', 'render']) assert.ok(fs.existsSync(path.join(evidence, `${label}-guard.json`)), 'missing application guard evidence');
+    const setup = reports.get('check-setup.json')?.exitCode;
+    assert.ok(Number.isInteger(setup) && setup > 0, 'missing failed-setup evidence');
+    assert.deepEqual(reports.get('bootstrap-checks.json')?.records.map(r => r.name), bootstrapNames, 'incomplete bootstrap evidence');
+    assert.deepEqual(reports.get('boundary-checks.json')?.records.map(r => r.name), boundaryNames, 'incomplete boundary evidence');
+    for (const label of ['check-boundary', 'unit', 'render']) {
+      const value = reports.get(`${label}-guard.json`);
+      assert.equal(value?.noNewPrivileges, true, 'missing application guard evidence');
+      assert.ok(Number.isInteger(value.uid) && value.uid > 0);
+      assert.match(value.namespace, /^net:\[\d+\]$/);
+      assert.deepEqual(value.records, ['loopback-only', 'no-external-routes', 'capabilities-dropped']);
+    }
     console.log('::notice title=Isolation evidence::Exact-source records finalized; browser-layer attribution remains separate');
     return;
   }
   throw new Error('unknown isolation probe mode');
 }
 try { await main(); } catch (error) {
-  if (process.env.FCD_EXPECTED_NEGATIVE === 'true') console.log(`EXPECTED NEGATIVE: ${error.message}`);
-  else console.error(`::error title=Isolation failure::${escapeAnnotation(error.message)}`);
-  process.exitCode = 1;
+  if (process.env.FCD_EXPECTED_NEGATIVE === 'true' && error.code === 'ERR_ASSERTION' && error.message.startsWith('EGRESS_POLICY: controlled parent canary reachable')) {
+    console.log('EXPECTED NEGATIVE: controlled parent canary reachable');
+    process.exitCode = 42;
+  } else {
+    console.error(`::error title=Isolation failure::${escapeAnnotation(error.message)}`);
+    process.exitCode = 1;
+  }
 }

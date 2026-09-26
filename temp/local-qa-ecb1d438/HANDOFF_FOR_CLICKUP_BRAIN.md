@@ -1,10 +1,11 @@
 # ClickUp Brain Handoff — FCD Blogger Local QA, Browser, Security & Accessibility Verification
 
 - **Repository**: `thefastcyberdefense/google-blogger`
-- **Target Commit (`HEAD` & `origin/main`)**: `ecb1d438e8b3227911dc76359b9e05f127867b27` (merge of PR #10 `83d33edfa23c4750ee488e1b2696be597cc8b114`)
+- **Evaluated Commit (`main` & `origin/main`)**: `ecb1d438e8b3227911dc76359b9e05f127867b27` (merge of PR #10 `83d33edfa23c4750ee488e1b2696be597cc8b114`)
+- **Evidence Transfer Branch**: `qa/local-evidence-ecb1d438`
 - **QA Execution Date (UTC)**: `2026-09-26`
-- **Deliverables Location**: `test-results/local-qa-ecb1d438/`
-- **Tracked Files Modified**: **0** (`git status` and `git diff` on `j:\DevDrive\google-blogger` are clean)
+- **GitHub Deliverables Root**: `temp/local-qa-ecb1d438/` (raw local copy also preserved at `test-results/local-qa-ecb1d438/`)
+- **Tracked Source Files Modified**: **0** (`main` is untouched at `ecb1d438e8b3227911dc76359b9e05f127867b27`)
 - **External / Production Requests Sent**: **0** (enforced by 3-layer fail-closed network isolation harness)
 
 ---
@@ -18,7 +19,7 @@
   - `npm audit --audit-level=moderate`: **`0` vulnerabilities** across 228 locked packages.
 - **First-Run Cross-Platform Test Suite Failures on Windows (Both Non-Product Test/Repo Line-Ending & Path Separator Issues)**:
   1. **`npm test` First Run (`210/211` passed, `1` failed -> `211/211` on LF rerun)**: `tests/unit/related-posts.test.ts:17` failed on default Windows Git checkout (`core.autocrlf=true`) because it checks `s.includes("b:if(cond='data:view.isPost')\n        +fcdRelated({}, false)")` against CRLF-checked-out `src/partials/presentation.pug` (**DEFECT-01**). Restoring Git blob LF line endings (`core.autocrlf=false`) passed **`211 / 211`**.
-  2. **`python3 -m unittest` First Run (`30/31` passed, `1` subtest failed -> `31/31` with raw `ZipInfo`)**: `tests/artifact/test_verify_artifact.py` `test_unsafe_names` (`name='test-results\\escape'`) failed on Windows because the test helper `packed()` passes a `str` filename to `zipfile.ZipFile.writestr()`, which normalizes `os.sep` (`\`) to `/` on Windows before `tools/verify-artifact.py` inspects the archive (**DEFECT-02**). Production `tools/verify-artifact.py:127` is **not** defective and passes **`31 / 31`** when `ZipInfo.filename` is set directly.
+  2. **`python3 -m unittest` First Run (`30/31` passed, `1` subtest failed -> `31/31` with raw `ZipInfo`)**: `tests/artifact/test_verify_artifact.py` `test_unsafe_names` (`name='test-results\\escape'`) failed on Windows because the test helper `packed()` passes a `str` filename to `ZipFile.writestr()`, which normalizes `os.sep` (`\`) to `/` on Windows before `tools/verify-artifact.py` inspects the archive (**DEFECT-02**). Production `tools/verify-artifact.py:127` is **not** defective and passes **`31 / 31`** when `ZipInfo.filename` is set directly.
 - **Deep Accessibility & Technical Content Inspection Findings (Low / Non-Blocking for Local Fixtures, Recommended for Next PR)**:
   - **DEFECT-03 (Low — ARIA role gap in `axe.incomplete`)**: `0` axe `violations` across all 28 full WCAG 2.2 AA scans, but `axe.incomplete` flags `aria-prohibited-attr` (`impact: "serious"`) on `<pre tabindex="0" aria-label="Scrollable code block">` (`src/scripts/article.ts:9`), `<div class="share-actions" aria-label="Share article">` (`src/partials/presentation.pug:56`), and `<div class="diagram-controls" aria-label="Diagram controls">` (`src/scripts/diagrams.ts:59`) because those elements lack `role="region"` / `role="group"`.
   - **DEFECT-04 (Low — Mixed Mermaid selector order on `>10` diagrams)**: `initDiagrams()` in `src/scripts/diagrams.ts:50-51` queries `#article-body pre.mermaid` and `#article-body pre > code.language-mermaid` in two separate passes rather than document order, so in a `>10`-diagram article mixing both syntaxes, `<pre><code class="language-mermaid">` near the top of the article is queued after later `<pre class="mermaid">` blocks.
@@ -27,16 +28,16 @@
 
 ---
 
-## 2. Key Metrics & Evidence Summary
+## 2. Key Metrics & Evidence Summary (`temp/local-qa-ecb1d438/`)
 
-| Metric / Check | Measured Value | Evidence File |
+| Metric / Check | Measured Value | Evidence File (relative to `temp/local-qa-ecb1d438/`) |
 | :--- | :--- | :--- |
 | **`dist/theme.xml` Size (Compiled LF)** | `101,248` B raw / `31,332` B gzip (`sha256: d14b8673...`) | `evidence/build-size.json`, `evidence/compiled-theme.xml` |
 | **Compiled CSS (`main.scss`) Size** | `15,716` B raw / `4,112` B gzip | `evidence/build-size.json` |
 | **Bundled JS (`main.ts` + Prism 1.30.0) Size** | `56,780` B raw / `21,920` B gzip | `evidence/build-size.json` |
-| **Vitest Unit & Contract Suite** | First run (CRLF): `210/211`; Diagnostic rerun (LF): `211/211` (`16` files) | `evidence/unit-report-first-run.json`, `evidence/unit-report-lf-rerun.json` |
-| **Playwright Render Matrix (`30` projects)** | `1,434 / 1,434` passed (`498.2 s`, `0` retries, `0` flaky) | `evidence/browser.json`, `evidence/playwright-report/index.html` |
-| **Supplemental Cross-Engine `native-states`** | `96 / 96` passed on Firefox `153.0` & WebKit `26.5` (`88.6 s`) | `evidence/supplemental/native-states-cross-engine.json` |
+| **Vitest Unit & Contract Suite** | First run (CRLF): `210/211`; Diagnostic rerun (LF): `211/211` (`16` files) | `evidence/unit-report-first-run.json`, `evidence/unit-report-lf-rerun.json`, `evidence/logs/06-unit-test.log.txt`, `evidence/logs/06b-unit-test-lf-rerun.log.txt` |
+| **Playwright Render Matrix (`30` projects)** | `1,434 / 1,434` passed (`498.2 s`, `0` retries, `0` flaky) | `evidence/browser-summary.json`, `evidence/browser.json.gz`, `evidence/playwright-html-report/index.html`, `evidence/logs/08-playwright-render.log.txt` |
+| **Supplemental Cross-Engine `native-states`** | `96 / 96` passed on Firefox `153.0` & WebKit `26.5` (`88.6 s`) | `evidence/supplemental/native-states-cross-engine-summary.json`, `evidence/supplemental/native-states-cross-engine.json.gz`, `evidence/logs/11-supplemental-native-states-cross-engine.log.txt` |
 | **Full Axe WCAG 2.2 AA Scans (`28` states)** | `0` violations across all 28 scans; `aria-prohibited-attr` in `incomplete` on `article`/`technical` | `evidence/axe/*.json`, `evidence/supplemental/deep-qa-report.json` |
 | **Token Contrast Ratios (Light / Dark)** | Body text: `13.08:1`–`13.59:1` (Light) / `13.52:1`–`15.37:1` (Dark); Muted/Primary: `>= 5.93:1` (Light) / `>= 8.09:1` (Dark) | `evidence/supplemental/deep-qa-report.json` |
 | **200% Font + WCAG 1.4.12 Spacing Reflow** | `12 / 12` passed (`scrollWidth === innerWidth` at `320px` and `1280px`, JS on/off) | `evidence/supplemental/deep-qa-report.json` |

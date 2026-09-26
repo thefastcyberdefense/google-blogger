@@ -14,9 +14,10 @@ const evidence = process.env.FCD_ISOLATION_EVIDENCE;
 const source = process.env.FCD_SOURCE;
 const namespace = () => fs.readlinkSync('/proc/self/ns/net');
 const records = [];
+const escapeAnnotation = text => String(text).replaceAll('%', '%25').replaceAll('\r', '%0D').replaceAll('\n', '%0A');
 function record(name, detail = {}) {
   records.push({ name, ...detail });
-  console.log(`PASS isolation: ${name}`);
+  console.log(`::notice title=Isolation evidence::${escapeAnnotation(name)}`);
 }
 function write(name, value) {
   assert.match(name, /^[a-z][a-z0-9-]{0,40}$/);
@@ -122,6 +123,7 @@ async function boundaryChild(canaries) {
 }
 async function suite() {
   guard();
+  record('outer safety namespace established');
   const canaries = [await server('127.0.0.1')];
   try {
     canaries.push(await server('::1'));
@@ -131,7 +133,7 @@ async function suite() {
     const env = { ...process.env, FCD_HARNESS_NS: namespace() };
     // Direct execution models the former workflow. It must detect the local
     // leak even after implementation, keeping the negative control meaningful.
-    const negative = await execute(process.execPath, [self, 'child', args], { env });
+    const negative = await execute(process.execPath, [self, 'child', args], { env: { ...env, FCD_EXPECTED_NEGATIVE: 'true' } });
     assert.equal(negative, 1, 'unisolated negative control must fail');
     record('unisolated negative control detected');
     const run = async (label, seconds, command) => execute('/bin/bash', [wrapper, 'run', label, String(seconds), ...command], { env });
@@ -189,9 +191,13 @@ async function main() {
       assert.equal(result.exitCode, 0, `${label} did not succeed`);
     }
     for (const label of ['unit', 'render']) assert.ok(fs.existsSync(path.join(evidence, `${label}-guard.json`)), 'missing application guard evidence');
-    console.log('PASS isolation: exact-source evidence finalized; browser-layer attribution remains separate');
+    console.log('::notice title=Isolation evidence::Exact-source records finalized; browser-layer attribution remains separate');
     return;
   }
   throw new Error('unknown isolation probe mode');
 }
-try { await main(); } catch (error) { console.error(`ISOLATION FAILURE: ${error.message}`); process.exitCode = 1; }
+try { await main(); } catch (error) {
+  if (process.env.FCD_EXPECTED_NEGATIVE === 'true') console.log(`EXPECTED NEGATIVE: ${error.message}`);
+  else console.error(`::error title=Isolation failure::${escapeAnnotation(error.message)}`);
+  process.exitCode = 1;
+}

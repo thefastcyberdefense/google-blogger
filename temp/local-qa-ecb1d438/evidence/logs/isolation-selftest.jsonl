@@ -1,0 +1,12 @@
+{"timestamp":"2026-09-26T13:56:07.014Z","pid":37080,"layer":"node-socket-guard","action":"blocked","host":"93.184.216.34","port":443}
+{"timestamp":"2026-09-26T13:56:09.220Z","pid":37080,"layer":"browser-request-observed","browserName":"chromium","method":"GET","resourceType":"document","url":"http://127.0.0.1:4173/"}
+{"timestamp":"2026-09-26T13:56:09.324Z","pid":37080,"layer":"browser-request-observed","browserName":"chromium","method":"GET","resourceType":"document","url":"http://127.0.0.1:4173/article"}
+{"timestamp":"2026-09-26T13:56:09.386Z","pid":37080,"layer":"browser-request-observed","browserName":"chromium","method":"GET","resourceType":"document","url":"http://127.0.0.1:4173/paged"}
+{"timestamp":"2026-09-26T13:56:09.439Z","pid":37080,"layer":"browser-request-observed","browserName":"chromium","method":"GET","resourceType":"document","url":"http://127.0.0.1:4173/state-error"}
+{"timestamp":"2026-09-26T13:56:09.480Z","pid":37080,"layer":"browser-request-observed","browserName":"chromium","method":"GET","resourceType":"document","url":"http://127.0.0.1:4173/state-search"}
+{"timestamp":"2026-09-26T13:56:09.517Z","pid":37080,"layer":"browser-request-observed","browserName":"chromium","method":"GET","resourceType":"document","url":"http://127.0.0.1:4173/state-label"}
+{"timestamp":"2026-09-26T13:56:09.554Z","pid":37080,"layer":"browser-request-observed","browserName":"chromium","method":"GET","resourceType":"document","url":"http://127.0.0.1:4173/state-archive"}
+{"timestamp":"2026-09-26T13:56:09.592Z","pid":37080,"layer":"browser-request-observed","browserName":"chromium","method":"GET","resourceType":"document","url":"http://127.0.0.1:4173/state-home"}
+{"timestamp":"2026-09-26T13:56:09.631Z","pid":37080,"layer":"browser-request-observed","browserName":"chromium","method":"GET","resourceType":"document","url":"http://127.0.0.1:4173/state-generic"}
+{"timestamp":"2026-09-26T13:56:09.689Z","pid":37080,"layer":"browser-request-observed","browserName":"chromium","method":"GET","resourceType":"fetch","url":"https://blogs.redwan.work/probe"}
+{"timestamp":"2026-09-26T13:56:09.692Z","pid":37080,"layer":"playwright-fallback-route","action":"blocked-unmatched","browserName":"chromium","method":"GET","resourceType":"fetch","url":"https://blogs.redwan.work/probe"}

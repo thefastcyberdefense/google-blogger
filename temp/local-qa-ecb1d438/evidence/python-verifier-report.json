@@ -1,0 +1,11 @@
+{
+  "testsRun": 31,
+  "failures": [
+    {
+      "test": "test_unsafe_names (test_verify_artifact.ArchiveTests.test_unsafe_names) (name='test-results\\\\escape')",
+      "traceback": "Traceback (most recent call last):\n  File \"j:\\DevDrive\\google-blogger\\test-results\\local-qa-ecb1d438\\checkout\\tests\\artifact\\test_verify_artifact.py\", line 96, in test_unsafe_names\n    with self.assertRaises(v.VerificationError): v.inspect_archive(blob,candidate(blob))\n         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^\nAssertionError: VerificationError not raised\n"
+    }
+  ],
+  "errors": [],
+  "skipped": []
+}

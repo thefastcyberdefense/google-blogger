@@ -1,0 +1,10 @@
+﻿> fcd-blogger-theme@0.1.0 test
+> vitest run --reporter=default --reporter=json --outputFile=unit-report.json
+
+First-run execution on default Windows Git checkout (core.autocrlf=true):
+Test Files  1 failed | 14 passed (15)
+     Tests  1 failed | 210 passed (211)
+Failed test: tests/unit/related-posts.test.ts > requires native post guard and permanent fallback in shared presentation
+AssertionError: expected false to be true (s.includes("b:if(cond='data:view.isPost')\n        +fcdRelated({}, false)") against CRLF-checked-out src/partials/presentation.pug)
+Full machine-readable output preserved in evidence/unit-report-first-run.json.
+--- META start_utc=2026-09-26T13:13:00.8060000Z end_utc=2026-09-26T13:13:14.6100000Z duration_ms=13804 exit_code=1 ---

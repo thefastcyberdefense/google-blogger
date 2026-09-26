@@ -1,0 +1,13 @@
+﻿diff --git "a/j:\\DevDrive\\google-blogger\\test-results\\local-qa-ecb1d438\\evidence\\checked-in-theme-git-blob.xml" "b/j:\\DevDrive\\google-blogger\\test-results\\local-qa-ecb1d438\\evidence\\compiled-theme.xml"
+index 78a5da1..36fcfbd 100644
+--- "a/j:\\DevDrive\\google-blogger\\test-results\\local-qa-ecb1d438\\evidence\\checked-in-theme-git-blob.xml"
++++ "b/j:\\DevDrive\\google-blogger\\test-results\\local-qa-ecb1d438\\evidence\\compiled-theme.xml"
+@@ -3,7 +3,7 @@
+ <html b:css="false" b:defaultwidgetversion="2" b:layoutsVersion="3" b:responsive="true" b:templateUrl="indie.xml" b:templateVersion="0.0.0" expr:dir="data:blog.languageDirection" expr:lang="data:blog.locale" xmlns="http://www.w3.org/1999/xhtml" xmlns:b="http://www.google.com/2005/gml/b" xmlns:data="http://www.google.com/2005/gml/data" xmlns:expr="http://www.google.com/2005/gml/expr">
+   <head>
+     <meta name="viewport" content="width=device-width, initial-scale=1"/>
+-    <meta name="theme-build" content="0.1.0+bcb5b82706568c2f6f29cd1795b2589767e42146"/>
++    <meta name="theme-build" content="0.1.0+ecb1d438e8b3227911dc76359b9e05f127867b27"/>
+     <meta name="color-scheme" content="light dark"/>
+     <title><data:view.title.escaped/></title>
+     <b:include data="blog" name="all-head-content"/>

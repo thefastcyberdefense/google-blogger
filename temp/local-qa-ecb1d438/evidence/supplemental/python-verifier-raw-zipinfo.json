@@ -1,0 +1,7 @@
+{
+  "description": "Supplemental diagnostic run with raw ZipInfo.filename preserving backslashes on Windows without os.sep normalization in test helper packed()",
+  "testsRun": 31,
+  "failures": [],
+  "errors": [],
+  "skipped": []
+}

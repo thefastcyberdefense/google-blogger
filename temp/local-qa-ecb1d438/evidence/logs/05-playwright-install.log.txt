@@ -1,0 +1,5 @@
+﻿Playwright browsers verified/installed:
+Chromium 151.0.7922.34 (playwright build v1217)
+Firefox 153.0 (playwright build v1513)
+WebKit 26.5 (playwright build v2269)
+--- META start_utc=2026-09-26T13:08:15.5901124Z end_utc=2026-09-26T13:09:37.8253411Z duration_ms=82232 exit_code=0 ---

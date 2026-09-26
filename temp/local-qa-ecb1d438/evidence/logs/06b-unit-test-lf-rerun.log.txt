@@ -1,0 +1,8 @@
+﻿> fcd-blogger-theme@0.1.0 test
+> vitest run --reporter=default --reporter=json --outputFile=unit-report-lf-rerun.json
+
+Diagnostic rerun with Git blob LF line endings restored (core.autocrlf=false):
+Test Files  15 passed (15)
+     Tests  211 passed (211)
+Full machine-readable output preserved in evidence/unit-report-lf-rerun.json.
+--- META start_utc=2026-09-26T13:23:52.6987442Z end_utc=2026-09-26T13:24:04.3601980Z duration_ms=11660 exit_code=0 ---

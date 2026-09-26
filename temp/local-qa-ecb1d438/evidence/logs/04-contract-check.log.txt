@@ -1,0 +1,7 @@
+
+> fcd-blogger-theme@0.1.0 contract:check
+> python3 tools/validate-xml.py
+
+PASS: static V3 shell, native binding, body, comments, pagination, metadata and empty-state contracts. Blogger import/rendering remains unverified.
+
+--- META start_utc=2026-09-26T13:47:43.2044198Z end_utc=2026-09-26T13:47:43.7691982Z duration_ms=564 exit_code=0 ---

@@ -1,0 +1,4203 @@
+{
+  "commit": "ecb1d438e8b3227911dc76359b9e05f127867b27",
+  "timestampUtc": "2026-09-26T13:53:19.817Z",
+  "browserVersion": "151.0.7922.34",
+  "axeSummary": [
+    {
+      "view": "home",
+      "width": 390,
+      "colorScheme": "light",
+      "state": "initial",
+      "axeVersion": "4.10.3",
+      "violationsCount": 0,
+      "incompleteCount": 0,
+      "passesCount": 24,
+      "violations": [],
+      "incompleteIds": [],
+      "evidenceFile": "evidence/axe/axe-home-390-light.json"
+    },
+    {
+      "view": "home",
+      "width": 390,
+      "colorScheme": "light",
+      "state": "expanded",
+      "axeVersion": "4.10.3",
+      "violationsCount": 0,
+      "incompleteCount": 0,
+      "passesCount": 28,
+      "violations": [],
+      "incompleteIds": [],
+      "evidenceFile": "evidence/axe/axe-home-expanded-390-light.json"
+    },
+    {
+      "view": "article",
+      "width": 390,
+      "colorScheme": "light",
+      "state": "initial",
+      "axeVersion": "4.10.3",
+      "violationsCount": 0,
+      "incompleteCount": 2,
+      "passesCount": 28,
+      "violations": [],
+      "incompleteIds": [
+        "aria-prohibited-attr",
+        "color-contrast"
+      ],
+      "evidenceFile": "evidence/axe/axe-article-390-light.json"
+    },
+    {
+      "view": "article",
+      "width": 390,
+      "colorScheme": "light",
+      "state": "expanded",
+      "axeVersion": "4.10.3",
+      "violationsCount": 0,
+      "incompleteCount": 2,
+      "passesCount": 32,
+      "violations": [],
+      "incompleteIds": [
+        "aria-prohibited-attr",
+        "color-contrast"
+      ],
+      "evidenceFile": "evidence/axe/axe-article-expanded-390-light.json"
+    },
+    {
+      "view": "paged",
+      "width": 390,
+      "colorScheme": "light",
+      "state": "initial",
+      "axeVersion": "4.10.3",
+      "violationsCount": 0,
+      "incompleteCount": 0,
+      "passesCount": 24,
+      "violations": [],
+      "incompleteIds": [],
+      "evidenceFile": "evidence/axe/axe-paged-390-light.json"
+    },
+    {
+      "view": "state-error",
+      "width": 390,
+      "colorScheme": "light",
+      "state": "initial",
+      "axeVersion": "4.10.3",
+      "violationsCount": 0,
+      "incompleteCount": 0,
+      "passesCount": 26,
+      "violations": [],
+      "incompleteIds": [],
+      "evidenceFile": "evidence/axe/axe-state-error-390-light.json"
+    },
+    {
+      "view": "state-label",
+      "width": 390,
+      "colorScheme": "light",
+      "state": "initial",
+      "axeVersion": "4.10.3",
+      "violationsCount": 0,
+      "incompleteCount": 0,
+      "passesCount": 26,
+      "violations": [],
+      "incompleteIds": [],
+      "evidenceFile": "evidence/axe/axe-state-label-390-light.json"
+    },
+    {
+      "view": "state-search",
+      "width": 390,
+      "colorScheme": "light",
+      "state": "initial",
+      "axeVersion": "4.10.3",
+      "violationsCount": 0,
+      "incompleteCount": 0,
+      "passesCount": 26,
+      "violations": [],
+      "incompleteIds": [],
+      "evidenceFile": "evidence/axe/axe-state-search-390-light.json"
+    },
+    {
+      "view": "state-archive",
+      "width": 390,
+      "colorScheme": "light",
+      "state": "initial",
+      "axeVersion": "4.10.3",
+      "violationsCount": 0,
+      "incompleteCount": 0,
+      "passesCount": 26,
+      "violations": [],
+      "incompleteIds": [],
+      "evidenceFile": "evidence/axe/axe-state-archive-390-light.json"
+    },
+    {
+      "view": "state-home",
+      "width": 390,
+      "colorScheme": "light",
+      "state": "initial",
+      "axeVersion": "4.10.3",
+      "violationsCount": 0,
+      "incompleteCount": 0,
+      "passesCount": 26,
+      "violations": [],
+      "incompleteIds": [],
+      "evidenceFile": "evidence/axe/axe-state-home-390-light.json"
+    },
+    {
+      "view": "state-generic",
+      "width": 390,
+      "colorScheme": "light",
+      "state": "initial",
+      "axeVersion": "4.10.3",
+      "violationsCount": 0,
+      "incompleteCount": 0,
+      "passesCount": 26,
+      "violations": [],
+      "incompleteIds": [],
+      "evidenceFile": "evidence/axe/axe-state-generic-390-light.json"
+    },
+    {
+      "view": "technical",
+      "width": 390,
+      "colorScheme": "light",
+      "state": "initial",
+      "axeVersion": "4.10.3",
+      "violationsCount": 0,
+      "incompleteCount": 2,
+      "passesCount": 21,
+      "violations": [],
+      "incompleteIds": [
+        "aria-prohibited-attr",
+        "color-contrast"
+      ],
+      "evidenceFile": "evidence/axe/axe-technical-390-light.json"
+    },
+    {
+      "view": "home",
+      "width": 390,
+      "colorScheme": "dark",
+      "state": "initial",
+      "axeVersion": "4.10.3",
+      "violationsCount": 0,
+      "incompleteCount": 0,
+      "passesCount": 24,
+      "violations": [],
+      "incompleteIds": [],
+      "evidenceFile": "evidence/axe/axe-home-390-dark.json"
+    },
+    {
+      "view": "home",
+      "width": 390,
+      "colorScheme": "dark",
+      "state": "expanded",
+      "axeVersion": "4.10.3",
+      "violationsCount": 0,
+      "incompleteCount": 0,
+      "passesCount": 28,
+      "violations": [],
+      "incompleteIds": [],
+      "evidenceFile": "evidence/axe/axe-home-expanded-390-dark.json"
+    },
+    {
+      "view": "article",
+      "width": 390,
+      "colorScheme": "dark",
+      "state": "initial",
+      "axeVersion": "4.10.3",
+      "violationsCount": 0,
+      "incompleteCount": 2,
+      "passesCount": 28,
+      "violations": [],
+      "incompleteIds": [
+        "aria-prohibited-attr",
+        "color-contrast"
+      ],
+      "evidenceFile": "evidence/axe/axe-article-390-dark.json"
+    },
+    {
+      "view": "article",
+      "width": 390,
+      "colorScheme": "dark",
+      "state": "expanded",
+      "axeVersion": "4.10.3",
+      "violationsCount": 0,
+      "incompleteCount": 2,
+      "passesCount": 32,
+      "violations": [],
+      "incompleteIds": [
+        "aria-prohibited-attr",
+        "color-contrast"
+      ],
+      "evidenceFile": "evidence/axe/axe-article-expanded-390-dark.json"
+    },
+    {
+      "view": "paged",
+      "width": 390,
+      "colorScheme": "dark",
+      "state": "initial",
+      "axeVersion": "4.10.3",
+      "violationsCount": 0,
+      "incompleteCount": 0,
+      "passesCount": 24,
+      "violations": [],
+      "incompleteIds": [],
+      "evidenceFile": "evidence/axe/axe-paged-390-dark.json"
+    },
+    {
+      "view": "state-error",
+      "width": 390,
+      "colorScheme": "dark",
+      "state": "initial",
+      "axeVersion": "4.10.3",
+      "violationsCount": 0,
+      "incompleteCount": 0,
+      "passesCount": 26,
+      "violations": [],
+      "incompleteIds": [],
+      "evidenceFile": "evidence/axe/axe-state-error-390-dark.json"
+    },
+    {
+      "view": "state-label",
+      "width": 390,
+      "colorScheme": "dark",
+      "state": "initial",
+      "axeVersion": "4.10.3",
+      "violationsCount": 0,
+      "incompleteCount": 0,
+      "passesCount": 26,
+      "violations": [],
+      "incompleteIds": [],
+      "evidenceFile": "evidence/axe/axe-state-label-390-dark.json"
+    },
+    {
+      "view": "state-search",
+      "width": 390,
+      "colorScheme": "dark",
+      "state": "initial",
+      "axeVersion": "4.10.3",
+      "violationsCount": 0,
+      "incompleteCount": 0,
+      "passesCount": 26,
+      "violations": [],
+      "incompleteIds": [],
+      "evidenceFile": "evidence/axe/axe-state-search-390-dark.json"
+    },
+    {
+      "view": "state-archive",
+      "width": 390,
+      "colorScheme": "dark",
+      "state": "initial",
+      "axeVersion": "4.10.3",
+      "violationsCount": 0,
+      "incompleteCount": 0,
+      "passesCount": 26,
+      "violations": [],
+      "incompleteIds": [],
+      "evidenceFile": "evidence/axe/axe-state-archive-390-dark.json"
+    },
+    {
+      "view": "state-home",
+      "width": 390,
+      "colorScheme": "dark",
+      "state": "initial",
+      "axeVersion": "4.10.3",
+      "violationsCount": 0,
+      "incompleteCount": 0,
+      "passesCount": 26,
+      "violations": [],
+      "incompleteIds": [],
+      "evidenceFile": "evidence/axe/axe-state-home-390-dark.json"
+    },
+    {
+      "view": "state-generic",
+      "width": 390,
+      "colorScheme": "dark",
+      "state": "initial",
+      "axeVersion": "4.10.3",
+      "violationsCount": 0,
+      "incompleteCount": 0,
+      "passesCount": 26,
+      "violations": [],
+      "incompleteIds": [],
+      "evidenceFile": "evidence/axe/axe-state-generic-390-dark.json"
+    },
+    {
+      "view": "technical",
+      "width": 390,
+      "colorScheme": "dark",
+      "state": "initial",
+      "axeVersion": "4.10.3",
+      "violationsCount": 0,
+      "incompleteCount": 2,
+      "passesCount": 21,
+      "violations": [],
+      "incompleteIds": [
+        "aria-prohibited-attr",
+        "color-contrast"
+      ],
+      "evidenceFile": "evidence/axe/axe-technical-390-dark.json"
+    },
+    {
+      "view": "home",
+      "width": 1280,
+      "colorScheme": "light",
+      "state": "initial",
+      "axeVersion": "4.10.3",
+      "violationsCount": 0,
+      "incompleteCount": 0,
+      "passesCount": 27,
+      "violations": [],
+      "incompleteIds": [],
+      "evidenceFile": "evidence/axe/axe-home-1280-light.json"
+    },
+    {
+      "view": "home",
+      "width": 1280,
+      "colorScheme": "light",
+      "state": "expanded",
+      "axeVersion": "4.10.3",
+      "violationsCount": 0,
+      "incompleteCount": 0,
+      "passesCount": 28,
+      "violations": [],
+      "incompleteIds": [],
+      "evidenceFile": "evidence/axe/axe-home-expanded-1280-light.json"
+    },
+    {
+      "view": "article",
+      "width": 1280,
+      "colorScheme": "light",
+      "state": "initial",
+      "axeVersion": "4.10.3",
+      "violationsCount": 0,
+      "incompleteCount": 1,
+      "passesCount": 31,
+      "violations": [],
+      "incompleteIds": [
+        "aria-prohibited-attr"
+      ],
+      "evidenceFile": "evidence/axe/axe-article-1280-light.json"
+    },
+    {
+      "view": "article",
+      "width": 1280,
+      "colorScheme": "light",
+      "state": "expanded",
+      "axeVersion": "4.10.3",
+      "violationsCount": 0,
+      "incompleteCount": 1,
+      "passesCount": 32,
+      "violations": [],
+      "incompleteIds": [
+        "aria-prohibited-attr"
+      ],
+      "evidenceFile": "evidence/axe/axe-article-expanded-1280-light.json"
+    },
+    {
+      "view": "paged",
+      "width": 1280,
+      "colorScheme": "light",
+      "state": "initial",
+      "axeVersion": "4.10.3",
+      "violationsCount": 0,
+      "incompleteCount": 0,
+      "passesCount": 27,
+      "violations": [],
+      "incompleteIds": [],
+      "evidenceFile": "evidence/axe/axe-paged-1280-light.json"
+    },
+    {
+      "view": "state-error",
+      "width": 1280,
+      "colorScheme": "light",
+      "state": "initial",
+      "axeVersion": "4.10.3",
+      "violationsCount": 0,
+      "incompleteCount": 0,
+      "passesCount": 27,
+      "violations": [],
+      "incompleteIds": [],
+      "evidenceFile": "evidence/axe/axe-state-error-1280-light.json"
+    },
+    {
+      "view": "state-label",
+      "width": 1280,
+      "colorScheme": "light",
+      "state": "initial",
+      "axeVersion": "4.10.3",
+      "violationsCount": 0,
+      "incompleteCount": 0,
+      "passesCount": 27,
+      "violations": [],
+      "incompleteIds": [],
+      "evidenceFile": "evidence/axe/axe-state-label-1280-light.json"
+    },
+    {
+      "view": "state-search",
+      "width": 1280,
+      "colorScheme": "light",
+      "state": "initial",
+      "axeVersion": "4.10.3",
+      "violationsCount": 0,
+      "incompleteCount": 0,
+      "passesCount": 27,
+      "violations": [],
+      "incompleteIds": [],
+      "evidenceFile": "evidence/axe/axe-state-search-1280-light.json"
+    },
+    {
+      "view": "state-archive",
+      "width": 1280,
+      "colorScheme": "light",
+      "state": "initial",
+      "axeVersion": "4.10.3",
+      "violationsCount": 0,
+      "incompleteCount": 0,
+      "passesCount": 27,
+      "violations": [],
+      "incompleteIds": [],
+      "evidenceFile": "evidence/axe/axe-state-archive-1280-light.json"
+    },
+    {
+      "view": "state-home",
+      "width": 1280,
+      "colorScheme": "light",
+      "state": "initial",
+      "axeVersion": "4.10.3",
+      "violationsCount": 0,
+      "incompleteCount": 0,
+      "passesCount": 27,
+      "violations": [],
+      "incompleteIds": [],
+      "evidenceFile": "evidence/axe/axe-state-home-1280-light.json"
+    },
+    {
+      "view": "state-generic",
+      "width": 1280,
+      "colorScheme": "light",
+      "state": "initial",
+      "axeVersion": "4.10.3",
+      "violationsCount": 0,
+      "incompleteCount": 0,
+      "passesCount": 27,
+      "violations": [],
+      "incompleteIds": [],
+      "evidenceFile": "evidence/axe/axe-state-generic-1280-light.json"
+    },
+    {
+      "view": "technical",
+      "width": 1280,
+      "colorScheme": "light",
+      "state": "initial",
+      "axeVersion": "4.10.3",
+      "violationsCount": 0,
+      "incompleteCount": 2,
+      "passesCount": 20,
+      "violations": [],
+      "incompleteIds": [
+        "aria-prohibited-attr",
+        "color-contrast"
+      ],
+      "evidenceFile": "evidence/axe/axe-technical-1280-light.json"
+    },
+    {
+      "view": "home",
+      "width": 1280,
+      "colorScheme": "dark",
+      "state": "initial",
+      "axeVersion": "4.10.3",
+      "violationsCount": 0,
+      "incompleteCount": 0,
+      "passesCount": 27,
+      "violations": [],
+      "incompleteIds": [],
+      "evidenceFile": "evidence/axe/axe-home-1280-dark.json"
+    },
+    {
+      "view": "home",
+      "width": 1280,
+      "colorScheme": "dark",
+      "state": "expanded",
+      "axeVersion": "4.10.3",
+      "violationsCount": 0,
+      "incompleteCount": 0,
+      "passesCount": 28,
+      "violations": [],
+      "incompleteIds": [],
+      "evidenceFile": "evidence/axe/axe-home-expanded-1280-dark.json"
+    },
+    {
+      "view": "article",
+      "width": 1280,
+      "colorScheme": "dark",
+      "state": "initial",
+      "axeVersion": "4.10.3",
+      "violationsCount": 0,
+      "incompleteCount": 1,
+      "passesCount": 31,
+      "violations": [],
+      "incompleteIds": [
+        "aria-prohibited-attr"
+      ],
+      "evidenceFile": "evidence/axe/axe-article-1280-dark.json"
+    },
+    {
+      "view": "article",
+      "width": 1280,
+      "colorScheme": "dark",
+      "state": "expanded",
+      "axeVersion": "4.10.3",
+      "violationsCount": 0,
+      "incompleteCount": 1,
+      "passesCount": 32,
+      "violations": [],
+      "incompleteIds": [
+        "aria-prohibited-attr"
+      ],
+      "evidenceFile": "evidence/axe/axe-article-expanded-1280-dark.json"
+    },
+    {
+      "view": "paged",
+      "width": 1280,
+      "colorScheme": "dark",
+      "state": "initial",
+      "axeVersion": "4.10.3",
+      "violationsCount": 0,
+      "incompleteCount": 0,
+      "passesCount": 27,
+      "violations": [],
+      "incompleteIds": [],
+      "evidenceFile": "evidence/axe/axe-paged-1280-dark.json"
+    },
+    {
+      "view": "state-error",
+      "width": 1280,
+      "colorScheme": "dark",
+      "state": "initial",
+      "axeVersion": "4.10.3",
+      "violationsCount": 0,
+      "incompleteCount": 0,
+      "passesCount": 27,
+      "violations": [],
+      "incompleteIds": [],
+      "evidenceFile": "evidence/axe/axe-state-error-1280-dark.json"
+    },
+    {
+      "view": "state-label",
+      "width": 1280,
+      "colorScheme": "dark",
+      "state": "initial",
+      "axeVersion": "4.10.3",
+      "violationsCount": 0,
+      "incompleteCount": 0,
+      "passesCount": 27,
+      "violations": [],
+      "incompleteIds": [],
+      "evidenceFile": "evidence/axe/axe-state-label-1280-dark.json"
+    },
+    {
+      "view": "state-search",
+      "width": 1280,
+      "colorScheme": "dark",
+      "state": "initial",
+      "axeVersion": "4.10.3",
+      "violationsCount": 0,
+      "incompleteCount": 0,
+      "passesCount": 27,
+      "violations": [],
+      "incompleteIds": [],
+      "evidenceFile": "evidence/axe/axe-state-search-1280-dark.json"
+    },
+    {
+      "view": "state-archive",
+      "width": 1280,
+      "colorScheme": "dark",
+      "state": "initial",
+      "axeVersion": "4.10.3",
+      "violationsCount": 0,
+      "incompleteCount": 0,
+      "passesCount": 27,
+      "violations": [],
+      "incompleteIds": [],
+      "evidenceFile": "evidence/axe/axe-state-archive-1280-dark.json"
+    },
+    {
+      "view": "state-home",
+      "width": 1280,
+      "colorScheme": "dark",
+      "state": "initial",
+      "axeVersion": "4.10.3",
+      "violationsCount": 0,
+      "incompleteCount": 0,
+      "passesCount": 27,
+      "violations": [],
+      "incompleteIds": [],
+      "evidenceFile": "evidence/axe/axe-state-home-1280-dark.json"
+    },
+    {
+      "view": "state-generic",
+      "width": 1280,
+      "colorScheme": "dark",
+      "state": "initial",
+      "axeVersion": "4.10.3",
+      "violationsCount": 0,
+      "incompleteCount": 0,
+      "passesCount": 27,
+      "violations": [],
+      "incompleteIds": [],
+      "evidenceFile": "evidence/axe/axe-state-generic-1280-dark.json"
+    },
+    {
+      "view": "technical",
+      "width": 1280,
+      "colorScheme": "dark",
+      "state": "initial",
+      "axeVersion": "4.10.3",
+      "violationsCount": 0,
+      "incompleteCount": 2,
+      "passesCount": 20,
+      "violations": [],
+      "incompleteIds": [
+        "aria-prohibited-attr",
+        "color-contrast"
+      ],
+      "evidenceFile": "evidence/axe/axe-technical-1280-dark.json"
+    }
+  ],
+  "noJsAudits": [
+    {
+      "view": "home",
+      "width": 320,
+      "duplicateIds": [],
+      "h1Count": 1,
+      "headingOrderValid": true,
+      "headings": [
+        {
+          "level": 1,
+          "text": "Security knowledge. Practical defense."
+        },
+        {
+          "level": 2,
+          "text": "Hardening cloud access without slowing your team down"
+        },
+        {
+          "level": 2,
+          "text": "What a useful incident response checklist actually includes"
+        },
+        {
+          "level": 2,
+          "text": "A practical guide to investigating long and unusual authentication chains"
+        },
+        {
+          "level": 2,
+          "text": "Making vulnerability remediation measurable"
+        },
+        {
+          "level": 2,
+          "text": "Recent Posts"
+        },
+        {
+          "level": 2,
+          "text": "Follow the research"
+        }
+      ],
+      "jsControlsHidden": true,
+      "allInputsLabeled": true,
+      "navVisible": true,
+      "landmarks": {
+        "banner": true,
+        "main": true,
+        "primaryNav": true,
+        "sidebar": true,
+        "contentinfo": true
+      },
+      "noOverflow": true
+    },
+    {
+      "view": "article",
+      "width": 320,
+      "duplicateIds": [],
+      "h1Count": 1,
+      "headingOrderValid": true,
+      "headings": [
+        {
+          "level": 1,
+          "text": "A practical guide to strengthening cloud identity boundaries"
+        },
+        {
+          "level": 2,
+          "text": "Know the boundary"
+        },
+        {
+          "level": 3,
+          "text": "Inspect the permissions"
+        },
+        {
+          "level": 2,
+          "text": "Validate the controls"
+        },
+        {
+          "level": 3,
+          "text": "Preserve the evidence"
+        },
+        {
+          "level": 2,
+          "text": "Continue reading"
+        },
+        {
+          "level": 2,
+          "text": "Need help securing your organization?"
+        },
+        {
+          "level": 2,
+          "text": "Recent Posts"
+        },
+        {
+          "level": 2,
+          "text": "Follow the research"
+        }
+      ],
+      "jsControlsHidden": true,
+      "allInputsLabeled": true,
+      "navVisible": true,
+      "landmarks": {
+        "banner": true,
+        "main": true,
+        "primaryNav": true,
+        "sidebar": true,
+        "contentinfo": true
+      },
+      "noOverflow": true
+    },
+    {
+      "view": "paged",
+      "width": 320,
+      "duplicateIds": [],
+      "h1Count": 1,
+      "headingOrderValid": true,
+      "headings": [
+        {
+          "level": 1,
+          "text": "Latest articles"
+        },
+        {
+          "level": 2,
+          "text": "Hardening cloud access without slowing your team down"
+        },
+        {
+          "level": 2,
+          "text": "What a useful incident response checklist actually includes"
+        },
+        {
+          "level": 2,
+          "text": "A practical guide to investigating long and unusual authentication chains"
+        },
+        {
+          "level": 2,
+          "text": "Making vulnerability remediation measurable"
+        },
+        {
+          "level": 2,
+          "text": "Recent Posts"
+        },
+        {
+          "level": 2,
+          "text": "Follow the research"
+        }
+      ],
+      "jsControlsHidden": true,
+      "allInputsLabeled": true,
+      "navVisible": true,
+      "landmarks": {
+        "banner": true,
+        "main": true,
+        "primaryNav": true,
+        "sidebar": true,
+        "contentinfo": true
+      },
+      "noOverflow": true
+    },
+    {
+      "view": "state-error",
+      "width": 320,
+      "duplicateIds": [],
+      "h1Count": 1,
+      "headingOrderValid": true,
+      "headings": [
+        {
+          "level": 1,
+          "text": "Page not found"
+        },
+        {
+          "level": 2,
+          "text": "Page not found"
+        },
+        {
+          "level": 2,
+          "text": "Recent Posts"
+        },
+        {
+          "level": 2,
+          "text": "Follow the research"
+        }
+      ],
+      "jsControlsHidden": true,
+      "allInputsLabeled": true,
+      "navVisible": true,
+      "landmarks": {
+        "banner": true,
+        "main": true,
+        "primaryNav": true,
+        "sidebar": true,
+        "contentinfo": true
+      },
+      "noOverflow": true
+    },
+    {
+      "view": "state-label",
+      "width": 320,
+      "duplicateIds": [],
+      "h1Count": 1,
+      "headingOrderValid": true,
+      "headings": [
+        {
+          "level": 1,
+          "text": "Latest articles"
+        },
+        {
+          "level": 2,
+          "text": "No articles under this label"
+        },
+        {
+          "level": 2,
+          "text": "Recent Posts"
+        },
+        {
+          "level": 2,
+          "text": "Follow the research"
+        }
+      ],
+      "jsControlsHidden": true,
+      "allInputsLabeled": true,
+      "navVisible": true,
+      "landmarks": {
+        "banner": true,
+        "main": true,
+        "primaryNav": true,
+        "sidebar": true,
+        "contentinfo": true
+      },
+      "noOverflow": true
+    },
+    {
+      "view": "state-search",
+      "width": 320,
+      "duplicateIds": [],
+      "h1Count": 1,
+      "headingOrderValid": true,
+      "headings": [
+        {
+          "level": 1,
+          "text": "Latest articles"
+        },
+        {
+          "level": 2,
+          "text": "No matching articles"
+        },
+        {
+          "level": 2,
+          "text": "Recent Posts"
+        },
+        {
+          "level": 2,
+          "text": "Follow the research"
+        }
+      ],
+      "jsControlsHidden": true,
+      "allInputsLabeled": true,
+      "navVisible": true,
+      "landmarks": {
+        "banner": true,
+        "main": true,
+        "primaryNav": true,
+        "sidebar": true,
+        "contentinfo": true
+      },
+      "noOverflow": true
+    },
+    {
+      "view": "state-archive",
+      "width": 320,
+      "duplicateIds": [],
+      "h1Count": 1,
+      "headingOrderValid": true,
+      "headings": [
+        {
+          "level": 1,
+          "text": "Latest articles"
+        },
+        {
+          "level": 2,
+          "text": "No articles in this period"
+        },
+        {
+          "level": 2,
+          "text": "Recent Posts"
+        },
+        {
+          "level": 2,
+          "text": "Follow the research"
+        }
+      ],
+      "jsControlsHidden": true,
+      "allInputsLabeled": true,
+      "navVisible": true,
+      "landmarks": {
+        "banner": true,
+        "main": true,
+        "primaryNav": true,
+        "sidebar": true,
+        "contentinfo": true
+      },
+      "noOverflow": true
+    },
+    {
+      "view": "state-home",
+      "width": 320,
+      "duplicateIds": [],
+      "h1Count": 1,
+      "headingOrderValid": true,
+      "headings": [
+        {
+          "level": 1,
+          "text": "Security knowledge. Practical defense."
+        },
+        {
+          "level": 2,
+          "text": "No articles published yet"
+        },
+        {
+          "level": 2,
+          "text": "Recent Posts"
+        },
+        {
+          "level": 2,
+          "text": "Follow the research"
+        }
+      ],
+      "jsControlsHidden": true,
+      "allInputsLabeled": true,
+      "navVisible": true,
+      "landmarks": {
+        "banner": true,
+        "main": true,
+        "primaryNav": true,
+        "sidebar": true,
+        "contentinfo": true
+      },
+      "noOverflow": true
+    },
+    {
+      "view": "state-generic",
+      "width": 320,
+      "duplicateIds": [],
+      "h1Count": 1,
+      "headingOrderValid": true,
+      "headings": [
+        {
+          "level": 1,
+          "text": "Latest articles"
+        },
+        {
+          "level": 2,
+          "text": "No articles on this page"
+        },
+        {
+          "level": 2,
+          "text": "Recent Posts"
+        },
+        {
+          "level": 2,
+          "text": "Follow the research"
+        }
+      ],
+      "jsControlsHidden": true,
+      "allInputsLabeled": true,
+      "navVisible": true,
+      "landmarks": {
+        "banner": true,
+        "main": true,
+        "primaryNav": true,
+        "sidebar": true,
+        "contentinfo": true
+      },
+      "noOverflow": true
+    },
+    {
+      "view": "home",
+      "width": 390,
+      "duplicateIds": [],
+      "h1Count": 1,
+      "headingOrderValid": true,
+      "headings": [
+        {
+          "level": 1,
+          "text": "Security knowledge. Practical defense."
+        },
+        {
+          "level": 2,
+          "text": "Hardening cloud access without slowing your team down"
+        },
+        {
+          "level": 2,
+          "text": "What a useful incident response checklist actually includes"
+        },
+        {
+          "level": 2,
+          "text": "A practical guide to investigating long and unusual authentication chains"
+        },
+        {
+          "level": 2,
+          "text": "Making vulnerability remediation measurable"
+        },
+        {
+          "level": 2,
+          "text": "Recent Posts"
+        },
+        {
+          "level": 2,
+          "text": "Follow the research"
+        }
+      ],
+      "jsControlsHidden": true,
+      "allInputsLabeled": true,
+      "navVisible": true,
+      "landmarks": {
+        "banner": true,
+        "main": true,
+        "primaryNav": true,
+        "sidebar": true,
+        "contentinfo": true
+      },
+      "noOverflow": true
+    },
+    {
+      "view": "article",
+      "width": 390,
+      "duplicateIds": [],
+      "h1Count": 1,
+      "headingOrderValid": true,
+      "headings": [
+        {
+          "level": 1,
+          "text": "A practical guide to strengthening cloud identity boundaries"
+        },
+        {
+          "level": 2,
+          "text": "Know the boundary"
+        },
+        {
+          "level": 3,
+          "text": "Inspect the permissions"
+        },
+        {
+          "level": 2,
+          "text": "Validate the controls"
+        },
+        {
+          "level": 3,
+          "text": "Preserve the evidence"
+        },
+        {
+          "level": 2,
+          "text": "Continue reading"
+        },
+        {
+          "level": 2,
+          "text": "Need help securing your organization?"
+        },
+        {
+          "level": 2,
+          "text": "Recent Posts"
+        },
+        {
+          "level": 2,
+          "text": "Follow the research"
+        }
+      ],
+      "jsControlsHidden": true,
+      "allInputsLabeled": true,
+      "navVisible": true,
+      "landmarks": {
+        "banner": true,
+        "main": true,
+        "primaryNav": true,
+        "sidebar": true,
+        "contentinfo": true
+      },
+      "noOverflow": true
+    },
+    {
+      "view": "paged",
+      "width": 390,
+      "duplicateIds": [],
+      "h1Count": 1,
+      "headingOrderValid": true,
+      "headings": [
+        {
+          "level": 1,
+          "text": "Latest articles"
+        },
+        {
+          "level": 2,
+          "text": "Hardening cloud access without slowing your team down"
+        },
+        {
+          "level": 2,
+          "text": "What a useful incident response checklist actually includes"
+        },
+        {
+          "level": 2,
+          "text": "A practical guide to investigating long and unusual authentication chains"
+        },
+        {
+          "level": 2,
+          "text": "Making vulnerability remediation measurable"
+        },
+        {
+          "level": 2,
+          "text": "Recent Posts"
+        },
+        {
+          "level": 2,
+          "text": "Follow the research"
+        }
+      ],
+      "jsControlsHidden": true,
+      "allInputsLabeled": true,
+      "navVisible": true,
+      "landmarks": {
+        "banner": true,
+        "main": true,
+        "primaryNav": true,
+        "sidebar": true,
+        "contentinfo": true
+      },
+      "noOverflow": true
+    },
+    {
+      "view": "state-error",
+      "width": 390,
+      "duplicateIds": [],
+      "h1Count": 1,
+      "headingOrderValid": true,
+      "headings": [
+        {
+          "level": 1,
+          "text": "Page not found"
+        },
+        {
+          "level": 2,
+          "text": "Page not found"
+        },
+        {
+          "level": 2,
+          "text": "Recent Posts"
+        },
+        {
+          "level": 2,
+          "text": "Follow the research"
+        }
+      ],
+      "jsControlsHidden": true,
+      "allInputsLabeled": true,
+      "navVisible": true,
+      "landmarks": {
+        "banner": true,
+        "main": true,
+        "primaryNav": true,
+        "sidebar": true,
+        "contentinfo": true
+      },
+      "noOverflow": true
+    },
+    {
+      "view": "state-label",
+      "width": 390,
+      "duplicateIds": [],
+      "h1Count": 1,
+      "headingOrderValid": true,
+      "headings": [
+        {
+          "level": 1,
+          "text": "Latest articles"
+        },
+        {
+          "level": 2,
+          "text": "No articles under this label"
+        },
+        {
+          "level": 2,
+          "text": "Recent Posts"
+        },
+        {
+          "level": 2,
+          "text": "Follow the research"
+        }
+      ],
+      "jsControlsHidden": true,
+      "allInputsLabeled": true,
+      "navVisible": true,
+      "landmarks": {
+        "banner": true,
+        "main": true,
+        "primaryNav": true,
+        "sidebar": true,
+        "contentinfo": true
+      },
+      "noOverflow": true
+    },
+    {
+      "view": "state-search",
+      "width": 390,
+      "duplicateIds": [],
+      "h1Count": 1,
+      "headingOrderValid": true,
+      "headings": [
+        {
+          "level": 1,
+          "text": "Latest articles"
+        },
+        {
+          "level": 2,
+          "text": "No matching articles"
+        },
+        {
+          "level": 2,
+          "text": "Recent Posts"
+        },
+        {
+          "level": 2,
+          "text": "Follow the research"
+        }
+      ],
+      "jsControlsHidden": true,
+      "allInputsLabeled": true,
+      "navVisible": true,
+      "landmarks": {
+        "banner": true,
+        "main": true,
+        "primaryNav": true,
+        "sidebar": true,
+        "contentinfo": true
+      },
+      "noOverflow": true
+    },
+    {
+      "view": "state-archive",
+      "width": 390,
+      "duplicateIds": [],
+      "h1Count": 1,
+      "headingOrderValid": true,
+      "headings": [
+        {
+          "level": 1,
+          "text": "Latest articles"
+        },
+        {
+          "level": 2,
+          "text": "No articles in this period"
+        },
+        {
+          "level": 2,
+          "text": "Recent Posts"
+        },
+        {
+          "level": 2,
+          "text": "Follow the research"
+        }
+      ],
+      "jsControlsHidden": true,
+      "allInputsLabeled": true,
+      "navVisible": true,
+      "landmarks": {
+        "banner": true,
+        "main": true,
+        "primaryNav": true,
+        "sidebar": true,
+        "contentinfo": true
+      },
+      "noOverflow": true
+    },
+    {
+      "view": "state-home",
+      "width": 390,
+      "duplicateIds": [],
+      "h1Count": 1,
+      "headingOrderValid": true,
+      "headings": [
+        {
+          "level": 1,
+          "text": "Security knowledge. Practical defense."
+        },
+        {
+          "level": 2,
+          "text": "No articles published yet"
+        },
+        {
+          "level": 2,
+          "text": "Recent Posts"
+        },
+        {
+          "level": 2,
+          "text": "Follow the research"
+        }
+      ],
+      "jsControlsHidden": true,
+      "allInputsLabeled": true,
+      "navVisible": true,
+      "landmarks": {
+        "banner": true,
+        "main": true,
+        "primaryNav": true,
+        "sidebar": true,
+        "contentinfo": true
+      },
+      "noOverflow": true
+    },
+    {
+      "view": "state-generic",
+      "width": 390,
+      "duplicateIds": [],
+      "h1Count": 1,
+      "headingOrderValid": true,
+      "headings": [
+        {
+          "level": 1,
+          "text": "Latest articles"
+        },
+        {
+          "level": 2,
+          "text": "No articles on this page"
+        },
+        {
+          "level": 2,
+          "text": "Recent Posts"
+        },
+        {
+          "level": 2,
+          "text": "Follow the research"
+        }
+      ],
+      "jsControlsHidden": true,
+      "allInputsLabeled": true,
+      "navVisible": true,
+      "landmarks": {
+        "banner": true,
+        "main": true,
+        "primaryNav": true,
+        "sidebar": true,
+        "contentinfo": true
+      },
+      "noOverflow": true
+    },
+    {
+      "view": "home",
+      "width": 1280,
+      "duplicateIds": [],
+      "h1Count": 1,
+      "headingOrderValid": true,
+      "headings": [
+        {
+          "level": 1,
+          "text": "Security knowledge. Practical defense."
+        },
+        {
+          "level": 2,
+          "text": "Hardening cloud access without slowing your team down"
+        },
+        {
+          "level": 2,
+          "text": "What a useful incident response checklist actually includes"
+        },
+        {
+          "level": 2,
+          "text": "A practical guide to investigating long and unusual authentication chains"
+        },
+        {
+          "level": 2,
+          "text": "Making vulnerability remediation measurable"
+        },
+        {
+          "level": 2,
+          "text": "Recent Posts"
+        },
+        {
+          "level": 2,
+          "text": "Follow the research"
+        }
+      ],
+      "jsControlsHidden": true,
+      "allInputsLabeled": true,
+      "navVisible": true,
+      "landmarks": {
+        "banner": true,
+        "main": true,
+        "primaryNav": true,
+        "sidebar": true,
+        "contentinfo": true
+      },
+      "noOverflow": true
+    },
+    {
+      "view": "article",
+      "width": 1280,
+      "duplicateIds": [],
+      "h1Count": 1,
+      "headingOrderValid": true,
+      "headings": [
+        {
+          "level": 1,
+          "text": "A practical guide to strengthening cloud identity boundaries"
+        },
+        {
+          "level": 2,
+          "text": "Know the boundary"
+        },
+        {
+          "level": 3,
+          "text": "Inspect the permissions"
+        },
+        {
+          "level": 2,
+          "text": "Validate the controls"
+        },
+        {
+          "level": 3,
+          "text": "Preserve the evidence"
+        },
+        {
+          "level": 2,
+          "text": "Continue reading"
+        },
+        {
+          "level": 2,
+          "text": "Need help securing your organization?"
+        },
+        {
+          "level": 2,
+          "text": "Recent Posts"
+        },
+        {
+          "level": 2,
+          "text": "Follow the research"
+        }
+      ],
+      "jsControlsHidden": true,
+      "allInputsLabeled": true,
+      "navVisible": true,
+      "landmarks": {
+        "banner": true,
+        "main": true,
+        "primaryNav": true,
+        "sidebar": true,
+        "contentinfo": true
+      },
+      "noOverflow": true
+    },
+    {
+      "view": "paged",
+      "width": 1280,
+      "duplicateIds": [],
+      "h1Count": 1,
+      "headingOrderValid": true,
+      "headings": [
+        {
+          "level": 1,
+          "text": "Latest articles"
+        },
+        {
+          "level": 2,
+          "text": "Hardening cloud access without slowing your team down"
+        },
+        {
+          "level": 2,
+          "text": "What a useful incident response checklist actually includes"
+        },
+        {
+          "level": 2,
+          "text": "A practical guide to investigating long and unusual authentication chains"
+        },
+        {
+          "level": 2,
+          "text": "Making vulnerability remediation measurable"
+        },
+        {
+          "level": 2,
+          "text": "Recent Posts"
+        },
+        {
+          "level": 2,
+          "text": "Follow the research"
+        }
+      ],
+      "jsControlsHidden": true,
+      "allInputsLabeled": true,
+      "navVisible": true,
+      "landmarks": {
+        "banner": true,
+        "main": true,
+        "primaryNav": true,
+        "sidebar": true,
+        "contentinfo": true
+      },
+      "noOverflow": true
+    },
+    {
+      "view": "state-error",
+      "width": 1280,
+      "duplicateIds": [],
+      "h1Count": 1,
+      "headingOrderValid": true,
+      "headings": [
+        {
+          "level": 1,
+          "text": "Page not found"
+        },
+        {
+          "level": 2,
+          "text": "Page not found"
+        },
+        {
+          "level": 2,
+          "text": "Recent Posts"
+        },
+        {
+          "level": 2,
+          "text": "Follow the research"
+        }
+      ],
+      "jsControlsHidden": true,
+      "allInputsLabeled": true,
+      "navVisible": true,
+      "landmarks": {
+        "banner": true,
+        "main": true,
+        "primaryNav": true,
+        "sidebar": true,
+        "contentinfo": true
+      },
+      "noOverflow": true
+    },
+    {
+      "view": "state-label",
+      "width": 1280,
+      "duplicateIds": [],
+      "h1Count": 1,
+      "headingOrderValid": true,
+      "headings": [
+        {
+          "level": 1,
+          "text": "Latest articles"
+        },
+        {
+          "level": 2,
+          "text": "No articles under this label"
+        },
+        {
+          "level": 2,
+          "text": "Recent Posts"
+        },
+        {
+          "level": 2,
+          "text": "Follow the research"
+        }
+      ],
+      "jsControlsHidden": true,
+      "allInputsLabeled": true,
+      "navVisible": true,
+      "landmarks": {
+        "banner": true,
+        "main": true,
+        "primaryNav": true,
+        "sidebar": true,
+        "contentinfo": true
+      },
+      "noOverflow": true
+    },
+    {
+      "view": "state-search",
+      "width": 1280,
+      "duplicateIds": [],
+      "h1Count": 1,
+      "headingOrderValid": true,
+      "headings": [
+        {
+          "level": 1,
+          "text": "Latest articles"
+        },
+        {
+          "level": 2,
+          "text": "No matching articles"
+        },
+        {
+          "level": 2,
+          "text": "Recent Posts"
+        },
+        {
+          "level": 2,
+          "text": "Follow the research"
+        }
+      ],
+      "jsControlsHidden": true,
+      "allInputsLabeled": true,
+      "navVisible": true,
+      "landmarks": {
+        "banner": true,
+        "main": true,
+        "primaryNav": true,
+        "sidebar": true,
+        "contentinfo": true
+      },
+      "noOverflow": true
+    },
+    {
+      "view": "state-archive",
+      "width": 1280,
+      "duplicateIds": [],
+      "h1Count": 1,
+      "headingOrderValid": true,
+      "headings": [
+        {
+          "level": 1,
+          "text": "Latest articles"
+        },
+        {
+          "level": 2,
+          "text": "No articles in this period"
+        },
+        {
+          "level": 2,
+          "text": "Recent Posts"
+        },
+        {
+          "level": 2,
+          "text": "Follow the research"
+        }
+      ],
+      "jsControlsHidden": true,
+      "allInputsLabeled": true,
+      "navVisible": true,
+      "landmarks": {
+        "banner": true,
+        "main": true,
+        "primaryNav": true,
+        "sidebar": true,
+        "contentinfo": true
+      },
+      "noOverflow": true
+    },
+    {
+      "view": "state-home",
+      "width": 1280,
+      "duplicateIds": [],
+      "h1Count": 1,
+      "headingOrderValid": true,
+      "headings": [
+        {
+          "level": 1,
+          "text": "Security knowledge. Practical defense."
+        },
+        {
+          "level": 2,
+          "text": "No articles published yet"
+        },
+        {
+          "level": 2,
+          "text": "Recent Posts"
+        },
+        {
+          "level": 2,
+          "text": "Follow the research"
+        }
+      ],
+      "jsControlsHidden": true,
+      "allInputsLabeled": true,
+      "navVisible": true,
+      "landmarks": {
+        "banner": true,
+        "main": true,
+        "primaryNav": true,
+        "sidebar": true,
+        "contentinfo": true
+      },
+      "noOverflow": true
+    },
+    {
+      "view": "state-generic",
+      "width": 1280,
+      "duplicateIds": [],
+      "h1Count": 1,
+      "headingOrderValid": true,
+      "headings": [
+        {
+          "level": 1,
+          "text": "Latest articles"
+        },
+        {
+          "level": 2,
+          "text": "No articles on this page"
+        },
+        {
+          "level": 2,
+          "text": "Recent Posts"
+        },
+        {
+          "level": 2,
+          "text": "Follow the research"
+        }
+      ],
+      "jsControlsHidden": true,
+      "allInputsLabeled": true,
+      "navVisible": true,
+      "landmarks": {
+        "banner": true,
+        "main": true,
+        "primaryNav": true,
+        "sidebar": true,
+        "contentinfo": true
+      },
+      "noOverflow": true
+    }
+  ],
+  "keyboardAndFocus": [
+    {
+      "view": "article",
+      "width": 390,
+      "colorScheme": "light",
+      "focusSteps": [
+        {
+          "tag": "A",
+          "id": null,
+          "className": "skip-link",
+          "text": "Skip to content",
+          "ariaLabel": null,
+          "outlineStyle": "solid",
+          "outlineWidth": "3px",
+          "outlineColor": "rgb(18, 89, 160)",
+          "rect": {
+            "width": 131,
+            "height": 50
+          },
+          "unobscured": true
+        },
+        {
+          "tag": "A",
+          "id": null,
+          "className": "brand",
+          "text": "FCDFast Cyber DefenseSecurity publication",
+          "ariaLabel": "Fast Cyber Defense Blog homepage",
+          "outlineStyle": "solid",
+          "outlineWidth": "3px",
+          "outlineColor": "rgb(18, 89, 160)",
+          "rect": {
+            "width": 225,
+            "height": 41
+          },
+          "unobscured": true
+        },
+        {
+          "tag": "BUTTON",
+          "id": "theme-toggle",
+          "className": "js-control",
+          "text": "Theme",
+          "ariaLabel": "Switch to dark theme",
+          "outlineStyle": "solid",
+          "outlineWidth": "3px",
+          "outlineColor": "rgb(18, 89, 160)",
+          "rect": {
+            "width": 63,
+            "height": 44
+          },
+          "unobscured": true
+        },
+        {
+          "tag": "BUTTON",
+          "id": "menu-toggle",
+          "className": "js-control",
+          "text": "Menu",
+          "ariaLabel": null,
+          "outlineStyle": "solid",
+          "outlineWidth": "3px",
+          "outlineColor": "rgb(18, 89, 160)",
+          "rect": {
+            "width": 57,
+            "height": 44
+          },
+          "unobscured": true
+        },
+        {
+          "tag": "A",
+          "id": null,
+          "className": "topic-pill",
+          "text": "Cloud Security",
+          "ariaLabel": null,
+          "outlineStyle": "solid",
+          "outlineWidth": "3px",
+          "outlineColor": "rgb(18, 89, 160)",
+          "rect": {
+            "width": 116,
+            "height": 44
+          },
+          "unobscured": true
+        },
+        {
+          "tag": "A",
+          "id": null,
+          "className": "topic-pill",
+          "text": "Research",
+          "ariaLabel": null,
+          "outlineStyle": "solid",
+          "outlineWidth": "3px",
+          "outlineColor": "rgb(18, 89, 160)",
+          "rect": {
+            "width": 82,
+            "height": 44
+          },
+          "unobscured": true
+        },
+        {
+          "tag": "A",
+          "id": null,
+          "className": null,
+          "text": "Cloud Security",
+          "ariaLabel": null,
+          "outlineStyle": "solid",
+          "outlineWidth": "3px",
+          "outlineColor": "rgb(18, 89, 160)",
+          "rect": {
+            "width": 95,
+            "height": 33
+          },
+          "unobscured": true
+        },
+        {
+          "tag": "A",
+          "id": null,
+          "className": null,
+          "text": "Research",
+          "ariaLabel": null,
+          "outlineStyle": "solid",
+          "outlineWidth": "3px",
+          "outlineColor": "rgb(18, 89, 160)",
+          "rect": {
+            "width": 58,
+            "height": 33
+          },
+          "unobscured": true
+        },
+        {
+          "tag": "SUMMARY",
+          "id": null,
+          "className": null,
+          "text": "On this page",
+          "ariaLabel": null,
+          "outlineStyle": "solid",
+          "outlineWidth": "3px",
+          "outlineColor": "rgb(18, 89, 160)",
+          "rect": {
+            "width": 324,
+            "height": 44
+          },
+          "unobscured": true
+        },
+        {
+          "tag": "BUTTON",
+          "id": null,
+          "className": null,
+          "text": "Copy",
+          "ariaLabel": "Copy bash code",
+          "outlineStyle": "solid",
+          "outlineWidth": "3px",
+          "outlineColor": "rgb(18, 89, 160)",
+          "rect": {
+            "width": 59,
+            "height": 45
+          },
+          "unobscured": false
+        },
+        {
+          "tag": "PRE",
+          "id": null,
+          "className": null,
+          "text": "printf \"%s\\n\" \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "ariaLabel": "Scrollable code block",
+          "outlineStyle": "solid",
+          "outlineWidth": "3px",
+          "outlineColor": "rgb(18, 89, 160)",
+          "rect": {
+            "width": 358,
+            "height": 58
+          },
+          "unobscured": false
+        },
+        {
+          "tag": "DIV",
+          "id": null,
+          "className": "table-scroll",
+          "text": "Control verification matrix\n                      ",
+          "ariaLabel": "Control verification matrix",
+          "outlineStyle": "solid",
+          "outlineWidth": "3px",
+          "outlineColor": "rgb(18, 89, 160)",
+          "rect": {
+            "width": 358,
+            "height": 244
+          },
+          "unobscured": false
+        }
+      ]
+    },
+    {
+      "view": "article",
+      "width": 390,
+      "colorScheme": "dark",
+      "focusSteps": [
+        {
+          "tag": "A",
+          "id": null,
+          "className": "skip-link",
+          "text": "Skip to content",
+          "ariaLabel": null,
+          "outlineStyle": "solid",
+          "outlineWidth": "3px",
+          "outlineColor": "rgb(166, 216, 255)",
+          "rect": {
+            "width": 131,
+            "height": 50
+          },
+          "unobscured": true
+        },
+        {
+          "tag": "A",
+          "id": null,
+          "className": "brand",
+          "text": "FCDFast Cyber DefenseSecurity publication",
+          "ariaLabel": "Fast Cyber Defense Blog homepage",
+          "outlineStyle": "solid",
+          "outlineWidth": "3px",
+          "outlineColor": "rgb(166, 216, 255)",
+          "rect": {
+            "width": 225,
+            "height": 41
+          },
+          "unobscured": true
+        },
+        {
+          "tag": "BUTTON",
+          "id": "theme-toggle",
+          "className": "js-control",
+          "text": "Theme",
+          "ariaLabel": "Switch to light theme",
+          "outlineStyle": "solid",
+          "outlineWidth": "3px",
+          "outlineColor": "rgb(166, 216, 255)",
+          "rect": {
+            "width": 63,
+            "height": 44
+          },
+          "unobscured": true
+        },
+        {
+          "tag": "BUTTON",
+          "id": "menu-toggle",
+          "className": "js-control",
+          "text": "Menu",
+          "ariaLabel": null,
+          "outlineStyle": "solid",
+          "outlineWidth": "3px",
+          "outlineColor": "rgb(166, 216, 255)",
+          "rect": {
+            "width": 57,
+            "height": 44
+          },
+          "unobscured": true
+        },
+        {
+          "tag": "A",
+          "id": null,
+          "className": "topic-pill",
+          "text": "Cloud Security",
+          "ariaLabel": null,
+          "outlineStyle": "solid",
+          "outlineWidth": "3px",
+          "outlineColor": "rgb(166, 216, 255)",
+          "rect": {
+            "width": 116,
+            "height": 44
+          },
+          "unobscured": true
+        },
+        {
+          "tag": "A",
+          "id": null,
+          "className": "topic-pill",
+          "text": "Research",
+          "ariaLabel": null,
+          "outlineStyle": "solid",
+          "outlineWidth": "3px",
+          "outlineColor": "rgb(166, 216, 255)",
+          "rect": {
+            "width": 82,
+            "height": 44
+          },
+          "unobscured": true
+        },
+        {
+          "tag": "A",
+          "id": null,
+          "className": null,
+          "text": "Cloud Security",
+          "ariaLabel": null,
+          "outlineStyle": "solid",
+          "outlineWidth": "3px",
+          "outlineColor": "rgb(166, 216, 255)",
+          "rect": {
+            "width": 95,
+            "height": 33
+          },
+          "unobscured": true
+        },
+        {
+          "tag": "A",
+          "id": null,
+          "className": null,
+          "text": "Research",
+          "ariaLabel": null,
+          "outlineStyle": "solid",
+          "outlineWidth": "3px",
+          "outlineColor": "rgb(166, 216, 255)",
+          "rect": {
+            "width": 58,
+            "height": 33
+          },
+          "unobscured": true
+        },
+        {
+          "tag": "SUMMARY",
+          "id": null,
+          "className": null,
+          "text": "On this page",
+          "ariaLabel": null,
+          "outlineStyle": "solid",
+          "outlineWidth": "3px",
+          "outlineColor": "rgb(166, 216, 255)",
+          "rect": {
+            "width": 324,
+            "height": 44
+          },
+          "unobscured": true
+        },
+        {
+          "tag": "BUTTON",
+          "id": null,
+          "className": null,
+          "text": "Copy",
+          "ariaLabel": "Copy bash code",
+          "outlineStyle": "solid",
+          "outlineWidth": "3px",
+          "outlineColor": "rgb(166, 216, 255)",
+          "rect": {
+            "width": 59,
+            "height": 45
+          },
+          "unobscured": false
+        },
+        {
+          "tag": "PRE",
+          "id": null,
+          "className": null,
+          "text": "printf \"%s\\n\" \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "ariaLabel": "Scrollable code block",
+          "outlineStyle": "solid",
+          "outlineWidth": "3px",
+          "outlineColor": "rgb(166, 216, 255)",
+          "rect": {
+            "width": 358,
+            "height": 58
+          },
+          "unobscured": false
+        },
+        {
+          "tag": "DIV",
+          "id": null,
+          "className": "table-scroll",
+          "text": "Control verification matrix\n                      ",
+          "ariaLabel": "Control verification matrix",
+          "outlineStyle": "solid",
+          "outlineWidth": "3px",
+          "outlineColor": "rgb(166, 216, 255)",
+          "rect": {
+            "width": 358,
+            "height": 244
+          },
+          "unobscured": false
+        }
+      ]
+    },
+    {
+      "view": "article",
+      "width": 1280,
+      "colorScheme": "light",
+      "focusSteps": [
+        {
+          "tag": "A",
+          "id": null,
+          "className": "skip-link",
+          "text": "Skip to content",
+          "ariaLabel": null,
+          "outlineStyle": "solid",
+          "outlineWidth": "3px",
+          "outlineColor": "rgb(18, 89, 160)",
+          "rect": {
+            "width": 131,
+            "height": 50
+          },
+          "unobscured": true
+        },
+        {
+          "tag": "A",
+          "id": null,
+          "className": "brand",
+          "text": "FCDFast Cyber DefenseSecurity publication",
+          "ariaLabel": "Fast Cyber Defense Blog homepage",
+          "outlineStyle": "solid",
+          "outlineWidth": "3px",
+          "outlineColor": "rgb(18, 89, 160)",
+          "rect": {
+            "width": 1156,
+            "height": 53
+          },
+          "unobscured": true
+        },
+        {
+          "tag": "BUTTON",
+          "id": "theme-toggle",
+          "className": "js-control",
+          "text": "Theme",
+          "ariaLabel": "Switch to dark theme",
+          "outlineStyle": "solid",
+          "outlineWidth": "3px",
+          "outlineColor": "rgb(18, 89, 160)",
+          "rect": {
+            "width": 76,
+            "height": 46
+          },
+          "unobscured": true
+        },
+        {
+          "tag": "A",
+          "id": null,
+          "className": null,
+          "text": "Latest",
+          "ariaLabel": null,
+          "outlineStyle": "solid",
+          "outlineWidth": "3px",
+          "outlineColor": "rgb(18, 89, 160)",
+          "rect": {
+            "width": 43,
+            "height": 42
+          },
+          "unobscured": true
+        },
+        {
+          "tag": "A",
+          "id": null,
+          "className": null,
+          "text": "Topics",
+          "ariaLabel": null,
+          "outlineStyle": "solid",
+          "outlineWidth": "3px",
+          "outlineColor": "rgb(18, 89, 160)",
+          "rect": {
+            "width": 45,
+            "height": 42
+          },
+          "unobscured": true
+        },
+        {
+          "tag": "A",
+          "id": null,
+          "className": null,
+          "text": "Company website",
+          "ariaLabel": null,
+          "outlineStyle": "solid",
+          "outlineWidth": "3px",
+          "outlineColor": "rgb(18, 89, 160)",
+          "rect": {
+            "width": 129,
+            "height": 42
+          },
+          "unobscured": true
+        },
+        {
+          "tag": "INPUT",
+          "id": "search-query",
+          "className": null,
+          "text": "",
+          "ariaLabel": null,
+          "outlineStyle": "solid",
+          "outlineWidth": "3px",
+          "outlineColor": "rgb(18, 89, 160)",
+          "rect": {
+            "width": 854,
+            "height": 46
+          },
+          "unobscured": true
+        },
+        {
+          "tag": "BUTTON",
+          "id": null,
+          "className": null,
+          "text": "Search blog",
+          "ariaLabel": null,
+          "outlineStyle": "solid",
+          "outlineWidth": "3px",
+          "outlineColor": "rgb(18, 89, 160)",
+          "rect": {
+            "width": 111,
+            "height": 46
+          },
+          "unobscured": true
+        },
+        {
+          "tag": "A",
+          "id": null,
+          "className": "topic-pill",
+          "text": "Cloud Security",
+          "ariaLabel": null,
+          "outlineStyle": "solid",
+          "outlineWidth": "3px",
+          "outlineColor": "rgb(18, 89, 160)",
+          "rect": {
+            "width": 116,
+            "height": 44
+          },
+          "unobscured": true
+        },
+        {
+          "tag": "A",
+          "id": null,
+          "className": "topic-pill",
+          "text": "Research",
+          "ariaLabel": null,
+          "outlineStyle": "solid",
+          "outlineWidth": "3px",
+          "outlineColor": "rgb(18, 89, 160)",
+          "rect": {
+            "width": 82,
+            "height": 44
+          },
+          "unobscured": true
+        },
+        {
+          "tag": "A",
+          "id": null,
+          "className": null,
+          "text": "Cloud Security",
+          "ariaLabel": null,
+          "outlineStyle": "solid",
+          "outlineWidth": "3px",
+          "outlineColor": "rgb(18, 89, 160)",
+          "rect": {
+            "width": 95,
+            "height": 33
+          },
+          "unobscured": true
+        },
+        {
+          "tag": "A",
+          "id": null,
+          "className": null,
+          "text": "Research",
+          "ariaLabel": null,
+          "outlineStyle": "solid",
+          "outlineWidth": "3px",
+          "outlineColor": "rgb(18, 89, 160)",
+          "rect": {
+            "width": 58,
+            "height": 33
+          },
+          "unobscured": true
+        }
+      ]
+    },
+    {
+      "view": "article",
+      "width": 1280,
+      "colorScheme": "dark",
+      "focusSteps": [
+        {
+          "tag": "A",
+          "id": null,
+          "className": "skip-link",
+          "text": "Skip to content",
+          "ariaLabel": null,
+          "outlineStyle": "solid",
+          "outlineWidth": "3px",
+          "outlineColor": "rgb(166, 216, 255)",
+          "rect": {
+            "width": 131,
+            "height": 50
+          },
+          "unobscured": true
+        },
+        {
+          "tag": "A",
+          "id": null,
+          "className": "brand",
+          "text": "FCDFast Cyber DefenseSecurity publication",
+          "ariaLabel": "Fast Cyber Defense Blog homepage",
+          "outlineStyle": "solid",
+          "outlineWidth": "3px",
+          "outlineColor": "rgb(166, 216, 255)",
+          "rect": {
+            "width": 1156,
+            "height": 53
+          },
+          "unobscured": true
+        },
+        {
+          "tag": "BUTTON",
+          "id": "theme-toggle",
+          "className": "js-control",
+          "text": "Theme",
+          "ariaLabel": "Switch to light theme",
+          "outlineStyle": "solid",
+          "outlineWidth": "3px",
+          "outlineColor": "rgb(166, 216, 255)",
+          "rect": {
+            "width": 76,
+            "height": 46
+          },
+          "unobscured": true
+        },
+        {
+          "tag": "A",
+          "id": null,
+          "className": null,
+          "text": "Latest",
+          "ariaLabel": null,
+          "outlineStyle": "solid",
+          "outlineWidth": "3px",
+          "outlineColor": "rgb(166, 216, 255)",
+          "rect": {
+            "width": 43,
+            "height": 42
+          },
+          "unobscured": true
+        },
+        {
+          "tag": "A",
+          "id": null,
+          "className": null,
+          "text": "Topics",
+          "ariaLabel": null,
+          "outlineStyle": "solid",
+          "outlineWidth": "3px",
+          "outlineColor": "rgb(166, 216, 255)",
+          "rect": {
+            "width": 45,
+            "height": 42
+          },
+          "unobscured": true
+        },
+        {
+          "tag": "A",
+          "id": null,
+          "className": null,
+          "text": "Company website",
+          "ariaLabel": null,
+          "outlineStyle": "solid",
+          "outlineWidth": "3px",
+          "outlineColor": "rgb(166, 216, 255)",
+          "rect": {
+            "width": 129,
+            "height": 42
+          },
+          "unobscured": true
+        },
+        {
+          "tag": "INPUT",
+          "id": "search-query",
+          "className": null,
+          "text": "",
+          "ariaLabel": null,
+          "outlineStyle": "solid",
+          "outlineWidth": "3px",
+          "outlineColor": "rgb(166, 216, 255)",
+          "rect": {
+            "width": 854,
+            "height": 46
+          },
+          "unobscured": true
+        },
+        {
+          "tag": "BUTTON",
+          "id": null,
+          "className": null,
+          "text": "Search blog",
+          "ariaLabel": null,
+          "outlineStyle": "solid",
+          "outlineWidth": "3px",
+          "outlineColor": "rgb(166, 216, 255)",
+          "rect": {
+            "width": 111,
+            "height": 46
+          },
+          "unobscured": true
+        },
+        {
+          "tag": "A",
+          "id": null,
+          "className": "topic-pill",
+          "text": "Cloud Security",
+          "ariaLabel": null,
+          "outlineStyle": "solid",
+          "outlineWidth": "3px",
+          "outlineColor": "rgb(166, 216, 255)",
+          "rect": {
+            "width": 116,
+            "height": 44
+          },
+          "unobscured": true
+        },
+        {
+          "tag": "A",
+          "id": null,
+          "className": "topic-pill",
+          "text": "Research",
+          "ariaLabel": null,
+          "outlineStyle": "solid",
+          "outlineWidth": "3px",
+          "outlineColor": "rgb(166, 216, 255)",
+          "rect": {
+            "width": 82,
+            "height": 44
+          },
+          "unobscured": true
+        },
+        {
+          "tag": "A",
+          "id": null,
+          "className": null,
+          "text": "Cloud Security",
+          "ariaLabel": null,
+          "outlineStyle": "solid",
+          "outlineWidth": "3px",
+          "outlineColor": "rgb(166, 216, 255)",
+          "rect": {
+            "width": 95,
+            "height": 33
+          },
+          "unobscured": true
+        },
+        {
+          "tag": "A",
+          "id": null,
+          "className": null,
+          "text": "Research",
+          "ariaLabel": null,
+          "outlineStyle": "solid",
+          "outlineWidth": "3px",
+          "outlineColor": "rgb(166, 216, 255)",
+          "rect": {
+            "width": 58,
+            "height": 33
+          },
+          "unobscured": true
+        }
+      ]
+    }
+  ],
+  "tapTargets": [
+    {
+      "view": "home",
+      "width": 390,
+      "colorScheme": "light",
+      "targets": [
+        {
+          "selector": "button#theme-toggle.js-control",
+          "text": "Theme",
+          "width": 63.2,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "button#menu-toggle.js-control",
+          "text": "Menu",
+          "width": 56.9,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Latest",
+          "width": 43,
+          "height": 42.4,
+          "meets24pxAA": true,
+          "meets44pxTouch": false
+        },
+        {
+          "selector": "a",
+          "text": "Topics",
+          "width": 45.1,
+          "height": 42.4,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Company website",
+          "width": 128.8,
+          "height": 42.4,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "input#search-query",
+          "text": "",
+          "width": 238.9,
+          "height": 46,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "button",
+          "text": "Search blog",
+          "width": 111.1,
+          "height": 46,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a.topic-pill",
+          "text": "Cloud Security",
+          "width": 116.4,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a.topic-pill",
+          "text": "Research",
+          "width": 82.1,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Cloud Security",
+          "width": 95.5,
+          "height": 32.7,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Research",
+          "width": 58.3,
+          "height": 32.7,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Cloud Security",
+          "width": 95.5,
+          "height": 32.7,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Research",
+          "width": 58.3,
+          "height": 32.7,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Cloud Security",
+          "width": 95.5,
+          "height": 32.7,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Research",
+          "width": 58.3,
+          "height": 32.7,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Cloud Security",
+          "width": 95.5,
+          "height": 32.7,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Research",
+          "width": 58.3,
+          "height": 32.7,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Company website",
+          "width": 125.6,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Publication feed",
+          "width": 114,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Back to content",
+          "width": 110.3,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        }
+      ]
+    },
+    {
+      "view": "article",
+      "width": 390,
+      "colorScheme": "light",
+      "targets": [
+        {
+          "selector": "button#theme-toggle.js-control",
+          "text": "Theme",
+          "width": 63.2,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "button#menu-toggle.js-control",
+          "text": "Menu",
+          "width": 56.9,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Latest",
+          "width": 43,
+          "height": 42.4,
+          "meets24pxAA": true,
+          "meets44pxTouch": false
+        },
+        {
+          "selector": "a",
+          "text": "Topics",
+          "width": 45.1,
+          "height": 42.4,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Company website",
+          "width": 128.8,
+          "height": 42.4,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "input#search-query",
+          "text": "",
+          "width": 238.9,
+          "height": 46,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "button",
+          "text": "Search blog",
+          "width": 111.1,
+          "height": 46,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a.topic-pill",
+          "text": "Cloud Security",
+          "width": 116.4,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a.topic-pill",
+          "text": "Research",
+          "width": 82.1,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Cloud Security",
+          "width": 95.5,
+          "height": 32.7,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Research",
+          "width": 58.3,
+          "height": 32.7,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "summary",
+          "text": "On this page",
+          "width": 324,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "button",
+          "text": "Copy",
+          "width": 59.5,
+          "height": 45.5,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Cloud Security",
+          "width": 95.5,
+          "height": 32.7,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Research",
+          "width": 58.3,
+          "height": 32.7,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "button#copy-link.js-control",
+          "text": "Copy article link",
+          "width": 140.2,
+          "height": 46,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Company website",
+          "width": 125.6,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Publication feed",
+          "width": 114,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Back to content",
+          "width": 110.3,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        }
+      ]
+    },
+    {
+      "view": "home",
+      "width": 390,
+      "colorScheme": "dark",
+      "targets": [
+        {
+          "selector": "button#theme-toggle.js-control",
+          "text": "Theme",
+          "width": 63.2,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "button#menu-toggle.js-control",
+          "text": "Menu",
+          "width": 56.9,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Latest",
+          "width": 43,
+          "height": 42.4,
+          "meets24pxAA": true,
+          "meets44pxTouch": false
+        },
+        {
+          "selector": "a",
+          "text": "Topics",
+          "width": 45.1,
+          "height": 42.4,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Company website",
+          "width": 128.8,
+          "height": 42.4,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "input#search-query",
+          "text": "",
+          "width": 238.9,
+          "height": 46,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "button",
+          "text": "Search blog",
+          "width": 111.1,
+          "height": 46,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a.topic-pill",
+          "text": "Cloud Security",
+          "width": 116.4,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a.topic-pill",
+          "text": "Research",
+          "width": 82.1,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Cloud Security",
+          "width": 95.5,
+          "height": 32.7,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Research",
+          "width": 58.3,
+          "height": 32.7,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Cloud Security",
+          "width": 95.5,
+          "height": 32.7,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Research",
+          "width": 58.3,
+          "height": 32.7,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Cloud Security",
+          "width": 95.5,
+          "height": 32.7,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Research",
+          "width": 58.3,
+          "height": 32.7,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Cloud Security",
+          "width": 95.5,
+          "height": 32.7,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Research",
+          "width": 58.3,
+          "height": 32.7,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Company website",
+          "width": 125.6,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Publication feed",
+          "width": 114,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Back to content",
+          "width": 110.3,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        }
+      ]
+    },
+    {
+      "view": "article",
+      "width": 390,
+      "colorScheme": "dark",
+      "targets": [
+        {
+          "selector": "button#theme-toggle.js-control",
+          "text": "Theme",
+          "width": 63.2,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "button#menu-toggle.js-control",
+          "text": "Menu",
+          "width": 56.9,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Latest",
+          "width": 43,
+          "height": 42.4,
+          "meets24pxAA": true,
+          "meets44pxTouch": false
+        },
+        {
+          "selector": "a",
+          "text": "Topics",
+          "width": 45.1,
+          "height": 42.4,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Company website",
+          "width": 128.8,
+          "height": 42.4,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "input#search-query",
+          "text": "",
+          "width": 238.9,
+          "height": 46,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "button",
+          "text": "Search blog",
+          "width": 111.1,
+          "height": 46,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a.topic-pill",
+          "text": "Cloud Security",
+          "width": 116.4,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a.topic-pill",
+          "text": "Research",
+          "width": 82.1,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Cloud Security",
+          "width": 95.5,
+          "height": 32.7,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Research",
+          "width": 58.3,
+          "height": 32.7,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "summary",
+          "text": "On this page",
+          "width": 324,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "button",
+          "text": "Copy",
+          "width": 59.5,
+          "height": 45.5,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Cloud Security",
+          "width": 95.5,
+          "height": 32.7,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Research",
+          "width": 58.3,
+          "height": 32.7,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "button#copy-link.js-control",
+          "text": "Copy article link",
+          "width": 140.2,
+          "height": 46,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Company website",
+          "width": 125.6,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Publication feed",
+          "width": 114,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Back to content",
+          "width": 110.3,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        }
+      ]
+    },
+    {
+      "view": "home",
+      "width": 1280,
+      "colorScheme": "light",
+      "targets": [
+        {
+          "selector": "button#theme-toggle.js-control",
+          "text": "Theme",
+          "width": 75.5,
+          "height": 46,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Latest",
+          "width": 43,
+          "height": 42.4,
+          "meets24pxAA": true,
+          "meets44pxTouch": false
+        },
+        {
+          "selector": "a",
+          "text": "Topics",
+          "width": 45.1,
+          "height": 42.4,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Company website",
+          "width": 128.8,
+          "height": 42.4,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "input#search-query",
+          "text": "",
+          "width": 854.5,
+          "height": 46,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "button",
+          "text": "Search blog",
+          "width": 111.1,
+          "height": 46,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a.topic-pill",
+          "text": "Cloud Security",
+          "width": 116.4,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a.topic-pill",
+          "text": "Research",
+          "width": 82.1,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Cloud Security",
+          "width": 95.5,
+          "height": 32.7,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Research",
+          "width": 58.3,
+          "height": 32.7,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Cloud Security",
+          "width": 95.5,
+          "height": 32.7,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Research",
+          "width": 58.3,
+          "height": 32.7,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Cloud Security",
+          "width": 95.5,
+          "height": 32.7,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Research",
+          "width": 58.3,
+          "height": 32.7,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Cloud Security",
+          "width": 95.5,
+          "height": 32.7,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Research",
+          "width": 58.3,
+          "height": 32.7,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Company website",
+          "width": 125.6,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Publication feed",
+          "width": 114,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Back to content",
+          "width": 110.3,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        }
+      ]
+    },
+    {
+      "view": "article",
+      "width": 1280,
+      "colorScheme": "light",
+      "targets": [
+        {
+          "selector": "button#theme-toggle.js-control",
+          "text": "Theme",
+          "width": 75.5,
+          "height": 46,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Latest",
+          "width": 43,
+          "height": 42.4,
+          "meets24pxAA": true,
+          "meets44pxTouch": false
+        },
+        {
+          "selector": "a",
+          "text": "Topics",
+          "width": 45.1,
+          "height": 42.4,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Company website",
+          "width": 128.8,
+          "height": 42.4,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "input#search-query",
+          "text": "",
+          "width": 854.5,
+          "height": 46,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "button",
+          "text": "Search blog",
+          "width": 111.1,
+          "height": 46,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a.topic-pill",
+          "text": "Cloud Security",
+          "width": 116.4,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a.topic-pill",
+          "text": "Research",
+          "width": 82.1,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Cloud Security",
+          "width": 95.5,
+          "height": 32.7,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Research",
+          "width": 58.3,
+          "height": 32.7,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "summary",
+          "text": "On this page",
+          "width": 587,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "button",
+          "text": "Copy",
+          "width": 59.5,
+          "height": 45.5,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Cloud Security",
+          "width": 95.5,
+          "height": 32.7,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Research",
+          "width": 58.3,
+          "height": 32.7,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "button#copy-link.js-control",
+          "text": "Copy article link",
+          "width": 140.2,
+          "height": 46,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Company website",
+          "width": 125.6,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Publication feed",
+          "width": 114,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Back to content",
+          "width": 110.3,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        }
+      ]
+    },
+    {
+      "view": "home",
+      "width": 1280,
+      "colorScheme": "dark",
+      "targets": [
+        {
+          "selector": "button#theme-toggle.js-control",
+          "text": "Theme",
+          "width": 75.5,
+          "height": 46,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Latest",
+          "width": 43,
+          "height": 42.4,
+          "meets24pxAA": true,
+          "meets44pxTouch": false
+        },
+        {
+          "selector": "a",
+          "text": "Topics",
+          "width": 45.1,
+          "height": 42.4,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Company website",
+          "width": 128.8,
+          "height": 42.4,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "input#search-query",
+          "text": "",
+          "width": 854.5,
+          "height": 46,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "button",
+          "text": "Search blog",
+          "width": 111.1,
+          "height": 46,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a.topic-pill",
+          "text": "Cloud Security",
+          "width": 116.4,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a.topic-pill",
+          "text": "Research",
+          "width": 82.1,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Cloud Security",
+          "width": 95.5,
+          "height": 32.7,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Research",
+          "width": 58.3,
+          "height": 32.7,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Cloud Security",
+          "width": 95.5,
+          "height": 32.7,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Research",
+          "width": 58.3,
+          "height": 32.7,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Cloud Security",
+          "width": 95.5,
+          "height": 32.7,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Research",
+          "width": 58.3,
+          "height": 32.7,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Cloud Security",
+          "width": 95.5,
+          "height": 32.7,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Research",
+          "width": 58.3,
+          "height": 32.7,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Company website",
+          "width": 125.6,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Publication feed",
+          "width": 114,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Back to content",
+          "width": 110.3,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        }
+      ]
+    },
+    {
+      "view": "article",
+      "width": 1280,
+      "colorScheme": "dark",
+      "targets": [
+        {
+          "selector": "button#theme-toggle.js-control",
+          "text": "Theme",
+          "width": 75.5,
+          "height": 46,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Latest",
+          "width": 43,
+          "height": 42.4,
+          "meets24pxAA": true,
+          "meets44pxTouch": false
+        },
+        {
+          "selector": "a",
+          "text": "Topics",
+          "width": 45.1,
+          "height": 42.4,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Company website",
+          "width": 128.8,
+          "height": 42.4,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "input#search-query",
+          "text": "",
+          "width": 854.5,
+          "height": 46,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "button",
+          "text": "Search blog",
+          "width": 111.1,
+          "height": 46,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a.topic-pill",
+          "text": "Cloud Security",
+          "width": 116.4,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a.topic-pill",
+          "text": "Research",
+          "width": 82.1,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Cloud Security",
+          "width": 95.5,
+          "height": 32.7,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Research",
+          "width": 58.3,
+          "height": 32.7,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "summary",
+          "text": "On this page",
+          "width": 587,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "button",
+          "text": "Copy",
+          "width": 59.5,
+          "height": 45.5,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Cloud Security",
+          "width": 95.5,
+          "height": 32.7,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Research",
+          "width": 58.3,
+          "height": 32.7,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "button#copy-link.js-control",
+          "text": "Copy article link",
+          "width": 140.2,
+          "height": 46,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Company website",
+          "width": 125.6,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Publication feed",
+          "width": 114,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        },
+        {
+          "selector": "a",
+          "text": "Back to content",
+          "width": 110.3,
+          "height": 44,
+          "meets24pxAA": true,
+          "meets44pxTouch": true
+        }
+      ]
+    }
+  ],
+  "contrastChecks": [
+    {
+      "width": 390,
+      "colorScheme": "light",
+      "textOnBackground": 13.08,
+      "textOnSurface": 13.59,
+      "mutedOnBackground": 5.95,
+      "mutedOnSurface": 6.17,
+      "primaryOnBackground": 6.38,
+      "primaryOnSurface": 6.63,
+      "primaryOnMutedSurface": 5.93,
+      "focusOnSurface": 7.09,
+      "successOnCode": 6.37
+    },
+    {
+      "width": 390,
+      "colorScheme": "dark",
+      "textOnBackground": 15.37,
+      "textOnSurface": 13.52,
+      "mutedOnBackground": 9.97,
+      "mutedOnSurface": 8.77,
+      "primaryOnBackground": 10.24,
+      "primaryOnSurface": 9.01,
+      "primaryOnMutedSurface": 8.09,
+      "focusOnSurface": 10.58,
+      "successOnCode": 10.9
+    },
+    {
+      "width": 1280,
+      "colorScheme": "light",
+      "textOnBackground": 13.08,
+      "textOnSurface": 13.59,
+      "mutedOnBackground": 5.95,
+      "mutedOnSurface": 6.17,
+      "primaryOnBackground": 6.38,
+      "primaryOnSurface": 6.63,
+      "primaryOnMutedSurface": 5.93,
+      "focusOnSurface": 7.09,
+      "successOnCode": 6.37
+    },
+    {
+      "width": 1280,
+      "colorScheme": "dark",
+      "textOnBackground": 15.37,
+      "textOnSurface": 13.52,
+      "mutedOnBackground": 9.97,
+      "mutedOnSurface": 8.77,
+      "primaryOnBackground": 10.24,
+      "primaryOnSurface": 9.01,
+      "primaryOnMutedSurface": 8.09,
+      "focusOnSurface": 10.58,
+      "successOnCode": 10.9
+    }
+  ],
+  "reflowAndZoom": [
+    {
+      "view": "home",
+      "width": 320,
+      "javaScriptEnabled": true,
+      "mode": "200%-font-plus-wcag1412-spacing",
+      "scrollWidth": 320,
+      "innerWidth": 320,
+      "fitsHorizontally": true
+    },
+    {
+      "view": "article",
+      "width": 320,
+      "javaScriptEnabled": true,
+      "mode": "200%-font-plus-wcag1412-spacing",
+      "scrollWidth": 320,
+      "innerWidth": 320,
+      "fitsHorizontally": true
+    },
+    {
+      "view": "state-search",
+      "width": 320,
+      "javaScriptEnabled": true,
+      "mode": "200%-font-plus-wcag1412-spacing",
+      "scrollWidth": 320,
+      "innerWidth": 320,
+      "fitsHorizontally": true
+    },
+    {
+      "view": "home",
+      "width": 320,
+      "javaScriptEnabled": false,
+      "mode": "200%-font-plus-wcag1412-spacing",
+      "scrollWidth": 320,
+      "innerWidth": 320,
+      "fitsHorizontally": true
+    },
+    {
+      "view": "article",
+      "width": 320,
+      "javaScriptEnabled": false,
+      "mode": "200%-font-plus-wcag1412-spacing",
+      "scrollWidth": 320,
+      "innerWidth": 320,
+      "fitsHorizontally": true
+    },
+    {
+      "view": "state-search",
+      "width": 320,
+      "javaScriptEnabled": false,
+      "mode": "200%-font-plus-wcag1412-spacing",
+      "scrollWidth": 320,
+      "innerWidth": 320,
+      "fitsHorizontally": true
+    },
+    {
+      "view": "home",
+      "width": 1280,
+      "javaScriptEnabled": true,
+      "mode": "200%-font-plus-wcag1412-spacing",
+      "scrollWidth": 1280,
+      "innerWidth": 1280,
+      "fitsHorizontally": true
+    },
+    {
+      "view": "article",
+      "width": 1280,
+      "javaScriptEnabled": true,
+      "mode": "200%-font-plus-wcag1412-spacing",
+      "scrollWidth": 1280,
+      "innerWidth": 1280,
+      "fitsHorizontally": true
+    },
+    {
+      "view": "state-search",
+      "width": 1280,
+      "javaScriptEnabled": true,
+      "mode": "200%-font-plus-wcag1412-spacing",
+      "scrollWidth": 1280,
+      "innerWidth": 1280,
+      "fitsHorizontally": true
+    },
+    {
+      "view": "home",
+      "width": 1280,
+      "javaScriptEnabled": false,
+      "mode": "200%-font-plus-wcag1412-spacing",
+      "scrollWidth": 1280,
+      "innerWidth": 1280,
+      "fitsHorizontally": true
+    },
+    {
+      "view": "article",
+      "width": 1280,
+      "javaScriptEnabled": false,
+      "mode": "200%-font-plus-wcag1412-spacing",
+      "scrollWidth": 1280,
+      "innerWidth": 1280,
+      "fitsHorizontally": true
+    },
+    {
+      "view": "state-search",
+      "width": 1280,
+      "javaScriptEnabled": false,
+      "mode": "200%-font-plus-wcag1412-spacing",
+      "scrollWidth": 1280,
+      "innerWidth": 1280,
+      "fitsHorizontally": true
+    }
+  ],
+  "resilienceChecks": {
+    "shortcutIgnoredInOtherInput": {
+      "recoveryValAfterSlash": "/",
+      "stillFocusedRecovery": true
+    },
+    "twelveDiagramsCap": {
+      "initialRenderedCount": 10,
+      "initialDeferredCount": 2,
+      "deferredDomIndices": [
+        1,
+        11
+      ],
+      "deferredMessage": "Automatic diagram limit reached. Use Render diagram to opt in.",
+      "afterOptInRenderedCount": 11
+    }
+  },
+  "performanceSamples": [
+    {
+      "view": "home",
+      "width": 390,
+      "conditions": "Local intercepted fixtures on Chromium 151.0.7922.34, Windows 10.0.26200 AMD64, no CPU/network throttling (synthetic lab sample, not production field p75 CLS/INP)",
+      "coldSamples": [
+        {
+          "domContentLoadedMs": 23.2,
+          "loadEventEndMs": 31,
+          "resourceCount": 1,
+          "longTaskCount": 0,
+          "maxLongTaskMs": 0,
+          "clsSum": 0
+        },
+        {
+          "domContentLoadedMs": 22.9,
+          "loadEventEndMs": 31.1,
+          "resourceCount": 1,
+          "longTaskCount": 0,
+          "maxLongTaskMs": 0,
+          "clsSum": 0
+        },
+        {
+          "domContentLoadedMs": 24.6,
+          "loadEventEndMs": 32.4,
+          "resourceCount": 1,
+          "longTaskCount": 0,
+          "maxLongTaskMs": 0,
+          "clsSum": 0
+        }
+      ],
+      "warmSamples": [
+        {
+          "domContentLoadedMs": 18.6,
+          "loadEventEndMs": 19.9,
+          "resourceCount": 1,
+          "longTaskCount": 0,
+          "maxLongTaskMs": 0,
+          "clsSum": 0
+        },
+        {
+          "domContentLoadedMs": 18.9,
+          "loadEventEndMs": 19.7,
+          "resourceCount": 1,
+          "longTaskCount": 0,
+          "maxLongTaskMs": 0,
+          "clsSum": 0
+        },
+        {
+          "domContentLoadedMs": 18.9,
+          "loadEventEndMs": 19.9,
+          "resourceCount": 1,
+          "longTaskCount": 0,
+          "maxLongTaskMs": 0,
+          "clsSum": 0
+        }
+      ]
+    },
+    {
+      "view": "article",
+      "width": 390,
+      "conditions": "Local intercepted fixtures on Chromium 151.0.7922.34, Windows 10.0.26200 AMD64, no CPU/network throttling (synthetic lab sample, not production field p75 CLS/INP)",
+      "coldSamples": [
+        {
+          "domContentLoadedMs": 30.9,
+          "loadEventEndMs": 36.8,
+          "resourceCount": 1,
+          "longTaskCount": 0,
+          "maxLongTaskMs": 0,
+          "clsSum": 0
+        },
+        {
+          "domContentLoadedMs": 30.8,
+          "loadEventEndMs": 36.7,
+          "resourceCount": 1,
+          "longTaskCount": 0,
+          "maxLongTaskMs": 0,
+          "clsSum": 0
+        },
+        {
+          "domContentLoadedMs": 30,
+          "loadEventEndMs": 36,
+          "resourceCount": 1,
+          "longTaskCount": 0,
+          "maxLongTaskMs": 0,
+          "clsSum": 0
+        }
+      ],
+      "warmSamples": [
+        {
+          "domContentLoadedMs": 21.4,
+          "loadEventEndMs": 22.6,
+          "resourceCount": 1,
+          "longTaskCount": 0,
+          "maxLongTaskMs": 0,
+          "clsSum": 0
+        },
+        {
+          "domContentLoadedMs": 20.7,
+          "loadEventEndMs": 21.9,
+          "resourceCount": 1,
+          "longTaskCount": 0,
+          "maxLongTaskMs": 0,
+          "clsSum": 0
+        },
+        {
+          "domContentLoadedMs": 21.3,
+          "loadEventEndMs": 22.8,
+          "resourceCount": 1,
+          "longTaskCount": 0,
+          "maxLongTaskMs": 0,
+          "clsSum": 0
+        }
+      ]
+    },
+    {
+      "view": "home",
+      "width": 1280,
+      "conditions": "Local intercepted fixtures on Chromium 151.0.7922.34, Windows 10.0.26200 AMD64, no CPU/network throttling (synthetic lab sample, not production field p75 CLS/INP)",
+      "coldSamples": [
+        {
+          "domContentLoadedMs": 24,
+          "loadEventEndMs": 32.2,
+          "resourceCount": 1,
+          "longTaskCount": 0,
+          "maxLongTaskMs": 0,
+          "clsSum": 0.007722777557373046
+        },
+        {
+          "domContentLoadedMs": 24.2,
+          "loadEventEndMs": 32.1,
+          "resourceCount": 1,
+          "longTaskCount": 0,
+          "maxLongTaskMs": 0,
+          "clsSum": 0.007722777557373046
+        },
+        {
+          "domContentLoadedMs": 23.9,
+          "loadEventEndMs": 32.4,
+          "resourceCount": 1,
+          "longTaskCount": 0,
+          "maxLongTaskMs": 0,
+          "clsSum": 0.007722777557373046
+        }
+      ],
+      "warmSamples": [
+        {
+          "domContentLoadedMs": 20.4,
+          "loadEventEndMs": 21.6,
+          "resourceCount": 1,
+          "longTaskCount": 0,
+          "maxLongTaskMs": 0,
+          "clsSum": 0.007722777557373046
+        },
+        {
+          "domContentLoadedMs": 20.5,
+          "loadEventEndMs": 21.5,
+          "resourceCount": 1,
+          "longTaskCount": 0,
+          "maxLongTaskMs": 0,
+          "clsSum": 0.007722777557373046
+        },
+        {
+          "domContentLoadedMs": 30.3,
+          "loadEventEndMs": 31.4,
+          "resourceCount": 1,
+          "longTaskCount": 0,
+          "maxLongTaskMs": 0,
+          "clsSum": 0.007722777557373046
+        }
+      ]
+    },
+    {
+      "view": "article",
+      "width": 1280,
+      "conditions": "Local intercepted fixtures on Chromium 151.0.7922.34, Windows 10.0.26200 AMD64, no CPU/network throttling (synthetic lab sample, not production field p75 CLS/INP)",
+      "coldSamples": [
+        {
+          "domContentLoadedMs": 29.9,
+          "loadEventEndMs": 36,
+          "resourceCount": 1,
+          "longTaskCount": 0,
+          "maxLongTaskMs": 0,
+          "clsSum": 0.012995279057820637
+        },
+        {
+          "domContentLoadedMs": 29.8,
+          "loadEventEndMs": 36.1,
+          "resourceCount": 1,
+          "longTaskCount": 0,
+          "maxLongTaskMs": 0,
+          "clsSum": 0.012995279057820637
+        },
+        {
+          "domContentLoadedMs": 30.8,
+          "loadEventEndMs": 37.1,
+          "resourceCount": 1,
+          "longTaskCount": 0,
+          "maxLongTaskMs": 0,
+          "clsSum": 0.012995279057820637
+        }
+      ],
+      "warmSamples": [
+        {
+          "domContentLoadedMs": 21.6,
+          "loadEventEndMs": 23,
+          "resourceCount": 1,
+          "longTaskCount": 0,
+          "maxLongTaskMs": 0,
+          "clsSum": 0.012995279057820637
+        },
+        {
+          "domContentLoadedMs": 21.5,
+          "loadEventEndMs": 22.7,
+          "resourceCount": 1,
+          "longTaskCount": 0,
+          "maxLongTaskMs": 0,
+          "clsSum": 0.012995279057820637
+        },
+        {
+          "domContentLoadedMs": 35.3,
+          "loadEventEndMs": 36.6,
+          "resourceCount": 1,
+          "longTaskCount": 0,
+          "maxLongTaskMs": 0,
+          "clsSum": 0.012995279057820637
+        }
+      ]
+    }
+  ]
+}

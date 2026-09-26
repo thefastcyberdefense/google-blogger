@@ -1,0 +1,61 @@
+python3.exe : test_browser_only_limit (test_verify_artifact.ArchiveTests.test_browser_only_limit) ... ok
+At line:7 char:10
++ $pyOut = & python3 -m unittest discover -s tests/artifact -p "test_*. ...
++          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (test_browser_on...y_limit) ... ok:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+test_crc_corruption_with_matching_archive_digest 
+(test_verify_artifact.ArchiveTests.test_crc_corruption_with_matching_archive_digest) ... ok
+test_digest_mismatch (test_verify_artifact.ArchiveTests.test_digest_mismatch) ... ok
+test_duplicate (test_verify_artifact.ArchiveTests.test_duplicate) ... ok
+test_encrypted_flag (test_verify_artifact.ArchiveTests.test_encrypted_flag) ... ok
+test_expansion_limit (test_verify_artifact.ArchiveTests.test_expansion_limit) ... ok
+test_missing_file (test_verify_artifact.ArchiveTests.test_missing_file) ... ok
+test_other_limits_unchanged (test_verify_artifact.ArchiveTests.test_other_limits_unchanged) ... ok
+test_positive (test_verify_artifact.ArchiveTests.test_positive) ... ok
+test_symlink (test_verify_artifact.ArchiveTests.test_symlink) ... ok
+test_unsafe_names (test_verify_artifact.ArchiveTests.test_unsafe_names) ... 
+  test_unsafe_names (test_verify_artifact.ArchiveTests.test_unsafe_names) (name='test-results\\escape') ... FAIL
+test_benign_doctype_and_inert_prism_text (test_verify_artifact.EvidenceTests.test_benign_doctype_and_inert_prism_text) 
+... ok
+test_duplicate_stamp (test_verify_artifact.EvidenceTests.test_duplicate_stamp) ... ok
+test_positive (test_verify_artifact.EvidenceTests.test_positive) ... ok
+test_reject_external_and_internal_dtd (test_verify_artifact.EvidenceTests.test_reject_external_and_internal_dtd) ... ok
+test_reject_malformed_xml_and_undefined_entities 
+(test_verify_artifact.EvidenceTests.test_reject_malformed_xml_and_undefined_entities) ... ok
+test_report_mutations (test_verify_artifact.EvidenceTests.test_report_mutations) ... ok
+test_stamp (test_verify_artifact.EvidenceTests.test_stamp) ... ok
+test_strict_json (test_verify_artifact.EvidenceTests.test_strict_json) ... ok
+test_xml_digest (test_verify_artifact.EvidenceTests.test_xml_digest) ... ok
+test_checksum (test_verify_artifact.LogTests.test_checksum) ... ok
+test_missing_or_ambiguous (test_verify_artifact.LogTests.test_missing_or_ambiguous) ... ok
+test_actual_expiry_without_metadata_change 
+(test_verify_artifact.MetadataTests.test_actual_expiry_without_metadata_change) ... ok
+test_positive (test_verify_artifact.MetadataTests.test_positive) ... ok
+test_reject_metadata_mutations (test_verify_artifact.MetadataTests.test_reject_metadata_mutations) ... ok
+test_auth_not_forwarded_to_storage (test_verify_artifact.TransportTests.test_auth_not_forwarded_to_storage) ... ok
+test_content_length_and_stream_bounds (test_verify_artifact.TransportTests.test_content_length_and_stream_bounds) ... 
+ok
+test_deadline_blocks_network (test_verify_artifact.TransportTests.test_deadline_blocks_network) ... ok
+test_redirect_count_bounded (test_verify_artifact.TransportTests.test_redirect_count_bounded) ... ok
+test_storage_allowlist (test_verify_artifact.TransportTests.test_storage_allowlist) ... ok
+test_storage_redirect_rejected_before_request 
+(test_verify_artifact.TransportTests.test_storage_redirect_rejected_before_request) ... ok
+
+======================================================================
+FAIL: test_unsafe_names (test_verify_artifact.ArchiveTests.test_unsafe_names) (name='test-results\\escape')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "J:\DevDrive\google-blogger\test-results\local-qa-ecb1d438\checkout\tests\artifact\test_verify_artifact.py", 
+line 96, in test_unsafe_names
+    with self.assertRaises(v.VerificationError): v.inspect_archive(blob,candidate(blob))
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+AssertionError: VerificationError not raised
+
+----------------------------------------------------------------------
+Ran 31 tests in 0.112s
+
+FAILED (failures=1)
+
+--- META start_utc=2026-09-26T13:48:15.4584139Z end_utc=2026-09-26T13:48:16.0038656Z duration_ms=623 exit_code=1 ---

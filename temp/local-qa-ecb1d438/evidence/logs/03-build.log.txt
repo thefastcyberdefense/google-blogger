@@ -1,0 +1,7 @@
+
+> fcd-blogger-theme@0.1.0 build
+> node tools/generate.ts
+
+Built dist/theme.xml: 101248 bytes; CSS 15716; bundled JS 56780; source ecb1d438e8b3227911dc76359b9e05f127867b27
+
+--- META start_utc=2026-09-26T13:47:41.9904813Z end_utc=2026-09-26T13:47:43.2024201Z duration_ms=1211 exit_code=0 ---

@@ -1,4 +1,4 @@
-import type { Browser, BrowserContext } from '@playwright/test';
+import type { Browser, BrowserContext, BrowserContextOptions } from '@playwright/test';
 
 export const FIXTURE_ORIGIN = 'https://fcd-fixture.invalid';
 export interface FixtureRule {
@@ -6,16 +6,23 @@ export interface FixtureRule {
   path: string;
   method: string;
   resource: string;
-  body: string;
+  body?: string;
+  action?: 'fulfill' | 'deny';
+  count?: number;
+  query?: string;
+  status?: number;
+  headers?: Record<string, string>;
 }
 export interface GuardedContext {
   context: BrowserContext;
   finish(): Promise<void>;
 }
 
-/** Test-first checkpoint: local-only responses, deliberately no attribution yet.
- * N0 remains mandatory. This is not the accepted N1 implementation.
- */
+/** Runnable test-first policy placeholders. N0 remains mandatory. */
+export function validateFixtureRules(_rules: FixtureRule[]): void {}
+export function validateContextOptions(_options: BrowserContextOptions): void {}
+
+/** Local-only checkpoint; deliberately lacks policy attribution. */
 export async function createGuardedContext(browser: Browser, rules: FixtureRule[]): Promise<GuardedContext> {
   const context = await browser.newContext({ serviceWorkers: 'block' });
   await context.route('**/*', async route => {
@@ -26,11 +33,7 @@ export async function createGuardedContext(browser: Browser, rules: FixtureRule[
   return { context, async finish() { await context.close(); } };
 }
 
-/** Approved feasibility experiment, not production guard or worker coverage.
- * Uses public APIs only. Reports count, not URLs, credentials or payloads.
- * Call after context routing, before pages. Init-script ordering is deliberately
- * tested, not assumed guaranteed by the Playwright API.
- */
+/** Public-API observation experiment. Final lifecycle attribution pending. */
 export async function observeDocumentWebSockets(context: BrowserContext): Promise<{ count(): number }> {
   let attempts = 0;
   await context.exposeBinding('__fcdN1WebSocketAttempt', () => {
@@ -42,8 +45,6 @@ export async function observeDocumentWebSockets(context: BrowserContext): Promis
     const report = (globalThis as unknown as { __fcdN1WebSocketAttempt: () => Promise<void> }).__fcdN1WebSocketAttempt;
     const Wrapped = new Proxy(Original, {
       construct(target, args, newTarget) {
-        // No URL conversion or message access: preserve constructor behavior.
-        // A failed binding remains an unhandled failure, not a swallowed success.
         void report();
         return Reflect.construct(target, args, newTarget);
       },

@@ -49,6 +49,45 @@ for(const engine of [chromium,firefox,webkit]) {
     }finally{await context.close();await browser.close();}
   },30000);
 }
+// A separate public-API control distinguishes absent pagehide from lost console
+// or binding delivery. Only fixed synthetic markers/counters enter diagnostics.
+for(const engine of [chromium,firefox,webkit]) {
+  test(`N1 public observer retires same-origin documents in ${engine.name()}`,async()=>{
+    const browser=await engine.launch({headless:true});const context=await browser.newContext({serviceWorkers:'block'});
+    const reasons:string[]=[],receipts:string[]=[],pageErrors:string[]=[];
+    const control={contextConsole:0,pageConsole:0,binding:0};
+    context.on('console',message=>{
+      if(message.text().startsWith('FCD_N1_RETIRE_')&&receipts.length<8)receipts.push(message.type());
+      if(message.text()==='FCD_N1_PAGEHIDE_CONTROL')control.contextConsole++;
+    });
+    context.on('page',page=>{
+      page.on('console',message=>{if(message.text()==='FCD_N1_PAGEHIDE_CONTROL')control.pageConsole++;});
+      page.on('pageerror',error=>{if(pageErrors.length<4)pageErrors.push(error.message.slice(0,200));});
+    });
+    try {
+      await context.exposeBinding('__fcdN1RetirementControl',(_source,value:unknown)=>{if(value==='pagehide')control.binding++;});
+      await context.route('**/*',route=>route.fulfill({status:new URL(route.request().url()).pathname==='/'?200:451,contentType:'text/html',body:'<!doctype html><h1>retirement control</h1>'}));
+      await context.routeWebSocket('**/*',socket=>socket.close({code:1008,reason:'local control'}));
+      const observer=await observeDocumentWebSockets(context,()=>{},reason=>{if(reasons.length<16)reasons.push(reason);});
+      const page=await context.newPage();await page.goto(`${FIXTURE_ORIGIN}/`);
+      expect(await page.locator('h1').textContent()).toBe('retirement control');
+      await page.evaluate(()=>{
+        sessionStorage.setItem('fcd-n1-pagehide','armed');
+        addEventListener('pagehide',()=>{
+          sessionStorage.setItem('fcd-n1-pagehide','fired');
+          console.debug('FCD_N1_PAGEHIDE_CONTROL');
+          const emit=(globalThis as unknown as Record<string,unknown>).__fcdN1RetirementControl as (value:string)=>Promise<unknown>;
+          void emit('pagehide');
+        });
+      });
+      expect((await page.goto(`${FIXTURE_ORIGIN}/unexpected`))?.status()).toBe(451);
+      const storage=await page.evaluate(()=>{try{return sessionStorage.getItem('fcd-n1-pagehide');}catch{return 'unavailable';}});
+      const documents=await observer.flush();
+      const detail=JSON.stringify({engine:engine.name(),storage,control,receipts,reasons,pageErrors,documents});
+      expect(documents.length>=2&&documents.every(d=>d.intact&&d.flushed&&d.attempts===d.acknowledged)&&reasons.length===0,`N1_RETIREMENT_CONTROL ${detail}`).toBe(true);
+    }finally{await context.close();await browser.close();}
+  },30000);
+}
 test('N1 accepts a precise local positive policy',()=>expect(()=>validateFixtureRules([localRule])).not.toThrow());
 for(const [name,rule] of [
   ['wildcard path',{...localRule,path:'/**'}],['redirect status',{...localRule,status:302}],['redirect header',{...localRule,headers:{location:'https://elsewhere.invalid/'}}],

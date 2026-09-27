@@ -32,11 +32,11 @@ jobs:
           node -e "const fs=require('node:fs');const s=JSON.parse(fs.readFileSync('build-size.json'));if(s.xml.raw>500000)throw Error('Total theme exceeds 500KB');console.log('::notice title=Asset sizes (JS/CSS informational)::'+JSON.stringify(s));"
       - run: npm run contract:check
       - run: npx --no-install playwright install --with-deps chromium firefox webkit
-      # Explicit names retain the existing stage inventory. These commands now
-      # include a mandatory isolation gate; a draft PR is not an execution guard.
+      # Preserve the established stage inventory and N0 privilege/environment gate.
       - name: Run npm test -- --reporter=default --reporter=json --outputFile=unit-report.json
         run: |
           bash tools/run-isolated-tests.sh self-test
+          node tools/finalize-browser-network.ts init "$RUNNER_TEMP/fcd-isolation-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT-browser-network" "$(git rev-parse HEAD)" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT"
           bash tools/run-isolated-tests.sh run unit 300 npm test -- --reporter=default --reporter=json --outputFile=unit-report.json
       - name: Report regression evidence
         if: ${{ always() }}
@@ -47,10 +47,12 @@ jobs:
           if(fs.existsSync('unit-report.json')){
             const r=JSON.parse(fs.readFileSync('unit-report.json','utf8'));
             console.log('::notice title=Unit totals::'+JSON.stringify({passed:r.numPassedTests,failed:r.numFailedTests,pending:r.numPendingTests}));
+            const n1=[];
             for(const s of r.testResults||[])for(const a of s.assertionResults||[])if(a.status==='failed'){
               console.log('::error title=Regression::'+escape(a.fullName));
-              if(s.name.endsWith('/tests/unit/browser-network.test.ts'))console.log('::error title=N1 assertion::'+escape((a.failureMessages||[]).join('\n').slice(0,6000)));
+              if(s.name.endsWith('/tests/unit/browser-network.test.ts'))n1.push({test:a.fullName,reason:(a.failureMessages||[]).join('\n').split('\n')[0]});
             }
+            if(n1.length)console.log('::error title=N1 assertions::'+escape(JSON.stringify(n1).slice(0,16000)));
           }
           JS
       - run: npm run preview -- --build-only
@@ -59,10 +61,13 @@ jobs:
       - name: Report browser counts
         if: ${{ always() }}
         run: |
-          bash tools/run-isolated-tests.sh finalize
+          result=0
+          bash tools/run-isolated-tests.sh finalize || result=$?
+          node tools/finalize-browser-network.ts finalize "$RUNNER_TEMP/fcd-isolation-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT-browser-network" test-results/browser-network "$(git rev-parse HEAD)" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" || { n1=$?; if [ "$result" -eq 0 ]; then result=$n1; fi; }
           if [ -f test-results/browser.json ]; then
-            node -e "const r=require('./test-results/browser.json');console.log('::notice title=Browser totals::'+JSON.stringify(r.stats));"
+            node -e "const r=require('./test-results/browser.json');console.log('::notice title=Browser totals::'+JSON.stringify(r.stats));" || { report=$?; if [ "$result" -eq 0 ]; then result=$report; fi; }
           fi
+          exit "$result"
       - run: npm audit --audit-level=moderate
       - name: Reject stale generated XML except historical build stamp
         run: |

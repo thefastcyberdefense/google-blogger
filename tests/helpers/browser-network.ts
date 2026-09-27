@@ -65,40 +65,49 @@ const bounded = async <T>(promise: Promise<T>, milliseconds = 3000): Promise<T> 
 interface Observer { count(): number; flush(): Promise<DocumentRecord[]> }
 type ObserverFailure='binding-shape'|'ready-shape'|'unknown-document'|'socket-accounting'|'retire-shape'|'retire-accounting'|'flush-detached'|'flush-state'|'flush-accounting'|'flush-timeout'|'flush-evaluation'|'unfinished-document';
 /** Independent document-start observation using public APIs. N0 is the firewall.
- * Live-document binding promises are acknowledged at flush. At pagehide, a
- * synchronous console receipt carries only a random document ID and counters:
- * unload cannot await a binding promise. Missing receipts still fail closed.
- * Request URLs exist only transiently in binding callbacks, never in receipts.
+ * Chromium can run pagehide while dropping both console and binding delivery.
+ * A synchronous, bounded, per-document localStorage receipt survives same-origin
+ * navigation and frame removal. Live frames recover only known document keys.
+ * Console delivery remains useful when available. Neither transport is assumed:
+ * missing, mismatched or inaccessible retirement evidence still fails closed.
+ * No request, arbitrary storage scan, cookie snapshot or raw URL persistence.
  */
 export async function observeDocumentWebSockets(context: BrowserContext, onAttempt: (url:string)=>void = () => {}, onFailure: (reason:ObserverFailure)=>void = () => {}): Promise<Observer> {
   const token=randomUUID().replaceAll('-','');
   const bindingName=`__fcdN1Report${token}`;
   const stateName=`__fcdN1State${token}`;
   const retirementPrefix=`FCD_N1_RETIRE_${token}:`;
-  const docs=new Map<string,DocumentRecord & { frame:Frame; initial:boolean }>();
+  const docs=new Map<string,DocumentRecord & { frame:Frame; initial:boolean; origin:string }>();
   let attempts=0;
-  // Context-level console observation includes frames and popup first documents.
-  // The random channel and document/page pair exclude unrelated console output.
+  const retire=(text:string,source:{page?:ReturnType<Frame['page']>;origin?:string})=>{
+    try {
+      if(text.length>512)throw new Error('bound');
+      const value:unknown=JSON.parse(text);
+      if(!value || typeof value!=='object' || Array.isArray(value))throw new Error('shape');
+      const v=value as Record<string,unknown>;const d=typeof v.id==='string'?docs.get(v.id):undefined;
+      const fields=['kind','id','attempts','failures','sealed','intact'];
+      if(Object.keys(v).length!==fields.length || fields.some(k=>!Object.hasOwn(v,k)) || !d ||
+          (source.page!==undefined && d.frame.page()!==source.page) || (source.origin!==undefined && d.origin!==source.origin) ||
+          v.kind!=='retire' || v.sealed!==true || typeof v.intact!=='boolean' ||
+          !Number.isInteger(v.attempts) || Number(v.attempts)<0 || Number(v.attempts)>128 ||
+          !Number.isInteger(v.failures) || Number(v.failures)<0 || Number(v.failures)>128)throw new Error('identity');
+      d.attempts=Number(v.attempts);d.intact=d.intact&&v.intact;d.flushed=d.attempts===d.acknowledged && v.failures===0;
+      if(!d.intact || !d.flushed)onFailure('retire-accounting');
+    }catch{onFailure('retire-shape');}
+  };
   context.on('console',message=>{
     if(message.type()!=='debug')return;
     const text=message.text();if(!text.startsWith(retirementPrefix))return;
-    try {
-      if(text.length>512)throw new Error('bound');
-      const value:unknown=JSON.parse(text.slice(retirementPrefix.length));
-      if(!value || typeof value!=='object')throw new Error('shape');
-      const v=value as Record<string,unknown>;const d=typeof v.id==='string'?docs.get(v.id):undefined;
-      if(!d || d.frame.page()!==message.page() || v.kind!=='retire' || v.sealed!==true)throw new Error('identity');
-      d.intact=v.intact===true;d.flushed=v.attempts===d.acknowledged && v.failures===0;
-      if(!d.intact || !d.flushed)onFailure('retire-accounting');
-    }catch{onFailure('retire-shape');}
+    const page=message.page();if(!page){onFailure('retire-shape');return;}
+    retire(text.slice(retirementPrefix.length),{page});
   });
   await context.exposeBinding(bindingName,(source,value:unknown)=>{
     if (!value || typeof value!=='object') { onFailure('binding-shape'); return; }
     const v=value as Record<string,unknown>;
     if (typeof v.id!=='string' || !/^[0-9a-f-]{36}$/.test(v.id)) { onFailure('binding-shape'); return; }
     if (v.kind==='ready') {
-      if (docs.has(v.id) || docs.size>=128 || typeof v.initial!=='boolean') { onFailure('ready-shape'); return; }
-      docs.set(v.id,{id:v.id,attempts:0,acknowledged:0,intact:true,flushed:false,frame:source.frame,initial:v.initial});
+      if (docs.has(v.id) || docs.size>=128 || typeof v.initial!=='boolean' || typeof v.origin!=='string' || v.origin.length>200) { onFailure('ready-shape'); return; }
+      docs.set(v.id,{id:v.id,attempts:0,acknowledged:0,intact:true,flushed:false,frame:source.frame,initial:v.initial,origin:v.origin});
       return;
     }
     const d=docs.get(v.id);
@@ -112,8 +121,9 @@ export async function observeDocumentWebSockets(context: BrowserContext, onAttem
     const globals=globalThis as unknown as Record<string,unknown>;
     const binding=globals[bindingName] as (data:unknown)=>Promise<unknown>;
     const reportRetirement=console.debug.bind(console);
-    // getRandomValues also works in the initial about:blank document, where
-    // secure-context-only crypto.randomUUID is not universally available.
+    const origin=location.origin;
+    let store:((key:string,value:string)=>void)|undefined,read:((key:string)=>string|null)|undefined;
+    try {const storage=localStorage;store=storage.setItem.bind(storage);read=storage.getItem.bind(storage);}catch { /* Initial opaque documents have no storage. Missing noninitial receipts still fail. */ }
     const bytes=crypto.getRandomValues(new Uint8Array(16));bytes[6]=(bytes[6]&15)|64;bytes[8]=(bytes[8]&63)|128;
     const hex=Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');
     const id=`${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20)}`;
@@ -126,7 +136,7 @@ export async function observeDocumentWebSockets(context: BrowserContext, onAttem
         pending.add(task);
       } catch { failures++; }
     };
-    emit({kind:'ready',initial:location.href==='about:blank'});
+    emit({kind:'ready',initial:location.href==='about:blank',origin});
     const Original=globalThis.WebSocket;
     const Wrapped=new Proxy(Original,{
       construct(target,args,newTarget) {
@@ -139,8 +149,19 @@ export async function observeDocumentWebSockets(context: BrowserContext, onAttem
     });
     globalThis.WebSocket=Wrapped;
     const intact=()=>globalThis.WebSocket===Wrapped && globals[bindingName]===binding;
-    Object.defineProperty(globals,stateName,{value:Object.freeze({async flush(){sealed=true;await Promise.all([...pending]);return {id,attempts,failures,intact:intact()};}}),configurable:false});
-    addEventListener('pagehide',()=>{sealed=true;reportRetirement(retirementPrefix+JSON.stringify({kind:'retire',id,attempts,failures,sealed,intact:intact()}));});
+    Object.defineProperty(globals,stateName,{value:Object.freeze({async flush(ids:string[]){
+      sealed=true;await Promise.all([...pending]);
+      if(ids.length>128)throw new Error('N1_RECEIPT_BOUND');
+      const receipts:string[]=[];
+      if(read)for(const documentId of ids){const receipt=read(retirementPrefix+documentId);if(receipt!==null){if(receipt.length>512)throw new Error('N1_RECEIPT_BOUND');receipts.push(receipt);}}
+      return {id,attempts,failures,intact:intact(),origin,receipts};
+    }}),configurable:false});
+    addEventListener('pagehide',()=>{
+      sealed=true;
+      const receipt=JSON.stringify({kind:'retire',id,attempts,failures,sealed,intact:intact()});
+      try {if(store)store(retirementPrefix+id,receipt);}catch { /* Console may still deliver; no unverified fallback is accepted. */ }
+      reportRetirement(retirementPrefix+receipt);
+    });
   },{bindingName,stateName,retirementPrefix});
   return {
     count:()=>attempts,
@@ -148,17 +169,18 @@ export async function observeDocumentWebSockets(context: BrowserContext, onAttem
       for(const page of context.pages())for(const frame of page.frames()) {
         if(frame.isDetached()){onFailure('flush-detached');continue;}
         try {
-          const state=await bounded(frame.evaluate(async name=>{
-            const value=(globalThis as unknown as Record<string,unknown>)[name] as {flush:()=>Promise<{id:string;attempts:number;failures:number;intact:boolean}>}|undefined;
-            return value ? await value.flush() : null;
-          },stateName));
+          const state=await bounded(frame.evaluate(async ({name,ids})=>{
+            const value=(globalThis as unknown as Record<string,unknown>)[name] as {flush:(ids:string[])=>Promise<{id:string;attempts:number;failures:number;intact:boolean;origin:string;receipts:string[]}>}|undefined;
+            return value ? await value.flush(ids) : null;
+          },{name:stateName,ids:[...docs.keys()]}));
           const d=state?docs.get(state.id):undefined;
-          if(!state || !d){onFailure('flush-state');continue;}
-          d.attempts=state.attempts;d.intact=state.intact;d.flushed=state.failures===0 && state.attempts===d.acknowledged;
+          if(!state || !d || d.frame!==frame || d.origin!==state.origin){onFailure('flush-state');continue;}
+          d.attempts=state.attempts;d.intact=d.intact&&state.intact;d.flushed=state.failures===0 && state.attempts===d.acknowledged;
           if(!d.intact || !d.flushed)onFailure('flush-accounting');
+          for(const receipt of state.receipts)retire(receipt,{origin:state.origin});
         }catch(cause){onFailure(cause instanceof NetworkGuardError?'flush-timeout':'flush-evaluation');}
       }
-      return [...docs.values()].map(({frame: _frame,initial,...d})=>{
+      return [...docs.values()].map(({frame: _frame,initial,origin: _origin,...d})=>{
         if(initial && d.attempts===0)d.flushed=true;
         if(!d.flushed || !d.intact)onFailure('unfinished-document');
         return d;
@@ -209,9 +231,8 @@ async function buildGuard(create:()=>Promise<BrowserContext>, rules:FixtureRule[
     if(!record){await route.abort('blockedbyclient');return;}
     const rule=choose(record,request.url(),request.method(),request.resourceType());
     if(!rule || record.action==='deny') {
-      // An inert, local denial document avoids opaque browser error pages while
-      // retaining the exact policy violation. This never follows a redirect or
-      // contacts the requested origin. Resource requests are still aborted.
+      // The response is local and retains the exact policy violation. Retirement
+      // accounting is separately verified; a 451 alone does not prove it.
       if(request.resourceType()==='document') await route.fulfill({status:451,contentType:'text/html',body:'<!doctype html><html><head><title>Fixture request denied</title></head><body><p>Denied by local fixture policy.</p></body></html>'});
       else await route.abort('blockedbyclient');
     } else await route.fulfill({status:rule.status??200,contentType:rule.contentType??'text/html',headers:rule.headers,body:rule.body??''});

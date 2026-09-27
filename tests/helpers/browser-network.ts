@@ -62,11 +62,7 @@ const bounded = async <T>(promise: Promise<T>, milliseconds = 3000): Promise<T> 
   try { return await Promise.race([promise,new Promise<never>((_,reject)=>{timer=setTimeout(()=>reject(new NetworkGuardError(['N1_OBSERVER'])),milliseconds);})]); }
   finally { if(timer) clearTimeout(timer); }
 };
-
-interface Observer {
-  count(): number;
-  flush(): Promise<DocumentRecord[]>;
-}
+interface Observer { count(): number; flush(): Promise<DocumentRecord[]> }
 /** Independent document-start observation using public APIs. N0 is the firewall.
  * URLs exist only transiently for in-memory reconciliation, never in records.
  * Init-script replacement/order and binding failure fail at the flush boundary.
@@ -143,8 +139,6 @@ export async function observeDocumentWebSockets(context: BrowserContext, onAttem
         } catch { onFailure(); }
       }
       return [...docs.values()].map(({frame: _frame,initial,...d})=>{
-        // Initial empty documents can be replaced without pagehide. They contain
-        // no author script and are not a missing active-document flush.
         if(initial && d.attempts===0) d.flushed=true;
         if(!d.flushed || !d.intact) onFailure();
         return d;
@@ -152,7 +146,6 @@ export async function observeDocumentWebSockets(context: BrowserContext, onAttem
     },
   };
 }
-
 export async function createGuardedContext(browser: Browser, rules: FixtureRule[], options?: GuardOptions): Promise<GuardedContext> {
   return buildGuard(()=>browser.newContext({...options?.contextOptions,serviceWorkers:'block'}),rules,options);
 }
@@ -170,94 +163,75 @@ async function buildGuard(create:()=>Promise<BrowserContext>, rules:FixtureRule[
   options.register?.(id);
   try { writeEvidence(root,`${id}.start.json`,start); } catch { throw new NetworkGuardError(['N1_WRITE']); }
   const errors=new Set<string>(); const requests:RequestRecord[]=[];
-  const seen=new Map<Request,RequestRecord>();
-  const sockets=new Map<string,RequestRecord[]>();
-  const pending=new Set<Promise<void>>();
-  const hits=new Map<string,number>();
-  let context:BrowserContext|undefined; let observer:Observer|undefined;
-  let setup=false; let closing=false; let closed=false; let finished=false;
-  let finishPromise:Promise<void>|undefined;
-  let documents:DocumentRecord[]=[];
+  const seen=new Map<Request,RequestRecord>();const sockets=new Map<string,RequestRecord[]>();
+  const pending=new Set<Promise<void>>();const hits=new Map<string,number>();
+  let context:BrowserContext|undefined;let observer:Observer|undefined;
+  let setup=false,closing=false,closed=false,finished=false,validated=false;
+  let finishPromise:Promise<void>|undefined;let documents:DocumentRecord[]=[];
   const error=(code:string)=>{errors.add(code);};
   const add=(kind:'http'|'websocket'):RequestRecord|undefined=>{
-    if(requests.length>=128) { error('N1_LIMIT'); return undefined; }
-    const r:RequestRecord={seq:requests.length+1,kind,rule:null,action:'unhandled',observed:false,handled:false}; requests.push(r); return r;
+    if(requests.length>=128) {error('N1_LIMIT');return;}
+    const r:RequestRecord={seq:requests.length+1,kind,rule:null,action:'unhandled',observed:false,handled:false};requests.push(r);return r;
   };
-  const http=(request:Request)=>{
-    let record=seen.get(request);
-    if(!record) { record=add('http'); if(record) seen.set(request,record); }
-    return record;
-  };
+  const http=(request:Request)=>{let record=seen.get(request);if(!record){record=add('http');if(record)seen.set(request,record);}return record;};
   const socket=(url:string,side:'observed'|'handled')=>{
-    const key=createHash('sha256').update(url).digest('hex');
-    const queue=sockets.get(key)??[];
-    let record=queue.find(r=>!r[side]);
-    if(!record) { record=add('websocket'); if(record) {queue.push(record);sockets.set(key,queue);} }
-    return record;
+    const key=createHash('sha256').update(url).digest('hex');const queue=sockets.get(key)??[];
+    let record=queue.find(r=>!r[side]);if(!record){record=add('websocket');if(record){queue.push(record);sockets.set(key,queue);}}return record;
   };
   const choose=(record:RequestRecord,url:string,method:string,resource:string)=>{
-    const rule=matchFixtureRule(rules,url,method,resource,record.kind);
-    record.handled=true;
-    if(!rule) {record.action='unexpected';error('N1_UNEXPECTED_REQUEST');return;}
+    const rule=matchFixtureRule(rules,url,method,resource,record.kind);record.handled=true;
+    if(!rule){record.action='unexpected';error('N1_UNEXPECTED_REQUEST');return;}
     record.rule=rule.id;record.action=rule.action??'fulfill';hits.set(rule.id,(hits.get(rule.id)??0)+1);return rule;
   };
-  const track=(operation:()=>Promise<void>)=>{
-    const task=operation().catch(()=>error('N1_HANDLER')).finally(()=>pending.delete(task));pending.add(task);return task;
-  };
+  const track=(operation:()=>Promise<void>)=>{const task=operation().catch(()=>error('N1_HANDLER')).finally(()=>pending.delete(task));pending.add(task);return task;};
   const onHttp=(route:Route)=>track(async()=>{
-    const request=route.request(); const record=http(request);
-    if(!record) {await route.abort('blockedbyclient');return;}
+    const request=route.request();const record=http(request);
+    if(!record){await route.abort('blockedbyclient');return;}
     const rule=choose(record,request.url(),request.method(),request.resourceType());
-    if(!rule || record.action==='deny') await route.abort('blockedbyclient');
-    else await route.fulfill({status:rule.status??200,contentType:rule.contentType??'text/html',headers:rule.headers,body:rule.body??''});
+    if(!rule || record.action==='deny') {
+      // An inert, local denial document avoids opaque browser error pages while
+      // retaining the exact policy violation. This never follows a redirect or
+      // contacts the requested origin. Resource requests are still aborted.
+      if(request.resourceType()==='document') await route.fulfill({status:451,contentType:'text/html',body:'<!doctype html><html><head><title>Fixture request denied</title></head><body><p>Denied by local fixture policy.</p></body></html>'});
+      else await route.abort('blockedbyclient');
+    } else await route.fulfill({status:rule.status??200,contentType:rule.contentType??'text/html',headers:rule.headers,body:rule.body??''});
   });
   const onSocket=(ws:WebSocketRoute)=>track(async()=>{
-    const record=socket(ws.url(),'handled');
-    if(!record) {await ws.close({code:1008,reason:'fixture limit'});return;}
+    const record=socket(ws.url(),'handled');if(!record){await ws.close({code:1008,reason:'fixture limit'});return;}
     const rule=choose(record,ws.url(),'GET','websocket');
-    if(!rule || record.action==='deny') await ws.close({code:1008,reason:'fixture policy'});
-    else ws.onMessage(()=>{try {ws.send(rule.body??'fixture');}catch {error('N1_HANDLER');}});
+    if(!rule || record.action==='deny')await ws.close({code:1008,reason:'fixture policy'});
+    else ws.onMessage(()=>{try{ws.send(rule.body??'fixture');}catch{error('N1_HANDLER');}});
   });
   const finish=async(outcome:'passed'|'failed'='passed')=>{
-    if(finishPromise) return finishPromise;
+    if(finishPromise)return finishPromise;
     finishPromise=(async()=>{
-      if(outcome!=='passed') error('N1_TEST_FAILED');
-      if(observer && setup) documents=await observer.flush();
-      try {await bounded(Promise.all([...pending]).then(()=>{}));}catch {error('N1_HANDLER');}
+      if(outcome!=='passed')error('N1_TEST_FAILED');
+      if(observer && setup)documents=await observer.flush();
+      try{await bounded(Promise.all([...pending]).then(()=>{}));}catch{error('N1_HANDLER');}
       closing=true;
-      if(context) {
-        try {await bounded(context.close());closed=true;}catch {error('N1_CLOSE');try {await bounded(context.close());closed=true;}catch {error('N1_CLOSE');}}
-      } else closed=true;
-      try {await bounded(Promise.all([...pending]).then(()=>{}));}catch {error('N1_HANDLER');}
-      for(const r of requests) {if(!r.observed) error('N1_OBSERVER');if(!r.handled) error('N1_BYPASS');}
-      for(const rule of rules) if(rule.count!==undefined && (hits.get(rule.id)??0)!==rule.count) error('N1_COUNT');
+      if(context){try{await bounded(context.close());closed=true;}catch{error('N1_CLOSE');try{await bounded(context.close());closed=true;}catch{error('N1_CLOSE');}}}else closed=true;
+      try{await bounded(Promise.all([...pending]).then(()=>{}));}catch{error('N1_HANDLER');}
+      for(const r of requests){if(!r.observed)error('N1_OBSERVER');if(!r.handled)error('N1_BYPASS');}
+      for(const rule of rules)if(rule.count!==undefined && (hits.get(rule.id)??0)!==rule.count)error('N1_COUNT');
       const end:End={...start,kind:'end',setup,closed,outcome,errors:[...errors].sort(),rules:rules.map(r=>({id:r.id,action:r.action??'fulfill',count:r.count??null,hits:hits.get(r.id)??0})),requests,documents};
-      try {writeEvidence(root,`${id}.end.json`,end);}catch {error('N1_WRITE');}
-      finished=true;
-      if(errors.size) throw new NetworkGuardError(errors);
-    })();
-    return finishPromise;
+      try{writeEvidence(root,`${id}.end.json`,end);}catch{error('N1_WRITE');}
+      finished=true;if(errors.size)throw new NetworkGuardError(errors);
+    })();return finishPromise;
   };
   try {
-    validateFixtureRules(rules);validateContextOptions(options.contextOptions??{});
-    // Freeze caller policy data so a later mutation cannot widen matching.
-    rules=structuredClone(rules);
-    context=await create();
-    if(context.pages().length) throw new NetworkGuardError(['N1_SETUP']);
-    context.on('request',request=>{const r=http(request);if(r) r.observed=true;});
+    validateFixtureRules(rules);validated=true;validateContextOptions(options.contextOptions??{});
+    rules=structuredClone(rules);context=await create();
+    if(context.pages().length)throw new NetworkGuardError(['N1_SETUP']);
+    context.on('request',request=>{const r=http(request);if(r)r.observed=true;});
     context.on('serviceworker',()=>error('N1_WORKER'));
-    context.on('page',page=>{
-      page.on('close',()=>{if(!closing) error('N1_EARLY_CLOSE');});
-      page.on('worker',()=>error('N1_WORKER'));
-    });
-    await context.route('**/*',onHttp);
-    await context.routeWebSocket('**/*',onSocket);
-    if(options.contextOptions?.javaScriptEnabled!==false) observer=await observeDocumentWebSockets(context,url=>{const r=socket(url,'observed');if(r) r.observed=true;},()=>error('N1_OBSERVER'));
+    context.on('page',page=>{page.on('close',()=>{if(!closing)error('N1_EARLY_CLOSE');});page.on('worker',()=>error('N1_WORKER'));});
+    await context.route('**/*',onHttp);await context.routeWebSocket('**/*',onSocket);
+    if(options.contextOptions?.javaScriptEnabled!==false)observer=await observeDocumentWebSockets(context,url=>{const r=socket(url,'observed');if(r)r.observed=true;},()=>error('N1_OBSERVER'));
     setup=true;
   } catch(cause) {
-    if(cause instanceof NetworkGuardError) for(const code of cause.codes) error(code); else error('N1_SETUP');
-    await finish(); // Always rejects, after cleanup and attempted evidence write.
-    throw new NetworkGuardError(['N1_SETUP']);
+    if(!validated)rules=[];
+    if(cause instanceof NetworkGuardError)for(const code of cause.codes)error(code);else error('N1_SETUP');
+    await finish();throw new NetworkGuardError(['N1_SETUP']);
   }
   return {context:context!,id,finish,get finished(){return finished;}};
 }

@@ -1,9 +1,8 @@
 import { expect, test } from 'vitest';
 import { chromium, firefox, webkit } from '@playwright/test';
-import { createGuardedContext, FIXTURE_ORIGIN } from '../helpers/browser-network.ts';
+import { createGuardedContext, FIXTURE_ORIGIN, observeDocumentWebSockets } from '../helpers/browser-network.ts';
 
-// All browsers and descendants execute under the unchanged N0 namespace.
-// The positive response proves this is behavioral red, not missing setup.
+// Retain the original protected red: attribution implementation is still pending.
 test('N1 attributes an unexpected request even when the caller handles navigation', async () => {
   const browser = await chromium.launch({ headless: true });
   const guard = await createGuardedContext(browser, [{ id: 'home', path: '/', method: 'GET', resource: 'document', body: '<h1>protected positive control</h1>' }]);
@@ -19,26 +18,23 @@ test('N1 attributes an unexpected request even when the caller handles navigatio
   }
 }, 30000);
 
-// Feasibility gate for independent public observation, not a connectivity test.
-// A later page WebSocket route overrides the context route, entirely locally.
-// Without an independent observation this could falsely report a zero-request
-// guarded context. Do not replace this assertion with a route-handler counter.
 for (const engine of [chromium, firefox, webkit]) {
   test(`N1 public observer detects page WebSocket override in ${engine.name()}`, async () => {
     const browser = await engine.launch({ headless: true });
     const context = await browser.newContext({ serviceWorkers: 'block' });
     let contextRoutes = 0;
     let pageRoutes = 0;
-    let observedWebSockets = 0;
+    let nativeObserved = 0;
     let observedHttp = 0;
     context.on('request', () => { observedHttp++; });
-    context.on('page', page => page.on('websocket', () => { observedWebSockets++; }));
+    context.on('page', page => page.on('websocket', () => { nativeObserved++; }));
     try {
       await context.route('**/*', route => route.fulfill({ status: 200, contentType: 'text/html', body: '<h1>local websocket control</h1>' }));
       await context.routeWebSocket('**/*', socket => {
         contextRoutes++;
         socket.onMessage(() => socket.send('context-local'));
       });
+      const observer = await observeDocumentWebSockets(context);
       const page = await context.newPage();
       await page.routeWebSocket('**/*', socket => {
         pageRoutes++;
@@ -54,11 +50,14 @@ for (const engine of [chromium, firefox, webkit]) {
         socket.onerror = () => { clearTimeout(deadline); reject(new Error('local WebSocket control failed')); };
       }));
       expect(reply).toBe('page-local');
-      await context.close();
       expect(pageRoutes).toBe(1);
       expect(contextRoutes).toBe(0);
       expect(observedHttp).toBe(1);
-      expect(observedWebSockets, `N1_PUBLIC_OBSERVER_GAP ${engine.name()}: local exchange succeeded; pageRoutes=${pageRoutes}; contextRoutes=${contextRoutes}; HTTP=${observedHttp}; observedWebSockets=${observedWebSockets}`).toBe(1);
+      // Preserve characterization of the native blind spot. The independent
+      // document observer, not the policy/page route counter, must now see it.
+      expect(nativeObserved).toBe(0);
+      await expect.poll(() => observer.count(), { timeout: 3000, message: `N1_PUBLIC_OBSERVER_GAP ${engine.name()}: local override exchange succeeded but independent document observation missing` }).toBe(1);
+      expect(await page.evaluate(() => WebSocket.OPEN)).toBe(1);
     } finally {
       await context.close();
       await browser.close();

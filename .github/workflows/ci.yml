@@ -55,9 +55,15 @@ jobs:
               if(s.name.endsWith('/tests/unit/browser-network.test.ts'))n1.push({test:a.fullName,reason:(a.failureMessages||[]).join('\n').split('\n')[0]});
             }
             if(n1.length){
-              // GitHub caps error annotations per step. A separate bounded notice
-              // preserves the diagnostic summary; the original unit exit stays nonzero.
+              // Keep the original bounded summary and publish each engine's
+              // navigation/identity trace separately so API excerpts do not
+              // hide later engines. Neither path changes acceptance or exits.
               console.log('::notice title=N1 assertions::'+escape(JSON.stringify(n1).slice(0,16000)));
+              for(const row of n1.filter(r=>r.reason.includes('N1_NAVIGATION_PHASE')).slice(0,3)){
+                const [navigation,lifetime]=row.reason.split('; lifetime=');
+                console.log('::notice title=N1 navigation::'+escape(JSON.stringify({test:row.test,reason:navigation}).slice(0,8000)));
+                if(lifetime)console.log('::notice title=N1 document lifetime::'+escape(JSON.stringify({test:row.test,reason:lifetime}).slice(0,8000)));
+              }
               const root=path.join(process.env.RUNNER_TEMP,`fcd-isolation-${process.env.GITHUB_RUN_ID}-${process.env.GITHUB_RUN_ATTEMPT}-browser-network`);
               if(fs.existsSync(root))for(const name of fs.readdirSync(root).filter(n=>/^[0-9a-f-]{36}\.end\.json$/.test(n)).slice(0,32)){
                 const file=path.join(root,name),stat=fs.lstatSync(file);

@@ -94,10 +94,10 @@ for(const engine of [chromium,firefox,webkit]) {
 for(const engine of [chromium,firefox,webkit]) {
   test(`N1 reconciles frame popup and reload retirement in ${engine.name()}`,async()=>{
     const browser=await engine.launch({headless:true}),context=await browser.newContext({serviceWorkers:'block'});
-    const reasons:string[]=[];let routed=0,documentRequests=0,phase='setup',omitted=0;
+    const reasons:string[]=[];let routed=0,documentRequests=0,phase='setup',omitted=0,lifetimeOmitted=0;
     const ids=new Map<string,number>(),ready=new Set<string>(),retired=new Set<string>();
     const pages=new Map<ReturnType<BrowserContext['pages']>[number],number>();
-    const events:Record<string,unknown>[]=[],pageErrors:{phase:string;message:string}[]=[];
+    const events:Record<string,unknown>[]=[],lifetimes:Record<string,unknown>[]=[],pageErrors:{phase:string;message:string}[]=[];
     const documentId=(id:string)=>{if(!ids.has(id))ids.set(id,ids.size+1);return ids.get(id)!;};
     const pageId=(page:ReturnType<BrowserContext['pages']>[number]|null)=>{if(!page)return 0;if(!pages.has(page))pages.set(page,pages.size+1);return pages.get(page)!;};
     const record=(event:Record<string,unknown>)=>{if(events.length<24)events.push({phase,...event});else omitted++;};
@@ -106,7 +106,12 @@ for(const engine of [chromium,firefox,webkit]) {
     context.on('request',r=>{if(r.resourceType()==='document')documentRequests++;});
     context.on('page',page=>{pageId(page);page.on('pageerror',error=>{if(pageErrors.length<4)pageErrors.push({phase,message:error.message.slice(0,200)});});});
     context.on('console',message=>{
-      const text=message.text();if(message.type()!=='debug'||!text.startsWith('FCD_N1_RETIRE_')||text.length>600)return;
+      const text=message.text();if(message.type()!=='debug'||text.length>600)return;
+      if(text.startsWith('FCD_N1_LIFETIME:')){
+        try{const value:unknown=JSON.parse(text.slice('FCD_N1_LIFETIME:'.length));if(value&&typeof value==='object'){if(lifetimes.length<32)lifetimes.push({phase,page:pageId(message.page()),...value});else lifetimeOmitted++;}}catch{lifetimeOmitted++;}
+        return;
+      }
+      if(!text.startsWith('FCD_N1_RETIRE_'))return;
       try {
         const value:unknown=JSON.parse(text.slice(text.indexOf(':')+1));
         if(!value||typeof value!=='object')return;
@@ -133,6 +138,24 @@ for(const engine of [chromium,firefox,webkit]) {
         return route.fulfill({contentType:'text/html',body:`<!doctype html><h1>navigation control</h1>${home?'<iframe title="local frame" src="/frame"></iframe><a href="/popup" target="_blank">Open popup</a>':''}${script}`});
       });
       await context.routeWebSocket('**/*',socket=>{routed++;socket.onMessage(()=>socket.send('local-pong'));});
+      // Independent public document identity observations. No reliance on the
+      // ordering of this script relative to the observer, and no state mutation
+      // of its constructor, binding, receipts or completion status.
+      await context.addInitScript(()=>{
+        const globals=globalThis as unknown as Record<string,unknown>;
+        const key='__fcdN1LifetimeControl';
+        type Control={documents:WeakMap<Document,number>;next:number;calls:number};
+        let control=globals[key] as Control|undefined;
+        if(!control){control={documents:new WeakMap(),next:0,calls:0};Object.defineProperty(globals,key,{value:control});}
+        const owner=document;if(!control.documents.has(owner))control.documents.set(owner,++control.next);
+        const doc=control.documents.get(owner),call=++control.calls;
+        const label=()=>location.href===''?'empty':location.href==='about:blank'?'blank':location.origin==='https://fcd-fixture.invalid'&&['/','/frame','/popup'].includes(location.pathname)?location.pathname:'other';
+        const log=(value:Record<string,unknown>)=>console.debug('FCD_N1_LIFETIME:'+JSON.stringify({doc,call,top:window===window.top,url:label(),...value}));
+        log({kind:'init',state:Object.getOwnPropertyNames(globals).filter(k=>k.startsWith('__fcdN1State')).length,binding:Object.getOwnPropertyNames(globals).filter(k=>k.startsWith('__fcdN1Report')&&typeof globals[k]==='function').length});
+        for(const kind of ['pagehide','pageshow'])addEventListener(kind,event=>{
+          log({kind,owner:event.target===owner,current:event.target===document,same:owner===document,window:event.target===window,trusted:event.isTrusted});
+        });
+      });
       observer=await observeDocumentWebSockets(observedContext,()=>{},reason=>{if(!reasons.includes(reason))reasons.push(reason);});
       const page=await context.newPage();phase='home-navigation';await page.goto(`${FIXTURE_ORIGIN}/`);
       phase='home-socket';await expect.poll(()=>page.locator('html').getAttribute('data-socket')).toBe('local-pong');
@@ -149,7 +172,7 @@ for(const engine of [chromium,firefox,webkit]) {
       // Flushing happens only after failure or the original final assertion.
       if(observer&&!documents)try{documents=await observer.flush();}catch{reasons.push('diagnostic-flush-failed');}
       const detail={engine:engine.name(),phase,routed,observed:observer?.count(),documentRequests,reasons,pageErrors,events,omitted,unregisteredRetirements:[...retired].filter(id=>!ready.has(id)).map(documentId),documents:documents?.map(d=>({document:documentId(d.id),attempts:d.attempts,acknowledged:d.acknowledged,intact:d.intact,flushed:d.flushed}))};
-      throw new Error(`N1_NAVIGATION_PHASE ${JSON.stringify(detail)}; assertion=${cause instanceof Error?cause.message.slice(0,300):'non-error failure'}`,{cause});
+      throw new Error(`N1_NAVIGATION_PHASE ${JSON.stringify(detail)}; lifetime=${JSON.stringify({events:lifetimes,omitted:lifetimeOmitted})}; assertion=${cause instanceof Error?cause.message.slice(0,300):'non-error failure'}`,{cause});
     }finally{await context.close();await browser.close();}
   },30000);
 }

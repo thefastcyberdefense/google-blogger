@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { chromium, firefox, webkit, type Browser, type BrowserContextOptions, type BrowserContext, type Route } from '@playwright/test';
+import { chromium, firefox, webkit, type Browser, type BrowserContextOptions, type BrowserContext, type Route, type ConsoleMessage } from '@playwright/test';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';import path from 'node:path';import os from 'node:os';import { randomUUID } from 'node:crypto';
@@ -374,3 +374,57 @@ test('N1 CLI rejects malformed UTF-8 rather than replacement decoding',()=>{
 test('N1 evidence cannot overwrite an existing identity and survives output cleanup',()=>{
   const f=cliFixture();try{const file=path.join(f.root,`${f.s.records[0].id}.start.json`),before=fs.readFileSync(file,'utf8');expect(()=>writeEvidence(f.root,`${f.s.records[0].id}.start.json`,{})).toThrow();expect(fs.readFileSync(file,'utf8')).toBe(before);expect(()=>initializeEvidence(f.root,f.s.manifest.source,'17','1')).toThrow();const renderOutput=path.join(f.base,'test-results');fs.mkdirSync(renderOutput);fs.writeFileSync(path.join(renderOutput,'old.json'),'{}');fs.rmSync(renderOutput,{recursive:true});expect(fs.readFileSync(file,'utf8')).toBe(before);expect(()=>writeEvidence(f.root,'../escape.json',{})).toThrow('N1_WRITE');}finally{fs.rmSync(f.base,{recursive:true,force:true});}
 });
+
+for(const engine of [chromium,firefox,webkit]) {
+  test(`N1 repeats bootstrap without duplicate observers in ${engine.name()}`,async()=>{
+    const browser=await engine.launch({headless:true}),context=await browser.newContext({serviceWorkers:'block'});
+    const reasons:string[]=[],pageErrors:string[]=[];let routed=0;
+    context.on('page',page=>page.on('pageerror',e=>pageErrors.push(e.message.slice(0,200))));
+    try {
+      await context.route('**/*',r=>r.fulfill({contentType:'text/html',body:'<!doctype html><h1>repeat control</h1>'}));
+      await context.routeWebSocket('**/*',ws=>{routed++;ws.onMessage(()=>ws.send('repeat-pong'));});
+      const repeated=publicAdapter<BrowserContext>(context,{addInitScript:async(script,arg)=>{await context.addInitScript(script,arg);return context.addInitScript(script,arg);}});
+      const observer=await observeDocumentWebSockets(repeated,()=>{},reason=>{if(!reasons.includes(reason))reasons.push(reason);});
+      const page=await context.newPage();await page.goto(`${FIXTURE_ORIGIN}/`);
+      expect(await page.getByRole('heading').textContent()).toBe('repeat control');
+      expect(await page.evaluate(()=>new Promise<string>((resolve,reject)=>{
+        const ws=new WebSocket('wss://fcd-fixture.invalid/socket');const timer=setTimeout(()=>reject(new Error('repeat socket timeout')),3000);
+        ws.onopen=()=>ws.send('local');ws.onmessage=e=>{clearTimeout(timer);ws.close();resolve(String(e.data));};
+      }))).toBe('repeat-pong');
+      const documents=await observer.flush();
+      expect({routed,observed:observer.count(),reasons,pageErrors,attempts:documents.reduce((n,d)=>n+d.attempts,0)},'N1_DUPLICATE_BOOTSTRAP').toEqual({routed:1,observed:1,reasons:[],pageErrors:[],attempts:1});
+      expect(documents.every(d=>d.intact&&d.flushed&&d.attempts===d.acknowledged)).toBe(true);
+    }finally{await context.close();await browser.close();}
+  },30000);
+  for(const dropConsole of [false,true])test(`N1 readiness transport with ${dropConsole?'both-missing':'binding-missing'} in ${engine.name()}`,async()=>{
+    const browser=await engine.launch({headless:true}),context=await browser.newContext({serviceWorkers:'block'});
+    const reasons:string[]=[];let routed=0;
+    try {
+      await context.route('**/*',r=>r.fulfill({contentType:'text/html',body:'<!doctype html><h1>readiness control</h1>'}));
+      await context.routeWebSocket('**/*',ws=>{routed++;ws.onMessage(()=>ws.send('ready-pong'));});
+      const adapted=publicAdapter<BrowserContext>(context,{
+        exposeBinding:async(name,callback)=>context.exposeBinding(name,(source,...args)=>{
+          const value:unknown=args[0];if(value&&typeof value==='object'&&(value as Record<string,unknown>).kind==='ready')return;
+          return callback(source,...args);
+        }),
+        on:((event:string,listener:(message:ConsoleMessage)=>void)=>{
+          expect(event).toBe('console');return context.on('console',message=>{if(!dropConsole||!message.text().startsWith('FCD_N1_READY_'))listener(message);});
+        }) as BrowserContext['on'],
+      });
+      const observer=await observeDocumentWebSockets(adapted,()=>{},reason=>{if(!reasons.includes(reason))reasons.push(reason);});
+      const page=await context.newPage();await page.goto(`${FIXTURE_ORIGIN}/`);
+      expect(await page.getByRole('heading').textContent()).toBe('readiness control');
+      expect(await page.evaluate(()=>new Promise<string>((resolve,reject)=>{
+        const ws=new WebSocket('wss://fcd-fixture.invalid/socket');const timer=setTimeout(()=>reject(new Error('ready socket timeout')),3000);
+        ws.onopen=()=>ws.send('local');ws.onmessage=e=>{clearTimeout(timer);ws.close();resolve(String(e.data));};
+      }))).toBe('ready-pong');
+      const documents=await observer.flush();expect(routed).toBe(1);
+      if(dropConsole){expect(reasons).toContain('unknown-document');expect(observer.count()).toBe(0);}
+      else {
+        expect({reasons,observed:observer.count()},'N1_READY_TRANSPORT').toEqual({reasons:[],observed:1});
+        expect(documents.some(d=>d.attempts===1&&d.acknowledged===1&&d.intact&&d.flushed)).toBe(true);
+        expect(documents.every(d=>d.intact&&d.flushed&&d.attempts===d.acknowledged)).toBe(true);
+      }
+    }finally{await context.close();await browser.close();}
+  },30000);
+}

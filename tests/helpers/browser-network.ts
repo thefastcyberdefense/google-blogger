@@ -75,6 +75,7 @@ type ObserverFailure='binding-shape'|'ready-shape'|'unknown-document'|'socket-ac
  */
 export async function observeDocumentWebSockets(context: BrowserContext, onAttempt: (url:string)=>void = () => {}, onFailure: (reason:ObserverFailure)=>void = () => {}): Promise<Observer> {
   const token=randomUUID().replaceAll('-','');
+  const bootstrapKey=randomUUID();
   const bindingName=`__fcdN1Report${token}`;
   const stateName=`__fcdN1State${token}`;
   const retirementPrefix=`FCD_N1_RETIRE_${token}:`;
@@ -146,21 +147,22 @@ export async function observeDocumentWebSockets(context: BrowserContext, onAttem
       attempts++; d.acknowledged++; d.attempts=d.acknowledged; d.flushed=false; onAttempt(v.url);
     } else onFailure('binding-shape');
   });
-  await context.addInitScript(({bindingName,stateName,retirementPrefix,readyPrefix})=>{
+  await context.addInitScript(({bindingName,stateName,retirementPrefix,readyPrefix,bootstrapKey})=>{
     const globals=globalThis as unknown as Record<string,unknown>;
     type Snapshot={id:string;attempts:number;failures:number;readyFailed:boolean;intact:boolean;origin:string;receipts:string[]};
-    type Controller={resume:()=>boolean;flush:(ids:string[])=>Promise<Snapshot>};
+    type Controller={resume:(key:string)=>boolean;flush:(ids:string[])=>Promise<Snapshot>};
     const descriptor=Object.getOwnPropertyDescriptor(globals,stateName);
     if(descriptor){
       const existing=descriptor.value as Partial<Controller>|undefined;
       if(descriptor.configurable!==false || descriptor.writable!==false || !existing || !Object.isFrozen(existing) ||
-          typeof existing.resume!=='function' || typeof existing.flush!=='function' || existing.resume()!==true)throw new Error('N1_BOOTSTRAP_STATE');
+          typeof existing.resume!=='function' || typeof existing.flush!=='function' || existing.resume(bootstrapKey)!==true)throw new Error('N1_BOOTSTRAP_STATE');
       return;
     }
-    const binding=globals[bindingName] as (data:unknown)=>Promise<unknown>;
+    let binding=globals[bindingName] as (data:unknown)=>Promise<unknown>;
+    let bindingRefreshed=false;
     if(typeof binding!=='function')throw new Error('N1_BOOTSTRAP_BINDING');
     const report=console.debug.bind(console);
-    type State={owner:Document;id:string;origin:string;attempts:number;failures:number;readyFailed:boolean;sealed:boolean;retired:boolean;pending:Set<Promise<void>>;store?: (key:string,value:string)=>void;read?: (key:string)=>string|null};
+    type State={owner:Document;id:string;origin:string;initial:boolean;attempts:number;failures:number;readyFailed:boolean;sealed:boolean;retired:boolean;pending:Set<Promise<void>>;store?: (key:string,value:string)=>void;read?: (key:string)=>string|null};
     const states=new WeakMap<Document,State>();let created=0;
     const current=():State=>{
       const owner=document,known=states.get(owner);if(known)return known;
@@ -170,10 +172,10 @@ export async function observeDocumentWebSockets(context: BrowserContext, onAttem
       const id=`${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20)}`;
       // Capture storage and security origin per Document, not per Window. An
       // inherited blank frame's location.origin need not be its storage origin.
-      const state:State={owner,id,origin:globalThis.origin,attempts:0,failures:0,readyFailed:false,sealed:false,retired:false,pending:new Set()};
+      const state:State={owner,id,origin:globalThis.origin,initial:location.href==='' || location.href==='about:blank',attempts:0,failures:0,readyFailed:false,sealed:false,retired:false,pending:new Set()};
       try{const storage=localStorage;state.store=storage.setItem.bind(storage);state.read=storage.getItem.bind(storage);}catch{ /* Opaque initial documents have no storage. */ }
       states.set(owner,state);
-      const payload={kind:'ready',id,initial:location.href==='' || location.href==='about:blank',origin:state.origin,top:window===window.top};
+      const payload={kind:'ready',id,initial:state.initial,origin:state.origin,top:window===window.top};
       if(payload.top)report(readyPrefix+JSON.stringify(payload));
       // A lost binding acknowledgment is not silently forgiven: flush/retire
       // require this exact document's independently received console ready.
@@ -199,8 +201,19 @@ export async function observeDocumentWebSockets(context: BrowserContext, onAttem
     });
     const intact=():boolean=>globalThis.WebSocket===Wrapped && globals[bindingName]===binding && globals[stateName]===controller;
     const controller:Controller=Object.freeze({
-      resume(){
-        if(!intact())throw new Error(`N1_BOOTSTRAP_INTEGRITY ${JSON.stringify({socket:globalThis.WebSocket===Wrapped,binding:globals[bindingName]===binding,state:globals[stateName]===controller,initial:location.href==='' || location.href==='about:blank',top:window===window.top})}`);
+      resume(key:string){
+        // Only the installed init script holds this independent capability.
+        // Never repair constructor replacement or a page-requested reset.
+        if(key!==bootstrapKey || globalThis.WebSocket!==Wrapped || globals[stateName]!==controller)return false;
+        if(globals[bindingName]!==binding){
+          const state=states.get(document),candidate=globals[bindingName];
+          // Pinned Playwright refreshes the exposed function during Chromium's
+          // second initial-popup bootstrap. Reconcile that one zero-attempt,
+          // still-live initial Document only; no new identity/counters/ready.
+          if(bindingRefreshed || !state || !state.initial || state.sealed || state.retired || state.attempts!==0 || state.failures!==0 ||
+              window!==window.top || (location.href!=='' && location.href!=='about:blank') || typeof candidate!=='function')return false;
+          binding=candidate as (data:unknown)=>Promise<unknown>;bindingRefreshed=true;
+        }
         current();return true;
       },
       async flush(ids:string[]){
@@ -224,7 +237,7 @@ export async function observeDocumentWebSockets(context: BrowserContext, onAttem
       try{if(state.store)state.store(retirementPrefix+state.id,receipt);}catch{ /* Console may deliver; missing receipts still fail closed. */ }
       report(retirementPrefix+receipt);
     });
-  },{bindingName,stateName,retirementPrefix,readyPrefix});
+  },{bindingName,stateName,retirementPrefix,readyPrefix,bootstrapKey});
   return {
     count:()=>attempts,
     async flush() {

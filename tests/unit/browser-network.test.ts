@@ -111,13 +111,15 @@ for(const engine of [chromium,firefox,webkit]) {
         try{const value:unknown=JSON.parse(text.slice('FCD_N1_LIFETIME:'.length));if(value&&typeof value==='object'){if(lifetimes.length<32)lifetimes.push({phase,page:pageId(message.page()),...value});else lifetimeOmitted++;}}catch{lifetimeOmitted++;}
         return;
       }
-      if(!text.startsWith('FCD_N1_RETIRE_'))return;
+      const readiness=text.startsWith('FCD_N1_READY_');
+      if(!readiness&&!text.startsWith('FCD_N1_RETIRE_'))return;
       try {
         const value:unknown=JSON.parse(text.slice(text.indexOf(':')+1));
         if(!value||typeof value!=='object')return;
         const v=value as Record<string,unknown>;
-        if(v.kind!=='retire'||typeof v.id!=='string'||!/^[0-9a-f-]{36}$/.test(v.id))return;
-        retired.add(v.id);record({kind:'retire',document:documentId(v.id),page:pageId(message.page()),known:ready.has(v.id),attempts:v.attempts,failures:v.failures});
+        if(v.kind!==(readiness?'ready':'retire')||typeof v.id!=='string'||!/^[0-9a-f-]{36}$/.test(v.id))return;
+        if(readiness){ready.add(v.id);record({kind:'ready-console',document:documentId(v.id),page:pageId(message.page()),initial:v.initial,fixtureOrigin:v.origin===FIXTURE_ORIGIN});}
+        else {retired.add(v.id);record({kind:'retire',document:documentId(v.id),page:pageId(message.page()),known:ready.has(v.id),attempts:v.attempts,failures:v.failures});}
       }catch {record({kind:'diagnostic-parse-failed'});}
     });
     // Observe the real public binding callback without delaying, suppressing,
@@ -425,6 +427,58 @@ for(const engine of [chromium,firefox,webkit]) {
         expect(documents.some(d=>d.attempts===1&&d.acknowledged===1&&d.intact&&d.flushed)).toBe(true);
         expect(documents.every(d=>d.intact&&d.flushed&&d.attempts===d.acknowledged)).toBe(true);
       }
+    }finally{await context.close();await browser.close();}
+  },30000);
+}
+
+// Guard the narrow legitimate bootstrap reconciliation against page-triggered
+// resets and contradictory readiness. These are preservation controls, not
+// claimed as new failing-before-fix behavior.
+for(const engine of [chromium,firefox,webkit]) {
+  for(const initial of [true,false])test(`N1 binding replacement rejects untrusted bootstrap in ${engine.name()} ${initial?'initial':'loaded'}`,async()=>{
+    const browser=await engine.launch({headless:true}),context=await browser.newContext({serviceWorkers:'block'});const reasons:string[]=[];
+    try {
+      await context.route('**/*',r=>r.fulfill({contentType:'text/html',body:'<!doctype html><h1>binding integrity control</h1>'}));
+      const observer=await observeDocumentWebSockets(context,()=>{},reason=>{if(!reasons.includes(reason))reasons.push(reason);});
+      const page=await context.newPage();
+      if(initial){expect(page.url()).toBe('about:blank');expect(await page.evaluate(()=>1+1)).toBe(2);}
+      else {await page.goto(`${FIXTURE_ORIGIN}/`);expect(await page.getByRole('heading').textContent()).toBe('binding integrity control');}
+      expect(await page.evaluate(()=>{
+        const globals=globalThis as unknown as Record<string,unknown>;
+        const bindingName=Object.getOwnPropertyNames(globals).find(k=>k.startsWith('__fcdN1Report'));
+        const stateName=Object.getOwnPropertyNames(globals).find(k=>k.startsWith('__fcdN1State'));
+        if(!bindingName||!stateName)throw new Error('missing observer control');
+        const original=globals[bindingName] as (...args:unknown[])=>unknown;
+        const controller=globals[stateName] as {resume:(key:string)=>boolean};
+        globals[bindingName]=(...args:unknown[])=>original(...args);
+        try{return controller.resume('not-the-bootstrap-capability');}catch{return false;}
+      })).toBe(false);
+      const documents=await observer.flush();
+      expect(reasons,'N1_UNTRUSTED_BOOTSTRAP').toContain('flush-accounting');
+      expect(documents.some(d=>!d.intact)).toBe(true);
+    }finally{await context.close();await browser.close();}
+  },30000);
+  test(`N1 conflicting ready transports fail closed in ${engine.name()}`,async()=>{
+    const browser=await engine.launch({headless:true}),context=await browser.newContext({serviceWorkers:'block'});const reasons:string[]=[];
+    try {
+      await context.route('**/*',r=>r.fulfill({contentType:'text/html',body:'<!doctype html><h1>ready conflict control</h1>'}));
+      await context.routeWebSocket('**/*',ws=>ws.onMessage(()=>ws.send('conflict-pong')));
+      const adapted=publicAdapter<BrowserContext>(context,{exposeBinding:async(name,callback)=>context.exposeBinding(name,(source,...args)=>{
+        const value:unknown=args[0];
+        if(value&&typeof value==='object'){
+          const v=value as Record<string,unknown>;
+          if(v.kind==='ready')return callback(source,{...v,origin:'https://conflicting-fixture.invalid'},...args.slice(1));
+        }
+        return callback(source,...args);
+      })});
+      const observer=await observeDocumentWebSockets(adapted,()=>{},reason=>{if(!reasons.includes(reason))reasons.push(reason);});
+      const page=await context.newPage();await page.goto(`${FIXTURE_ORIGIN}/`);
+      expect(await page.getByRole('heading').textContent()).toBe('ready conflict control');
+      expect(await page.evaluate(()=>new Promise<string>((resolve,reject)=>{
+        const ws=new WebSocket('wss://fcd-fixture.invalid/socket');const timer=setTimeout(()=>reject(new Error('conflict socket timeout')),3000);
+        ws.onopen=()=>ws.send('local');ws.onmessage=e=>{clearTimeout(timer);ws.close();resolve(String(e.data));};
+      }))).toBe('conflict-pong');
+      await observer.flush();expect(reasons,'N1_READY_CONFLICT').toContain('ready-shape');
     }finally{await context.close();await browser.close();}
   },30000);
 }

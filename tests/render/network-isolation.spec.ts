@@ -78,7 +78,9 @@ test(CASES[4],async({makeGuard},info)=>{
   await expectFailure(redirect,['N1_UNEXPECTED_REQUEST']);
   // Worker programs are unsupported guard consumers. Their script requests are
   // observed/fulfilled locally, and successful worker creation fails its owner.
-  const workerRules:FixtureRule[]=[simple,...['script','other'].map(resource=>({id:`worker-${resource}`,path:'/worker.js',method:'GET',resource,body:'postMessage("worker-ready")',contentType:'application/javascript'}))];
+  // The pinned WebKit reports this exact script load as xhr; the local positive
+  // must complete before the unchanged N1_WORKER rejection can be exercised.
+  const workerRules:FixtureRule[]=[simple,...['script','other','xhr'].map(resource=>({id:`worker-${resource}`,path:'/worker.js',method:'GET',resource,body:'postMessage("worker-ready")',contentType:'application/javascript'}))];
   const worker=await makeGuard(workerRules,{expectedErrors:['N1_WORKER']});const workerPage=await worker.context.newPage();
   // Read-only public events; no route, binding, worker program or guard mutation.
   // Match results replay the existing pure matcher, not a substituted handler.

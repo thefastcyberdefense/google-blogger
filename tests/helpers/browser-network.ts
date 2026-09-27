@@ -63,7 +63,7 @@ const bounded = async <T>(promise: Promise<T>, milliseconds = 3000): Promise<T> 
   finally { if(timer) clearTimeout(timer); }
 };
 interface Observer { count(): number; flush(): Promise<DocumentRecord[]> }
-type ObserverFailure='binding-shape'|'ready-shape'|'unknown-document'|'socket-accounting'|'retire-shape'|'retire-accounting'|'flush-detached'|'flush-state'|'flush-accounting'|'flush-timeout'|'flush-evaluation'|'unfinished-document';
+type ObserverFailure='binding-shape'|'ready-shape'|'unknown-document'|'socket-accounting'|'retire-shape'|'retire-unknown-document'|'retire-page'|'retire-origin'|'retire-accounting'|'flush-detached'|'flush-state'|'flush-accounting'|'flush-timeout'|'flush-evaluation'|'unfinished-document';
 /** Independent document-start observation using public APIs. N0 is the firewall.
  * Chromium can run pagehide while dropping both console and binding delivery.
  * A synchronous, bounded, per-document localStorage receipt survives same-origin
@@ -84,13 +84,16 @@ export async function observeDocumentWebSockets(context: BrowserContext, onAttem
       if(text.length>512)throw new Error('bound');
       const value:unknown=JSON.parse(text);
       if(!value || typeof value!=='object' || Array.isArray(value))throw new Error('shape');
-      const v=value as Record<string,unknown>;const d=typeof v.id==='string'?docs.get(v.id):undefined;
+      const v=value as Record<string,unknown>;
       const fields=['kind','id','attempts','failures','sealed','intact'];
-      if(Object.keys(v).length!==fields.length || fields.some(k=>!Object.hasOwn(v,k)) || !d ||
-          (source.page!==undefined && d.frame.page()!==source.page) || (source.origin!==undefined && d.origin!==source.origin) ||
+      if(Object.keys(v).length!==fields.length || fields.some(k=>!Object.hasOwn(v,k)) || typeof v.id!=='string' ||
           v.kind!=='retire' || v.sealed!==true || typeof v.intact!=='boolean' ||
           !Number.isInteger(v.attempts) || Number(v.attempts)<0 || Number(v.attempts)>128 ||
-          !Number.isInteger(v.failures) || Number(v.failures)<0 || Number(v.failures)>128)throw new Error('identity');
+          !Number.isInteger(v.failures) || Number(v.failures)<0 || Number(v.failures)>128)throw new Error('shape');
+      const d=docs.get(v.id);
+      if(!d){onFailure('retire-unknown-document');return;}
+      if(source.page!==undefined && d.frame.page()!==source.page){onFailure('retire-page');return;}
+      if(source.origin!==undefined && d.origin!==source.origin){onFailure('retire-origin');return;}
       d.attempts=Number(v.attempts);d.intact=d.intact&&v.intact;d.flushed=d.attempts===d.acknowledged && v.failures===0;
       if(!d.intact || !d.flushed)onFailure('retire-accounting');
     }catch{onFailure('retire-shape');}
@@ -98,7 +101,7 @@ export async function observeDocumentWebSockets(context: BrowserContext, onAttem
   context.on('console',message=>{
     if(message.type()!=='debug')return;
     const text=message.text();if(!text.startsWith(retirementPrefix))return;
-    const page=message.page();if(!page){onFailure('retire-shape');return;}
+    const page=message.page();if(!page){onFailure('retire-page');return;}
     retire(text.slice(retirementPrefix.length),{page});
   });
   await context.exposeBinding(bindingName,(source,value:unknown)=>{
@@ -121,7 +124,9 @@ export async function observeDocumentWebSockets(context: BrowserContext, onAttem
     const globals=globalThis as unknown as Record<string,unknown>;
     const binding=globals[bindingName] as (data:unknown)=>Promise<unknown>;
     const reportRetirement=console.debug.bind(console);
-    const origin=location.origin;
+    // about:blank frames may inherit a tuple origin while location.origin is
+    // "null". Storage belongs to the global security origin, not the URL string.
+    const origin=globalThis.origin;
     let store:((key:string,value:string)=>void)|undefined,read:((key:string)=>string|null)|undefined;
     try {const storage=localStorage;store=storage.setItem.bind(storage);read=storage.getItem.bind(storage);}catch { /* Initial opaque documents have no storage. Missing noninitial receipts still fail. */ }
     const bytes=crypto.getRandomValues(new Uint8Array(16));bytes[6]=(bytes[6]&15)|64;bytes[8]=(bytes[8]&63)|128;

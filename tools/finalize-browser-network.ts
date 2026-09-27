@@ -62,7 +62,16 @@ export function validRecord(value:unknown):value is Start|End {
   return Array.isArray(value.documents)&&value.documents.length<=128&&value.documents.every(d=>object(d)&&keys(d,['id','attempts','acknowledged','intact','flushed'])&&UUID.test(String(d.id))&&integer(d.attempts,128)&&integer(d.acknowledged,128)&&typeof d.intact==='boolean'&&typeof d.flushed==='boolean');
 }
 export function stageRoot():string {const base=process.env.FCD_ISOLATION_EVIDENCE;if(!base||!path.isAbsolute(base))throw new Error('N1_EVIDENCE_ENV');return `${base}-browser-network`;}
-function readJson(file:string,limit=MAX_FILE):unknown {const stat=fs.lstatSync(file);if(!stat.isFile()||stat.isSymbolicLink()||stat.size<2||stat.size>limit)throw new Error('N1_FILE_BOUND');return JSON.parse(fs.readFileSync(file,'utf8')) as unknown;}
+function readJson(file:string,limit=MAX_FILE,owned=false):unknown {
+  const stat=fs.lstatSync(file);if(!stat.isFile()||stat.isSymbolicLink()||stat.size<2||stat.size>limit)throw new Error('N1_FILE_BOUND');
+  const bytes=fs.readFileSync(file);
+  const value:unknown=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));
+  // Self-owned records have one writer format. A byte-for-byte round trip
+  // rejects duplicate keys, BOMs and ambiguous encodings without changing the
+  // standard runners' permitted JSON formatting. This is not an RFC 8785 claim.
+  if(owned&&!Buffer.from(JSON.stringify(value)).equals(bytes))throw new Error('N1_JSON_FORM');
+  return value;
+}
 export function writeEvidence(root:string,name:string,value:unknown):void {
   if(!/^[a-z0-9][a-z0-9.-]{0,100}\.json$/.test(name))throw new Error('N1_WRITE');
   const stat=fs.lstatSync(root);if(!stat.isDirectory()||stat.isSymbolicLink())throw new Error('N1_WRITE');
@@ -74,7 +83,7 @@ export function initializeEvidence(root:string,source:string,run:string,attempt:
   if(!path.isAbsolute(root)||!validManifest(manifest))throw new Error('N1_MANIFEST');
   fs.mkdirSync(root,{mode:0o700});writeEvidence(root,'manifest.json',manifest);return manifest;
 }
-export function loadManifest(root=stageRoot()):Manifest {const value=readJson(path.join(root,'manifest.json'));if(!validManifest(value)||value.source!==process.env.FCD_SOURCE)throw new Error('N1_MANIFEST');return value;}
+export function loadManifest(root=stageRoot()):Manifest {const value=readJson(path.join(root,'manifest.json'),MAX_FILE,true);if(!validManifest(value)||value.source!==process.env.FCD_SOURCE)throw new Error('N1_MANIFEST');return value;}
 
 /** Reconcile independent discovery, runner results, and paired lifecycle data. */
 export function validateSnapshot(raw:unknown,expected?:Stamp):string[] {
@@ -117,6 +126,10 @@ export function validateSnapshot(raw:unknown,expected?:Stamp):string[] {
       if(r.rule!==null&&r.handled&&r.action!==end.rules.find(q=>q.id===r.rule)?.action)fail('N1_ACCOUNTING');
     }
     if(new Set(end.documents.map(d=>d.id)).size!==end.documents.length)fail('N1_DUPLICATE');
+    const acknowledged=end.documents.reduce((total,d)=>total+d.acknowledged,0);
+    const observedSockets=end.requests.filter(r=>r.kind==='websocket'&&r.observed).length;
+    // Declared negative controls cannot excuse contradictory independent data.
+    if(acknowledged!==observedSockets)fail('N1_ACCOUNTING');
     if(end.documents.some(d=>!d.flushed||!d.intact||d.attempts!==d.acknowledged)&&!end.errors.includes('N1_OBSERVER')&&!end.errors.includes('N1_EARLY_CLOSE'))fail('N1_ACCOUNTING');
   }
   for(const id of ends.keys())if(!starts.has(id))fail('N1_UNFINISHED');
@@ -177,7 +190,7 @@ export function finalizeEvidence(root:string,output:string,expected:Stamp,unitFi
       if(!/^(manifest|discovery|results|reporter-error|[0-9a-f-]{36}\.(start|end))\.json$/.test(name)){snapshot.readErrors!.push('N1_FILENAME');continue;}
       try {
         const file=path.join(root,name);total+=fs.lstatSync(file).size;if(total>MAX_TOTAL)throw new Error('N1_LIMIT');
-        const value=readJson(file);files.set(name,value);
+        const value=readJson(file,MAX_FILE,true);files.set(name,value);
         if(name==='manifest.json')snapshot.manifest=value;
         else if(name==='discovery.json')snapshot.discovery=value;
         else if(name==='results.json')snapshot.results=value;
@@ -189,7 +202,7 @@ export function finalizeEvidence(root:string,output:string,expected:Stamp,unitFi
   try{snapshot.unit=readJson(unitFile,16*1024*1024);}catch{snapshot.readErrors!.push('N1_UNIT_READ');}
   try{snapshot.browser=readJson(browserFile,80*1024*1024);}catch{snapshot.readErrors!.push('N1_BROWSER_READ');}
   const errors=validateSnapshot(snapshot,expected);
-  const summary={...expected,kind:'summary',accepted:errors.length===0,errors,contexts:array(snapshot.records).filter(v=>object(v)&&v.kind==='end').length,discovered:object(snapshot.discovery)?array(snapshot.discovery.tests).length:0,nonAdopted:'All suites other than network-isolation.spec.ts and the explicitly recorded Vitest contexts remain N0-only.'};
+  const summary={...expected,kind:'summary',accepted:errors.length===0,errors,readErrors:[...new Set(snapshot.readErrors)],stagedBytes:total,contexts:array(snapshot.records).filter(v=>object(v)&&v.kind==='end').length,discovered:object(snapshot.discovery)?array(snapshot.discovery.tests).length:0,nonAdopted:'All suites other than network-isolation.spec.ts and the explicitly recorded Vitest contexts remain N0-only.'};
   fs.mkdirSync(path.dirname(output),{recursive:true});fs.mkdirSync(output,{mode:0o700});
   for(const [name,value] of files)if(validRecord(value))writeEvidence(output,name,value);
   writeEvidence(output,'summary.json',summary);

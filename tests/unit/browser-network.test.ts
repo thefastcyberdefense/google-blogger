@@ -88,6 +88,49 @@ for(const engine of [chromium,firefox,webkit]) {
     }finally{await context.close();await browser.close();}
   },30000);
 }
+// Small reproductions of the first real 30-project failure, not a replacement
+// for that matrix. These expose the observer's safe reason enums in unit JSON.
+for(const engine of [chromium,firefox,webkit]) {
+  test(`N1 reconciles frame popup and reload retirement in ${engine.name()}`,async()=>{
+    const browser=await engine.launch({headless:true}),context=await browser.newContext({serviceWorkers:'block'});
+    const reasons:string[]=[];let routed=0,documentRequests=0;
+    const script=`<script>const socket=new WebSocket('wss://fcd-fixture.invalid/socket');socket.onopen=()=>socket.send('hello');socket.onmessage=e=>{document.documentElement.dataset.socket=e.data;socket.close();};</script>`;
+    context.on('request',r=>{if(r.resourceType()==='document')documentRequests++;});
+    try {
+      await context.route('**/*',route=>{
+        const home=new URL(route.request().url()).pathname==='/';
+        return route.fulfill({contentType:'text/html',body:`<!doctype html><h1>navigation control</h1>${home?'<iframe title="local frame" src="/frame"></iframe><a href="/popup" target="_blank">Open popup</a>':''}${script}`});
+      });
+      await context.routeWebSocket('**/*',socket=>{routed++;socket.onMessage(()=>socket.send('local-pong'));});
+      const observer=await observeDocumentWebSockets(context,()=>{},reason=>{if(!reasons.includes(reason))reasons.push(reason);});
+      const page=await context.newPage();await page.goto(`${FIXTURE_ORIGIN}/`);
+      await expect.poll(()=>page.locator('html').getAttribute('data-socket')).toBe('local-pong');
+      await expect.poll(()=>page.frameLocator('iframe').locator('html').getAttribute('data-socket')).toBe('local-pong');
+      const [popup]=await Promise.all([context.waitForEvent('page'),page.getByRole('link',{name:'Open popup'}).click()]);
+      await expect.poll(()=>popup.locator('html').getAttribute('data-socket')).toBe('local-pong');
+      await page.reload();
+      await expect.poll(()=>page.locator('html').getAttribute('data-socket')).toBe('local-pong');
+      await expect.poll(()=>page.frameLocator('iframe').locator('html').getAttribute('data-socket')).toBe('local-pong');
+      const documents=await observer.flush();
+      const detail=JSON.stringify({engine:engine.name(),routed,observed:observer.count(),documentRequests,reasons,documents});
+      expect(routed===5&&observer.count()===5&&documentRequests===5&&reasons.length===0&&documents.every(d=>d.flushed&&d.intact&&d.attempts===d.acknowledged),`N1_NAVIGATION_CONTROL ${detail}`).toBe(true);
+    }finally{await context.close();await browser.close();}
+  },30000);
+}
+test('N1 retires inherited-origin blank frames without losing evidence',async()=>{
+  const browser=await chromium.launch({headless:true}),context=await browser.newContext({serviceWorkers:'block'});const reasons:string[]=[];
+  try {
+    await context.route('**/*',r=>r.fulfill({contentType:'text/html',body:'<!doctype html><h1>inherited frame control</h1>'}));
+    const observer=await observeDocumentWebSockets(context,()=>{},reason=>{if(!reasons.includes(reason))reasons.push(reason);});
+    const page=await context.newPage();await page.goto(`${FIXTURE_ORIGIN}/`);
+    await page.evaluate(()=>document.body.append(document.createElement('iframe')));
+    const frame=page.frames().find(f=>f!==page.mainFrame());if(!frame)throw new Error('missing controlled frame');
+    const origins=await frame.evaluate(()=>({location:location.origin,security:globalThis.origin}));
+    await frame.goto(`${FIXTURE_ORIGIN}/frame`);expect(await frame.locator('h1').textContent()).toBe('inherited frame control');
+    const documents=await observer.flush();
+    expect(reasons.length===0&&documents.every(d=>d.flushed&&d.intact),`N1_INHERITED_ORIGIN ${JSON.stringify({origins,reasons,documents})}`).toBe(true);
+  }finally{await context.close();await browser.close();}
+},30000);
 test('N1 accepts a precise local positive policy',()=>expect(()=>validateFixtureRules([localRule])).not.toThrow());
 for(const [name,rule] of [
   ['wildcard path',{...localRule,path:'/**'}],['redirect status',{...localRule,status:302}],['redirect header',{...localRule,headers:{location:'https://elsewhere.invalid/'}}],
@@ -116,6 +159,36 @@ test('N1 caller assertion outcome remains a failure after cleanup',async()=>{
 // Playwright private state, executable strings, or production escape hatch.
 function publicAdapter<T extends object>(target:T,overrides:Partial<T>):T {
   return new Proxy(target,{get(object,key){const owner=Object.hasOwn(overrides,key)?overrides:object;const value:unknown=Reflect.get(owner,key,owner);return typeof value==='function'?value.bind(owner):value;}});
+}
+for(const mutation of ['none','missing','malformed','accounting','cross-origin'] as const) {
+  test(`N1 durable receipt control with ${mutation} evidence`,async()=>{
+    const browser=await chromium.launch({headless:true}),context=await browser.newContext({serviceWorkers:'block'});const reasons:string[]=[];
+    try {
+      await context.route('**/*',r=>r.fulfill({contentType:'text/html',body:'<!doctype html><h1>receipt control</h1>'}));
+      // Deliberately suppress only the observer's public console subscription.
+      // Bindings, init scripts, navigation and browser storage remain real.
+      const quiet=publicAdapter<BrowserContext>(context,{on:((event:string)=>{expect(event).toBe('console');return context;}) as BrowserContext['on']});
+      const observer=await observeDocumentWebSockets(quiet,()=>{},reason=>{if(!reasons.includes(reason))reasons.push(reason);});
+      const page=await context.newPage();await page.goto(`${FIXTURE_ORIGIN}/`);expect(await page.locator('h1').textContent()).toBe('receipt control');
+      await page.goto(mutation==='cross-origin'?'https://other-fixture.invalid/next':`${FIXTURE_ORIGIN}/next`);
+      const receipts=await page.evaluate(change=>{
+        const keys=Object.keys(localStorage).filter(k=>k.startsWith('FCD_N1_RETIRE_'));
+        for(const key of keys){
+          if(change==='missing')localStorage.removeItem(key);
+          if(change==='malformed')localStorage.setItem(key,'{');
+          if(change==='accounting'){const value=JSON.parse(localStorage.getItem(key)!);value.attempts=1;localStorage.setItem(key,JSON.stringify(value));}
+        }
+        return keys.length;
+      },mutation);
+      if(mutation!=='cross-origin')expect(receipts).toBeGreaterThan(0);
+      const documents=await observer.flush();
+      if(mutation==='none'){expect(reasons).toEqual([]);expect(documents.every(d=>d.flushed&&d.intact)).toBe(true);}
+      else {
+        expect(reasons).toContain(mutation==='malformed'?'retire-shape':mutation==='accounting'?'retire-accounting':'unfinished-document');
+        expect(documents.some(d=>!d.flushed)).toBe(true);
+      }
+    }finally{await context.close();await browser.close();}
+  },30000);
 }
 test('N1 handler failure is attributed despite a caught resource error',async()=>{
   const title='N1 handler failure is attributed despite a caught resource error';const browser=await chromium.launch({headless:true});
@@ -187,6 +260,24 @@ const corruptions:[string,string,(s:ReturnType<typeof sampleEvidence>)=>void][]=
   ['unaccounted observed request','N1_ACCOUNTING',s=>{firstEnd(s).requests=[{seq:1,kind:'http',rule:null,action:'unhandled',observed:true,handled:false}];} ],
 ];
 for(const [name,code,mutate] of corruptions)test(`N1 finalizer rejects ${name}`,()=>{const s=sampleEvidence();mutate(s);expect(validateSnapshot(s)).toContain(code);});
+function socketEvidence(){
+  const s=sampleEvidence(),end=firstEnd(s);
+  end.rules=[{id:'socket',action:'fulfill',count:1,hits:1}];
+  end.requests=[{seq:1,kind:'websocket',rule:'socket',action:'fulfill',observed:true,handled:true}];
+  end.documents=[{id:randomUUID(),attempts:1,acknowledged:1,intact:true,flushed:true}];
+  return s;
+}
+test('N1 accepts cross-reconciled socket evidence positive control',()=>expect(validateSnapshot(socketEvidence())).toEqual([]));
+for(const mutation of ['missing-document','exaggerated-acknowledgments','orphan-observed-socket','erased-observation'] as const) {
+  test(`N1 finalizer rejects socket cross-accounting ${mutation}`,()=>{
+    const s=socketEvidence(),end=firstEnd(s);
+    if(mutation==='missing-document')end.documents=[];
+    if(mutation==='exaggerated-acknowledgments'){end.documents[0].attempts=2;end.documents[0].acknowledged=2;}
+    if(mutation==='orphan-observed-socket'){end.requests.push({...end.requests[0],seq:2});end.rules[0].count=2;end.rules[0].hits=2;}
+    if(mutation==='erased-observation'){end.requests[0].observed=false;s.records[0].expectedErrors=['N1_OBSERVER'];end.expectedErrors=['N1_OBSERVER'];end.errors=['N1_OBSERVER'];}
+    expect(validateSnapshot(s),'N1_SOCKET_ACCOUNTING_FALSE_GREEN').toContain('N1_ACCOUNTING');
+  });
+}
 test('N1 an exact inner failure control still requires a passing owner',()=>{
   const s=sampleEvidence();s.records[0].expectedErrors=['N1_TEST_FAILED'];const end=firstEnd(s);end.expectedErrors=['N1_TEST_FAILED'];end.errors=['N1_TEST_FAILED'];end.outcome='failed';
   expect(validateSnapshot(s)).toEqual([]);s.results.tests[0].status='failed';expect(validateSnapshot(s)).toContain('N1_RESULTS');
@@ -205,6 +296,22 @@ test('N1 CLI has a real nonzero missing-evidence path',()=>{
   const f=cliFixture();try{fs.unlinkSync(path.join(f.root,'discovery.json'));const result=f.run();expect(result.error).toBeUndefined();expect(result.status,'N1_FINALIZER_FALSE_GREEN').toBe(1);expect(result.stderr).toContain('N1_DISCOVERY');expect(JSON.parse(fs.readFileSync(path.join(f.output,'summary.json'),'utf8')).accepted).toBe(false);expect(fs.existsSync(path.join(f.output,`${f.s.records[0].id}.start.json`))).toBe(true);}finally{fs.rmSync(f.base,{recursive:true,force:true});}
 });
 test('N1 CLI rejects truncated records and preserves valid partial diagnostics',()=>{const f=cliFixture();try{fs.writeFileSync(path.join(f.root,`${f.s.records[0].id}.start.json`),'{');const result=f.run();expect(result.status).toBe(1);expect(result.stderr).toContain('N1_READ');expect(fs.existsSync(path.join(f.output,`${f.s.records[0].id}.end.json`))).toBe(true);}finally{fs.rmSync(f.base,{recursive:true,force:true});}});
+test('N1 CLI rejects duplicate JSON keys in its own evidence',()=>{
+  const f=cliFixture();try{
+    const file=path.join(f.root,'manifest.json'),before=fs.readFileSync(file,'utf8'),duplicate=before.replace('"schema":1','"schema":999,"schema":1');
+    expect(duplicate).not.toBe(before);fs.writeFileSync(file,duplicate);
+    const result=f.run();expect(result.error).toBeUndefined();expect(result.status,'N1_DUPLICATE_KEYS_FALSE_GREEN').toBe(1);expect(result.stderr).toContain('N1_READ');
+    expect(fs.existsSync(path.join(f.output,`${f.s.records[0].id}.end.json`))).toBe(true);
+  }finally{fs.rmSync(f.base,{recursive:true,force:true});}
+});
+test('N1 CLI rejects malformed UTF-8 rather than replacement decoding',()=>{
+  const f=cliFixture();try{
+    const file=path.join(f.base,'browser.json'),before=fs.readFileSync(file,'utf8');
+    fs.writeFileSync(file,Buffer.concat([Buffer.from(before.slice(0,-1)+',"diagnostic":"'),Buffer.from([255]),Buffer.from('"}')]));
+    const result=f.run();expect(result.error).toBeUndefined();expect(result.status,'N1_UTF8_FALSE_GREEN').toBe(1);expect(result.stderr).toContain('N1_READ');
+    expect(fs.existsSync(path.join(f.output,`${f.s.records[0].id}.end.json`))).toBe(true);
+  }finally{fs.rmSync(f.base,{recursive:true,force:true});}
+});
 test('N1 evidence cannot overwrite an existing identity and survives output cleanup',()=>{
   const f=cliFixture();try{const file=path.join(f.root,`${f.s.records[0].id}.start.json`),before=fs.readFileSync(file,'utf8');expect(()=>writeEvidence(f.root,`${f.s.records[0].id}.start.json`,{})).toThrow();expect(fs.readFileSync(file,'utf8')).toBe(before);expect(()=>initializeEvidence(f.root,f.s.manifest.source,'17','1')).toThrow();const renderOutput=path.join(f.base,'test-results');fs.mkdirSync(renderOutput);fs.writeFileSync(path.join(renderOutput,'old.json'),'{}');fs.rmSync(renderOutput,{recursive:true});expect(fs.readFileSync(file,'utf8')).toBe(before);expect(()=>writeEvidence(f.root,'../escape.json',{})).toThrow('N1_WRITE');}finally{fs.rmSync(f.base,{recursive:true,force:true});}
 });

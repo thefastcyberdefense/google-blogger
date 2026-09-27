@@ -17,7 +17,7 @@ for(const view of ['home','article','paged','empty','error'])test(`${view}: acce
    }
   }
   const result=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']).analyze();
-  await info.attach(`axe-${view}-${state}`,{body:JSON.stringify(result,null,2),contentType:'application/json'});
+  await info.attach(`axe-${view}-${state}`,{body:JSON.stringify(result),contentType:'application/json'});
   expect(result.violations).toEqual([]);
  }
  if(view==='article'){

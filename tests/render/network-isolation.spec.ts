@@ -35,7 +35,20 @@ test(CASES[1],async({makeGuard})=>{
   const page=await guard.context.newPage();await page.goto(`${FIXTURE_ORIGIN}/`);
   await expect(page.getByRole('heading')).toHaveText('fixture');
   expect(await page.evaluate(()=>fetch('/unexpected?q=synthetic').then(()=>false,()=>true))).toBe(true);
-  expect(await page.evaluate(()=>new Promise<boolean>(resolve=>{const img=new Image();img.onload=()=>resolve(false);img.onerror=()=>resolve(true);img.src='/unexpected-image';document.body.append(img);}))).toBe(true);
+  // WebKit cancellation need not dispatch image load/error events. Require
+  // the exact failed request AND an actual decode rejection, never a timeout.
+  const [imageRequest,image]=await Promise.all([
+    guard.context.waitForEvent('requestfailed',request=>request.url()===`${FIXTURE_ORIGIN}/unexpected-image`&&request.method()==='GET'&&request.resourceType()==='image'&&request.frame()===page.mainFrame()),
+    page.evaluate(async()=>{
+      const img=new Image();img.src='/unexpected-image';document.body.append(img);
+      const result=await img.decode().then(()=>({decoded:true,error:''}),(cause:unknown)=>({decoded:false,error:cause instanceof DOMException?cause.name:'unexpected-rejection'}));
+      return {...result,complete:img.complete,naturalWidth:img.naturalWidth};
+    }),
+  ]);
+  expect(imageRequest.failure()?.errorText).toEqual(expect.any(String));
+  expect(imageRequest.failure()?.errorText).not.toBe('');
+  expect(await imageRequest.response()).toBeNull();
+  expect(image).toEqual({decoded:false,error:'EncodingError',complete:true,naturalWidth:0});
   await expectFailure(guard,['N1_UNEXPECTED_REQUEST']);
 });
 

@@ -32,17 +32,55 @@ jobs:
           node -e "const fs=require('node:fs');const s=JSON.parse(fs.readFileSync('build-size.json'));if(s.xml.raw>500000)throw Error('Total theme exceeds 500KB');console.log('::notice title=Asset sizes (JS/CSS informational)::'+JSON.stringify(s));"
       - run: npm run contract:check
       - run: npx --no-install playwright install --with-deps chromium firefox webkit
-      # Explicit names retain the existing stage inventory. These commands now
-      # include a mandatory isolation gate; a draft PR is not an execution guard.
+      # Preserve the established stage inventory and N0 privilege/environment gate.
       - name: Run npm test -- --reporter=default --reporter=json --outputFile=unit-report.json
         run: |
           bash tools/run-isolated-tests.sh self-test
+          node tools/finalize-browser-network.ts init "$RUNNER_TEMP/fcd-isolation-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT-browser-network" "$(git rev-parse HEAD)" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT"
           bash tools/run-isolated-tests.sh run unit 300 npm test -- --reporter=default --reporter=json --outputFile=unit-report.json
       - name: Report regression evidence
         if: ${{ always() }}
         run: |
           node --input-type=module <<'JS'
-          import fs from 'node:fs';if(fs.existsSync('unit-report.json')){const r=JSON.parse(fs.readFileSync('unit-report.json','utf8'));console.log('::notice title=Unit totals::'+JSON.stringify({passed:r.numPassedTests,failed:r.numFailedTests,pending:r.numPendingTests}));for(const s of r.testResults||[])for(const a of s.assertionResults||[])if(a.status==='failed')console.log('::error title=Regression::'+a.fullName);}
+          import fs from 'node:fs';
+          import path from 'node:path';
+          import { validRecord } from './tools/finalize-browser-network.ts';
+          const escape=value=>String(value).replaceAll('%','%25').replaceAll('\r','%0D').replaceAll('\n','%0A');
+          if(fs.existsSync('unit-report.json')){
+            const r=JSON.parse(fs.readFileSync('unit-report.json','utf8'));
+            console.log('::notice title=Unit totals::'+JSON.stringify({passed:r.numPassedTests,failed:r.numFailedTests,pending:r.numPendingTests}));
+            const n1=[],focused=[];
+            for(const s of r.testResults||[])for(const a of s.assertionResults||[])if(a.status==='failed'){
+              console.log('::error title=Regression::'+escape(a.fullName));
+              if(s.name.endsWith('/tests/unit/browser-network.test.ts')){
+                const failure=(a.failureMessages||[]).join('\n');
+                n1.push({test:a.fullName,reason:failure.split('\n')[0]});
+                if(!failure.includes('N1_NAVIGATION_PHASE'))focused.push({test:a.fullName,reason:failure.slice(0,3000)});
+              }
+            }
+            if(n1.length){
+              // Keep the original bounded summary and publish each engine's
+              // navigation/identity trace separately so API excerpts do not
+              // hide later engines. Neither path changes acceptance or exits.
+              console.log('::notice title=N1 assertions::'+escape(JSON.stringify(n1).slice(0,16000)));
+              for(const row of focused.slice(0,16))console.log('::notice title=N1 focused assertion::'+escape(JSON.stringify(row)));
+              for(const row of n1.filter(r=>r.reason.includes('N1_NAVIGATION_PHASE')).slice(0,3)){
+                const [navigation,lifetime]=row.reason.split('; lifetime=');
+                console.log('::notice title=N1 navigation::'+escape(JSON.stringify({test:row.test,reason:navigation}).slice(0,8000)));
+                if(lifetime)console.log('::notice title=N1 document lifetime::'+escape(JSON.stringify({test:row.test,reason:lifetime}).slice(0,8000)));
+              }
+              const root=path.join(process.env.RUNNER_TEMP,`fcd-isolation-${process.env.GITHUB_RUN_ID}-${process.env.GITHUB_RUN_ATTEMPT}-browser-network`);
+              if(fs.existsSync(root))for(const name of fs.readdirSync(root).filter(n=>/^[0-9a-f-]{36}\.end\.json$/.test(n)).slice(0,32)){
+                const file=path.join(root,name),stat=fs.lstatSync(file);
+                if(!stat.isFile()||stat.isSymbolicLink()||stat.size>131072)continue;
+                const end=JSON.parse(fs.readFileSync(file,'utf8'));
+                if(validRecord(end)&&end.kind==='end'&&end.identity.stage==='unit'&&n1.some(a=>a.test===end.identity.title)){
+                  const detail={test:end.identity.title,errors:end.errors,setup:end.setup,closed:end.closed,documentsCount:end.documents.length,documents:end.documents.slice(0,16),requestsCount:end.requests.length,requests:end.requests.slice(0,16)};
+                  console.log('::notice title=N1 lifecycle diagnostic::'+escape(JSON.stringify(detail)));
+                }
+              }
+            }
+          }
           JS
       - run: npm run preview -- --build-only
       - name: Run npm run test:render
@@ -50,10 +88,120 @@ jobs:
       - name: Report browser counts
         if: ${{ always() }}
         run: |
-          bash tools/run-isolated-tests.sh finalize
+          result=0
+          bash tools/run-isolated-tests.sh finalize || result=$?
+          node tools/finalize-browser-network.ts finalize "$RUNNER_TEMP/fcd-isolation-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT-browser-network" test-results/browser-network "$(git rev-parse HEAD)" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" || { n1=$?; if [ "$result" -eq 0 ]; then result=$n1; fi; }
           if [ -f test-results/browser.json ]; then
-            node -e "const r=require('./test-results/browser.json');console.log('::notice title=Browser totals::'+JSON.stringify(r.stats));"
+            node --input-type=module <<'JS' || { report=$?; if [ "$result" -eq 0 ]; then result=$report; fi; }
+          import fs from 'node:fs';
+          // Extend the existing totals read only. Both finalizers have already
+          // enforced their unchanged gates; no report or attachment is rewritten.
+          const r=JSON.parse(fs.readFileSync('test-results/browser.json','utf8'));
+          const escape=value=>String(value).replaceAll('%','%25').replaceAll('\r','%0D').replaceAll('\n','%0A');
+          const notice=(title,value)=>console.log(`::notice title=${title}::${escape(JSON.stringify(value))}`);
+          notice('Browser totals',r.stats);
+          const groups=new Map(),failed=[];let visited=0,omitted=0,omittedFailures=0;
+          const bytes=value=>Buffer.byteLength(JSON.stringify(value)??'');
+          function visit(suites,depth=0,inherited=''){
+            if(depth>32){omitted++;return;}
+            for(const suite of suites||[]){
+              if(++visited>10000){omitted++;return;}
+              const file=String(suite.file||inherited).replaceAll('\\','/');
+              for(const spec of suite.specs||[])for(const test of spec.tests||[]){
+                if(++visited>10000){omitted++;return;}
+                const name=String(spec.file||file).replaceAll('\\','/').split('/').pop().slice(0,100);
+                let group=groups.get(name);
+                if(!group){if(groups.size>=32){omitted++;continue;}group={file:name,tests:0,testBytes:0,stdoutBytes:0,errorBytes:0,inlineJsonBase64Bytes:0,compactJsonBase64Bytes:0,unmeasuredAttachments:0};groups.set(name,group);}
+                group.tests++;group.testBytes+=bytes(test);
+                const results=test.results||[];
+                if(test.status!=='expected'||test.expectedStatus!=='passed'||results.length!==1||results[0]?.status!=='passed'||results[0]?.retry!==0){
+                  if(failed.length<32)failed.push({file:name,project:String(test.projectName).slice(0,100),title:String(spec.title).slice(0,200),status:test.status,codes:[...new Set(results.flatMap(x=>(x.errors||[]).flatMap(e=>String(e.message||'').match(/N1_[A-Z_]+/g)||[])))].sort()});else omittedFailures++;
+                }
+                for(const result of results){
+                  group.stdoutBytes+=bytes(result.stdout)+bytes(result.stderr);group.errorBytes+=bytes(result.error)+bytes(result.errors);
+                  for(const a of result.attachments||[])if(a.contentType==='application/json'&&typeof a.body==='string'){
+                    group.inlineJsonBase64Bytes+=Buffer.byteLength(a.body);
+                    if(a.body.length>1024*1024){group.unmeasuredAttachments++;continue;}
+                    try{const value=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(Buffer.from(a.body,'base64')));group.compactJsonBase64Bytes+=Buffer.from(JSON.stringify(value)).toString('base64').length;}catch{group.unmeasuredAttachments++;}
+                  }
+                }
+              }
+              visit(suite.suites,depth+1,file);
+            }
+          }
+          visit(r.suites);
+          notice('Browser diagnostic volume',{groups:[...groups.values()].sort((a,b)=>b.testBytes-a.testBytes),omitted});
+          notice('Browser failure inventory',{failed,omitted,omittedFailures});
+          JS
           fi
+          node --input-type=module <<'JS' || { report=$?; if [ "$result" -eq 0 ]; then result=$report; fi; }
+          import fs from 'node:fs';
+          import path from 'node:path';
+          import { CASES, PROJECTS, validRecord, engineFor } from './tools/finalize-browser-network.ts';
+          const escape=value=>String(value).replaceAll('%','%25').replaceAll('\r','%0D').replaceAll('\n','%0A');
+          const notice=(title,value)=>console.log(`::notice title=${title}::${escape(JSON.stringify(value))}`);
+          const size=file=>{try{const s=fs.lstatSync(file);return s.isFile()&&!s.isSymbolicLink()?s.size:null;}catch{return null;}};
+          const root=path.join(process.env.RUNNER_TEMP,`fcd-isolation-${process.env.GITHUB_RUN_ID}-${process.env.GITHUB_RUN_ATTEMPT}-browser-network`);
+          const names=fs.existsSync(root)?fs.readdirSync(root):[];
+          const stagedSizes=names.slice(0,4100).map(n=>size(path.join(root,n))).filter(n=>n!==null);
+          const footprint={files:0,directories:0,bytes:0,maxFileBytes:0,symlinks:0,missingRoots:0,truncated:false};
+          const stack=[];
+          for(const p of ['dist/theme.xml','package-lock.json','build-size.json','unit-report.json','test-results','playwright-report']){
+            if(fs.existsSync(p))stack.push(p);else footprint.missingRoots++;
+          }
+          let entries=0;
+          while(stack.length){
+            if(++entries>10000){footprint.truncated=true;break;}
+            const p=stack.pop(),s=fs.lstatSync(p);
+            if(s.isSymbolicLink()){footprint.symlinks++;continue;}
+            if(s.isDirectory()){footprint.directories++;for(const n of fs.readdirSync(p))stack.push(path.join(p,n));}
+            else if(s.isFile()){footprint.files++;footprint.bytes+=s.size;footprint.maxFileBytes=Math.max(footprint.maxFileBytes,s.size);}
+          }
+          notice('Artifact input footprint',{...footprint,browserReportBytes:size('test-results/browser.json'),unitReportBytes:size('unit-report.json'),stagedN1:{files:names.length,measuredFiles:stagedSizes.length,bytes:stagedSizes.reduce((a,b)=>a+b,0),maxFileBytes:Math.max(0,...stagedSizes),discoveryBytes:size(path.join(root,'discovery.json')),resultsBytes:size(path.join(root,'results.json')),reporterError:size(path.join(root,'reporter-error.json'))!==null}});
+          const reportBytes=size('test-results/browser.json');
+          if(reportBytes!==null&&reportBytes<=80*1024*1024){
+            const report=JSON.parse(fs.readFileSync('test-results/browser.json','utf8'));
+            const counts={baseline:{tests:0,passed:0,unexpected:0,skipped:0,retried:0},n1:{tests:0,passed:0,unexpected:0,skipped:0,retried:0}};
+            const failed=[];
+            function visit(suites,depth=0,inherited=''){
+              if(depth>32)throw new Error('N1_DIAGNOSTIC_DEPTH');
+              for(const suite of suites||[]){
+                const file=suite.file||inherited;
+                for(const spec of suite.specs||[])for(const test of spec.tests||[]){
+                  const scoped=(spec.file||file).replaceAll('\\','/').endsWith('network-isolation.spec.ts');
+                  const count=scoped?counts.n1:counts.baseline,results=test.results||[];count.tests++;
+                  if(results.length>1||results.some(r=>r.retry>0))count.retried++;
+                  if(test.expectedStatus==='passed'&&test.status==='expected'&&results.length===1&&results[0].status==='passed'&&results[0].retry===0)count.passed++;
+                  else if(results.some(r=>r.status==='skipped')||test.expectedStatus==='skipped')count.skipped++;
+                  else {
+                    count.unexpected++;
+                    if(scoped&&PROJECTS.includes(test.projectName)&&CASES.includes(spec.title)){
+                      const codes=[...new Set(results.flatMap(r=>(r.errors||[]).flatMap(e=>(String(e.message||'').match(/N1_[A-Z_]+/g)||[]))))].sort();
+                      failed.push({project:test.projectName,title:spec.title,codes});
+                    }
+                  }
+                }
+                visit(suite.suites,depth+1,file);
+              }
+            }
+            visit(report.suites);
+            const groups=[];
+            for(const row of failed){let group=groups.find(g=>g.title===row.title);if(!group){group={title:row.title,projects:[],codes:[]};groups.push(group);}group.projects.push(row.project);group.codes=[...new Set([...group.codes,...row.codes])].sort();}
+            notice('Browser coverage reconciliation',{...counts,failedN1:failed.length,groups});
+            const selected=new Map();
+            for(const row of failed){const key=engineFor(row.project)+'\0'+row.title;if(!selected.has(key)&&selected.size<6)selected.set(key,{...row,contexts:[]});}
+            for(const name of names.slice(0,4100))if(/^[0-9a-f-]{36}\.end\.json$/.test(name)){
+              const file=path.join(root,name),bytes=size(file);if(bytes===null||bytes>131072)continue;
+              const end=JSON.parse(fs.readFileSync(file,'utf8'));if(!validRecord(end)||end.kind!=='end'||end.identity.stage!=='render')continue;
+              const selectedOwner=selected.get(end.identity.engine+'\0'+end.identity.title);
+              if(selectedOwner&&selectedOwner.project===end.identity.project&&selectedOwner.contexts.length<5){
+                selectedOwner.contexts.push({id:end.id,expected:end.expectedErrors,errors:end.errors,setup:end.setup,closed:end.closed,outcome:end.outcome,documentsCount:end.documents.length,documents:end.documents.slice(0,16),requestsCount:end.requests.length,requests:end.requests.slice(0,16)});
+              }
+            }
+            for(const sample of selected.values())notice('N1 browser lifecycle sample',sample);
+          }
+          JS
+          exit "$result"
       - run: npm audit --audit-level=moderate
       - name: Reject stale generated XML except historical build stamp
         run: |

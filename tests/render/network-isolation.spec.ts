@@ -122,13 +122,13 @@ test(CASES[4],async({makeGuard},info)=>{
   }finally{
     worker.context.off('request',onRequest);worker.context.off('response',onResponse);
     worker.context.off('requestfinished',onFinished);worker.context.off('requestfailed',onFailed);workerPage.off('worker',onWorker);
-    // Six bounded notices: all four WebKit projects plus one comparison per
-    // other engine. Full test discovery/execution and acceptance are unchanged.
+    // Six bounded diagnostic warnings use a separate allowance from observer notices:
+    // all four WebKit projects plus one comparison per other engine. No acceptance change.
     if(['390-light','firefox-390-light','webkit-390-light','webkit-390-dark','webkit-1280-light','webkit-1280-dark'].includes(info.project.name)){
       const identity={source:(process.env.FCD_SOURCE??'missing').slice(0,40),context:worker.id,project:info.project.name.slice(0,80),worker:info.workerIndex,retry:info.retry};
       const detail=JSON.stringify({...identity,phase,positive,failure,capturedThrough:'test-finally',workersCreated,matchingWorkers,requests:[...requests.values()],events,omittedRequests,omittedEvents,untrackedEvents});
       const payload=Buffer.byteLength(detail)<=4096?detail:JSON.stringify({...identity,diagnostic:'payload-bound-exceeded'});
-      console.log('::notice title=N1 worker runtime::'+payload.replaceAll('%','%25').replaceAll('\r','%0D').replaceAll('\n','%0A'));
+      console.log('::warning title=N1 worker runtime::'+payload.replaceAll('%','%25').replaceAll('\r','%0D').replaceAll('\n','%0A'));
     }
   }
 });

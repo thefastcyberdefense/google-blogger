@@ -109,6 +109,24 @@ const bootstrapNames = [
   'failed privileged setup stops payload',
   'descendant cleanup after parent exit'
 ];
+// Child probes execute this file, never JavaScript assembled from path data.
+function markerPath(name) {
+  assert.ok(['must-not-run', 'orphan-must-not-survive'].includes(name), 'unknown probe marker');
+  assert.ok(evidence && fs.statSync(evidence).isDirectory(), 'missing probe evidence directory');
+  return path.join(evidence, name);
+}
+function orphanParent(name) {
+  markerPath(name);
+  const child = spawn(process.execPath, [self, 'probe-orphan-child', name], { detached: true, stdio: ['ignore', 'ignore', 'ignore', 'ipc'] });
+  const timer = setTimeout(() => process.exit(2), 1500);
+  child.once('message', message => {
+    if (message !== 'ready') process.exit(3);
+    clearTimeout(timer);
+    child.disconnect();
+    child.unref();
+  });
+  child.once('error', () => process.exit(4));
+}
 async function boundaryChild(canaries) {
   // Probe the controlled parent first: the red checkpoint fails here, not on
   // missing infrastructure, and never has access to the host network.
@@ -118,7 +136,7 @@ async function boundaryChild(canaries) {
   const local = await server('127.0.0.1');
   try {
     assert.equal(await (await fetch(`http://127.0.0.1:${local.port}`, { signal: AbortSignal.timeout(2000) })).text(), 'fcd-controlled-canary');
-    const childNs = execFileSync(process.execPath, ['-e', "process.stdout.write(require('node:fs').readlinkSync('/proc/self/ns/net'))"], { encoding: 'utf8' });
+    const childNs = execFileSync(process.execPath, [self, 'probe-namespace'], { encoding: 'utf8' });
     assert.equal(childNs, namespace(), 'Node descendants inherit the boundary');
     record(boundaryNames[1]);
     const { chromium, firefox, webkit } = await import('playwright-core');
@@ -172,21 +190,19 @@ async function suite() {
     const run = async (label, seconds, command) => execute('/bin/bash', [wrapper, 'run', label, String(seconds), ...command], { env });
     assert.equal(await run('check-boundary', 60, [process.execPath, self, 'child', args]), 0, 'isolated policy regression failed');
     record(bootstrapNames[3]);
-    assert.equal(await run('check-zero', 5, [process.execPath, '-e', 'process.exit(0)']), 0);
-    assert.equal(await run('check-exit', 5, [process.execPath, '-e', 'process.exit(37)']), 37, 'child exit status must be preserved');
-    assert.equal(await run('check-signal', 5, [process.execPath, '-e', "process.kill(process.pid,'SIGHUP')"]), 129, 'child signal status must be preserved');
+    assert.equal(await run('check-zero', 5, [process.execPath, self, 'probe-zero']), 0);
+    assert.equal(await run('check-exit', 5, [process.execPath, self, 'probe-exit']), 37, 'child exit status must be preserved');
+    assert.equal(await run('check-signal', 5, [process.execPath, self, 'probe-signal']), 129, 'child signal status must be preserved');
     record(bootstrapNames[4]);
-    assert.equal(await run('check-timeout', 1, [process.execPath, '-e', 'setInterval(()=>{},1000)']), 124, 'timeout must stay nonzero and bounded');
+    assert.equal(await run('check-timeout', 1, [process.execPath, self, 'probe-timeout']), 124, 'timeout must stay nonzero and bounded');
     record(bootstrapNames[5]);
-    const marker = path.join(evidence, 'must-not-run');
-    const blocked = await execute('/usr/bin/setpriv', ['--no-new-privs', '/bin/bash', wrapper, 'run', 'check-setup', '5', process.execPath, '-e', `require('node:fs').writeFileSync(${JSON.stringify(marker)},'unsafe')`], { env });
+    const marker = markerPath('must-not-run');
+    const blocked = await execute('/usr/bin/setpriv', ['--no-new-privs', '/bin/bash', wrapper, 'run', 'check-setup', '5', process.execPath, self, 'probe-marker', 'must-not-run'], { env });
     assert.notEqual(blocked, 0, 'failed namespace setup must be nonzero');
     assert.equal(fs.existsSync(marker), false, 'payload ran after failed setup');
     record(bootstrapNames[6]);
-    const orphan = path.join(evidence, 'orphan-must-not-survive');
-    const orphanCode = `process.send('ready');setTimeout(()=>require('node:fs').writeFileSync(${JSON.stringify(orphan)},'unsafe'),2500)`;
-    const code = `const {spawn}=require('node:child_process');const c=spawn(process.execPath,['-e',${JSON.stringify(orphanCode)}],{detached:true,stdio:['ignore','ignore','ignore','ipc']});const t=setTimeout(()=>process.exit(2),1500);c.once('message',m=>{if(m!=='ready')process.exit(3);clearTimeout(t);c.disconnect();c.unref()});c.once('error',()=>process.exit(4))`;
-    assert.equal(await run('check-cleanup', 5, [process.execPath, '-e', code]), 0);
+    const orphan = markerPath('orphan-must-not-survive');
+    assert.equal(await run('check-cleanup', 5, [process.execPath, self, 'probe-orphan-parent', 'orphan-must-not-survive']), 0);
     await new Promise(resolve => setTimeout(resolve, 3500)); // Deliberate child-lifetime assertion after an IPC readiness acknowledgment.
     assert.equal(fs.existsSync(orphan), false, 'orphan survived namespace shutdown');
     record(bootstrapNames[7]);
@@ -197,6 +213,20 @@ async function suite() {
 }
 async function main() {
   const [mode, ...args] = process.argv.slice(2);
+  if (mode === 'probe-namespace') { process.stdout.write(namespace()); return; }
+  if (mode === 'probe-zero') { process.exitCode = 0; return; }
+  if (mode === 'probe-exit') { process.exitCode = 37; return; }
+  if (mode === 'probe-signal') { process.kill(process.pid, 'SIGHUP'); return; }
+  if (mode === 'probe-timeout') { setInterval(() => {}, 1000); return; }
+  if (mode === 'probe-marker') { fs.writeFileSync(markerPath(args[0]), 'unsafe'); return; }
+  if (mode === 'probe-orphan-parent') { orphanParent(args[0]); return; }
+  if (mode === 'probe-orphan-child') {
+    const marker = markerPath(args[0]);
+    assert.equal(typeof process.send, 'function', 'orphan readiness requires IPC');
+    process.send('ready');
+    setTimeout(() => fs.writeFileSync(marker, 'unsafe'), 2500);
+    return;
+  }
   if (mode === 'suite') return await suite();
   if (mode === 'child') return await boundaryChild(JSON.parse(args[0]));
   if (mode === 'exec') {

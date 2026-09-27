@@ -92,7 +92,47 @@ jobs:
           bash tools/run-isolated-tests.sh finalize || result=$?
           node tools/finalize-browser-network.ts finalize "$RUNNER_TEMP/fcd-isolation-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT-browser-network" test-results/browser-network "$(git rev-parse HEAD)" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" || { n1=$?; if [ "$result" -eq 0 ]; then result=$n1; fi; }
           if [ -f test-results/browser.json ]; then
-            node -e "const r=require('./test-results/browser.json');console.log('::notice title=Browser totals::'+JSON.stringify(r.stats));" || { report=$?; if [ "$result" -eq 0 ]; then result=$report; fi; }
+            node --input-type=module <<'JS' || { report=$?; if [ "$result" -eq 0 ]; then result=$report; fi; }
+          import fs from 'node:fs';
+          // Extend the existing totals read only. Both finalizers have already
+          // enforced their unchanged gates; no report or attachment is rewritten.
+          const r=JSON.parse(fs.readFileSync('test-results/browser.json','utf8'));
+          const escape=value=>String(value).replaceAll('%','%25').replaceAll('\r','%0D').replaceAll('\n','%0A');
+          const notice=(title,value)=>console.log(`::notice title=${title}::${escape(JSON.stringify(value))}`);
+          notice('Browser totals',r.stats);
+          const groups=new Map(),failed=[];let visited=0,omitted=0,omittedFailures=0;
+          const bytes=value=>Buffer.byteLength(JSON.stringify(value)??'');
+          function visit(suites,depth=0,inherited=''){
+            if(depth>32){omitted++;return;}
+            for(const suite of suites||[]){
+              if(++visited>10000){omitted++;return;}
+              const file=String(suite.file||inherited).replaceAll('\\','/');
+              for(const spec of suite.specs||[])for(const test of spec.tests||[]){
+                if(++visited>10000){omitted++;return;}
+                const name=String(spec.file||file).replaceAll('\\','/').split('/').pop().slice(0,100);
+                let group=groups.get(name);
+                if(!group){if(groups.size>=32){omitted++;continue;}group={file:name,tests:0,testBytes:0,stdoutBytes:0,errorBytes:0,inlineJsonBase64Bytes:0,compactJsonBase64Bytes:0,unmeasuredAttachments:0};groups.set(name,group);}
+                group.tests++;group.testBytes+=bytes(test);
+                const results=test.results||[];
+                if(test.status!=='expected'||test.expectedStatus!=='passed'||results.length!==1||results[0]?.status!=='passed'||results[0]?.retry!==0){
+                  if(failed.length<32)failed.push({file:name,project:String(test.projectName).slice(0,100),title:String(spec.title).slice(0,200),status:test.status,codes:[...new Set(results.flatMap(x=>(x.errors||[]).flatMap(e=>String(e.message||'').match(/N1_[A-Z_]+/g)||[])))].sort()});else omittedFailures++;
+                }
+                for(const result of results){
+                  group.stdoutBytes+=bytes(result.stdout)+bytes(result.stderr);group.errorBytes+=bytes(result.error)+bytes(result.errors);
+                  for(const a of result.attachments||[])if(a.contentType==='application/json'&&typeof a.body==='string'){
+                    group.inlineJsonBase64Bytes+=Buffer.byteLength(a.body);
+                    if(a.body.length>1024*1024){group.unmeasuredAttachments++;continue;}
+                    try{const value=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(Buffer.from(a.body,'base64')));group.compactJsonBase64Bytes+=Buffer.from(JSON.stringify(value)).toString('base64').length;}catch{group.unmeasuredAttachments++;}
+                  }
+                }
+              }
+              visit(suite.suites,depth+1,file);
+            }
+          }
+          visit(r.suites);
+          notice('Browser diagnostic volume',{groups:[...groups.values()].sort((a,b)=>b.testBytes-a.testBytes),omitted});
+          notice('Browser failure inventory',{failed,omitted,omittedFailures});
+          JS
           fi
           node --input-type=module <<'JS' || { report=$?; if [ "$result" -eq 0 ]; then result=$report; fi; }
           import fs from 'node:fs';

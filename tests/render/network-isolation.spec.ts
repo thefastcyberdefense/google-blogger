@@ -1,6 +1,6 @@
 import { test, expect } from '../helpers/isolated-test.ts';
 import { FIXTURE_ORIGIN, matchFixtureRule, type FixtureRule, type GuardedContext } from '../helpers/browser-network.ts';
-import type { Request, Response, Worker } from '@playwright/test';
+import type { Request, Response, Worker as PlaywrightWorker } from '@playwright/test';
 import { CASES } from '../../tools/finalize-browser-network.ts';
 
 const socketScript=`<script>const socket=new WebSocket('wss://fcd-fixture.invalid/socket');socket.onopen=()=>socket.send('hello');socket.onmessage=e=>{document.documentElement.dataset.socket=e.data;socket.close();};</script>`;
@@ -105,7 +105,7 @@ test(CASES[4],async({makeGuard},info)=>{
     row.failed=true;row.failure=text.includes('Blocked by Web Inspector')?'inspector-blocked':text.includes('ERR_BLOCKED_BY_CLIENT')?'client-blocked':/cancel/i.test(text)?'cancelled':'other';
     record('failed',row.id);
   };
-  const onWorker=(created:Worker)=>{workersCreated++;if(created.url()===scriptURL)matchingWorkers++;record('worker-created');};
+  const onWorker=(created:PlaywrightWorker)=>{workersCreated++;if(created.url()===scriptURL)matchingWorkers++;record('worker-created');};
   worker.context.on('request',onRequest);worker.context.on('response',onResponse);
   worker.context.on('requestfinished',onFinished);worker.context.on('requestfailed',onFailed);workerPage.on('worker',onWorker);
   try {

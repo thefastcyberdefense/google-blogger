@@ -49,16 +49,21 @@ jobs:
           if(fs.existsSync('unit-report.json')){
             const r=JSON.parse(fs.readFileSync('unit-report.json','utf8'));
             console.log('::notice title=Unit totals::'+JSON.stringify({passed:r.numPassedTests,failed:r.numFailedTests,pending:r.numPendingTests}));
-            const n1=[];
+            const n1=[],focused=[];
             for(const s of r.testResults||[])for(const a of s.assertionResults||[])if(a.status==='failed'){
               console.log('::error title=Regression::'+escape(a.fullName));
-              if(s.name.endsWith('/tests/unit/browser-network.test.ts'))n1.push({test:a.fullName,reason:(a.failureMessages||[]).join('\n').split('\n')[0]});
+              if(s.name.endsWith('/tests/unit/browser-network.test.ts')){
+                const failure=(a.failureMessages||[]).join('\n');
+                n1.push({test:a.fullName,reason:failure.split('\n')[0]});
+                if(!failure.includes('N1_NAVIGATION_PHASE'))focused.push({test:a.fullName,reason:failure.slice(0,3000)});
+              }
             }
             if(n1.length){
               // Keep the original bounded summary and publish each engine's
               // navigation/identity trace separately so API excerpts do not
               // hide later engines. Neither path changes acceptance or exits.
               console.log('::notice title=N1 assertions::'+escape(JSON.stringify(n1).slice(0,16000)));
+              for(const row of focused.slice(0,16))console.log('::notice title=N1 focused assertion::'+escape(JSON.stringify(row)));
               for(const row of n1.filter(r=>r.reason.includes('N1_NAVIGATION_PHASE')).slice(0,3)){
                 const [navigation,lifetime]=row.reason.split('; lifetime=');
                 console.log('::notice title=N1 navigation::'+escape(JSON.stringify({test:row.test,reason:navigation}).slice(0,8000)));

@@ -32,7 +32,7 @@ export default class BrowserNetworkReporter implements Reporter {
     } catch {this.failure();}
   }
   onError(){this.failure();}
-  onEnd(result:FullResult) {
+  async onEnd(result:FullResult) {
     try {
       if(!this.manifest) throw new Error('N1_REPORTER_MANIFEST');
       writeEvidence(this.root,'results.json',{...this.manifest,kind:'results',status:result.status,errors:this.errors,tests:this.results});

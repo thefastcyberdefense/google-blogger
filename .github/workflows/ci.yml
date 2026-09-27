@@ -42,7 +42,16 @@ jobs:
         if: ${{ always() }}
         run: |
           node --input-type=module <<'JS'
-          import fs from 'node:fs';if(fs.existsSync('unit-report.json')){const r=JSON.parse(fs.readFileSync('unit-report.json','utf8'));console.log('::notice title=Unit totals::'+JSON.stringify({passed:r.numPassedTests,failed:r.numFailedTests,pending:r.numPendingTests}));for(const s of r.testResults||[])for(const a of s.assertionResults||[])if(a.status==='failed')console.log('::error title=Regression::'+a.fullName);}
+          import fs from 'node:fs';
+          const escape=value=>String(value).replaceAll('%','%25').replaceAll('\r','%0D').replaceAll('\n','%0A');
+          if(fs.existsSync('unit-report.json')){
+            const r=JSON.parse(fs.readFileSync('unit-report.json','utf8'));
+            console.log('::notice title=Unit totals::'+JSON.stringify({passed:r.numPassedTests,failed:r.numFailedTests,pending:r.numPendingTests}));
+            for(const s of r.testResults||[])for(const a of s.assertionResults||[])if(a.status==='failed'){
+              console.log('::error title=Regression::'+escape(a.fullName));
+              if(s.name.endsWith('/tests/unit/browser-network.test.ts'))console.log('::error title=N1 assertion::'+escape((a.failureMessages||[]).join('\n').slice(0,6000)));
+            }
+          }
           JS
       - run: npm run preview -- --build-only
       - name: Run npm run test:render

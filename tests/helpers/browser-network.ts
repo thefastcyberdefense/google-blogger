@@ -62,10 +62,13 @@ const bounded = async <T>(promise: Promise<T>, milliseconds = 3000): Promise<T> 
   try { return await Promise.race([promise,new Promise<never>((_,reject)=>{timer=setTimeout(()=>reject(new NetworkGuardError(['N1_OBSERVER'])),milliseconds);})]); }
   finally { if(timer) clearTimeout(timer); }
 };
-interface Observer { count(): number; flush(): Promise<DocumentRecord[]> }
+interface Observer { count(): number; checkpoint(frame:Frame):Promise<void>; flush(): Promise<DocumentRecord[]> }
 /** Independent document-start observation using public APIs. N0 is the firewall.
- * URLs exist only transiently for in-memory reconciliation, never in records.
- * Init-script replacement/order and binding failure fail at the flush boundary.
+ * A routed document response awaits a checkpoint of the old frame subtree before
+ * committing navigation. pagehide binding delivery alone is not reliable.
+ * The checkpoint seals socket construction before awaiting acknowledgments, so a
+ * retired document cannot create new sockets after its final observed prefix.
+ * URLs remain transient in memory and never enter persisted records.
  */
 export async function observeDocumentWebSockets(context: BrowserContext, onAttempt: (url:string)=>void = () => {}, onFailure: ()=>void = () => {}): Promise<Observer> {
   const token=randomUUID().replaceAll('-','');
@@ -78,15 +81,15 @@ export async function observeDocumentWebSockets(context: BrowserContext, onAttem
     const v=value as Record<string,unknown>;
     if (typeof v.id!=='string' || !/^[0-9a-f-]{36}$/.test(v.id)) { onFailure(); return; }
     if (v.kind==='ready') {
-      if (docs.has(v.id) || docs.size>=128) { onFailure(); return; }
-      docs.set(v.id,{id:v.id,attempts:0,acknowledged:0,intact:true,flushed:false,frame:source.frame,initial:source.frame.url()==='about:blank'});
+      if (docs.has(v.id) || docs.size>=128 || typeof v.initial!=='boolean') { onFailure(); return; }
+      docs.set(v.id,{id:v.id,attempts:0,acknowledged:0,intact:true,flushed:false,frame:source.frame,initial:v.initial});
       return;
     }
     const d=docs.get(v.id);
     if (!d || d.frame!==source.frame) { onFailure(); return; }
     if (v.kind==='socket') {
       if (typeof v.url!=='string' || v.url.length>2048 || v.sequence!==d.acknowledged+1 || attempts>=128) { onFailure(); return; }
-      attempts++; d.acknowledged++; d.attempts=d.acknowledged; onAttempt(v.url);
+      attempts++; d.acknowledged++; d.attempts=d.acknowledged; d.flushed=false; onAttempt(v.url);
     } else if (v.kind==='retire') {
       d.intact=v.intact===true;
       d.flushed=v.attempts===d.acknowledged && v.failures===0;
@@ -96,9 +99,13 @@ export async function observeDocumentWebSockets(context: BrowserContext, onAttem
   await context.addInitScript(({bindingName,stateName})=>{
     const globals=globalThis as unknown as Record<string,unknown>;
     const binding=globals[bindingName] as (data:unknown)=>Promise<unknown>;
-    const id=crypto.randomUUID();
+    // getRandomValues also works in the initial about:blank document, where
+    // secure-context-only crypto.randomUUID is not universally available.
+    const bytes=crypto.getRandomValues(new Uint8Array(16));bytes[6]=(bytes[6]&15)|64;bytes[8]=(bytes[8]&63)|128;
+    const hex=Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');
+    const id=`${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20)}`;
     const pending=new Set<Promise<void>>();
-    let attempts=0; let failures=0;
+    let attempts=0; let failures=0; let sealed=false;
     const emit=(payload:Record<string,unknown>)=>{
       let task:Promise<void>;
       try {
@@ -106,10 +113,11 @@ export async function observeDocumentWebSockets(context: BrowserContext, onAttem
         pending.add(task);
       } catch { failures++; }
     };
-    emit({kind:'ready'});
+    emit({kind:'ready',initial:location.href==='about:blank'});
     const Original=globalThis.WebSocket;
     const Wrapped=new Proxy(Original,{
       construct(target,args,newTarget) {
+        if(sealed)throw new Error('N1_DOCUMENT_RETIRED');
         const socket=Reflect.construct(target,args,newTarget) as WebSocket;
         attempts++;
         emit({kind:'socket',sequence:attempts,url:socket.url});
@@ -118,29 +126,37 @@ export async function observeDocumentWebSockets(context: BrowserContext, onAttem
     });
     globalThis.WebSocket=Wrapped;
     const intact=()=>globalThis.WebSocket===Wrapped && globals[bindingName]===binding;
-    Object.defineProperty(globals,stateName,{value:{async flush(){await Promise.all([...pending]);return {id,attempts,failures,intact:intact()};}},configurable:false});
-    addEventListener('pagehide',()=>emit({kind:'retire',attempts,failures,intact:intact()}));
+    Object.defineProperty(globals,stateName,{value:Object.freeze({async flush(){sealed=true;await Promise.all([...pending]);return {id,attempts,failures,intact:intact()};}}),configurable:false});
+    addEventListener('pagehide',()=>{sealed=true;emit({kind:'retire',attempts,failures,intact:intact()});});
   },{bindingName,stateName});
+  const checkpointFrame=async(frame:Frame)=>{
+    if(frame.isDetached()){onFailure();return;}
+    try {
+      const state=await bounded(frame.evaluate(async name=>{
+        const value=(globalThis as unknown as Record<string,unknown>)[name] as {flush:()=>Promise<{id:string;attempts:number;failures:number;intact:boolean}>}|undefined;
+        return value ? await value.flush() : null;
+      },stateName));
+      const d=state?docs.get(state.id):undefined;
+      // An initial navigation can be routed before its virgin frame has run
+      // any init script. No previously registered document is excused here.
+      if(!state && ['','about:blank'].includes(frame.url()) && ![...docs.values()].some(d=>d.frame===frame))return;
+      if(!state || !d){onFailure();return;}
+      d.attempts=state.attempts;d.intact=state.intact;
+      d.flushed=state.failures===0 && state.attempts===d.acknowledged;
+      if(!d.intact || !d.flushed)onFailure();
+    } catch {onFailure();}
+  };
   return {
     count:()=>attempts,
+    async checkpoint(frame) {
+      const visit=async(current:Frame):Promise<void>=>{await checkpointFrame(current);for(const child of current.childFrames())await visit(child);};
+      await visit(frame);
+    },
     async flush() {
-      for (const page of context.pages()) for (const frame of page.frames()) {
-        if(frame.isDetached()) { onFailure(); continue; }
-        try {
-          const state=await bounded(frame.evaluate(async name=>{
-            const value=(globalThis as unknown as Record<string,unknown>)[name] as {flush:()=>Promise<{id:string;attempts:number;failures:number;intact:boolean}>}|undefined;
-            return value ? await value.flush() : null;
-          },stateName));
-          const d=state?docs.get(state.id):undefined;
-          if (!state || !d) { onFailure(); continue; }
-          d.attempts=state.attempts; d.intact=state.intact;
-          d.flushed=state.failures===0 && state.attempts===d.acknowledged;
-          if (!d.intact || !d.flushed) onFailure();
-        } catch { onFailure(); }
-      }
+      for(const page of context.pages())for(const frame of page.frames())await checkpointFrame(frame);
       return [...docs.values()].map(({frame: _frame,initial,...d})=>{
         if(initial && d.attempts===0) d.flushed=true;
-        if(!d.flushed || !d.intact) onFailure();
+        if(!d.flushed || !d.intact)onFailure();
         return d;
       });
     },
@@ -187,6 +203,13 @@ async function buildGuard(create:()=>Promise<BrowserContext>, rules:FixtureRule[
   const onHttp=(route:Route)=>track(async()=>{
     const request=route.request();const record=http(request);
     if(!record){await route.abort('blockedbyclient');return;}
+    if(observer && request.isNavigationRequest()) {
+      let frame:Frame|undefined;
+      // Playwright documents initial popup navigation requests that precede the
+      // frame object. There is no old frame subtree to checkpoint in that case.
+      try{frame=request.frame();}catch{frame=undefined;}
+      if(frame)await observer.checkpoint(frame);
+    }
     const rule=choose(record,request.url(),request.method(),request.resourceType());
     if(!rule || record.action==='deny') {
       // An inert, local denial document avoids opaque browser error pages while

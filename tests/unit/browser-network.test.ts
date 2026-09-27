@@ -89,31 +89,67 @@ for(const engine of [chromium,firefox,webkit]) {
   },30000);
 }
 // Small reproductions of the first real 30-project failure, not a replacement
-// for that matrix. These expose the observer's safe reason enums in unit JSON.
+// for that matrix. Public callback diagnostics preserve every assertion and
+// timeout. Ordinals identify only synthetic documents/pages, never raw URLs.
 for(const engine of [chromium,firefox,webkit]) {
   test(`N1 reconciles frame popup and reload retirement in ${engine.name()}`,async()=>{
     const browser=await engine.launch({headless:true}),context=await browser.newContext({serviceWorkers:'block'});
-    const reasons:string[]=[];let routed=0,documentRequests=0;
+    const reasons:string[]=[];let routed=0,documentRequests=0,phase='setup',omitted=0;
+    const ids=new Map<string,number>(),ready=new Set<string>(),retired=new Set<string>();
+    const pages=new Map<ReturnType<BrowserContext['pages']>[number],number>();
+    const events:Record<string,unknown>[]=[],pageErrors:{phase:string;message:string}[]=[];
+    const documentId=(id:string)=>{if(!ids.has(id))ids.set(id,ids.size+1);return ids.get(id)!;};
+    const pageId=(page:ReturnType<BrowserContext['pages']>[number]|null)=>{if(!page)return 0;if(!pages.has(page))pages.set(page,pages.size+1);return pages.get(page)!;};
+    const record=(event:Record<string,unknown>)=>{if(events.length<24)events.push({phase,...event});else omitted++;};
+    let observer:Awaited<ReturnType<typeof observeDocumentWebSockets>>|undefined,documents:End['documents']|undefined;
     const script=`<script>const socket=new WebSocket('wss://fcd-fixture.invalid/socket');socket.onopen=()=>socket.send('hello');socket.onmessage=e=>{document.documentElement.dataset.socket=e.data;socket.close();};</script>`;
     context.on('request',r=>{if(r.resourceType()==='document')documentRequests++;});
+    context.on('page',page=>{pageId(page);page.on('pageerror',error=>{if(pageErrors.length<4)pageErrors.push({phase,message:error.message.slice(0,200)});});});
+    context.on('console',message=>{
+      const text=message.text();if(message.type()!=='debug'||!text.startsWith('FCD_N1_RETIRE_')||text.length>600)return;
+      try {
+        const value:unknown=JSON.parse(text.slice(text.indexOf(':')+1));
+        if(!value||typeof value!=='object')return;
+        const v=value as Record<string,unknown>;
+        if(v.kind!=='retire'||typeof v.id!=='string'||!/^[0-9a-f-]{36}$/.test(v.id))return;
+        retired.add(v.id);record({kind:'retire',document:documentId(v.id),page:pageId(message.page()),known:ready.has(v.id),attempts:v.attempts,failures:v.failures});
+      }catch {record({kind:'diagnostic-parse-failed'});}
+    });
+    // Observe the real public binding callback without delaying, suppressing,
+    // replacing or fabricating its ready/socket payloads or return values.
+    const observedContext=publicAdapter<BrowserContext>(context,{exposeBinding:async(name,callback,bindingOptions)=>context.exposeBinding(name,(source,...args)=>{
+      const value:unknown=args[0];
+      if(value&&typeof value==='object'){
+        const v=value as Record<string,unknown>;
+        if(v.kind==='ready'&&typeof v.id==='string'&&/^[0-9a-f-]{36}$/.test(v.id)){
+          ready.add(v.id);record({kind:'ready',document:documentId(v.id),page:pageId(source.page),initial:v.initial,fixtureOrigin:v.origin===FIXTURE_ORIGIN});
+        }
+      }
+      return callback(source,...args);
+    },bindingOptions)});
     try {
       await context.route('**/*',route=>{
         const home=new URL(route.request().url()).pathname==='/';
         return route.fulfill({contentType:'text/html',body:`<!doctype html><h1>navigation control</h1>${home?'<iframe title="local frame" src="/frame"></iframe><a href="/popup" target="_blank">Open popup</a>':''}${script}`});
       });
       await context.routeWebSocket('**/*',socket=>{routed++;socket.onMessage(()=>socket.send('local-pong'));});
-      const observer=await observeDocumentWebSockets(context,()=>{},reason=>{if(!reasons.includes(reason))reasons.push(reason);});
-      const page=await context.newPage();await page.goto(`${FIXTURE_ORIGIN}/`);
-      await expect.poll(()=>page.locator('html').getAttribute('data-socket')).toBe('local-pong');
-      await expect.poll(()=>page.frameLocator('iframe').locator('html').getAttribute('data-socket')).toBe('local-pong');
-      const [popup]=await Promise.all([context.waitForEvent('page'),page.getByRole('link',{name:'Open popup'}).click()]);
-      await expect.poll(()=>popup.locator('html').getAttribute('data-socket')).toBe('local-pong');
-      await page.reload();
-      await expect.poll(()=>page.locator('html').getAttribute('data-socket')).toBe('local-pong');
-      await expect.poll(()=>page.frameLocator('iframe').locator('html').getAttribute('data-socket')).toBe('local-pong');
-      const documents=await observer.flush();
-      const detail=JSON.stringify({engine:engine.name(),routed,observed:observer.count(),documentRequests,reasons,documents});
-      expect(routed===5&&observer.count()===5&&documentRequests===5&&reasons.length===0&&documents.every(d=>d.flushed&&d.intact&&d.attempts===d.acknowledged),`N1_NAVIGATION_CONTROL ${detail}`).toBe(true);
+      observer=await observeDocumentWebSockets(observedContext,()=>{},reason=>{if(!reasons.includes(reason))reasons.push(reason);});
+      const page=await context.newPage();phase='home-navigation';await page.goto(`${FIXTURE_ORIGIN}/`);
+      phase='home-socket';await expect.poll(()=>page.locator('html').getAttribute('data-socket')).toBe('local-pong');
+      phase='frame-socket';await expect.poll(()=>page.frameLocator('iframe').locator('html').getAttribute('data-socket')).toBe('local-pong');
+      phase='popup-navigation';const [popup]=await Promise.all([context.waitForEvent('page'),page.getByRole('link',{name:'Open popup'}).click()]);
+      phase='popup-socket';await expect.poll(()=>popup.locator('html').getAttribute('data-socket')).toBe('local-pong');
+      phase='reload-navigation';await page.reload();
+      phase='reload-home-socket';await expect.poll(()=>page.locator('html').getAttribute('data-socket')).toBe('local-pong');
+      phase='reload-frame-socket';await expect.poll(()=>page.frameLocator('iframe').locator('html').getAttribute('data-socket')).toBe('local-pong');
+      phase='reconcile';documents=await observer.flush();
+      expect(routed===5&&observer.count()===5&&documentRequests===5&&reasons.length===0&&documents.every(d=>d.flushed&&d.intact&&d.attempts===d.acknowledged),'N1_NAVIGATION_CONTROL').toBe(true);
+    }catch(cause){
+      // A failed poll must still publish the actual phase and observer state.
+      // Flushing happens only after failure or the original final assertion.
+      if(observer&&!documents)try{documents=await observer.flush();}catch{reasons.push('diagnostic-flush-failed');}
+      const detail={engine:engine.name(),phase,routed,observed:observer?.count(),documentRequests,reasons,pageErrors,events,omitted,unregisteredRetirements:[...retired].filter(id=>!ready.has(id)).map(documentId),documents:documents?.map(d=>({document:documentId(d.id),attempts:d.attempts,acknowledged:d.acknowledged,intact:d.intact,flushed:d.flushed}))};
+      throw new Error(`N1_NAVIGATION_PHASE ${JSON.stringify(detail)}; assertion=${cause instanceof Error?cause.message.slice(0,300):'non-error failure'}`,{cause});
     }finally{await context.close();await browser.close();}
   },30000);
 }
@@ -307,7 +343,7 @@ test('N1 CLI rejects duplicate JSON keys in its own evidence',()=>{
 test('N1 CLI rejects malformed UTF-8 rather than replacement decoding',()=>{
   const f=cliFixture();try{
     const file=path.join(f.base,'browser.json'),before=fs.readFileSync(file,'utf8');
-    fs.writeFileSync(file,Buffer.concat([Buffer.from(before.slice(0,-1)+',"diagnostic":"'),Buffer.from([255]),Buffer.from('"}')]));
+    fs.writeFileSync(file,Buffer.concat([Buffer.from(before.slice(0,-1)+',"diagnostic":"'),Buffer.from([255]),Buffer.from('"}') ]));
     const result=f.run();expect(result.error).toBeUndefined();expect(result.status,'N1_UTF8_FALSE_GREEN').toBe(1);expect(result.stderr).toContain('N1_READ');
     expect(fs.existsSync(path.join(f.output,`${f.s.records[0].id}.end.json`))).toBe(true);
   }finally{fs.rmSync(f.base,{recursive:true,force:true});}

@@ -1,5 +1,6 @@
 import { test, expect } from '../helpers/isolated-test.ts';
-import { FIXTURE_ORIGIN, type FixtureRule, type GuardedContext } from '../helpers/browser-network.ts';
+import { FIXTURE_ORIGIN, matchFixtureRule, type FixtureRule, type GuardedContext } from '../helpers/browser-network.ts';
+import type { Request, Response, Worker } from '@playwright/test';
 import { CASES } from '../../tools/finalize-browser-network.ts';
 
 const socketScript=`<script>const socket=new WebSocket('wss://fcd-fixture.invalid/socket');socket.onopen=()=>socket.send('hello');socket.onmessage=e=>{document.documentElement.dataset.socket=e.data;socket.close();};</script>`;
@@ -70,7 +71,7 @@ test(CASES[3],async({makeGuard})=>{
   await expectFailure(ws,['N1_BYPASS']);
 });
 
-test(CASES[4],async({makeGuard})=>{
+test(CASES[4],async({makeGuard},info)=>{
   const redirect=await makeGuard([simple],{expectedErrors:['N1_UNEXPECTED_REQUEST']});const page=await redirect.context.newPage();
   await page.goto(`${FIXTURE_ORIGIN}/`);await expect(page.getByRole('heading')).toHaveText('fixture');
   await page.goto(`${FIXTURE_ORIGIN}/unapproved-destination`).catch(()=>undefined);
@@ -78,12 +79,58 @@ test(CASES[4],async({makeGuard})=>{
   // Worker programs are unsupported guard consumers. Their script requests are
   // observed/fulfilled locally, and successful worker creation fails its owner.
   const workerRules:FixtureRule[]=[simple,...['script','other'].map(resource=>({id:`worker-${resource}`,path:'/worker.js',method:'GET',resource,body:'postMessage("worker-ready")',contentType:'application/javascript'}))];
-  const worker=await makeGuard(workerRules,{expectedErrors:['N1_WORKER']});const workerPage=await worker.context.newPage();await workerPage.goto(`${FIXTURE_ORIGIN}/`);
-  expect(await workerPage.evaluate(()=>new Promise<string>((resolve,reject)=>{
-    const w=new Worker('/worker.js');const timer=setTimeout(()=>{w.terminate();reject(new Error('local worker timeout'));},3000);
-    w.onmessage=e=>{clearTimeout(timer);w.terminate();resolve(String(e.data));};w.onerror=()=>{clearTimeout(timer);w.terminate();reject(new Error('local worker failed'));};
-  }))).toBe('worker-ready');
-  await expectFailure(worker,['N1_WORKER']);
+  const worker=await makeGuard(workerRules,{expectedErrors:['N1_WORKER']});const workerPage=await worker.context.newPage();
+  // Read-only public events; no route, binding, worker program or guard mutation.
+  // Match results replay the existing pure matcher, not a substituted handler.
+  // Observe the exact synthetic script only; never log URLs, headers or bodies.
+  type WorkerRequest={id:number;method:string;resource:string;matchedRule:string|null;status:number|null;finished:boolean;failed:boolean;failure:'none'|'inspector-blocked'|'client-blocked'|'cancelled'|'other'};
+  const scriptURL=`${FIXTURE_ORIGIN}/worker.js`,requests=new Map<Request,WorkerRequest>();
+  const events:{event:string;request?:number}[]=[];
+  let omittedRequests=0,omittedEvents=0,untrackedEvents=0,workersCreated=0,matchingWorkers=0;
+  let phase='home',positive=false,failure='none';
+  const record=(event:string,request?:number)=>{if(events.length<12)events.push({event,request});else omittedEvents++;};
+  const onRequest=(request:Request)=>{
+    if(request.url()!==scriptURL)return;
+    if(requests.size>=4){omittedRequests++;return;}
+    const rule=matchFixtureRule(workerRules,request.url(),request.method(),request.resourceType());
+    const row:WorkerRequest={id:requests.size+1,method:request.method().slice(0,8),resource:request.resourceType().slice(0,20),matchedRule:rule?.id??null,status:null,finished:false,failed:false,failure:'none'};
+    requests.set(request,row);record('request',row.id);
+  };
+  const tracked=(request:Request)=>{if(request.url()!==scriptURL)return;const row=requests.get(request);if(!row)untrackedEvents++;return row;};
+  const onResponse=(response:Response)=>{const row=tracked(response.request());if(row){row.status=response.status();record('response',row.id);}};
+  const onFinished=(request:Request)=>{const row=tracked(request);if(row){row.finished=true;record('finished',row.id);}};
+  const onFailed=(request:Request)=>{
+    const row=tracked(request);if(!row)return;
+    const text=request.failure()?.errorText??'';
+    row.failed=true;row.failure=text.includes('Blocked by Web Inspector')?'inspector-blocked':text.includes('ERR_BLOCKED_BY_CLIENT')?'client-blocked':/cancel/i.test(text)?'cancelled':'other';
+    record('failed',row.id);
+  };
+  const onWorker=(created:Worker)=>{workersCreated++;if(created.url()===scriptURL)matchingWorkers++;record('worker-created');};
+  worker.context.on('request',onRequest);worker.context.on('response',onResponse);
+  worker.context.on('requestfinished',onFinished);worker.context.on('requestfailed',onFailed);workerPage.on('worker',onWorker);
+  try {
+    await workerPage.goto(`${FIXTURE_ORIGIN}/`);phase='worker-exchange';
+    expect(await workerPage.evaluate(()=>new Promise<string>((resolve,reject)=>{
+      const w=new Worker('/worker.js');const timer=setTimeout(()=>{w.terminate();reject(new Error('local worker timeout'));},3000);
+      w.onmessage=e=>{clearTimeout(timer);w.terminate();resolve(String(e.data));};w.onerror=()=>{clearTimeout(timer);w.terminate();reject(new Error('local worker failed'));};
+    }))).toBe('worker-ready');
+    positive=true;phase='expected-worker-rejection';
+    await expectFailure(worker,['N1_WORKER']);phase='complete';
+  }catch(cause){
+    failure=cause instanceof Error&&cause.message.includes('local worker failed')?'local-worker-error':cause instanceof Error&&cause.message.includes('local worker timeout')?'local-worker-timeout':'other';
+    throw cause;
+  }finally{
+    worker.context.off('request',onRequest);worker.context.off('response',onResponse);
+    worker.context.off('requestfinished',onFinished);worker.context.off('requestfailed',onFailed);workerPage.off('worker',onWorker);
+    // Six bounded notices: all four WebKit projects plus one comparison per
+    // other engine. Full test discovery/execution and acceptance are unchanged.
+    if(['390-light','firefox-390-light','webkit-390-light','webkit-390-dark','webkit-1280-light','webkit-1280-dark'].includes(info.project.name)){
+      const identity={source:(process.env.FCD_SOURCE??'missing').slice(0,40),context:worker.id,project:info.project.name.slice(0,80),worker:info.workerIndex,retry:info.retry};
+      const detail=JSON.stringify({...identity,phase,positive,failure,capturedThrough:'test-finally',workersCreated,matchingWorkers,requests:[...requests.values()],events,omittedRequests,omittedEvents,untrackedEvents});
+      const payload=Buffer.byteLength(detail)<=4096?detail:JSON.stringify({...identity,diagnostic:'payload-bound-exceeded'});
+      console.log('::notice title=N1 worker runtime::'+payload.replaceAll('%','%25').replaceAll('\r','%0D').replaceAll('\n','%0A'));
+    }
+  }
 });
 
 test(CASES[5],async({makeGuard,viewport,colorScheme})=>{

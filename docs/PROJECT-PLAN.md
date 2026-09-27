@@ -1,6 +1,57 @@
 # FCD development plan
 
-## Current baseline and approved B0+N0 bootstrap (2026-09-27 Asia/Dhaka)
+## Current baseline and approved U0+N1 (2026-09-27 Asia/Dhaka)
+
+This section supersedes the preserved historical bootstrap and PR #10 snapshots below. Main is the verified PR #11 merge `312954b6f9bf0e39b0f276ea6881f9f82146b4ff`. [Post-merge source run 36288775447](https://github.com/thefastcyberdefense/google-blogger/actions/runs/36288775447/job/108534626444) passed all 21 stages with 211 unit/contract and 1434 browser passes, no reported pending/skipped/unexpected/flaky results, audit and XML consistency. [Post-merge CodeQL](https://github.com/thefastcyberdefense/google-blogger/actions/runs/36288775048) succeeded in three languages; this is not a repository-wide zero-alert claim. The 31 artifact-verifier contracts passed on the identical pre-merge source tree in run 36285583516, not claimed as a post-merge execution. Bootstrap branch remains at `7c30c3cccad22a337cea88c99d1f9ab87238aeb9`; leave it untouched.
+
+B0+N0 source acceptance and accepted Errata v2 reporting R1-R6 are closed. DEFECT-05 is not closed: browser attribution/adoption remains N1 then N2A/N2B/N2C. The other canonical product/native/human defects below remain open as stated. The checked-in XML is still 101248 bytes and this slice does not modify it, its historical generating stamp, the product source or dependencies.
+
+### Current approval and implementation boundary
+
+Branch `feat/fcd-browser-network-guards`, [draft PR #12](https://github.com/thefastcyberdefense/google-blogger/pull/12), starts from the verified main above. Owner approved FCD-U0-N1-APPROVAL-v1 (SHA256 `8ff763b1df9a933d1e5e8f08a1131c49b4c4bbbfc3c7a1b18f1751138b01e921`) and subsequently the two-file public document-start WebSocket observation experiment; the owner then requested continued N1 implementation without merging. The exact ten-file boundary remains:
+
+1. docs/UPSTREAM-AUDIT.md
+2. docs/PROJECT-PLAN.md
+3. .github/workflows/ci.yml
+4. playwright.config.ts
+5. tests/helpers/browser-network.ts
+6. tests/helpers/isolated-test.ts
+7. tests/helpers/browser-network-reporter.ts
+8. tests/render/network-isolation.spec.ts
+9. tests/unit/browser-network.test.ts
+10. tools/finalize-browser-network.ts
+
+No N0 wrapper/probe change, dependency/lockfile change, product/fixture migration, generated XML change, candidate pin, job topology/permission/stage/timeout change, repository setting, branch deletion, production request, ready-for-review transition or merge is authorized. Use the project-selected workspace connection and FCD Superpowers + Ralph + GSD. Builds/tests run only in Actions. Review is sequential AI source/specification/security/QA review, not independent human approval.
+
+### U0 disposition
+
+[UPSTREAM-AUDIT.md](UPSTREAM-AUDIT.md) records the full nine-commit Ledger comparison from `2e5eb328...` through `91cc043...`, including the intermediate publisher, dependency, Mermaid and actual article/dark CSS changes. FCD's bounded strict Mermaid/source-retention and literal code paths differ materially from Ledger's repair-oriented compiler. Reuse no publisher, broad repair, loose configuration, personal identity, generated output or dependency tree. Useful product regression and UI concepts are separately deferred, not smuggled into N1. No material U0 dependency blocks this foundation.
+
+### N1 behavior and evidence contract
+
+The new guard uses pinned public Playwright APIs before pages, service workers blocked, no caller proxy/credential/HAR/state override, and exact synthetic origin/path/method/query/resource rules. Known responses are local. Denial counts are exact and bounded. Unexpected requests fail their owning test at teardown even when caught by application code. Denied navigations receive an inert local 451 document so lifecycle observation is not replaced by an opaque browser error page; resource denials are aborted. No normal guard path continues/fetches a remote request or connects a WebSocket to a server. Redirect statuses and headers are rejected in fixture policy.
+
+HTTP request observation is independent of context routing and detects later page overrides. Public document-start WebSocket observation supplements native events, which miss fully mocked sockets; constructor/binding integrity, acknowledgment and lifecycle flushing are checked. N0 remains the connectivity boundary, not browser interception. Dedicated workers are not accepted guard consumers: their locally supplied resource path is exercised and worker creation is attributed as a failure. These tests are not universal worker/browser-internal/Node-network coverage or a hostile-code sandbox. Existing raw browser suites remain N0-only until their approved N2 migration.
+
+The reusable fixture wraps the runner-owned context before its page fixture, preserving runner options/artifacts; manual factory contexts share bounded lifecycle/evidence rules. Success, negative controls, setup/handler/assertion/close/write failure behavior, no-JS, frames, popup first navigation, reload, override detection and parallel/zero-request records must be verified. Eight scoped cases are declared for all 30 existing projects (22 Chromium plus eight Firefox/WebKit); totals and success are derived from actual discovery/results, not this planned matrix.
+
+Schema 1 / policy n1-v1 stages at `${FCD_ISOLATION_EVIDENCE}-browser-network`, outside both N0's strict root and Playwright output cleanup. A fresh source/run/attempt manifest is initialized in the existing unit stage. UUID-based exclusive start/end writes bind stage, engine, project, title, worker, retry, process, exact expected control codes, safe rule/disposition data and lifecycle outcomes. No raw request URL/query, cookies, credentials, headers or bodies enter these records. Bounds fail explicitly rather than truncate required evidence.
+
+The independent reporter inventories the scoped tests and records outcomes/context annotations. The data-only finalizer reconciles inventory, normal browser JSON, the required real Vitest factory consumer and all lifecycle pairs. Missing/stale/duplicate/truncated/wrong-schema/unfinished/unexplained/zero-discovery evidence fails CI. Exact negative controls still throw and must have passed owning tests; they are not a global ignore-errors mode. Always-run reporting attempts both finalizers and publishes valid partial diagnostics under `test-results/browser-network/` without changing the original test result. The existing artifact verifier remains unchanged and does not semantically attest to N1 JSON.
+
+### Test-first history and current verification gate
+
+[937f64b checkpoint](https://github.com/thefastcyberdefense/google-blogger/actions/runs/36290894923) retained 211 existing passes and exposed missing unexpected-request attribution after a local positive control. [b736bdb detailed red](https://github.com/thefastcyberdefense/google-blogger/actions/runs/36291059239/job/108541107714) recorded 211 passes and four new failures: the attribution promise resolved, and each engine had pageRoutes=1, contextRoutes=0, HTTP=1 but native observedWebSockets=0 during a successful local exchange. No external endpoint was tested.
+
+[1a0e379 experiment](https://github.com/thefastcyberdefense/google-blogger/actions/runs/36291269398/job/108541694200) passed all three independent document-observation controls plus the 211 existing cases; the original HTTP-attribution red remained. This proved only the bounded experiment, not complete N1. [cedacf1 policy/evidence checkpoint](https://github.com/thefastcyberdefense/google-blogger/actions/runs/36291937014/job/108543565017) passed 215 and failed 14 new requirements against runnable placeholders, zero pending; explicit assertions included wildcard/redirect/denial policy acceptance and missing attribution. Setup, typecheck and N0 controls succeeded.
+
+The initial integrated checkpoint found the pinned reporter onEnd signature required an asynchronous return; this setup failure is not behavioral-red evidence. At [57c9ed0](https://github.com/thefastcyberdefense/google-blogger/actions/runs/36292567710/job/108545334525), 252 cases passed and one failed: a blocked navigation produced an opaque browser document and an additional observer error. The correction retains the exact original request violation while serving an inert local denial document. The finalizer also distinguishes explicitly asserted inner failures from failing owners; unrelated failed owners still reject acceptance.
+
+**Status at this document commit:** U0 dispositions and implementation are written; fresh exact-head full green and final substantive review are pending. No browser matrix, N1 source acceptance, candidate or merge eligibility is predeclared here. **Next action:** inspect the current PR head's full Actions results, fix only approved causes without dropping assertions/records or changing retries/timeouts, inspect CodeQL findings, and maintain exact-head evidence in PR #12. If public API feasibility or another required change exceeds this manifest, stop for a specific amendment. After source acceptance, stop unmerged; N2A requires its own manifest approval.
+
+---
+
+## Historical baseline and approved B0+N0 bootstrap (2026-09-27 Asia/Dhaka)
 
 This section supersedes the dated PR #10 preparation snapshot below; that snapshot is retained as history, not current status. Main is `ecb1d438e8b3227911dc76359b9e05f127867b27`. PRs #1 through #10 are merged. [PR #10 post-merge CI](https://github.com/thefastcyberdefense/google-blogger/actions/runs/35303993418/job/105472311414) completed 2026-09-18 03:52:09 UTC with all stages successful: 211 unit/contract and 1434 browser passes, no reported failures/pending/skips/unexpected/flaky outcomes, audit and restored XML consistency. The checked-in XML remains 101248 bytes with its real generating stamp `0.1.0+bcb5b82706568c2f6f29cd1795b2589767e42146`. [Post-merge CodeQL](https://github.com/thefastcyberdefense/google-blogger/actions/runs/35303992974) and [inspected scheduled analysis](https://github.com/thefastcyberdefense/google-blogger/actions/runs/35542582610) succeeded; analysis success is not a zero-alert claim.
 

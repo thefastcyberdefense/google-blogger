@@ -117,7 +117,7 @@ for(const engine of [chromium,firefox,webkit]) {
     });
     // Observe the real public binding callback without delaying, suppressing,
     // replacing or fabricating its ready/socket payloads or return values.
-    const observedContext=publicAdapter<BrowserContext>(context,{exposeBinding:async(name,callback,bindingOptions)=>context.exposeBinding(name,(source,...args)=>{
+    const observedContext=publicAdapter<BrowserContext>(context,{exposeBinding:async(name,callback)=>context.exposeBinding(name,(source,...args)=>{
       const value:unknown=args[0];
       if(value&&typeof value==='object'){
         const v=value as Record<string,unknown>;
@@ -126,7 +126,7 @@ for(const engine of [chromium,firefox,webkit]) {
         }
       }
       return callback(source,...args);
-    },bindingOptions)});
+    })});
     try {
       await context.route('**/*',route=>{
         const home=new URL(route.request().url()).pathname==='/';

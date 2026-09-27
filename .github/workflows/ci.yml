@@ -43,6 +43,8 @@ jobs:
         run: |
           node --input-type=module <<'JS'
           import fs from 'node:fs';
+          import path from 'node:path';
+          import { validRecord } from './tools/finalize-browser-network.ts';
           const escape=value=>String(value).replaceAll('%','%25').replaceAll('\r','%0D').replaceAll('\n','%0A');
           if(fs.existsSync('unit-report.json')){
             const r=JSON.parse(fs.readFileSync('unit-report.json','utf8'));
@@ -52,7 +54,19 @@ jobs:
               console.log('::error title=Regression::'+escape(a.fullName));
               if(s.name.endsWith('/tests/unit/browser-network.test.ts'))n1.push({test:a.fullName,reason:(a.failureMessages||[]).join('\n').split('\n')[0]});
             }
-            if(n1.length)console.log('::error title=N1 assertions::'+escape(JSON.stringify(n1).slice(0,16000)));
+            if(n1.length){
+              console.log('::error title=N1 assertions::'+escape(JSON.stringify(n1).slice(0,16000)));
+              const root=path.join(process.env.RUNNER_TEMP,`fcd-isolation-${process.env.GITHUB_RUN_ID}-${process.env.GITHUB_RUN_ATTEMPT}-browser-network`);
+              if(fs.existsSync(root))for(const name of fs.readdirSync(root).filter(n=>/^[0-9a-f-]{36}\.end\.json$/.test(n)).slice(0,32)){
+                const file=path.join(root,name),stat=fs.lstatSync(file);
+                if(!stat.isFile()||stat.isSymbolicLink()||stat.size>131072)continue;
+                const end=JSON.parse(fs.readFileSync(file,'utf8'));
+                if(validRecord(end)&&end.kind==='end'&&end.identity.stage==='unit'&&n1.some(a=>a.test===end.identity.title)){
+                  const detail={test:end.identity.title,errors:end.errors,setup:end.setup,closed:end.closed,documentsCount:end.documents.length,documents:end.documents.slice(0,16),requestsCount:end.requests.length,requests:end.requests.slice(0,16)};
+                  console.log('::notice title=N1 lifecycle diagnostic::'+escape(JSON.stringify(detail)));
+                }
+              }
+            }
           }
           JS
       - run: npm run preview -- --build-only

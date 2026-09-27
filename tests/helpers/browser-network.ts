@@ -199,7 +199,10 @@ export async function observeDocumentWebSockets(context: BrowserContext, onAttem
     });
     const intact=():boolean=>globalThis.WebSocket===Wrapped && globals[bindingName]===binding && globals[stateName]===controller;
     const controller:Controller=Object.freeze({
-      resume(){if(!intact())return false;current();return true;},
+      resume(){
+        if(!intact())throw new Error(`N1_BOOTSTRAP_INTEGRITY ${JSON.stringify({socket:globalThis.WebSocket===Wrapped,binding:globals[bindingName]===binding,state:globals[stateName]===controller,initial:location.href==='' || location.href==='about:blank',top:window===window.top})}`);
+        current();return true;
+      },
       async flush(ids:string[]){
         const state=current();state.sealed=true;await Promise.all([...state.pending]);
         if(ids.length>128)throw new Error('N1_RECEIPT_BOUND');

@@ -9,9 +9,9 @@ import ts from 'typescript';
 import { assets, pug, root } from '../../tools/generate.ts';
 import { createGuardedContext, FIXTURE_ORIGIN, observeDocumentWebSockets, validateFixtureRules, validateResponsePlan, matchFixtureRule, type FixtureAsset, type ResponsePlan, type FixtureRule, type GuardedContext, type GuardOptions } from '../helpers/browser-network.ts';
 import { guardedAxe } from '../helpers/guarded-axe.ts';
-import { readAssetText, htmlAsset, fixtureHTML, mermaidCatalog, mermaidPlan } from '../helpers/render-fixtures.ts';
-import { POLICY, SCHEMA, UNIT_CONSUMER, engineFor, testKey, loadManifest, stageRoot, validateSnapshot, initializeEvidence, writeIndexedEvidence, readIndexedEvidence, entryFor, MAX_FILE, MERMAID_ORIGIN, MERMAID_PREFIX, RESPONSE_LIMITS, validateResponseEvidence, validatePageEvidence, validPagePolicy, validRecord, type Manifest, type Start, type End, type TestEntry, type ResultEntry, type EvidenceIndex } from '../../tools/finalize-browser-network.ts';
-import { N1_FILE, UNIT_FILE, ADOPTION_UNIT_FILE, TARGET_FILES, ADOPTED_FILES, makeOwner, expectedOwners, infoOwner, reporterOwner } from '../helpers/browser-network-scope.ts';
+import { readAssetText, htmlAsset, fixtureHTML, mermaidCatalog, mermaidPlan, casePlan } from '../helpers/render-fixtures.ts';
+import { POLICY, SCHEMA, UNIT_CONSUMER, engineFor, testKey, loadManifest, stageRoot, validateSnapshot, initializeEvidence, writeIndexedEvidence, readIndexedEvidence, entryFor, MAX_FILE, MERMAID_ORIGIN, MERMAID_PREFIX, RESPONSE_LIMITS, validateResponseEvidence, validatePageEvidence, validPagePolicy, validRecord, renderAxeScans, type Manifest, type Start, type End, type TestEntry, type ResultEntry, type EvidenceIndex } from '../../tools/finalize-browser-network.ts';
+import { N1_FILE, UNIT_FILE, ADOPTION_UNIT_FILE, TARGET_FILES, ADOPTED_FILES, makeOwner, expectedOwners, infoOwner, reporterOwner, renderContextModes } from '../helpers/browser-network-scope.ts';
 
 // N2A-01 characterization only. This does not register routes or adopt suites.
 // Runs under the existing Actions unit stage and its mandatory N0 boundary.
@@ -124,6 +124,24 @@ test('N2A preflight measures the locked entry and flowchart closure against appr
 }, 20000);
 
 // AC-02: complete runnable data, then change exactly one independent dimension.
+function modeledEnd(start:Start,javascript:boolean|undefined):End {
+  const end:End={...start,kind:'end',setup:true,closed:true,outcome:'passed',errors:[],rules:[],requests:[],documents:[]};
+  if(javascript===undefined)return end;
+  const rule:FixtureRule={id:'home',path:'/',method:'GET',resource:'document',body:'<h1>ownership control</h1>',count:1};
+  const plan=validateResponsePlan([rule],{assets:[],phases:['ready'],transitions:[],gates:[]});
+  start.plan=plan;end.plan=plan;start.pagePolicy={javascript,scans:renderAxeScans(start.identity)};end.pagePolicy={...start.pagePolicy};
+  const primary=randomUUID(),documents=javascript?[randomUUID()]:[];
+  end.rules=[{id:'home',action:'fulfill',count:1,hits:1}];end.requests=[{seq:1,kind:'http',rule:'home',action:'fulfill',observed:true,handled:true}];
+  end.pages={pages:[{id:primary,role:'primary',lease:null,source:null,observed:true,finalized:true,closed:true,documents}],leases:[],requests:[{seq:1,page:primary}]};
+  for(let i=0;i<start.pagePolicy.scans;i++){
+    const id=randomUUID(),lease=randomUUID(),document=randomUUID();
+    end.pages.pages.push({id,role:'axe-aggregation',lease,source:primary,observed:true,finalized:true,closed:true,documents:[document]});
+    end.pages.leases.push({id:lease,owner:start.identity.test,context:start.id,source:primary,page:id,created:true,finished:true,scan:'passed'});
+  }
+  end.documents=end.pages.pages.flatMap(p=>p.documents).map(id=>({id,attempts:0,acknowledged:0,intact:true,flushed:true}));
+  const metadata=plan.rules[0];end.response={phase:'ready',transitions:[],gates:[],responses:[{seq:1,phase:'ready',rule:'home',asset:null,gate:null,waited:false,bytes:metadata.bytes,sha256:metadata.sha256,status:200,outcome:'fulfilled'}],chargedBytes:metadata.bytes,fulfilledBytes:metadata.bytes};
+  return end;
+}
 function ownershipFixture() {
   const manifest:Manifest={schema:SCHEMA,policy:POLICY,kind:'manifest',source:'a'.repeat(40),run:'17',attempt:'1'};
   const records:(Start|End)[]=[], entries:TestEntry[]=[], results:ResultEntry[]=[];
@@ -131,11 +149,13 @@ function ownershipFixture() {
   type Suite={file?:string;title?:string;specs:Spec[];suites?:Suite[]};
   const specs:Spec[]=[];
   for(const owner of expectedOwners()){
-    const id=randomUUID(),entry=entryFor(owner),title=entry.title;
-    const start:Start={...manifest,kind:'start',id,identity:{...owner,engine:entry.engine,title,test:entry.key,worker:1,retry:0,pid:10},expectedErrors:[]};
-    records.push(start,{...start,kind:'end',setup:true,closed:true,outcome:'passed',errors:[],rules:[],requests:[],documents:[]});
-    entries.push(entry);results.push({...entry,status:'passed',expectedStatus:'passed',retry:0,worker:1,contexts:[id]});
-    specs.push({file:owner.file,title,tests:[{projectName:owner.project,expectedStatus:'passed',status:'expected',annotations:[{type:'n1-context',description:id}],results:[{status:'passed',retry:0,workerIndex:1}]}]});
+    const entry=entryFor(owner),title=entry.title,contexts:string[]=[];
+    for(const javascript of owner.file===N1_FILE?[undefined]:renderContextModes(owner)){
+      const id=randomUUID(),start:Start={...manifest,kind:'start',id,identity:{...owner,engine:entry.engine,title,test:entry.key,worker:1,retry:0,pid:10},expectedErrors:[]};
+      const end=modeledEnd(start,javascript);records.push(start,end);contexts.push(id);
+    }
+    entries.push(entry);results.push({...entry,status:'passed',expectedStatus:'passed',retry:0,worker:1,contexts});
+    specs.push({file:owner.file,title,tests:[{projectName:owner.project,expectedStatus:'passed',status:'expected',annotations:contexts.map(description=>({type:'n1-context',description})),results:[{status:'passed',retry:0,workerIndex:1}]}]});
   }
   const owner=makeOwner('unit',UNIT_FILE,[UNIT_CONSUMER],'vitest-chromium');
   const start:Start={...manifest,kind:'start',id:randomUUID(),identity:{...owner,engine:'chromium',title:UNIT_CONSUMER,test:testKey(owner),worker:0,retry:0,pid:11},expectedErrors:[]};
@@ -650,7 +670,7 @@ function consumerSourceIssues(file:string,text:string):string[]{
   if(Buffer.byteLength(text)>131072)throw new Error('N2A_SOURCE_BOUND');
   const source=ts.createSourceFile(file,text,ts.ScriptTarget.ESNext,true,ts.ScriptKind.TS);
   const constants=new Map<string,ts.Expression>(),issues=new Set<string>();let visited=0,guardedTest=false;
-  const forbidden=new Set(['newContext','newPage','launch','launchPersistentContext','connect','connectOverCDP','route','routeWebSocket','routeFromHAR','unroute','unrouteAll','continue','fallback','fetch','connectToServer','setLegacyMode','makeGuard']);
+  const forbidden=new Set(['newContext','newPage','launch','launchPersistentContext','connect','connectOverCDP','route','routeWebSocket','routeFromHAR','unroute','unrouteAll','continue','fallback','fetch','connectToServer','setLegacyMode','makeGuard','extend','newCDPSession','newBrowserCDPSession']);
   const imports:Readonly<Record<string,readonly string[]>>={
     '../helpers/isolated-test.ts':['test','expect','FIXTURE_ORIGIN'],
     '../helpers/guarded-axe.ts':['guardedAxe'],
@@ -678,9 +698,13 @@ function consumerSourceIssues(file:string,text:string):string[]{
     if(ts.isImportEqualsDeclaration(node)||ts.isExportDeclaration(node)&&node.moduleSpecifier)add('import');
     if(ts.isPropertyAccessExpression(node)&&forbidden.has(node.name.text))add('member:'+node.name.text);
     if(ts.isElementAccessExpression(node)){const name=literal(node.argumentExpression);if(name&&forbidden.has(name))add('member:'+name);}
-    if(ts.isBindingElement(node)&&ts.isObjectBindingPattern(node.parent)){const property=node.propertyName??node.name;const name=ts.isComputedPropertyName(property)?literal(property.expression):ts.isIdentifier(property)||ts.isStringLiteral(property)?property.text:undefined;if(name&&forbidden.has(name))add('member:'+name);}
+    if(ts.isBindingElement(node)&&ts.isObjectBindingPattern(node.parent)){const property=node.propertyName??node.name;const name=ts.isComputedPropertyName(property)?literal(property.expression):ts.isIdentifier(property)||ts.isStringLiteral(property)?property.text:undefined;if(name&&forbidden.has(name))add('member:'+name);if(name==='request')add('request-fixture');}
     if(ts.isCallExpression(node)&&node.expression.kind===ts.SyntaxKind.ImportKeyword)add('dynamic-import');
     if((ts.isCallExpression(node)||ts.isNewExpression(node))&&ts.isIdentifier(node.expression)&&['require','eval','Function','fetch','AxeBuilder'].includes(node.expression.text))add('call:'+node.expression.text);
+    if(ts.isCallExpression(node)&&ts.isPropertyAccessExpression(node.expression)&&node.expression.name.text==='use'){
+      const arg=node.arguments[0];
+      if(!arg||!ts.isObjectLiteralExpression(arg)||arg.properties.some(p=>!ts.isPropertyAssignment(p)||!ts.isIdentifier(p.name)||p.name.text!=='javaScriptEnabled'))add('fixture-override');
+    }
     ts.forEachChild(node,visit);
   }
   visit(source);if(!guardedTest)add('missing-guarded-test');return [...issues].sort();
@@ -699,6 +723,7 @@ for(const [name,body,code] of [
   ['direct axe',"import Scan from '@axe-core/playwright';new Scan({page})",'import'],['raw test import',"import {test as raw} from '@playwright/test';",'import'],
   ['raw helper import',"import {createGuardedContext} from '../helpers/browser-network.ts';",'import'],['namespace import',"import * as raw from '@playwright/test';",'import'],
   ['dynamic module',"import('@playwright/test')",'dynamic-import'],['require module',"require('@playwright/test')",'call:require'],['legacy axe','analyzer.setLegacyMode(true)','member:setLegacyMode'],
+  ['runner override','test.extend({page:replacement})','member:extend'],['plan override','test.use({networkPlan:replacement})','fixture-override'],['API request fixture',"test('bypass',async({request})=>request.get(url))",'request-fixture'],
 ] as const)test(`N2A source guard rejects ${name}`,()=>expect(consumerSourceIssues('control.ts',guardedSource+body)).toContain(code));
 test('N2A source guard has a bounded input and requires the guarded runner',()=>{
   expect(()=>consumerSourceIssues('control.ts','x'.repeat(131073))).toThrow('N2A_SOURCE_BOUND');
@@ -723,4 +748,81 @@ test('N2A successful ordinary render evidence requires its actual primary page',
   expect(validatePageEvidence(start,end)).toBe(true);
   end.pages!.pages=[];end.pages!.requests=[];end.documents=[];end.requests=[];
   expect(validatePageEvidence(start,end),'N2A_MISSING_PRIMARY_FALSE_GREEN').toBe(false);
+});
+
+test('N2A completion requires all six files and all 1168 owners',()=>{
+  expect(ADOPTED_FILES).toEqual(TARGET_FILES);expect(expectedOwners()).toHaveLength(1168);
+  const ordinary=expectedOwners().filter(o=>o.file!==N1_FILE);
+  expect(ordinary).toHaveLength(928);expect(ordinary.reduce((n,o)=>n+renderContextModes(o).length,0)).toBe(958);
+  expect(ordinary.reduce((n,o)=>n+renderAxeScans(o),0)).toBe(382);
+});
+test('N2A finite plans reject unknown identities and undeclared secondary contexts before reading assets',async()=>{
+  const owner=makeOwner('render','tests/render/responsive.spec.ts',['home shared presentation fits with native-wrapper fixtures'],'390-light');
+  await expect(casePlan(owner,1)).rejects.toThrow('N2A_CASE_OWNER');await expect(casePlan({...owner,titlePath:['other']},0)).rejects.toThrow('N2A_CASE_OWNER');
+  await expect(casePlan({...owner,titlePath:['group',...owner.titlePath]},0)).rejects.toThrow('N2A_CASE_OWNER');
+  expect(renderContextModes({...owner,project:'firefox-390-light'})).toEqual([]);
+});
+for(const change of ['ordinary-extra','fallback-missing','fallback-reordered','fallback-wrong-mode'] as const)test(`N2A context populations reject ${change}`,()=>{
+  const s=ownershipFixture();expect(validateSnapshot(s)).toEqual([]);
+  const entry=s.results.tests.find(e=>change==='ordinary-extra'?e.file==='tests/render/responsive.spec.ts'&&e.title==='home shared presentation fits with native-wrapper fixtures':e.file==='tests/render/publication-acceptance.spec.ts'&&e.title==='fallback, menu escape and no-JS enlarged text retain native navigation')!;
+  expect(entry).toBeDefined();
+  if(change==='ordinary-extra'){
+    const original=s.records.find((r):r is Start=>r.kind==='start'&&r.id===entry.contexts[0])!;
+    const start={...structuredClone(original),id:randomUUID()},end=modeledEnd(start,true);s.records.push(start,end);entry.contexts.push(start.id);
+  }
+  if(change==='fallback-missing'){const id=entry.contexts.pop()!;s.records=s.records.filter(r=>r.id!==id);}
+  if(change==='fallback-reordered')entry.contexts.reverse();
+  if(change==='fallback-wrong-mode'){
+    const id=entry.contexts[1],start=s.records.find((r):r is Start=>r.kind==='start'&&r.id===id)!;
+    const replacement=modeledEnd(start,true);s.records=s.records.map(r=>r.kind==='end'&&r.id===id?replacement:r);
+  }
+  const spec=s.browser.suites[0].specs.find(p=>p.file===entry.file&&p.title===entry.title&&p.tests[0].projectName===entry.project)!;
+  spec.tests[0].annotations=entry.contexts.map(description=>({type:'n1-context',description}));
+  expect(validateSnapshot(s)).toEqual(['N2A_CONTEXT_POPULATION']);
+});
+
+function harnessCalls(text:string):string[]{
+  if(Buffer.byteLength(text)>131072)throw new Error('N2A_SOURCE_BOUND');
+  const source=ts.createSourceFile('harness.ts',text,ts.ScriptTarget.ESNext,true,ts.ScriptKind.TS),calls:string[]=[];
+  const names=new Set(['newContext','newPage','launch','launchPersistentContext','connect','connectOverCDP','route','routeWebSocket','routeFromHAR','unroute','unrouteAll','continue','fallback','fetch','connectToServer']);
+  const constants=new Map<string,ts.Expression>();let nodes=0;
+  function literal(node:ts.Node|undefined,depth=0):string|undefined{
+    if(!node||depth>8)return undefined;
+    if(ts.isStringLiteral(node)||ts.isNoSubstitutionTemplateLiteral(node))return node.text;
+    if(ts.isIdentifier(node))return literal(constants.get(node.text),depth+1);
+    if(ts.isBinaryExpression(node)&&node.operatorToken.kind===ts.SyntaxKind.PlusToken){const a=literal(node.left,depth+1),b=literal(node.right,depth+1);if(a!==undefined&&b!==undefined&&a.length+b.length<=64)return a+b;}
+    return undefined;
+  }
+  const scope=(node:ts.Node)=>{let current:ts.Node|undefined=node,label='module',property:string|undefined;while(current){if(ts.isFunctionDeclaration(current)&&current.name)label=current.name.text;if(!property&&ts.isPropertyAssignment(current)&&ts.isIdentifier(current.name)&&['context','makeGuard','secondaryPage'].includes(current.name.text))property=current.name.text;current=current.parent;}return label==='module'?property??label:label;};
+  function visit(node:ts.Node):void{
+    if(++nodes>20000)throw new Error('N2A_SOURCE_BOUND');
+    if(ts.isVariableDeclaration(node)&&ts.isIdentifier(node.name)&&node.initializer)constants.set(node.name.text,node.initializer);
+    if(ts.isPropertyAccessExpression(node)&&names.has(node.name.text))calls.push(scope(node)+':'+node.getText(source));
+    if(ts.isElementAccessExpression(node)){const name=literal(node.argumentExpression);if(name&&names.has(name))calls.push(scope(node)+':'+node.getText(source));}
+    if(ts.isCallExpression(node)&&ts.isIdentifier(node.expression)&&['attachGuard','createGuardedContext','fetch','require'].includes(node.expression.text))calls.push(scope(node)+':'+node.expression.text);
+    if(ts.isNewExpression(node)&&ts.isIdentifier(node.expression)&&node.expression.text==='AxeBuilder')calls.push(scope(node)+':new AxeBuilder');
+    if(calls.length>64)throw new Error('N2A_SOURCE_DIAGNOSTIC_BOUND');ts.forEachChild(node,visit);
+  }
+  visit(source);return calls.sort();
+}
+const harnessPolicy:Readonly<Record<string,readonly string[]>>={
+  'tests/helpers/browser-network.ts':['buildGuard:context!.newPage','buildGuard:context.route','buildGuard:context.routeWebSocket','buildGuard:page.routeWebSocket','createGuardedContext:browser.newContext'],
+  'tests/helpers/isolated-test.ts':['context:attachGuard','makeGuard:createGuardedContext','secondaryPage:createGuardedContext','secondaryPage:guard.context.newPage'],
+  'tests/helpers/guarded-axe.ts':['guardedAxe:new AxeBuilder','guardedAxe:owner.newPage'],
+  'tests/helpers/render-fixtures.ts':[],
+  'tests/helpers/browser-network-scope.ts':[],
+  'tests/helpers/browser-network-reporter.ts':[],
+  'tools/finalize-browser-network.ts':[],
+};
+for(const [file,allowed] of Object.entries(harnessPolicy))test(`N2A harness raw callsites remain narrowly owned: ${file}`,async()=>{
+  expect(harnessCalls(await readAssetText(root,file,131072))).toEqual([...allowed].sort());
+});
+test('N2A harness inventory detects aliases extra sites and duplicate sites',()=>{
+  const allowed=['buildGuard:context.route'];expect(harnessCalls('function buildGuard(){context.route(pattern,handler)}')).toEqual(allowed);
+  for(const extra of ['browser.newContext({});',"const name='new'+'Context';browser[name]({});",'const alias=browser.newContext;alias({});'])expect(harnessCalls('function buildGuard(){context.route(pattern,handler)}function bypass(){'+extra+'}')).not.toEqual(allowed);
+  expect(harnessCalls('function buildGuard(){context.route(pattern,handler);context.route(pattern,handler)}')).toHaveLength(2);
+});
+test('N2A inherited low-level controls are an exact unchanged exception',async()=>{
+  const text=await readAssetText(root,N1_FILE,131072),bytes=Buffer.from(text);
+  expect(createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex')).toBe('6938d3551f98a93e760adbeb0e8eb3012f2eb34d');
 });

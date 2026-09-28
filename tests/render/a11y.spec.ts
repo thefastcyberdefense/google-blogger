@@ -1,11 +1,6 @@
-import { test, expect } from '@playwright/test';
-import AxeBuilder from '@axe-core/playwright';
-import { readFile } from 'node:fs/promises';
-for(const view of ['home','article','paged','empty','error'])test(`${view}: accessible initial and expanded states`,async({page},info)=>{
- await page.route('https://blogs.fastcyberdefense.com/**',async route=>{
-  if(route.request().url().includes('/feeds/'))return route.fulfill({contentType:'application/json',body:'{"feed":{"entry":[]}}'});
-  await route.fulfill({status:view==='error'?404:200,contentType:'text/html',body:await readFile(`.preview/${view}.html`,'utf8')});
- });
+import { test, expect } from '../helpers/isolated-test.ts';
+import { guardedAxe } from '../helpers/guarded-axe.ts';
+for(const view of ['home','article','paged','empty','error'])test(`${view}: accessible initial and expanded states`,async({page,network},info)=>{
  await page.goto('/');await expect(page.locator('#recent-status')).toContainText('No recent posts');
  for(const state of ['initial','expanded']){
   if(state==='expanded'){
@@ -16,7 +11,7 @@ for(const view of ['home','article','paged','empty','error'])test(`${view}: acce
     await expect(page.locator('#filter-status')).toContainText('0 of');
    }
   }
-  const result=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']).analyze();
+  const result=await guardedAxe(network,page).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']).analyze();
   await info.attach(`axe-${view}-${state}`,{body:JSON.stringify(result),contentType:'application/json'});
   expect(result.violations).toEqual([]);
  }

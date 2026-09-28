@@ -1,12 +1,5 @@
-import { test, expect } from '@playwright/test';
-import { readFile } from 'node:fs/promises';
-const origin='https://blogs.fastcyberdefense.com';
-test.beforeEach(async({page})=>{
- await page.route(`${origin}/**`,async route=>{
-  if(route.request().url().includes('/feeds/'))return route.fulfill({status:503,body:'Unavailable'});
-  await route.fulfill({contentType:'text/html',body:await readFile(`.preview/${new URL(route.request().url()).pathname==='/article'?'article':'home'}.html`,'utf8')});
- });
-});
+import { test, expect, FIXTURE_ORIGIN } from '../helpers/isolated-test.ts';
+const origin=FIXTURE_ORIGIN;
 test('search shortcuts filter honestly and preserve native full-blog submission',async({page})=>{
  await page.goto('/');await page.keyboard.press('/');await expect(page.locator('#search-query')).toBeFocused();
  await page.locator('#search-query').fill('remediation');await expect(page.locator('[data-filter-card]:visible')).toHaveCount(1);

@@ -43,7 +43,7 @@ export const SUITES:Readonly<Record<string,readonly string[]>>=Object.freeze({
 export const TARGET_FILES=Object.freeze(Object.keys(SUITES));
 // Each suite is added atomically with its guarded consumer migration.
 // No environment switch can reduce this list. Final N2A requires all six files.
-export const ADOPTED_FILES:readonly string[]=Object.freeze([N1_FILE,'tests/render/native-states.spec.ts','tests/render/responsive.spec.ts']);
+export const ADOPTED_FILES:readonly string[]=Object.freeze([N1_FILE,'tests/render/a11y.spec.ts','tests/render/interactions.spec.ts','tests/render/native-states.spec.ts','tests/render/responsive.spec.ts']);
 export interface Owner {stage:'unit'|'render';file:string;titlePath:string[];project:string;repeatEachIndex:number}
 export const OWNER_FIELDS=['stage','file','titlePath','project','repeatEachIndex'];
 const safeText=(v:unknown,max=200):v is string=>typeof v==='string'&&v.length>0&&v.length<=max&&!/[\x00-\x1f\x7f]/.test(v);

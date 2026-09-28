@@ -36,7 +36,7 @@ const resources = ['document','stylesheet','image','media','font','script','text
 const ruleFields=['id','path','method','resource','body','action','count','query','status','headers','kind','contentType','asset','phase','gate','origin','abort'];
 const object=(v:unknown):v is Record<string,unknown>=>!!v&&typeof v==='object'&&!Array.isArray(v);
 const digest=(v:string|Buffer)=>createHash('sha256').update(v).digest('hex');
-const policy=():never=>{throw new NetworkGuardError(['N1_POLICY']);};
+function policy():never {throw new NetworkGuardError(['N1_POLICY']);}
 const matchKey=(r:FixtureRule)=>JSON.stringify([r.kind??'http',r.origin??FIXTURE_ORIGIN,r.path,r.query??'',r.method,r.resource]);
 export function validateFixtureRules(rules: FixtureRule[],plan?:PlanRecord): void {
   const ids = new Set<string>();const previous:FixtureRule[]=[];
@@ -339,13 +339,13 @@ async function buildGuard(create:()=>Promise<BrowserContext>, rules:FixtureRule[
   type Waiter={settle:(failed:boolean)=>void};
   const waiters=new Map<string,Set<Waiter>>(plan?.gates.map(id=>[id,new Set<Waiter>()])??[]);
   const error=(code:string)=>{errors.add(code);};
-  const controlFailure=(code:'N2A_GATE'|'N2A_PHASE'):never=>{
+  function controlFailure(code:'N2A_GATE'|'N2A_PHASE'):never {
     error(code);
     // A post-seal misuse cannot rewrite an exclusive end record. Persist a
     // bounded failure marker so even a caught late exception cannot turn green.
     if(finished)try{writeEvidence(root,'reporter-error.json',{...manifest,kind:'guard-late-error',id,code});}catch{error('N1_WRITE');}
     throw new NetworkGuardError([code]);
-  };
+  }
   const waitGate=async(gate:string,row:ResponseRecord)=>{
     const state=response?.gates.find(g=>g.id===gate),set=waiters.get(gate);
     if(!state||!set)controlFailure('N2A_GATE');

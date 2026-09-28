@@ -1,4 +1,5 @@
 import { expect, test } from 'vitest';
+import { chromium } from '@playwright/test';
 import { createHash, randomUUID } from 'node:crypto';
 import fs, { constants } from 'node:fs';
 import { lstat, open, readFile, realpath, writeFile } from 'node:fs/promises';
@@ -6,8 +7,9 @@ import path from 'node:path';
 import os from 'node:os';
 import ts from 'typescript';
 import { assets, pug, root } from '../../tools/generate.ts';
+import { createGuardedContext, FIXTURE_ORIGIN, validateFixtureRules, type FixtureRule, type GuardedContext, type GuardOptions } from '../helpers/browser-network.ts';
 import { POLICY, SCHEMA, UNIT_CONSUMER, engineFor, testKey, loadManifest, stageRoot, validateSnapshot, initializeEvidence, writeIndexedEvidence, readIndexedEvidence, entryFor, MAX_FILE, type Manifest, type Start, type End, type TestEntry, type ResultEntry, type EvidenceIndex } from '../../tools/finalize-browser-network.ts';
-import { N1_FILE, UNIT_FILE, TARGET_FILES, ADOPTED_FILES, makeOwner, expectedOwners, infoOwner, reporterOwner } from '../helpers/browser-network-scope.ts';
+import { N1_FILE, UNIT_FILE, ADOPTION_UNIT_FILE, TARGET_FILES, ADOPTED_FILES, makeOwner, expectedOwners, infoOwner, reporterOwner } from '../helpers/browser-network-scope.ts';
 
 // N2A-01 characterization only. This does not register routes or adopt suites.
 // Runs under the existing Actions unit stage and its mandatory N0 boundary.
@@ -239,3 +241,35 @@ test('N2A indexed evidence enforces 32 pages and rejects boundary plus one',()=>
 test('N2A indexed evidence does not bypass the unchanged per-file byte limit',()=>{
   const f=indexFixture(1);try{const other=path.join(f.base,'oversize');fs.mkdirSync(other);const tests=Array.from({length:64},(_,i)=>entryFor(makeOwner('render',N1_FILE,[...Array.from({length:15},()=> 'x'.repeat(200)),`large ${i}`],'390-light')));expect(()=>writeIndexedEvidence(other,{...f.manifest,kind:'discovery',tests})).toThrow('N1_LIMIT');}finally{fs.rmSync(f.base,{recursive:true,force:true});}
 });
+
+// AC-04/05 test-first controls call the existing real validator/guard. Unknown
+// response metadata must not be silently accepted or served as an empty body.
+const smallRule:FixtureRule={id:'home',path:'/',method:'GET',resource:'document',body:'<h1>inline control</h1>'};
+for(const [name,extra] of [
+  ['unknown field',{unapproved:true}],
+  ['foreign origin',{origin:'https://elsewhere.invalid'}],
+  ['body and asset modes',{asset:'html'}],
+  ['forged asset reference',{asset:{body:'forged'}}],
+  ['undeclared phase',{phase:'not-declared'}],
+  ['undeclared gate',{gate:'not-declared'}],
+  ['arbitrary abort reason',{abort:'timedout'}],
+  ['denial with a body',{action:'deny',count:1}],
+] as const)test(`N2A response policy rejects ${name}`,()=>expect(()=>validateFixtureRules([{...smallRule,...extra} as FixtureRule]),`N2A_IGNORED_POLICY ${name}`).toThrow('N1_POLICY'));
+const registeredHTML='N2A real guard fulfills registered HTML beyond the inline limit';
+test(registeredHTML,async()=>{
+  const html='<!doctype html><h1>registered response control</h1><!--'+'x'.repeat(70000)+'-->';
+  expect(Buffer.byteLength(html)).toBeGreaterThan(65536);expect(Buffer.byteLength(html)).toBeLessThanOrEqual(limits.html);
+  const responsePlan={assets:[{id:'html',kind:'html',body:html,bytes:Buffer.byteLength(html),sha256:sha256(html)}],phases:['ready'],transitions:[],gates:[]};
+  const rule=Object.assign({id:'home',path:'/',method:'GET',resource:'document',count:1},{asset:'html',phase:'ready'});
+  const options:GuardOptions=Object.assign({...makeOwner('unit',ADOPTION_UNIT_FILE,[registeredHTML],'vitest-chromium'),title:registeredHTML,engine:'chromium'},{responsePlan});
+  const browser=await chromium.launch({headless:true});let guard:GuardedContext|undefined,failure:unknown;
+  try{
+    guard=await createGuardedContext(browser,[rule],options);const page=await guard.context.newPage();const response=await page.goto(FIXTURE_ORIGIN+'/');
+    expect(response?.status()).toBe(200);
+    expect(await page.locator('h1').count(),'N2A_REGISTERED_HTML_IGNORED').toBe(1);
+    expect(await page.getByRole('heading').textContent()).toBe('registered response control');
+    expect(sha256(await response!.body())).toBe(sha256(html));
+  }catch(cause){failure=cause;}
+  finally{if(guard)try{await guard.finish(failure?'failed':'passed');}catch(cause){failure??=cause;}await browser.close();}
+  if(failure)throw failure;
+},30000);

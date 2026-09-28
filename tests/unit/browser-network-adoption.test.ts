@@ -612,6 +612,8 @@ test(negativeAxe,async()=>{
       const adapter=publicDependency(g,{beginAxe:source=>{const lease=g.beginAxe(source);return {newPage:()=>lease.newPage(),close:(page,options)=>lease.close(page,options),complete:async outcome=>{await lease.complete(outcome);throw new Error('controlled outer cleanup failure');}};}});
       const failure=await guardedAxe(adapter,p).withRules('__fcd_unknown_rule').analyze().then(()=>undefined,e=>e as unknown);expect(failure).toBeInstanceOf(AggregateError);const errors=(failure as AggregateError).errors;expect(errors).toHaveLength(2);expect(String(errors[0])).toContain('__fcd_unknown_rule');expect(String(errors[1])).toContain('controlled outer cleanup failure');
     });
+    // An extra page outside the lease interval must not inherit primary policy.
+    await run(['N2A_AUX_OWNER'],async(g)=>{const extra=await g.context.newPage();expect(extra.isClosed()).toBe(false);},undefined,browser,0);
     expect(browser.contexts()).toHaveLength(0);
   }finally{await browser.close();}
 },30000);
@@ -624,3 +626,19 @@ test('N2A blocked storage does not excuse a genuinely missing retired document',
     const documents=await observer.flush();expect(reasons).toContain('unfinished-document');expect(documents.some(d=>!d.flushed)).toBe(true);
   }finally{await context.close();await browser.close();}
 },30000);
+
+test('N2A page evidence rejects an extra fully reconciled primary page',()=>{
+  const {start,end}=pageFixture();expect(validatePageEvidence(start,end)).toBe(true);
+  const document=randomUUID();end.documents.push({id:document,attempts:0,acknowledged:0,intact:true,flushed:true});
+  end.pages!.pages.push({...end.pages!.pages[0],id:randomUUID(),documents:[document]});
+  expect(validRecord(end)).toBe(true);
+  expect(validatePageEvidence(start,end),'N2A_EXTRA_PRIMARY_FALSE_GREEN').toBe(false);
+});
+test('N2A ordinary render evidence cannot omit its registered response plan',()=>{
+  const {start,end}=responseFixture();
+  const owner=makeOwner('render','tests/render/responsive.spec.ts',['home shared presentation fits with native-wrapper fixtures'],'390-light');
+  start.identity={...start.identity,...owner,title:owner.titlePath[0],test:testKey(owner)};end.identity={...start.identity};
+  expect(validateResponseEvidence(start,end)).toBe(true);
+  delete start.plan;delete end.plan;delete end.response;
+  expect(validateResponseEvidence(start,end),'N2A_MISSING_RENDER_PLAN_FALSE_GREEN').toBe(false);
+});

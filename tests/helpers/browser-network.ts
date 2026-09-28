@@ -1,6 +1,6 @@
-import type { Browser, BrowserContext, BrowserContextOptions, Frame, Request, Route, WebSocketRoute } from '@playwright/test';
+import type { Browser, BrowserContext, BrowserContextOptions, Frame, Page, Request, Route, WebSocketRoute } from '@playwright/test';
 import { createHash, randomUUID } from 'node:crypto';
-import { CODES, loadManifest, stageRoot, testKey, writeEvidence, validRecord, validPlanRecord, validModulePath, responseOwner, RESPONSE_LIMITS, MERMAID_ORIGIN, MERMAID_PREFIX, type Start, type End, type Identity, type RequestRecord, type DocumentRecord, type PlanRecord, type ResponseRecord, type ResponseLedger } from '../../tools/finalize-browser-network.ts';
+import { CODES, loadManifest, stageRoot, testKey, writeEvidence, validRecord, validPlanRecord, validModulePath, responseOwner, renderAxeScans, RESPONSE_LIMITS, MERMAID_ORIGIN, MERMAID_PREFIX, type Start, type End, type Identity, type RequestRecord, type DocumentRecord, type PlanRecord, type ResponseRecord, type ResponseLedger, type PageRecord, type PageLedger, type AxeRecord } from '../../tools/finalize-browser-network.ts';
 import { makeOwner } from './browser-network-scope.ts';
 
 export const FIXTURE_ORIGIN = 'https://fcd-fixture.invalid';
@@ -17,13 +17,20 @@ export interface GuardOptions {
   file:string;titlePath:string[];repeatEachIndex:number;
   title: string; project: string; engine: string; worker?: number; retry?: number;
   contextOptions?: BrowserContextOptions; expectedErrors?: readonly string[];
-  register?: (id: string) => void;responsePlan?:unknown;
+  register?: (id: string) => void;responsePlan?:unknown;axeScans?:number;
+}
+/** Node-only capability; no page can mint or transfer an ownership lease. */
+export interface AxeLease {
+  newPage():Promise<Page>;
+  close(page:Page,options?:Parameters<Page['close']>[0]):Promise<void>;
+  complete(outcome:'passed'|'failed'):Promise<void>;
 }
 export interface GuardedContext {
   context: BrowserContext; id: string;
   finish(outcome?: 'passed' | 'failed'): Promise<void>;
   readonly finished: boolean;readonly phase:string|null;
   transition(next:string):void;releaseGate(id:string):void;pendingGate(id:string):number;
+  beginAxe(source:Page):AxeLease;
 }
 export class NetworkGuardError extends Error {
   readonly codes: string[];
@@ -105,7 +112,7 @@ const bounded = async <T>(promise: Promise<T>, milliseconds = 3000): Promise<T> 
   try { return await Promise.race([promise,new Promise<never>((_,reject)=>{timer=setTimeout(()=>reject(new NetworkGuardError(['N1_OBSERVER'])),milliseconds);})]); }
   finally { if(timer) clearTimeout(timer); }
 };
-interface Observer { count(): number; flush(): Promise<DocumentRecord[]> }
+interface Observer { count(): number; flush(): Promise<DocumentRecord[]>; flushPage(page:Page):Promise<DocumentRecord[]>; documentIds(page:Page):string[] }
 type ObserverFailure='binding-shape'|'ready-shape'|'unknown-document'|'socket-accounting'|'retire-shape'|'retire-unknown-document'|'retire-page'|'retire-origin'|'retire-accounting'|'flush-detached'|'flush-state'|'flush-accounting'|'flush-timeout'|'flush-evaluation'|'unfinished-document';
 /** Independent document-start observation using public APIs. N0 is the firewall.
  * A Window can receive repeated init calls or outlive its initial Document.
@@ -116,7 +123,7 @@ type ObserverFailure='binding-shape'|'ready-shape'|'unknown-document'|'socket-ac
  * Synchronous retirement storage recovers only already-known same-origin keys
  * when pagehide console delivery is lost. Missing evidence still fails closed.
  */
-export async function observeDocumentWebSockets(context: BrowserContext, onAttempt: (url:string)=>void = () => {}, onFailure: (reason:ObserverFailure)=>void = () => {}): Promise<Observer> {
+export async function observeDocumentWebSockets(context: BrowserContext, onAttempt: (url:string,page:Page)=>void = () => {}, onFailure: (reason:ObserverFailure)=>void = () => {}): Promise<Observer> {
   const token=randomUUID().replaceAll('-','');
   const bootstrapKey=randomUUID();
   const bindingName=`__fcdN1Report${token}`;
@@ -187,18 +194,19 @@ export async function observeDocumentWebSockets(context: BrowserContext, onAttem
     if (!d || d.frame!==source.frame) { onFailure('unknown-document'); return; }
     if (v.kind==='socket') {
       if (typeof v.url!=='string' || v.url.length>2048 || v.sequence!==d.acknowledged+1 || attempts>=128) { onFailure('socket-accounting'); return; }
-      attempts++; d.acknowledged++; d.attempts=d.acknowledged; d.flushed=false; onAttempt(v.url);
+      attempts++; d.acknowledged++; d.attempts=d.acknowledged; d.flushed=false; onAttempt(v.url,source.frame.page());
     } else onFailure('binding-shape');
   });
   await context.addInitScript(({bindingName,stateName,retirementPrefix,readyPrefix,bootstrapKey})=>{
     const globals=globalThis as unknown as Record<string,unknown>;
     type Snapshot={id:string;attempts:number;failures:number;readyFailed:boolean;intact:boolean;origin:string;receipts:string[]};
-    type Controller={resume:(key:string)=>boolean;flush:(ids:string[])=>Promise<Snapshot>};
+    type Recovery={id:string;origin:string;receipts:string[]};
+    type Controller={resume:(key:string)=>boolean;flush:(ids:string[])=>Promise<Snapshot>;recover:(ids:string[])=>Recovery};
     const descriptor=Object.getOwnPropertyDescriptor(globals,stateName);
     if(descriptor){
       const existing=descriptor.value as Partial<Controller>|undefined;
       if(descriptor.configurable!==false || descriptor.writable!==false || !existing || !Object.isFrozen(existing) ||
-          typeof existing.resume!=='function' || typeof existing.flush!=='function' || existing.resume(bootstrapKey)!==true)throw new Error('N1_BOOTSTRAP_STATE');
+          typeof existing.resume!=='function' || typeof existing.flush!=='function' || typeof existing.recover!=='function' || existing.resume(bootstrapKey)!==true)throw new Error('N1_BOOTSTRAP_STATE');
       return;
     }
     let binding=globals[bindingName] as (data:unknown)=>Promise<unknown>;
@@ -243,6 +251,12 @@ export async function observeDocumentWebSockets(context: BrowserContext, onAttem
       },
     });
     const intact=():boolean=>globalThis.WebSocket===Wrapped && globals[bindingName]===binding && globals[stateName]===controller;
+    const receipts=(state:State,ids:string[]):string[]=>{
+      if(ids.length>128)throw new Error('N1_RECEIPT_BOUND');
+      const values:string[]=[];
+      if(state.read)for(const documentId of ids){const receipt=state.read(retirementPrefix+documentId);if(receipt!==null){if(receipt.length>512)throw new Error('N1_RECEIPT_BOUND');values.push(receipt);}}
+      return values;
+    };
     const controller:Controller=Object.freeze({
       resume(key:string){
         // Only the installed init script holds this independent capability.
@@ -261,10 +275,11 @@ export async function observeDocumentWebSockets(context: BrowserContext, onAttem
       },
       async flush(ids:string[]){
         const state=current();state.sealed=true;await Promise.all([...state.pending]);
-        if(ids.length>128)throw new Error('N1_RECEIPT_BOUND');
-        const receipts:string[]=[];
-        if(state.read)for(const documentId of ids){const receipt=state.read(retirementPrefix+documentId);if(receipt!==null){if(receipt.length>512)throw new Error('N1_RECEIPT_BOUND');receipts.push(receipt);}}
-        return {id:state.id,attempts:state.attempts,failures:state.failures,readyFailed:state.readyFailed,intact:intact(),origin:state.origin,receipts};
+        return {id:state.id,attempts:state.attempts,failures:state.failures,readyFailed:state.readyFailed,intact:intact(),origin:state.origin,receipts:receipts(state,ids)};
+      },
+      recover(ids:string[]){
+        // Recovery is read-only and does not seal a different active page.
+        const state=current();return {id:state.id,origin:state.origin,receipts:receipts(state,ids)};
       },
     });
     globalThis.WebSocket=Wrapped;
@@ -281,31 +296,44 @@ export async function observeDocumentWebSockets(context: BrowserContext, onAttem
       report(retirementPrefix+receipt);
     });
   },{bindingName,stateName,retirementPrefix,readyPrefix,bootstrapKey});
-  return {
-    count:()=>attempts,
-    async flush() {
-      for(const page of context.pages())for(const frame of page.frames()) {
-        if(frame.isDetached()){onFailure('flush-detached');continue;}
-        try {
-          const state=await bounded(frame.evaluate(async ({name,ids})=>{
-            const value=(globalThis as unknown as Record<string,unknown>)[name] as {flush:(ids:string[])=>Promise<{id:string;attempts:number;failures:number;readyFailed:boolean;intact:boolean;origin:string;receipts:string[]}>}|undefined;
-            return value ? await value.flush(ids) : null;
-          },{name:stateName,ids:[...docs.keys()]}));
-          const d=state?docs.get(state.id):undefined;
-          if(!state || !d || d.frame!==frame || d.origin!==state.origin){onFailure('flush-state');continue;}
-          d.attempts=state.attempts;d.intact=d.intact&&state.intact;
-          d.flushed=state.failures===0 && state.attempts===d.acknowledged && (!state.readyFailed || d.registrations.has('console'));
-          if(!d.intact || !d.flushed)onFailure('flush-accounting');
-          for(const receipt of state.receipts)retire(receipt,{origin:state.origin});
-        }catch(cause){onFailure(cause instanceof NetworkGuardError?'flush-timeout':'flush-evaluation');}
-      }
-      return [...docs.values()].map(({frame: _frame,initial,origin: _origin,top: _top,registrations: _registrations,...d})=>{
-        if(initial && d.attempts===0)d.flushed=true;
-        if(!d.flushed || !d.intact)onFailure('unfinished-document');
-        return d;
-      });
-    },
+  const flushSelected=async(selected?:Page):Promise<DocumentRecord[]>=>{
+    const pages=selected?[selected]:context.pages(),live=new Map<Frame,{id:string;origin:string}>();
+    // First reconcile actual current documents, with zero receipt reads. This
+    // makes storage compatibility independent of init-script registration order.
+    for(const page of pages)for(const frame of page.frames()){
+      if(frame.isDetached()){onFailure('flush-detached');continue;}
+      try{
+        const state=await bounded(frame.evaluate(async name=>{
+          const value=(globalThis as unknown as Record<string,unknown>)[name] as {flush:(ids:string[])=>Promise<{id:string;attempts:number;failures:number;readyFailed:boolean;intact:boolean;origin:string;receipts:string[]}>}|undefined;
+          return value?await value.flush([]):null;
+        },stateName));
+        const d=state?docs.get(state.id):undefined;
+        if(!state||!d||d.frame!==frame||d.origin!==state.origin){onFailure('flush-state');continue;}
+        live.set(frame,{id:state.id,origin:state.origin});d.attempts=state.attempts;d.intact=d.intact&&state.intact;
+        d.flushed=state.failures===0&&state.attempts===d.acknowledged&&(!state.readyFailed||d.registrations.has('console'));
+        if(!d.intact||!d.flushed)onFailure('flush-accounting');
+      }catch(cause){onFailure(cause instanceof NetworkGuardError?'flush-timeout':'flush-evaluation');}
+    }
+    for(const [frame,current] of live){
+      const needed=[...docs.values()].filter(d=>(!selected||d.frame.page()===selected)&&!d.flushed&&d.id!==current.id&&d.origin===current.origin&&!(selected===undefined&&d.initial&&d.attempts===0)&&(d.frame.isDetached()||d.frame.page().isClosed()||live.has(d.frame)&&live.get(d.frame)!.id!==d.id)).map(d=>d.id);
+      if(needed.length===0)continue;
+      try{
+        const recovered=await bounded(frame.evaluate(({name,ids})=>{
+          const value=(globalThis as unknown as Record<string,unknown>)[name] as {recover:(ids:string[])=>{id:string;origin:string;receipts:string[]}}|undefined;
+          return value?value.recover(ids):null;
+        },{name:stateName,ids:needed}));
+        if(!recovered||recovered.id!==current.id||recovered.origin!==current.origin){onFailure('flush-state');continue;}
+        for(const receipt of recovered.receipts)retire(receipt,{origin:current.origin});
+      }catch(cause){onFailure(cause instanceof NetworkGuardError?'flush-timeout':'flush-evaluation');}
+    }
+    return [...docs.values()].filter(d=>!selected||d.frame.page()===selected).map(({frame:_frame,initial,origin:_origin,top:_top,registrations:_registrations,...d})=>{
+      // Preserve N1's narrow initial-zero exception only for whole-context
+      // teardown. An axe lease always needs actual page-specific flush proof.
+      if(!selected&&initial&&d.attempts===0)d.flushed=true;
+      if(!d.flushed||!d.intact)onFailure('unfinished-document');return d;
+    });
   };
+  return {count:()=>attempts,flush:()=>flushSelected(),flushPage:page=>flushSelected(page),documentIds:page=>[...docs.values()].filter(d=>d.frame.page()===page).map(d=>d.id)};
 }
 export async function createGuardedContext(browser: Browser, rules: FixtureRule[], options?: GuardOptions): Promise<GuardedContext> {
   return buildGuard(()=>browser.newContext({...options?.contextOptions,serviceWorkers:'block'}),rules,options);
@@ -321,16 +349,19 @@ async function buildGuard(create:()=>Promise<BrowserContext>, rules:FixtureRule[
   const identity:Identity={...owner,engine:options.engine,title:options.title,test:testKey(owner),worker:options.worker??0,retry:options.retry??0,pid:process.pid};
   const expectedErrors=[...options.expectedErrors??[]].sort();
   if(expectedErrors.some(c=>!(CODES as readonly string[]).includes(c)) || new Set(expectedErrors).size!==expectedErrors.length) throw new Error('N1_IDENTITY');
+  const managed=responseOwner(owner);
+  if(!managed&&options.axeScans!==undefined)throw new Error('N1_IDENTITY');
+  const pagePolicy=managed?{javascript:options.contextOptions?.javaScriptEnabled!==false,scans:options.axeScans??(owner.stage==='render'?renderAxeScans(owner):0)}:undefined;
   let plan:PlanRecord|null|undefined,registrationFailure=false;const bodies=new Map<string,Buffer>();
   if(options.responsePlan!==undefined){
-    if(!responseOwner(owner))throw new Error('N1_IDENTITY');
+    if(!managed)throw new Error('N1_IDENTITY');
     try{
       rules=structuredClone(rules);const input=structuredClone(options.responsePlan);
       plan=validateResponsePlan(rules,input);
       for(const asset of (input as ResponsePlan).assets)bodies.set(asset.id,Buffer.from(asset.body,'utf8'));
     }catch{plan=null;registrationFailure=true;}
   }
-  const start:Start={...manifest,kind:'start',id,identity,expectedErrors,...(plan!==undefined?{plan}:{})};
+  const start:Start={...manifest,kind:'start',id,identity,expectedErrors,...(plan!==undefined?{plan}:{}),...(pagePolicy?{pagePolicy}:{})};
   if(!validRecord(start))throw new Error('N1_IDENTITY');
   options.register?.(id);
   try { writeEvidence(root,`${id}.start.json`,start); } catch { throw new NetworkGuardError(['N1_WRITE']); }
@@ -340,17 +371,34 @@ async function buildGuard(create:()=>Promise<BrowserContext>, rules:FixtureRule[
   let context:BrowserContext|undefined;let observer:Observer|undefined;
   let setup=false,closing=false,closed=false,finished=false,finishing=false,validated=false;
   let finishPromise:Promise<void>|undefined;let documents:DocumentRecord[]=[];
+  const pages:PageLedger={pages:[],leases:[],requests:[]},pageMap=new Map<Page,PageRecord>(),requestPages=new Map<number,Page>();
+  const ownedClosing=new Set<Page>();let activeAxe:AxeRecord|undefined,creation:{lease:AxeRecord;pages:Page[]}|undefined;
   const response:ResponseLedger|null=plan?{phase:plan.phases[0],transitions:[],gates:plan.gates.map(id=>({id,released:false,expired:false,waits:0,settled:0})),responses:[],chargedBytes:0,fulfilledBytes:0}:null;
   type Waiter={settle:(failed:boolean)=>void};
   const waiters=new Map<string,Set<Waiter>>(plan?.gates.map(id=>[id,new Set<Waiter>()])??[]);
   const error=(code:string)=>{errors.add(code);};
-  function controlFailure(code:'N2A_GATE'|'N2A_PHASE'):never {
+  function controlFailure(code:'N2A_GATE'|'N2A_PHASE'|'N2A_AUX_OWNER'|'N2A_AUX_LIFECYCLE'):never {
     error(code);
     // A post-seal misuse cannot rewrite an exclusive end record. Persist a
     // bounded failure marker so even a caught late exception cannot turn green.
     if(finished)try{writeEvidence(root,'reporter-error.json',{...manifest,kind:'guard-late-error',id,code});}catch{error('N1_WRITE');}
     throw new NetworkGuardError([code]);
   }
+  const pageRecord=(page:Page):PageRecord|undefined=>{
+    if(!managed)return;
+    const existing=pageMap.get(page);if(existing)return existing;
+    if(pageMap.size>=128){error('N1_LIMIT');return;}
+    const record:PageRecord={id:randomUUID(),role:'unowned',lease:null,source:null,observed:false,finalized:false,closed:false,documents:[]};
+    pageMap.set(page,record);pages.pages.push(record);return record;
+  };
+  const attribute=(record:RequestRecord,page:Page|undefined)=>{
+    if(!managed)return;
+    if(!page){error('N2A_AUX_OWNER');return;}
+    const known=requestPages.get(record.seq);if(known&&known!==page)error('N2A_AUX_OWNER');else requestPages.set(record.seq,page);
+    const metadata=pageRecord(page);if(!metadata||!metadata.observed)error('N2A_AUX_OWNER');
+    if(metadata?.role!=='primary')error(metadata?.role==='axe-aggregation'?'N2A_AUX_NETWORK':'N2A_AUX_OWNER');
+  };
+  const requestPage=(request:Request):Page|undefined=>{try{return request.frame().page();}catch{return undefined;}};
   const waitGate=async(gate:string,row:ResponseRecord)=>{
     const state=response?.gates.find(g=>g.id===gate),set=waiters.get(gate);
     if(!state||!set)controlFailure('N2A_GATE');
@@ -381,8 +429,11 @@ async function buildGuard(create:()=>Promise<BrowserContext>, rules:FixtureRule[
     const key=createHash('sha256').update(url).digest('hex');const queue=sockets.get(key)??[];
     let record=queue.find(r=>!r[side]);if(!record){record=add('websocket');if(record){queue.push(record);sockets.set(key,queue);}}return record;
   };
-  const choose=(record:RequestRecord,url:string,method:string,resource:string)=>{
-    const rule=matchFixtureRule(rules,url,method,resource,record.kind,response?.phase);record.handled=true;
+  const choose=(record:RequestRecord,url:string,method:string,resource:string,page?:Page)=>{
+    const attributed=page??requestPages.get(record.seq),metadata=attributed?pageMap.get(attributed):undefined;
+    const disallowed=managed&&(attributed?metadata?.role!=='primary':record.kind==='http'||creation!==undefined);
+    const rule=disallowed?undefined:matchFixtureRule(rules,url,method,resource,record.kind,response?.phase);record.handled=true;
+    if(disallowed)error(metadata?.role==='axe-aggregation'?'N2A_AUX_NETWORK':'N2A_AUX_OWNER');
     if(!rule){record.action='unexpected';error('N1_UNEXPECTED_REQUEST');return;}
     record.rule=rule.id;record.action=rule.action??'fulfill';hits.set(rule.id,(hits.get(rule.id)??0)+1);return rule;
   };
@@ -390,7 +441,8 @@ async function buildGuard(create:()=>Promise<BrowserContext>, rules:FixtureRule[
   const onHttp=(route:Route)=>track(async()=>{
     const request=route.request();const record=http(request);
     if(!record){await route.abort('blockedbyclient');return;}
-    const rule=choose(record,request.url(),request.method(),request.resourceType());
+    const page=requestPage(request);attribute(record,page);
+    const rule=choose(record,request.url(),request.method(),request.resourceType(),page);
     const row:ResponseRecord|undefined=response?{seq:record.seq,phase:response.phase,rule:record.rule,asset:rule?.asset??null,gate:rule?.gate??null,waited:false,bytes:0,sha256:null,status:null,outcome:'failed'}:undefined;
     if(row)response!.responses.push(row);
     const send=async(body:Buffer|string,status:number,contentType:string,headers?:Record<string,string>)=>{
@@ -416,19 +468,87 @@ async function buildGuard(create:()=>Promise<BrowserContext>, rules:FixtureRule[
       try{await route.abort('blockedbyclient');}catch{error('N1_HANDLER');}
     }
   });
-  const onSocket=(ws:WebSocketRoute)=>track(async()=>{
+  const onSocket=(ws:WebSocketRoute,page?:Page)=>track(async()=>{
     const record=socket(ws.url(),'handled');if(!record){await ws.close({code:1008,reason:'fixture limit'});return;}
-    const rule=choose(record,ws.url(),'GET','websocket');
+    if(page)attribute(record,page);
+    const rule=choose(record,ws.url(),'GET','websocket',page);
     if(!rule || record.action==='deny')await ws.close({code:1008,reason:'fixture policy'});
     else ws.onMessage(()=>{try{ws.send(rule.body??'fixture');}catch{error('N1_HANDLER');}});
   });
+  const beginAxe=(source:Page):AxeLease=>{
+    const sourceRecord=pageMap.get(source);
+    if(!managed||!pagePolicy?.javascript||!setup||finishing||finished||activeAxe||!context||source.context()!==context||source.isClosed()||!sourceRecord?.observed||sourceRecord.role!=='primary'||pages.leases.length>=pagePolicy.scans)controlFailure('N2A_AUX_OWNER');
+    const record:AxeRecord={id:randomUUID(),owner:identity.test,context:id,source:sourceRecord.id,page:null,created:false,finished:false,scan:'pending'};
+    pages.leases.push(record);activeAxe=record;
+    let auxiliary:Page|undefined,newPageStarted=false,closePromise:Promise<void>|undefined,closeError:unknown;
+    const own=()=>{if(activeAxe!==record||record.finished||finishing||finished)controlFailure('N2A_AUX_OWNER');};
+    const closeAuxiliary=(page:Page,closeOptions?:Parameters<Page['close']>[0]):Promise<void>=>{
+      own();if(page!==auxiliary||!record.created||closePromise)controlFailure('N2A_AUX_OWNER');
+      closePromise=(async()=>{
+        const failures:unknown[]=[],metadata=pageMap.get(page);
+        if(!metadata||metadata.lease!==record.id||page.isClosed()){
+          error('N2A_AUX_LIFECYCLE');failures.push(new NetworkGuardError(['N2A_AUX_LIFECYCLE']));
+        }else{
+          try{
+            if(!observer)throw new NetworkGuardError(['N1_OBSERVER']);
+            const proof=await observer.flushPage(page);metadata.documents=observer.documentIds(page);
+            if(proof.length===0||proof.length!==metadata.documents.length||proof.some(d=>!d.flushed||!d.intact||d.attempts!==d.acknowledged))throw new NetworkGuardError(['N1_OBSERVER']);
+            metadata.finalized=true;
+          }catch(cause){error('N1_OBSERVER');error('N2A_AUX_LIFECYCLE');failures.push(cause);}
+          ownedClosing.add(page);
+          try{await bounded(page.close(closeOptions));if(!page.isClosed()||!metadata.closed)throw new Error('auxiliary close not observed');}
+          catch(cause){error('N1_CLOSE');error('N2A_AUX_LIFECYCLE');failures.push(cause);}
+          finally{ownedClosing.delete(page);}
+        }
+        if(failures.length)throw new AggregateError(failures,'N2A_AUX_CLEANUP');
+      })().catch(cause=>{closeError=cause;throw cause;});return closePromise;
+    };
+    return Object.freeze({
+      async newPage(){
+        own();if(newPageStarted||creation)controlFailure('N2A_AUX_OWNER');newPageStarted=true;
+        const pendingCreation={lease:record,pages:[] as Page[]};creation=pendingCreation;
+        try{
+          const page=await bounded(context!.newPage()),metadata=pageMap.get(page);
+          if(pendingCreation.pages.length!==1||pendingCreation.pages[0]!==page||!metadata?.observed||metadata.role!=='unowned'||page.context()!==context)controlFailure('N2A_AUX_OWNER');
+          auxiliary=page;record.page=metadata.id;record.created=true;metadata.role='axe-aggregation';metadata.lease=record.id;metadata.source=sourceRecord.id;
+          // Scope socket handling to this exact page. Before association, the
+          // context fallback rejects unclassified creation-time activity.
+          await page.routeWebSocket('**/*',socket=>onSocket(socket,page));return page;
+        }catch(cause){error('N2A_AUX_LIFECYCLE');throw cause;}
+        finally{if(creation===pendingCreation)creation=undefined;}
+      },
+      close:closeAuxiliary,
+      async complete(outcome:'passed'|'failed'){
+        own();if(outcome==='failed')error('N2A_AXE_FAILED');record.scan=outcome;
+        const failures:unknown[]=[];
+        try{
+          if(auxiliary&&!auxiliary.isClosed()&&!closePromise)try{await closeAuxiliary(auxiliary);}catch(cause){failures.push(cause);}
+          else if(closePromise)try{await closePromise;}catch(cause){failures.push(cause);}
+          if(closeError&&!failures.includes(closeError))failures.push(closeError);
+          const metadata=auxiliary?pageMap.get(auxiliary):undefined;
+          if(outcome==='passed'&&!record.created||record.created&&(!metadata?.closed||!metadata.finalized)){
+            error('N2A_AUX_LIFECYCLE');failures.push(new NetworkGuardError(['N2A_AUX_LIFECYCLE']));
+          }
+        }finally{record.finished=true;activeAxe=undefined;}
+        if(failures.length)throw new AggregateError(failures,'N2A_AXE_CLEANUP');
+      },
+    });
+  };
   const finish=async(outcome:'passed'|'failed'='passed')=>{
     if(finishPromise)return finishPromise;
     finishing=true;
     finishPromise=(async()=>{
       if(outcome!=='passed')error('N1_TEST_FAILED');
       if(response)for(const gate of response.gates)if(!gate.released){error('N2A_GATE');for(const item of [...waiters.get(gate.id)??[]])item.settle(true);}
+      if(managed&&(activeAxe||pages.leases.some(a=>!a.finished)||pages.leases.length!==pagePolicy!.scans))error('N2A_AUX_LIFECYCLE');
       if(observer && setup)documents=await observer.flush();
+      if(managed)for(const [page,metadata] of pageMap){
+        metadata.documents=observer?.documentIds(page)??[];
+        if(metadata.role==='primary')metadata.finalized=(!pagePolicy!.javascript||metadata.documents.length>0)&&metadata.documents.every(id=>documents.some(d=>d.id===id&&d.flushed&&d.intact&&d.attempts===d.acknowledged));
+        else if(metadata.role==='axe-aggregation'&&(!metadata.finalized||!metadata.closed))error('N2A_AUX_LIFECYCLE');
+        else if(metadata.role==='unowned')error('N2A_AUX_OWNER');
+        if(!metadata.finalized&&metadata.role==='primary')error('N1_OBSERVER');
+      }
       try{await bounded(Promise.all([...pending]).then(()=>{}));}catch{error('N1_HANDLER');}
       closing=true;
       if(context){try{await bounded(context.close());closed=true;}catch{error('N1_CLOSE');try{await bounded(context.close());closed=true;}catch{error('N1_CLOSE');}}}else closed=true;
@@ -436,7 +556,8 @@ async function buildGuard(create:()=>Promise<BrowserContext>, rules:FixtureRule[
       for(const r of requests){if(!r.observed)error('N1_OBSERVER');if(!r.handled)error('N1_BYPASS');}
       for(const rule of rules)if(rule.count!==undefined && (hits.get(rule.id)??0)!==rule.count)error('N1_COUNT');
       if(response)response.responses.sort((a,b)=>a.seq-b.seq);
-      const end:End={...start,kind:'end',setup,closed,outcome,errors:[...errors].sort(),rules:rules.map(r=>({id:r.id,action:r.action??'fulfill',count:r.count??null,hits:hits.get(r.id)??0})),requests,documents,...(plan!==undefined?{response}:{})};
+      if(managed)pages.requests=requests.map(r=>{const page=requestPages.get(r.seq),metadata=page?pageMap.get(page):undefined;if(!metadata)error('N2A_AUX_OWNER');return {seq:r.seq,page:metadata?.id??null};});
+      const end:End={...start,kind:'end',setup,closed,outcome,errors:[...errors].sort(),rules:rules.map(r=>({id:r.id,action:r.action??'fulfill',count:r.count??null,hits:hits.get(r.id)??0})),requests,documents,...(plan!==undefined?{response}:{}),...(managed?{pages}:{})};
       try{writeEvidence(root,`${id}.end.json`,end);}catch{error('N1_WRITE');}
       finished=true;if(errors.size)throw new NetworkGuardError(errors);
     })();return finishPromise;
@@ -446,11 +567,18 @@ async function buildGuard(create:()=>Promise<BrowserContext>, rules:FixtureRule[
     validateFixtureRules(rules,plan??undefined);validated=true;validateContextOptions(options.contextOptions??{});
     rules=structuredClone(rules);context=await create();
     if(context.pages().length)throw new NetworkGuardError(['N1_SETUP']);
-    context.on('request',request=>{const r=http(request);if(r)r.observed=true;});
+    context.on('request',request=>{const r=http(request);if(r){r.observed=true;attribute(r,requestPage(request));}});
     context.on('serviceworker',()=>error('N1_WORKER'));
-    context.on('page',page=>{page.on('close',()=>{if(!closing)error('N1_EARLY_CLOSE');});page.on('worker',()=>error('N1_WORKER'));});
-    await context.route('**/*',onHttp);await context.routeWebSocket('**/*',onSocket);
-    if(options.contextOptions?.javaScriptEnabled!==false)observer=await observeDocumentWebSockets(context,url=>{const r=socket(url,'observed');if(r)r.observed=true;},reason=>{
+    context.on('page',page=>{
+      const metadata=pageRecord(page);
+      if(metadata){if(metadata.observed)error('N2A_AUX_OWNER');metadata.observed=true;metadata.role=creation?'unowned':'primary';if(creation)creation.pages.push(page);}
+      page.on('close',()=>{
+        if(metadata)metadata.closed=true;
+        if(!closing&&!(metadata?.role==='axe-aggregation'&&metadata.finalized&&ownedClosing.has(page))){error('N1_EARLY_CLOSE');if(metadata?.role==='axe-aggregation')error('N2A_AUX_LIFECYCLE');}
+      });page.on('worker',()=>error('N1_WORKER'));
+    });
+    await context.route('**/*',onHttp);await context.routeWebSocket('**/*',socket=>onSocket(socket));
+    if(options.contextOptions?.javaScriptEnabled!==false)observer=await observeDocumentWebSockets(context,(url,page)=>{const r=socket(url,'observed');if(r){r.observed=true;attribute(r,page);}},reason=>{
       error('N1_OBSERVER');if(!observerFailures.has(reason)){observerFailures.add(reason);console.log(`::notice title=N1 observer diagnostic::${JSON.stringify({context:id,reason})}`);}
     });
     setup=true;
@@ -459,5 +587,5 @@ async function buildGuard(create:()=>Promise<BrowserContext>, rules:FixtureRule[
     if(cause instanceof NetworkGuardError)for(const code of cause.codes)error(code);else error('N1_SETUP');
     await finish();throw new NetworkGuardError(['N1_SETUP']);
   }
-  return {context:context!,id,finish,transition,releaseGate,pendingGate:gate=>waiters.get(gate)?.size??0,get phase(){return response?.phase??null;},get finished(){return finished;}};
+  return {context:context!,id,finish,transition,releaseGate,beginAxe,pendingGate:gate=>waiters.get(gate)?.size??0,get phase(){return response?.phase??null;},get finished(){return finished;}};
 }

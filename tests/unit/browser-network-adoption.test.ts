@@ -642,3 +642,85 @@ test('N2A ordinary render evidence cannot omit its registered response plan',()=
   delete start.plan;delete end.plan;delete end.response;
   expect(validateResponseEvidence(start,end),'N2A_MISSING_RENDER_PLAN_FALSE_GREEN').toBe(false);
 });
+
+// Bounded call-site inventory for the five ordinary consumers. This catches
+// direct calls, method aliases, destructuring and representative constant
+// element access. It is not a universal malicious-reflection sandbox.
+function consumerSourceIssues(file:string,text:string):string[]{
+  if(Buffer.byteLength(text)>131072)throw new Error('N2A_SOURCE_BOUND');
+  const source=ts.createSourceFile(file,text,ts.ScriptTarget.ESNext,true,ts.ScriptKind.TS);
+  const constants=new Map<string,ts.Expression>(),issues=new Set<string>();let visited=0,guardedTest=false;
+  const forbidden=new Set(['newContext','newPage','launch','launchPersistentContext','connect','connectOverCDP','route','routeWebSocket','routeFromHAR','unroute','unrouteAll','continue','fallback','fetch','connectToServer','setLegacyMode','makeGuard']);
+  const imports:Readonly<Record<string,readonly string[]>>={
+    '../helpers/isolated-test.ts':['test','expect','FIXTURE_ORIGIN'],
+    '../helpers/guarded-axe.ts':['guardedAxe'],
+  };
+  function literal(node:ts.Node|undefined,depth=0):string|undefined{
+    if(!node||depth>8)return undefined;
+    if(ts.isStringLiteral(node)||ts.isNoSubstitutionTemplateLiteral(node))return node.text;
+    if(ts.isParenthesizedExpression(node)||ts.isAsExpression(node))return literal(node.expression,depth+1);
+    if(ts.isIdentifier(node))return literal(constants.get(node.text),depth+1);
+    if(ts.isBinaryExpression(node)&&node.operatorToken.kind===ts.SyntaxKind.PlusToken){const a=literal(node.left,depth+1),b=literal(node.right,depth+1);if(a!==undefined&&b!==undefined&&a.length+b.length<=64)return a+b;}
+    return undefined;
+  }
+  const add=(code:string)=>{if(issues.size>=64)throw new Error('N2A_SOURCE_DIAGNOSTIC_BOUND');issues.add(code);};
+  function visit(node:ts.Node):void{
+    if(++visited>20000)throw new Error('N2A_SOURCE_BOUND');
+    if(ts.isVariableDeclaration(node)&&ts.isIdentifier(node.name)&&node.initializer&&ts.isVariableDeclarationList(node.parent)&&(node.parent.flags&ts.NodeFlags.Const))constants.set(node.name.text,node.initializer);
+    if(ts.isImportDeclaration(node)){
+      const name=ts.isStringLiteral(node.moduleSpecifier)?node.moduleSpecifier.text:'';
+      const clause=node.importClause,binding=clause?.namedBindings;
+      const typeOnly=clause?.isTypeOnly||!!binding&&ts.isNamedImports(binding)&&binding.elements.length>0&&binding.elements.every(e=>e.isTypeOnly);
+      if(typeOnly){if(name!=='@playwright/test')add('type-import');}
+      else if(!imports[name]||!clause||clause.name||!binding||!ts.isNamedImports(binding))add('import');
+      else for(const e of binding.elements){const original=(e.propertyName??e.name).text;if(!imports[name].includes(original))add('import');if(name==='../helpers/isolated-test.ts'&&original==='test')guardedTest=true;}
+    }
+    if(ts.isImportEqualsDeclaration(node)||ts.isExportDeclaration(node)&&node.moduleSpecifier)add('import');
+    if(ts.isPropertyAccessExpression(node)&&forbidden.has(node.name.text))add('member:'+node.name.text);
+    if(ts.isElementAccessExpression(node)){const name=literal(node.argumentExpression);if(name&&forbidden.has(name))add('member:'+name);}
+    if(ts.isBindingElement(node)&&ts.isObjectBindingPattern(node.parent)){const property=node.propertyName??node.name;const name=ts.isComputedPropertyName(property)?literal(property.expression):ts.isIdentifier(property)||ts.isStringLiteral(property)?property.text:undefined;if(name&&forbidden.has(name))add('member:'+name);}
+    if(ts.isCallExpression(node)&&node.expression.kind===ts.SyntaxKind.ImportKeyword)add('dynamic-import');
+    if((ts.isCallExpression(node)||ts.isNewExpression(node))&&ts.isIdentifier(node.expression)&&['require','eval','Function','fetch','AxeBuilder'].includes(node.expression.text))add('call:'+node.expression.text);
+    ts.forEachChild(node,visit);
+  }
+  visit(source);if(!guardedTest)add('missing-guarded-test');return [...issues].sort();
+}
+const guardedSource="import {test,expect} from '../helpers/isolated-test.ts';\n";
+test('N2A source guard accepts ordinary fixtures and type-only browser references',()=>{
+  expect(consumerSourceIssues('control.ts',guardedSource+"import type {Page} from '@playwright/test';import {guardedAxe as scan} from '../helpers/guarded-axe.ts';test('control',async({page,network})=>{await page.goto('/');await scan(network,page).analyze();expect(page.url()).toContain('/');});")).toEqual([]);
+});
+for(const [name,body,code] of [
+  ['raw factory','browser.newContext()','member:newContext'],['page factory','context.newPage()','member:newPage'],
+  ['HTTP override',"page.route('**/*',handler)",'member:route'],['WebSocket override',"context.routeWebSocket('**/*',handler)",'member:routeWebSocket'],
+  ['HAR',"page.routeFromHAR('record.har')",'member:routeFromHAR'],['continue','route.continue()','member:continue'],['request fetch','route.fetch()','member:fetch'],['server connection','socket.connectToServer()','member:connectToServer'],
+  ['method alias','const alias=page.route;alias(pattern,handler)','member:route'],['receiver alias','const alias=browser;alias.newContext()','member:newContext'],
+  ['element access',"page['route'](pattern,handler)",'member:route'],['constant element',"const name='rou'+'te';page[name](pattern,handler)",'member:route'],
+  ['destructured alias','const {newContext:create}=browser;create()','member:newContext'],['computed destructuring',"const {['route']:install}=page;install(pattern,handler)",'member:route'],
+  ['direct axe',"import Scan from '@axe-core/playwright';new Scan({page})",'import'],['raw test import',"import {test as raw} from '@playwright/test';",'import'],
+  ['raw helper import',"import {createGuardedContext} from '../helpers/browser-network.ts';",'import'],['namespace import',"import * as raw from '@playwright/test';",'import'],
+  ['dynamic module',"import('@playwright/test')",'dynamic-import'],['require module',"require('@playwright/test')",'call:require'],['legacy axe','analyzer.setLegacyMode(true)','member:setLegacyMode'],
+] as const)test(`N2A source guard rejects ${name}`,()=>expect(consumerSourceIssues('control.ts',guardedSource+body)).toContain(code));
+test('N2A source guard has a bounded input and requires the guarded runner',()=>{
+  expect(()=>consumerSourceIssues('control.ts','x'.repeat(131073))).toThrow('N2A_SOURCE_BOUND');
+  expect(consumerSourceIssues('control.ts','const harmless=1;')).toContain('missing-guarded-test');
+});
+for(const file of TARGET_FILES.filter(file=>file!==N1_FILE))test(`N2A ordinary consumer uses only guarded entry points: ${file}`,async()=>{
+  const text=await readAssetText(root,file,131072);
+  expect(consumerSourceIssues(file,text),`N2A_UNGUARDED_CONSUMER ${file}`).toEqual([]);
+});
+test('N2A ordinary page policies retain their required JavaScript mode',()=>{
+  const disabled=makeOwner('render','tests/render/responsive.spec.ts',['home core content survives theme JavaScript disabled'],'390-light');
+  expect(validPagePolicy({javascript:false,scans:0},disabled)).toBe(true);
+  expect(validPagePolicy({javascript:true,scans:0},disabled),'N2A_JAVASCRIPT_MODE_FALSE_GREEN').toBe(false);
+  const enabled=makeOwner('render','tests/render/interactions.spec.ts',['theme persists normally and TOC moves keyboard focus'],'390-light');
+  expect(validPagePolicy({javascript:true,scans:0},enabled)).toBe(true);
+  expect(validPagePolicy({javascript:false,scans:0},enabled)).toBe(false);
+});
+test('N2A successful ordinary render evidence requires its actual primary page',()=>{
+  const {start,end}=pageFixture();const owner=makeOwner('render','tests/render/responsive.spec.ts',['home shared presentation fits with native-wrapper fixtures'],'390-light');
+  start.identity={...start.identity,...owner,title:owner.titlePath[0],test:testKey(owner)};end.identity={...start.identity};start.pagePolicy={javascript:true,scans:0};end.pagePolicy={...start.pagePolicy};
+  end.pages!.leases=[];end.pages!.pages.splice(1);end.documents.splice(1);
+  expect(validatePageEvidence(start,end)).toBe(true);
+  end.pages!.pages=[];end.pages!.requests=[];end.documents=[];end.requests=[];
+  expect(validatePageEvidence(start,end),'N2A_MISSING_PRIMARY_FALSE_GREEN').toBe(false);
+});

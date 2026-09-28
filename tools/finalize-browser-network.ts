@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { ADOPTED_FILES, TARGET_FILES, N1_FILE, UNIT_FILE, ADOPTION_UNIT_FILE, UNIT_CONSUMER, CASES, PROJECTS, OWNER_FIELDS, testKey, engineFor, validOwner, makeOwner, expectedOwners, displayTitle, normalRenderFile, isControlOwner, type Owner } from '../tests/helpers/browser-network-scope.ts';
+import { ADOPTED_FILES, TARGET_FILES, N1_FILE, UNIT_FILE, ADOPTION_UNIT_FILE, UNIT_CONSUMER, CASES, PROJECTS, OWNER_FIELDS, testKey, engineFor, validOwner, makeOwner, expectedOwners, displayTitle, normalRenderFile, isControlOwner, renderContextModes, type Owner } from '../tests/helpers/browser-network-scope.ts';
 export { UNIT_CONSUMER, CASES, PROJECTS, testKey, engineFor };
 // Data-only: the scope dependency has no browser, filesystem, process or network I/O.
 export const POLICY='n2a-v1';export const SCHEMA=2;
@@ -68,7 +68,7 @@ export function renderAxeScans(owner:Owner):number {
   return 0;
 }
 export function validPagePolicy(v:unknown,owner:Owner):v is PagePolicy {
-  return object(v)&&keys(v,['javascript','scans'])&&typeof v.javascript==='boolean'&&integer(v.scans,16)&&(v.scans===0||v.javascript)&&responseOwner(owner)&&(owner.stage==='unit'||v.scans===renderAxeScans(owner));
+  return object(v)&&keys(v,['javascript','scans'])&&typeof v.javascript==='boolean'&&integer(v.scans,16)&&(v.scans===0||v.javascript)&&responseOwner(owner)&&(owner.stage==='unit'||v.scans===renderAxeScans(owner)&&renderContextModes(owner).includes(v.javascript));
 }
 function validPageLedger(v:unknown):v is PageLedger {
   if(!object(v)||!keys(v,['pages','leases','requests'])||!Array.isArray(v.pages)||v.pages.length>128||!Array.isArray(v.leases)||v.leases.length>16||!Array.isArray(v.requests)||v.requests.length>128)return false;
@@ -79,9 +79,11 @@ export function validatePageEvidence(start:Start,end:End):boolean {
   if(!Object.hasOwn(start,'pagePolicy'))return !Object.hasOwn(end,'pagePolicy')&&!Object.hasOwn(end,'pages')&&!(start.identity.stage==='render'&&responseOwner(start.identity));
   const policy=start.pagePolicy,l=end.pages;
   if(!validPagePolicy(policy,start.identity)||!same(policy,end.pagePolicy)||!validPageLedger(l))return false;
-  if(l.pages.filter(p=>p.role==='primary').length>1)return false;
+  const primaryCount=l.pages.filter(p=>p.role==='primary').length;
+  if(primaryCount>1)return false;
   const explained=(codes:string[])=>codes.some(c=>end.errors.includes(c));
   const interrupted=explained(['N1_SETUP','N1_OPTIONS','N1_POLICY','N1_TEST_FAILED','N2A_AXE_FAILED','N2A_AUX_OWNER','N2A_AUX_LIFECYCLE']);
+  if(start.identity.stage==='render'&&!interrupted&&primaryCount!==1)return false;
   if(l.leases.length!==policy.scans&&!interrupted)return false;
   if(new Set(l.pages.map(p=>p.id)).size!==l.pages.length||new Set(l.leases.map(p=>p.id)).size!==l.leases.length)return false;
   const pages=new Map(l.pages.map(p=>[p.id,p])),leases=new Map(l.leases.map(a=>[a.id,a]));
@@ -133,7 +135,7 @@ export function validPlanRecord(v:unknown):v is PlanRecord {
     if(!object(r)||!keys(r,['id','phase','gate','asset','origin','match','resource','action','count','bytes','sha256','status','abort'])||!label(r.id)||(r.phase!==null&&!phases.includes(String(r.phase)))||(r.gate!==null&&!gates.includes(String(r.gate)))||!['fixture','mermaid'].includes(String(r.origin))||!digest(r.match)||!['document','stylesheet','image','media','font','script','texttrack','xhr','fetch','eventsource','manifest','other'].includes(String(r.resource))||!['fulfill','deny'].includes(String(r.action))||(r.count!==null&&(!integer(r.count,32)||r.count===0))||!integer(r.bytes,RESPONSE_LIMITS.module))return false;
     const asset=r.asset===null?undefined:assets.find(a=>a.id===r.asset);
     if(r.asset!==null&&!asset)return false;
-    if(r.action==='deny')return r.count!==null&&r.asset===null&&r.bytes===0&&r.sha256===null&&r.status===null&&r.gate===null&&['failed','blockedbyclient'].includes(r.abort as string);
+    if(r.action==='deny')return r.count!==null&&r.asset===null&&r.bytes===0&&r.sha256===null&&r.status===null&&r.gate===null&&['failed','blockedbyclient'].includes(String(r.abort));
     if(!digest(r.sha256)||!integer(r.status,599)||r.status<200||(r.status>=300&&r.status<400)||r.abort!==null)return false;
     if(asset&&(r.bytes!==asset.bytes||r.sha256!==asset.sha256))return false;
     if(r.origin==='mermaid')return asset?.kind==='mermaid'&&r.resource==='script'&&r.status===200;
@@ -311,6 +313,10 @@ export function validateSnapshot(raw:unknown,expected?:Stamp):string[] {
   for(const entry of resultEntries) {
     if(!validEntry(entry)||!object(entry)||entry.status!=='passed'||entry.expectedStatus!=='passed'||entry.retry!==0||!integer(entry.worker)||!Array.isArray(entry.contexts)||entry.contexts.length<1||entry.contexts.length>16){fail('N1_RESULTS');continue;}
     reported.set(entry.key,entry as unknown as ResultEntry);
+    if(entry.file!==N1_FILE){
+      const modes=renderContextModes(entry);
+      if(entry.contexts.length!==modes.length||entry.contexts.some((id,index)=>typeof id!=='string'||ends.get(id)?.pagePolicy?.javascript!==modes[index]))fail('N2A_CONTEXT_POPULATION');
+    }
     for(const id of entry.contexts) {
       if(typeof id!=='string'||!UUID.test(id)||referenced.has(id)){fail('N1_DUPLICATE');continue;}
       referenced.add(id);const end=ends.get(id);
@@ -392,7 +398,10 @@ export function finalizeEvidence(root:string,output:string,expected:Stamp,unitFi
   const planned=ends.filter(e=>e.plan&&e.response),owned=ends.filter(e=>e.pagePolicy&&e.pages);
   const responseCapacity={plannedContexts:planned.length,maxDistinctBytes:Math.max(0,...planned.map(e=>e.plan!.distinctBytes)),maxChargedBytes:Math.max(0,...planned.map(e=>e.response!.chargedBytes)),maxFulfilledBytes:Math.max(0,...planned.map(e=>e.response!.fulfilledBytes)),maxRules:Math.max(0,...planned.map(e=>e.rules.length)),responses:planned.reduce((n,e)=>n+e.response!.responses.length,0),transitions:planned.reduce((n,e)=>n+e.response!.transitions.length,0),gates:planned.reduce((n,e)=>n+e.response!.gates.length,0)};
   const pageCapacity={contexts:owned.length,pages:owned.reduce((n,e)=>n+e.pages!.pages.length,0),leases:owned.reduce((n,e)=>n+e.pages!.leases.length,0),auxiliaryPages:owned.reduce((n,e)=>n+e.pages!.pages.filter(p=>p.role==='axe-aggregation').length,0),maxPages:Math.max(0,...owned.map(e=>e.pages!.pages.length)),maxDocuments:Math.max(0,...owned.map(e=>e.documents.length))};
-  const summary={...expected,kind:'summary',accepted:errors.length===0,errors,readErrors:[...new Set(snapshot.readErrors)],stagedBytes:total,stagedFiles:files.size,contexts:array(snapshot.records).filter(v=>object(v)&&v.kind==='end').length,discovered:object(snapshot.discovery)?array(snapshot.discovery.tests).length:0,indexPages:[...files.keys()].filter(n=>/^(discovery|results)-[0-9]{4}\.json$/.test(n)).length,adoptedFiles:ADOPTED_FILES,n2aScopeComplete:ADOPTED_FILES.length===TARGET_FILES.length,responseCapacity,pageCapacity,nonAdopted:'Only the explicit adoptedFiles and recorded owners in the two approved unit files have browser-layer attribution; other browsers remain N0-only.'};
+  const discovered=object(snapshot.discovery)?array(snapshot.discovery.tests).filter(validEntry):[];
+  const populations=ADOPTED_FILES.map(file=>({file,owners:discovered.filter(e=>e.file===file).length,contexts:ends.filter(e=>e.identity.stage==='render'&&e.identity.file===file).length,auxiliaryPages:owned.filter(e=>e.identity.stage==='render'&&e.identity.file===file).reduce((n,e)=>n+e.pages!.pages.filter(p=>p.role==='axe-aggregation').length,0)}));
+  const moduleCatalog=planned.find(e=>e.identity.stage==='render'&&e.identity.file==='tests/render/publication-acceptance.spec.ts'&&e.identity.title==='actual pinned Mermaid renders and preserves source when blocked')?.plan?.assets.filter(a=>a.kind==='mermaid')??[];
+  const summary={...expected,kind:'summary',accepted:errors.length===0,errors,readErrors:[...new Set(snapshot.readErrors)],stagedBytes:total,stagedFiles:files.size,contexts:array(snapshot.records).filter(v=>object(v)&&v.kind==='end').length,discovered:discovered.length,indexPages:[...files.keys()].filter(n=>/^(discovery|results)-[0-9]{4}\.json$/.test(n)).length,adoptedFiles:ADOPTED_FILES,n2aScopeComplete:ADOPTED_FILES.length===TARGET_FILES.length,responseCapacity,pageCapacity,populations,moduleCatalog,nonAdopted:'Only the explicit adoptedFiles and recorded owners in the two approved unit files have browser-layer attribution; other browsers remain N0-only.'};
   fs.mkdirSync(path.dirname(output),{recursive:true});fs.mkdirSync(output,{mode:0o700});
   // Preserve complete valid raw pages/indexes as diagnostics, even on rejection.
   // Only summary.accepted establishes a reconciled set. No invalid file is fixed.

@@ -3,9 +3,9 @@ import { chromium, firefox, webkit, type Browser, type BrowserContextOptions, ty
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';import path from 'node:path';import os from 'node:os';import { randomUUID } from 'node:crypto';
-import { createGuardedContext, FIXTURE_ORIGIN, observeDocumentWebSockets, validateFixtureRules, validateContextOptions, matchFixtureRule, type FixtureRule, type GuardOptions } from '../helpers/browser-network.ts';
-import { validateSnapshot, initializeEvidence, loadManifest, writeEvidence, writeIndexedEvidence, stageRoot, SCHEMA, POLICY, PROJECTS, CASES, UNIT_CONSUMER, testKey, engineFor, type Manifest, type Start, type End, type TestEntry, type ResultEntry } from '../../tools/finalize-browser-network.ts';
-import { makeOwner, N1_FILE, UNIT_FILE } from '../helpers/browser-network-scope.ts';
+import { createGuardedContext, FIXTURE_ORIGIN, observeDocumentWebSockets, validateFixtureRules, validateResponsePlan, validateContextOptions, matchFixtureRule, type FixtureRule, type GuardOptions } from '../helpers/browser-network.ts';
+import { validateSnapshot, initializeEvidence, loadManifest, writeEvidence, writeIndexedEvidence, stageRoot, SCHEMA, POLICY, UNIT_CONSUMER, testKey, engineFor, renderAxeScans, type Manifest, type Start, type End, type TestEntry, type ResultEntry } from '../../tools/finalize-browser-network.ts';
+import { makeOwner, N1_FILE, UNIT_FILE, expectedOwners, renderContextModes } from '../helpers/browser-network-scope.ts';
 
 const localRule:FixtureRule={id:'home',path:'/',method:'GET',resource:'document',body:'<h1>protected positive control</h1>'};
 const options=(title:string,expectedErrors:string[]=[]):GuardOptions=>({...makeOwner('unit',UNIT_FILE,[title],'vitest-chromium'),title,engine:'chromium',expectedErrors});
@@ -224,7 +224,7 @@ function publicAdapter<T extends object>(target:T,overrides:Partial<T>):T {
 }
 for(const mutation of ['none','missing','malformed','accounting','cross-origin'] as const) {
   test(`N1 durable receipt control with ${mutation} evidence`,async()=>{
-    const browser=await chromium.launch({headless:true}),context=await browser.newContext({serviceWorkers:'block'});const reasons:string[]=[];
+    const browser=await engine.launch({headless:true}),context=await browser.newContext({serviceWorkers:'block'});const reasons:string[]=[];
     try {
       await context.route('**/*',r=>r.fulfill({contentType:'text/html',body:'<!doctype html><h1>receipt control</h1>'}));
       // Deliberately suppress only the observer's public console subscription.
@@ -291,23 +291,44 @@ test('N1 evidence write failure throws after closing the real context',async()=>
   }finally{process.env.FCD_ISOLATION_EVIDENCE=previous;await browser.close();fs.rmSync(base,{recursive:true,force:true});}
 });
 
+// Synthetic schema migration only. The first N1 owner and every inherited
+// mutation/assertion remain unchanged; ordinary owners get complete ledgers.
+function modelEnd(start:Start,javascript:boolean|undefined):End {
+  const end:End={...start,kind:'end',setup:true,closed:true,outcome:'passed',errors:[],rules:[],requests:[],documents:[]};
+  if(javascript===undefined)return end;
+  const plan=validateResponsePlan([{...localRule,count:1}],{assets:[],phases:['ready'],transitions:[],gates:[]});
+  start.plan=plan;end.plan=plan;start.pagePolicy={javascript,scans:renderAxeScans(start.identity)};end.pagePolicy={...start.pagePolicy};
+  const primary=randomUUID(),documents=javascript?[randomUUID()]:[];
+  end.rules=[{id:'home',action:'fulfill',count:1,hits:1}];end.requests=[{seq:1,kind:'http',rule:'home',action:'fulfill',observed:true,handled:true}];
+  end.pages={pages:[{id:primary,role:'primary',lease:null,source:null,observed:true,finalized:true,closed:true,documents}],leases:[],requests:[{seq:1,page:primary}]};
+  for(let i=0;i<start.pagePolicy.scans;i++){
+    const id=randomUUID(),lease=randomUUID(),document=randomUUID();
+    end.pages.pages.push({id,role:'axe-aggregation',lease,source:primary,observed:true,finalized:true,closed:true,documents:[document]});
+    end.pages.leases.push({id:lease,owner:start.identity.test,context:start.id,source:primary,page:id,created:true,finished:true,scan:'passed'});
+  }
+  end.documents=end.pages.pages.flatMap(p=>p.documents).map(id=>({id,attempts:0,acknowledged:0,intact:true,flushed:true}));
+  const rule=plan.rules[0];end.response={phase:'ready',transitions:[],gates:[],responses:[{seq:1,phase:'ready',rule:'home',asset:null,gate:null,waited:false,bytes:rule.bytes,sha256:rule.sha256,status:200,outcome:'fulfilled'}],chargedBytes:rule.bytes,fulfilledBytes:rule.bytes};
+  return end;
+}
 function sampleEvidence() {
   const manifest:Manifest={schema:SCHEMA,policy:POLICY,kind:'manifest',source:'a'.repeat(40),run:'17',attempt:'1'};
   const records:(Start|End)[]=[];const entries:TestEntry[]=[];const results:ResultEntry[]=[];
   const specs:{file:string;title:string;tests:{projectName:string;expectedStatus:string;status:string;annotations:{type:string;description:string}[];results:{status:string;retry:number;workerIndex:number}[]}[]}[]=[];
-  for(const project of PROJECTS)for(const title of CASES) {
-    const owner=makeOwner('render',N1_FILE,[title],project),id=randomUUID(),key=testKey(owner),engine=engineFor(project);
-    const start:Start={...manifest,kind:'start',id,identity:{...owner,engine,title,test:key,worker:1,retry:0,pid:10},expectedErrors:[]};
-    records.push(start,{...start,kind:'end',setup:true,closed:true,outcome:'passed',errors:[],rules:[],requests:[],documents:[]});
-    entries.push({...owner,key,engine,title});results.push({...owner,key,engine,title,status:'passed',expectedStatus:'passed',retry:0,worker:1,contexts:[id]});
-    specs.push({file:N1_FILE,title,tests:[{projectName:project,expectedStatus:'passed',status:'expected',annotations:[{type:'n1-context',description:id}],results:[{status:'passed',retry:0,workerIndex:1}]}]});
+  for(const owner of expectedOwners()) {
+    const project=owner.project,title=owner.titlePath[0],key=testKey(owner),engine=engineFor(project),contexts:string[]=[];
+    for(const javascript of owner.file===N1_FILE?[undefined]:renderContextModes(owner)){
+      const id=randomUUID(),start:Start={...manifest,kind:'start',id,identity:{...owner,engine,title,test:key,worker:1,retry:0,pid:10},expectedErrors:[]};
+      const end=modelEnd(start,javascript);records.push(start,end);contexts.push(id);
+    }
+    entries.push({...owner,key,engine,title});results.push({...owner,key,engine,title,status:'passed',expectedStatus:'passed',retry:0,worker:1,contexts});
+    specs.push({file:owner.file,title,tests:[{projectName:project,expectedStatus:'passed',status:'expected',annotations:contexts.map(description=>({type:'n1-context',description})),results:[{status:'passed',retry:0,workerIndex:1}]}]});
   }
   const unitOwner=makeOwner('unit',UNIT_FILE,[UNIT_CONSUMER],'vitest-chromium');
   const unitStart:Start={...manifest,kind:'start',id:randomUUID(),identity:{...unitOwner,engine:'chromium',title:UNIT_CONSUMER,test:testKey(unitOwner),worker:0,retry:0,pid:11},expectedErrors:[]};
   records.push(unitStart,{...unitStart,kind:'end',setup:true,closed:true,outcome:'passed',errors:[],rules:[{id:'home',action:'fulfill',count:1,hits:1}],requests:[{seq:1,kind:'http',rule:'home',action:'fulfill',observed:true,handled:true}],documents:[]});
   // Synthetic normal-report rows model the unchanged N0-only population. They
   // are not new repository cases or a claim to execute the browser matrix here.
-  const unadopted=Array.from({length:1434},(_,i)=>({file:'tests/render/unadopted-control.spec.ts',title:`unadopted ${i}`,tests:[{projectName:'390-light',expectedStatus:'passed',status:'expected',annotations:[] as {type:string;description:string}[],results:[{status:'passed',retry:0,workerIndex:1}]}]}));
+  const unadopted=Array.from({length:1674-specs.length},(_,i)=>({file:'tests/render/unadopted-control.spec.ts',title:`unadopted ${i}`,tests:[{projectName:'390-light',expectedStatus:'passed',status:'expected',annotations:[] as {type:string;description:string}[],results:[{status:'passed',retry:0,workerIndex:1}]}]}));
   return {manifest,records,discovery:{...manifest,kind:'discovery' as const,tests:entries},results:{...manifest,kind:'results' as const,status:'passed',errors:0,tests:results},browser:{stats:{expected:1674,unexpected:0,skipped:0,flaky:0},errors:[],suites:[{specs},{specs:unadopted}]},unit:{numFailedTests:0,numPendingTests:0,numPassedTests:297,testResults:[{name:'/fixture/tests/unit/browser-network.test.ts',assertionResults:[{fullName:UNIT_CONSUMER,title:UNIT_CONSUMER,ancestorTitles:[] as string[],status:'passed'}]}]}};
 }
 const firstEnd=(s:ReturnType<typeof sampleEvidence>)=>s.records.find((r):r is End=>r.kind==='end')!;
@@ -413,7 +434,7 @@ for(const engine of [chromium,firefox,webkit]) {
         exposeBinding:async(name,callback)=>context.exposeBinding(name,(source,...args)=>{
           const value:unknown=args[0];if(value&&typeof value==='object'&&(value as Record<string,unknown>).kind==='ready')return;
           return callback(source,...args);
-        }),
+        },
         on:((event:string,listener:(message:ConsoleMessage)=>void)=>{
           expect(event).toBe('console');return context.on('console',message=>{if(!dropConsole||!message.text().startsWith('FCD_N1_READY_'))listener(message);});
         }) as BrowserContext['on'],

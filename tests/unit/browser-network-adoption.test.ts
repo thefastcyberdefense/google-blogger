@@ -607,7 +607,9 @@ test(negativeAxe,async()=>{
     const failed=await run(['N2A_AXE_FAILED'],async(g,p)=>{await expect(guardedAxe(g,p).withTags(axeTags).analyze()).rejects.toThrow('controlled axe aggregation setup failure');expect(g.context.pages()).toEqual([p]);},undefined,setupFault);expect(failed.pages?.leases[0]).toMatchObject({created:true,finished:true,scan:'failed'});
     const early=await run(['N2A_AXE_FAILED'],async(g,p)=>{await expect(guardedAxe(g,p).withRules('__fcd_unknown_rule').analyze()).rejects.toThrow();expect(g.context.pages()).toEqual([p]);});expect(early.pages?.leases[0]).toMatchObject({created:false,finished:true,scan:'failed'});
     await run(['N2A_AXE_FAILED'],async(g,p)=>{
-      const adapter=publicDependency(g,{beginAxe:source=>{const lease=g.beginAxe(source);return publicDependency(lease,{complete:async outcome=>{await lease.complete(outcome);throw new Error('controlled outer cleanup failure');}});}});
+      // The real lease is frozen. Explicit public forwarding preserves it;
+      // overriding its nonconfigurable methods through a Proxy violates JS invariants.
+      const adapter=publicDependency(g,{beginAxe:source=>{const lease=g.beginAxe(source);return {newPage:()=>lease.newPage(),close:(page,options)=>lease.close(page,options),complete:async outcome=>{await lease.complete(outcome);throw new Error('controlled outer cleanup failure');}};}});
       const failure=await guardedAxe(adapter,p).withRules('__fcd_unknown_rule').analyze().then(()=>undefined,e=>e as unknown);expect(failure).toBeInstanceOf(AggregateError);const errors=(failure as AggregateError).errors;expect(errors).toHaveLength(2);expect(String(errors[0])).toContain('__fcd_unknown_rule');expect(String(errors[1])).toContain('controlled outer cleanup failure');
     });
     expect(browser.contexts()).toHaveLength(0);

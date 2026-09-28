@@ -19,7 +19,7 @@ export function guardedAxe(guard:GuardedContext,page:Page):AxeBuilder {
   }});
   const source=facade<Page>(page,{context:()=>context});
   const builder=new AxeBuilder({page:source});
-  const proxy=new Proxy(builder,{get(target,key){
+  const proxy:AxeBuilder=new Proxy(builder,{get(target,key){
     if(key==='analyze')return async()=>{
       if(running)throw new Error('N2A_AXE_CONCURRENT_SCAN');
       running=true;let result:Awaited<ReturnType<AxeBuilder['analyze']>>|undefined,scanError:unknown,cleanupError:unknown;

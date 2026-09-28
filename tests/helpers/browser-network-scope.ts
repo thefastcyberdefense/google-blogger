@@ -114,5 +114,6 @@ export function isControlOwner(owner:Owner):boolean {
   return owner.file===ADOPTION_UNIT_FILE&&owner.titlePath.length===1&&[
     'N2A bounded response controls retain real failures',
     'N2A cumulative fulfilled bytes cannot reset across phases',
+    'N2A owned axe controls retain real failures',
   ].includes(displayTitle(owner));
 }

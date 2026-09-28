@@ -1,4 +1,5 @@
 import { expect, test } from 'vitest';
+import AxeBuilder from '@axe-core/playwright';
 import { chromium, firefox, webkit, type Browser, type BrowserContext, type BrowserContextOptions, type Route, type Response } from '@playwright/test';
 import { createHash, randomUUID } from 'node:crypto';
 import fs, { constants } from 'node:fs';
@@ -490,6 +491,67 @@ for(const engine of [chromium,firefox,webkit]){
       guard.transition('blocked');await page.reload();await expect.poll(()=>page.locator('.fcd-diagram').getAttribute('data-state'),{timeout:15000}).toBe('error');expect(await page.locator('.diagram-source pre').isVisible()).toBe(true);expect(await page.locator('.diagram-source pre').textContent()).toBe(source);
       await guard.finish();const pair=pairFor(guard);expect(validateResponseEvidence(pair.start,pair.end)).toBe(true);expect(pair.end.rules.find(r=>r.id==='blocked-entry')?.hits).toBe(1);expect(pair.end.response?.responses.filter(r=>r.rule==='blocked-entry')).toMatchObject([{outcome:'aborted',bytes:0}]);expect(pair.end.response!.fulfilledBytes).toBeLessThanOrEqual(limits.fulfilled);
     }catch(cause){failure=new Error(`N2A_MERMAID_RUNTIME ${engine.name()} ${JSON.stringify(requests)}: ${cause instanceof Error?cause.message:'non-error failure'}`,{cause});}
+    finally{if(guard&&!guard.finished)try{await guard.finish(failure?'failed':'passed');}catch(cause){failure??=cause;}await browser.close();}
+    if(failure)throw failure;
+  },30000);
+}
+
+// AC-06/07: real compatibility requirements, before the lifecycle correction.
+// Full normal axe and a broadly throwing storage mock must coexist with guards.
+const axeTags=['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa'];
+for(const engine of [chromium,firefox,webkit]){
+  const title=`N2A normal axe retains complete frames and a live primary in ${engine.name()}`;
+  test(title,async()=>{
+    const browser=await engine.launch({headless:true});let guard:GuardedContext|undefined,failure:unknown,scans=0;
+    const rules:FixtureRule[]=[
+      {id:'home',path:'/',method:'GET',resource:'document',count:1,body:'<!doctype html><html lang="en"><head><title>Axe lifecycle control</title></head><body><main><h1>Primary remains active</h1><iframe title="Name violation control" src="/frame"></iframe></main></body></html>'},
+      {id:'frame',path:'/frame',method:'GET',resource:'document',count:1,body:'<!doctype html><html lang="en"><head><title>Frame control</title></head><body><main><h1>Frame</h1><button></button></main></body></html>'},
+      {id:'socket',path:'/socket',method:'GET',resource:'websocket',kind:'websocket',body:'primary-still-active',count:1},
+    ];
+    try{
+      guard=await createGuardedContext(browser,rules,{...makeOwner('unit',ADOPTION_UNIT_FILE,[title],`vitest-${engine.name()}`),title,engine:engine.name()});
+      const page=await guard.context.newPage();await page.goto(FIXTURE_ORIGIN+'/');
+      const first=await new AxeBuilder({page}).withTags(axeTags).analyze();scans++;
+      expect(first.testEngine.name).toBe('axe-core');expect(first.passes.length).toBeGreaterThan(0);expect(Array.isArray(first.incomplete)).toBe(true);expect(Array.isArray(first.inapplicable)).toBe(true);
+      expect(first.violations.some(v=>v.id==='button-name'&&v.nodes.some(n=>n.target.length>1)),'normal axe must retain the child-frame violation').toBe(true);
+      await page.frameLocator('iframe').getByRole('button').evaluate(button=>{button.textContent='Named frame action';});
+      const second=await new AxeBuilder({page}).withTags(axeTags).analyze();scans++;expect(second.violations).toEqual([]);expect(second.passes.length).toBeGreaterThan(0);
+      expect(guard.context.pages()).toEqual([page]);expect(page.isClosed()).toBe(false);
+      expect(await page.evaluate(()=>new Promise<string>((resolve,reject)=>{
+        const socket=new WebSocket('wss://fcd-fixture.invalid/socket'),timer=setTimeout(()=>reject(new Error('primary socket timed out')),3000);
+        socket.onopen=()=>socket.send('local');socket.onmessage=e=>{clearTimeout(timer);socket.close();resolve(String(e.data));};socket.onerror=()=>{clearTimeout(timer);reject(new Error('primary socket failed'));};
+      }))).toBe('primary-still-active');
+      await guard.finish();expect(pairFor(guard).end.errors).toEqual([]);
+    }catch(cause){failure=new Error(`N2A_AXE_LIFECYCLE ${engine.name()} scans=${scans}: ${cause instanceof Error?cause.message:'non-error failure'}`,{cause});}
+    finally{if(guard&&!guard.finished)try{await guard.finish(failure?'failed':'passed');}catch(cause){failure??=cause;}await browser.close();}
+    if(failure)throw failure;
+  },30000);
+}
+function throwingStorageMock():void {
+  // No key exemptions, restored methods or assumed init-script ordering.
+  Storage.prototype.getItem=function(){console.debug('N2A_STORAGE_READ');throw new Error('storage unavailable');};
+  Storage.prototype.setItem=function(){console.debug('N2A_STORAGE_WRITE');throw new Error('storage unavailable');};
+  console.debug('N2A_STORAGE_INSTALLED');
+}
+for(const engine of [chromium,firefox,webkit])for(const registration of ['before','after'] as const){
+  const title=`N2A current document needs no storage receipts in ${engine.name()} ${registration}`;
+  test(title,async()=>{
+    const browser=await engine.launch({headless:true});let guard:GuardedContext|undefined,failure:unknown,reads=0,writes=0,installed=0;
+    const factory={newContext:async(options:BrowserContextOptions)=>{
+      const context=await browser.newContext(options);context.on('console',message=>{if(message.text()==='N2A_STORAGE_READ')reads++;if(message.text()==='N2A_STORAGE_WRITE')writes++;if(message.text()==='N2A_STORAGE_INSTALLED')installed++;});
+      if(registration==='before')await context.addInitScript(throwingStorageMock);return context;
+    }} as unknown as Browser;
+    try{
+      guard=await createGuardedContext(factory,[{...smallRule,count:1}],{...makeOwner('unit',ADOPTION_UNIT_FILE,[title],`vitest-${engine.name()}`),title,engine:engine.name()});
+      if(registration==='after')await guard.context.addInitScript(throwingStorageMock);
+      const page=await guard.context.newPage();await page.goto(FIXTURE_ORIGIN+'/');expect(await page.getByRole('heading').textContent()).toBe('inline control');
+      expect(await page.evaluate(()=>{
+        const errors:string[]=[];try{localStorage.getItem('ordinary-application-key');}catch(e){errors.push((e as Error).message);}try{localStorage.setItem('ordinary-application-key','value');}catch(e){errors.push((e as Error).message);}
+        return {errors,observers:Object.getOwnPropertyNames(globalThis).filter(k=>k.startsWith('__fcdN1State')).length};
+      })).toEqual({errors:['storage unavailable','storage unavailable'],observers:1});
+      expect(installed).toBeGreaterThan(0);expect(reads).toBe(1);expect(writes).toBe(1);
+      await guard.finish();expect(reads,'current/reconciled documents require no storage reads').toBe(1);expect(pairFor(guard).end.documents.every(d=>d.intact&&d.flushed&&d.attempts===d.acknowledged)).toBe(true);
+    }catch(cause){failure=new Error(`N2A_STORAGE_LIFECYCLE ${engine.name()} ${registration} reads=${reads} writes=${writes} installed=${installed}: ${cause instanceof Error?cause.message:'non-error failure'}`,{cause});}
     finally{if(guard&&!guard.finished)try{await guard.finish(failure?'failed':'passed');}catch(cause){failure??=cause;}await browser.close();}
     if(failure)throw failure;
   },30000);

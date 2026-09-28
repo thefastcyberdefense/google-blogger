@@ -1,6 +1,7 @@
 import type { Browser, BrowserContext, BrowserContextOptions, Frame, Request, Route, WebSocketRoute } from '@playwright/test';
 import { createHash, randomUUID } from 'node:crypto';
-import { CODES, loadManifest, stageRoot, testKey, writeEvidence, type Start, type End, type Identity, type RequestRecord, type DocumentRecord } from '../../tools/finalize-browser-network.ts';
+import { CODES, loadManifest, stageRoot, testKey, writeEvidence, validRecord, type Start, type End, type Identity, type RequestRecord, type DocumentRecord } from '../../tools/finalize-browser-network.ts';
+import { makeOwner } from './browser-network-scope.ts';
 
 export const FIXTURE_ORIGIN = 'https://fcd-fixture.invalid';
 export const SOCKET_ORIGIN = 'wss://fcd-fixture.invalid';
@@ -10,6 +11,7 @@ export interface FixtureRule {
   headers?: Record<string,string>; kind?: 'http' | 'websocket'; contentType?: string;
 }
 export interface GuardOptions {
+  file:string;titlePath:string[];repeatEachIndex:number;
   title: string; project: string; engine: string; worker?: number; retry?: number;
   contextOptions?: BrowserContextOptions; expectedErrors?: readonly string[];
   register?: (id: string) => void;
@@ -274,10 +276,12 @@ export async function attachGuard(context: BrowserContext,rules:FixtureRule[],op
 async function buildGuard(create:()=>Promise<BrowserContext>, rules:FixtureRule[], options?:GuardOptions):Promise<GuardedContext> {
   if(!options || !['unit','render'].includes(process.env.FCD_LABEL??'')) throw new Error('N1_IDENTITY');
   const root=stageRoot(); const manifest=loadManifest(root); const id=randomUUID();
-  const identity:Identity={stage:process.env.FCD_LABEL as 'unit'|'render',project:options.project,engine:options.engine,title:options.title,test:testKey(options.project,options.title),worker:options.worker??0,retry:options.retry??0,pid:process.pid};
+  const owner=makeOwner(process.env.FCD_LABEL as 'unit'|'render',options.file,options.titlePath,options.project,options.repeatEachIndex);
+  const identity:Identity={...owner,engine:options.engine,title:options.title,test:testKey(owner),worker:options.worker??0,retry:options.retry??0,pid:process.pid};
   const expectedErrors=[...options.expectedErrors??[]].sort();
   if(expectedErrors.some(c=>!(CODES as readonly string[]).includes(c)) || new Set(expectedErrors).size!==expectedErrors.length) throw new Error('N1_IDENTITY');
   const start:Start={...manifest,kind:'start',id,identity,expectedErrors};
+  if(!validRecord(start))throw new Error('N1_IDENTITY');
   options.register?.(id);
   try { writeEvidence(root,`${id}.start.json`,start); } catch { throw new NetworkGuardError(['N1_WRITE']); }
   const errors=new Set<string>(); const requests:RequestRecord[]=[];

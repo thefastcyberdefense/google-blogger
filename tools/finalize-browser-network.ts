@@ -97,18 +97,23 @@ export function validateResponseEvidence(start:Start,end:End):boolean {
     if(rule){
       if(rule.phase!==null&&rule.phase!==r.phase||r.asset!==rule.asset||r.gate!==rule.gate)return false;
       if(q.action!==rule.action)return false;
+      // A fulfillment may fail, but can never become a successful denial.
+      if(rule.action==='fulfill'&&r.outcome==='aborted')return false;
       if(rule.action==='fulfill'&&r.bytes>0&&(r.bytes!==rule.bytes||r.sha256!==rule.sha256||r.status!==rule.status))return false;
       if(rule.action==='fulfill'&&r.outcome==='fulfilled'&&(r.bytes!==rule.bytes||r.sha256!==rule.sha256||r.status!==rule.status))return false;
       if(rule.action==='deny'&&(r.outcome==='fulfilled'?(rule.resource!=='document'||r.status!==451||r.bytes>RESPONSE_LIMITS.inline||!digest(r.sha256)):r.outcome!=='aborted'&&r.outcome!=='failed'))return false;
     }else if(q.action!=='unexpected'||r.asset!==null||r.gate!==null)return false;
     if(r.outcome==='aborted'&&(r.bytes!==0||r.sha256!==null||r.status!==null))return false;
     if(r.outcome==='failed'&&!end.errors.some(c=>['N1_HANDLER','N1_LIMIT','N1_CLOSE','N2A_GATE'].includes(c)))return false;
+    // Before send(), failures have no invented response metadata. An actual
+    // attempted zero-byte inline fulfillment retains its exact planned tuple.
+    if(r.outcome==='failed'&&r.bytes===0&&(r.sha256!==null||r.status!==null)&&!(rule?.action==='fulfill'&&rule.bytes===0&&r.sha256===rule.sha256&&r.status===rule.status))return false;
     if(r.bytes===0&&r.sha256!==null&&r.outcome!=='fulfilled'&&r.outcome!=='failed')return false;
     if(r.waited&&r.gate===null)return false;
   }
   if(l.chargedBytes!==l.responses.reduce((n,r)=>n+r.bytes,0)||l.fulfilledBytes!==l.responses.filter(r=>r.outcome==='fulfilled').reduce((n,r)=>n+r.bytes,0))return false;
   if(!same(l.gates.map(g=>g.id),p.gates))return false;
-  for(const g of l.gates){const waited=l.responses.filter(r=>r.gate===g.id&&r.waited).length;if(g.waits!==waited||g.settled!==waited||g.expired&&g.released||(!g.released||g.expired)&&!end.errors.includes('N2A_GATE'))return false;}
+  for(const g of l.gates){const waited=l.responses.filter(r=>r.gate===g.id&&r.waited).length;if(g.waits!==waited||g.settled!==waited||(g.released||g.expired)&&waited===0||g.expired&&g.released||(!g.released||g.expired)&&!end.errors.includes('N2A_GATE'))return false;}
   return true;
 }
 export function entryFor(owner:Owner):TestEntry {return {...owner,key:testKey(owner),title:displayTitle(owner),engine:engineFor(owner.project)};}

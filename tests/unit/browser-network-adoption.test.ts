@@ -1,11 +1,13 @@
 import { expect, test } from 'vitest';
 import { createHash, randomUUID } from 'node:crypto';
-import { constants } from 'node:fs';
+import fs, { constants } from 'node:fs';
 import { lstat, open, readFile, realpath, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import os from 'node:os';
 import ts from 'typescript';
 import { assets, pug, root } from '../../tools/generate.ts';
-import { CASES, PROJECTS, POLICY, SCHEMA, UNIT_CONSUMER, engineFor, testKey, loadManifest, stageRoot, validateSnapshot, type Manifest, type Start, type End, type TestEntry, type ResultEntry } from '../../tools/finalize-browser-network.ts';
+import { POLICY, SCHEMA, UNIT_CONSUMER, engineFor, testKey, loadManifest, stageRoot, validateSnapshot, initializeEvidence, writeIndexedEvidence, readIndexedEvidence, entryFor, MAX_FILE, type Manifest, type Start, type End, type TestEntry, type ResultEntry, type EvidenceIndex } from '../../tools/finalize-browser-network.ts';
+import { N1_FILE, UNIT_FILE, TARGET_FILES, ADOPTED_FILES, makeOwner, expectedOwners, infoOwner, reporterOwner } from '../helpers/browser-network-scope.ts';
 
 // N2A-01 characterization only. This does not register routes or adopt suites.
 // Runs under the existing Actions unit stage and its mandatory N0 boundary.
@@ -17,7 +19,6 @@ function report(kind: string, value: unknown): void {
   if (Buffer.byteLength(text) > 12000) throw new Error('N2A_PREFLIGHT_DIAGNOSTIC_BOUND');
   console.log(`::warning title=N2A preflight ${kind}::${text.replaceAll('%','%25').replaceAll('\r','%0D').replaceAll('\n','%0A')}`);
 }
-
 let fixtureMeasurements: Promise<Measurement[]> | undefined;
 function measureFixtures(): Promise<Measurement[]> {
   return fixtureMeasurements ??= (async () => {
@@ -41,36 +42,25 @@ function measureFixtures(): Promise<Measurement[]> {
     return values.map(({name, html}) => ({name, bytes: Buffer.byteLength(html), sha256: sha256(html)}));
   })();
 }
-
 test('N2A preflight measures every adopted HTML variant without changing producers', async () => {
-  const rows = await measureFixtures();
-  report('HTML', rows);
-  expect(rows).toHaveLength(14);
-  expect(new Set(rows.map(row => row.name)).size).toBe(rows.length);
-  for (const row of rows) {
-    expect(row.bytes, row.name).toBeGreaterThan(0);
-    expect(row.bytes, `N2A_HTML_LIMIT ${row.name}: ${row.bytes}`).toBeLessThanOrEqual(limits.html);
-  }
+  const rows = await measureFixtures();report('HTML', rows);
+  expect(rows).toHaveLength(14);expect(new Set(rows.map(row => row.name)).size).toBe(rows.length);
+  for (const row of rows) {expect(row.bytes, row.name).toBeGreaterThan(0);expect(row.bytes, `N2A_HTML_LIMIT ${row.name}: ${row.bytes}`).toBeLessThanOrEqual(limits.html);}
 }, 20000);
-
 /** Read a locked installed module, never a request-derived path. No execution. */
 async function readModule(base: string, relative: string): Promise<Buffer> {
   if (!/^[A-Za-z0-9_./-]+\.mjs$/.test(relative) || relative.split('/').some(p => !p || p === '.' || p === '..')) throw new Error('N2A_MODULE_PATH');
-  let current = base;
-  const parts = relative.split('/');
+  let current = base;const parts = relative.split('/');
   for (let i = 0; i < parts.length; i++) {
-    current = path.join(current, parts[i]);
-    const stat = await lstat(current);
+    current = path.join(current, parts[i]);const stat = await lstat(current);
     if (stat.isSymbolicLink() || (i < parts.length - 1 ? !stat.isDirectory() : !stat.isFile())) throw new Error('N2A_MODULE_TYPE');
   }
-  const resolved = await realpath(current);
-  if (!resolved.startsWith(base + path.sep)) throw new Error('N2A_MODULE_ESCAPE');
+  const resolved = await realpath(current);if (!resolved.startsWith(base + path.sep)) throw new Error('N2A_MODULE_ESCAPE');
   const handle = await open(current, constants.O_RDONLY | constants.O_NOFOLLOW);
   try {
     const before = await handle.stat();
     if (!before.isFile() || before.size > limits.module) throw new Error(`N2A_MODULE_LIMIT ${relative}: ${before.size}`);
-    const body = await handle.readFile();
-    const after = await handle.stat();
+    const body = await handle.readFile();const after = await handle.stat();
     if (body.length !== before.size || after.size !== before.size || after.mtimeMs !== before.mtimeMs || after.ino !== before.ino || after.dev !== before.dev) throw new Error('N2A_MODULE_CHANGED');
     return body;
   } finally { await handle.close(); }
@@ -81,93 +71,74 @@ function moduleImports(name: string, body: Buffer): { staticImports: string[]; d
   const staticImports: string[] = [], dynamicImports: string[] = [];
   const visit = (node: ts.Node): void => {
     if ((ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) && node.moduleSpecifier) {
-      if (!ts.isStringLiteral(node.moduleSpecifier)) throw new Error('N2A_MODULE_NONLITERAL_STATIC');
-      staticImports.push(node.moduleSpecifier.text);
+      if (!ts.isStringLiteral(node.moduleSpecifier)) throw new Error('N2A_MODULE_NONLITERAL_STATIC');staticImports.push(node.moduleSpecifier.text);
     }
     if (ts.isCallExpression(node) && node.expression.kind === ts.SyntaxKind.ImportKeyword) {
       const argument = node.arguments[0];
-      if (node.arguments.length !== 1 || !argument || !ts.isStringLiteral(argument)) throw new Error(`N2A_MODULE_NONLITERAL_DYNAMIC ${name}`);
-      dynamicImports.push(argument.text);
+      if (node.arguments.length !== 1 || !argument || !ts.isStringLiteral(argument)) throw new Error(`N2A_MODULE_NONLITERAL_DYNAMIC ${name}`);dynamicImports.push(argument.text);
     }
     ts.forEachChild(node, visit);
   };
-  visit(source);
-  return {staticImports, dynamicImports};
+  visit(source);return {staticImports, dynamicImports};
 }
 function relativeImport(parent: string, specifier: string): string {
   if (!specifier.startsWith('./') && !specifier.startsWith('../')) throw new Error(`N2A_MODULE_EXTERNAL_IMPORT ${parent}`);
   if (!/^[A-Za-z0-9_./-]+\.mjs$/.test(specifier)) throw new Error('N2A_MODULE_IMPORT_PATH');
   const target = path.posix.normalize(path.posix.join(path.posix.dirname(parent), specifier));
-  if (target.startsWith('../') || target.startsWith('/') || target === '..') throw new Error('N2A_MODULE_IMPORT_ESCAPE');
-  return target;
+  if (target.startsWith('../') || target.startsWith('/') || target === '..') throw new Error('N2A_MODULE_IMPORT_ESCAPE');return target;
 }
-
 test('N2A preflight measures the locked entry and flowchart closure against approved limits', async () => {
   const packageRoot = path.join(root, 'node_modules/mermaid');
-  const pkg = JSON.parse(await readFile(path.join(packageRoot, 'package.json'), 'utf8'));
-  expect(pkg.version).toBe('11.17.2');
-  const base = await realpath(path.join(packageRoot, 'dist'));
-  expect((await lstat(path.join(packageRoot, 'dist'))).isSymbolicLink()).toBe(false);
-  const catalog = new Map<string, Measurement>();
-  const dynamics = new Set<string>();
-  const queue = ['mermaid.esm.min.mjs'];
+  const pkg = JSON.parse(await readFile(path.join(packageRoot, 'package.json'), 'utf8'));expect(pkg.version).toBe('11.17.2');
+  const base = await realpath(path.join(packageRoot, 'dist'));expect((await lstat(path.join(packageRoot, 'dist'))).isSymbolicLink()).toBe(false);
+  const catalog = new Map<string, Measurement>(),dynamics = new Set<string>(),queue = ['mermaid.esm.min.mjs'];
   async function drain(): Promise<void> {
     while (queue.length) {
-      const name = queue.shift()!;
-      if (catalog.has(name)) continue;
+      const name = queue.shift()!;if (catalog.has(name)) continue;
       if (catalog.size >= limits.rules) throw new Error('N2A_MODULE_RULE_LIMIT');
-      const body = await readModule(base, name);
-      catalog.set(name, {name, bytes: body.length, sha256: sha256(body)});
+      const body = await readModule(base, name);catalog.set(name, {name, bytes: body.length, sha256: sha256(body)});
       const imports = moduleImports(name, body);
       for (const specifier of imports.staticImports) queue.push(relativeImport(name, specifier));
       for (const specifier of imports.dynamicImports) dynamics.add(relativeImport(name, specifier));
     }
   }
-  await drain();
-  const entryStaticModules = catalog.size;
+  await drain();const entryStaticModules = catalog.size;
   const flow = [...dynamics].filter(name => /(?:^|\/)flowDiagram-[A-Za-z0-9_-]+\.mjs$/.test(name));
   report('dynamic inventory', {entryStaticModules, candidates: [...dynamics].sort(), selectedFlow: flow});
   expect(flow, 'exactly one flowchart dynamic entry is required; no guessed family expansion').toHaveLength(1);
-  queue.push(flow[0]);
-  await drain();
+  queue.push(flow[0]);await drain();
   const rows = [...catalog.values()].sort((a,b) => a.name.localeCompare(b.name));
   for (let i = 0; i < rows.length; i += 16) report(`module page ${i / 16}`, rows.slice(i, i + 16));
-  const fixtures = await measureFixtures();
-  const technical = fixtures.find(row => row.name === 'technical')!;
-  const moduleBytes = rows.reduce((sum, row) => sum + row.bytes, 0);
-  const rules = rows.length + 2;
-  const distinctBytes = moduleBytes + technical.bytes;
-  const estimatedFulfilledBytes = moduleBytes + technical.bytes * 2;
+  const fixtures = await measureFixtures(),technical = fixtures.find(row => row.name === 'technical')!;
+  const moduleBytes = rows.reduce((sum, row) => sum + row.bytes, 0),rules = rows.length + 2;
+  const distinctBytes = moduleBytes + technical.bytes,estimatedFulfilledBytes = moduleBytes + technical.bytes * 2;
   const capacity = {version: pkg.version, entryStaticModules, modules: rows.length, moduleBytes, maxModuleBytes: Math.max(...rows.map(row => row.bytes)), rules, distinctBytes, estimatedFulfilledBytes, limits, caveat: 'Static preflight only; actual browser imports, repeats, response phases, contexts and evidence remain unverified.'};
   report('capacity', capacity);
-  expect(rules, 'N2A_RULE_LIMIT').toBeLessThanOrEqual(limits.rules);
-  expect(distinctBytes, 'N2A_DISTINCT_LIMIT').toBeLessThanOrEqual(limits.distinct);
-  expect(estimatedFulfilledBytes, 'N2A_FULFILLED_LIMIT').toBeLessThanOrEqual(limits.fulfilled);
-  // The independent CI reporting stage publishes these complete measurements.
-  // This sibling is outside N0/N1's strict record roots and survives cleanup.
+  expect(rules, 'N2A_RULE_LIMIT').toBeLessThanOrEqual(limits.rules);expect(distinctBytes, 'N2A_DISTINCT_LIMIT').toBeLessThanOrEqual(limits.distinct);expect(estimatedFulfilledBytes, 'N2A_FULFILLED_LIMIT').toBeLessThanOrEqual(limits.fulfilled);
   const evidence = {...loadManifest(), kind: 'n2a-preflight', html: fixtures, modules: rows, dynamic: {entryStaticModules, candidates: [...dynamics].sort(), selectedFlow: flow}, capacity};
   await writeFile(`${stageRoot()}-preflight.json`, JSON.stringify(evidence), {flag:'wx', mode:0o600});
 }, 20000);
 
-// AC-02: independent normal-report identity must agree with lifecycle/reporter
-// ownership. Use complete runnable N1 data, then change only one dimension.
+// AC-02: complete runnable data, then change exactly one independent dimension.
 function ownershipFixture() {
   const manifest:Manifest={schema:SCHEMA,policy:POLICY,kind:'manifest',source:'a'.repeat(40),run:'17',attempt:'1'};
   const records:(Start|End)[]=[], entries:TestEntry[]=[], results:ResultEntry[]=[];
   type Spec={file:string;title:string;tests:{projectName:string;expectedStatus:string;status:string;annotations:{type:string;description:string}[];results:{status:string;retry:number;workerIndex:number}[]}[]};
   type Suite={file?:string;title?:string;specs:Spec[];suites?:Suite[]};
   const specs:Spec[]=[];
-  for(const project of PROJECTS)for(const title of CASES){
-    const id=randomUUID(),key=testKey(project,title),engine=engineFor(project);
-    const start:Start={...manifest,kind:'start',id,identity:{stage:'render',project,engine,title,test:key,worker:1,retry:0,pid:10},expectedErrors:[]};
+  for(const owner of expectedOwners()){
+    const id=randomUUID(),entry=entryFor(owner),title=entry.title;
+    const start:Start={...manifest,kind:'start',id,identity:{...owner,engine:entry.engine,title,test:entry.key,worker:1,retry:0,pid:10},expectedErrors:[]};
     records.push(start,{...start,kind:'end',setup:true,closed:true,outcome:'passed',errors:[],rules:[],requests:[],documents:[]});
-    entries.push({key,project,engine,title});results.push({key,project,engine,title,status:'passed',expectedStatus:'passed',retry:0,worker:1,contexts:[id]});
-    specs.push({file:'tests/render/network-isolation.spec.ts',title,tests:[{projectName:project,expectedStatus:'passed',status:'expected',annotations:[{type:'n1-context',description:id}],results:[{status:'passed',retry:0,workerIndex:1}]}]});
+    entries.push(entry);results.push({...entry,status:'passed',expectedStatus:'passed',retry:0,worker:1,contexts:[id]});
+    specs.push({file:owner.file,title,tests:[{projectName:owner.project,expectedStatus:'passed',status:'expected',annotations:[{type:'n1-context',description:id}],results:[{status:'passed',retry:0,workerIndex:1}]}]});
   }
-  const start:Start={...manifest,kind:'start',id:randomUUID(),identity:{stage:'unit',project:'vitest-chromium',engine:'chromium',title:UNIT_CONSUMER,test:testKey('vitest-chromium',UNIT_CONSUMER),worker:0,retry:0,pid:11},expectedErrors:[]};
+  const owner=makeOwner('unit',UNIT_FILE,[UNIT_CONSUMER],'vitest-chromium');
+  const start:Start={...manifest,kind:'start',id:randomUUID(),identity:{...owner,engine:'chromium',title:UNIT_CONSUMER,test:testKey(owner),worker:0,retry:0,pid:11},expectedErrors:[]};
   records.push(start,{...start,kind:'end',setup:true,closed:true,outcome:'passed',errors:[],rules:[{id:'home',action:'fulfill',count:1,hits:1}],requests:[{seq:1,kind:'http',rule:'home',action:'fulfill',observed:true,handled:true}],documents:[]});
-  const suites:Suite[]=[{specs}];
-  return {manifest,records,discovery:{...manifest,kind:'discovery',tests:entries},results:{...manifest,kind:'results',status:'passed',errors:0,tests:results},browser:{stats:{unexpected:0,skipped:0,flaky:0},errors:[],suites},unit:{numFailedTests:0,numPendingTests:0,numPassedTests:299,testResults:[{name:'/fixture/tests/unit/browser-network.test.ts',assertionResults:[{fullName:UNIT_CONSUMER,status:'passed'}]}]}};
+  const unadopted:Spec[]=Array.from({length:1674-specs.length},(_,i)=>({file:'tests/render/unadopted-control.spec.ts',title:`unadopted ${i}`,tests:[{projectName:'390-light',expectedStatus:'passed',status:'expected',annotations:[],results:[{status:'passed',retry:0,workerIndex:1}]}]}));
+  const suites:Suite[]=[{specs},{specs:unadopted}];
+  return {manifest,records,discovery:{...manifest,kind:'discovery' as const,tests:entries},results:{...manifest,kind:'results' as const,status:'passed',errors:0,tests:results},browser:{stats:{expected:1674,unexpected:0,skipped:0,flaky:0},errors:[],suites},unit:{numFailedTests:0,numPendingTests:0,numPassedTests:299,testResults:[{name:'/fixture/tests/unit/browser-network.test.ts',assertionResults:[{fullName:UNIT_CONSUMER,title:UNIT_CONSUMER,ancestorTitles:[] as string[],status:'passed'}]}]}};
 }
 test('N2A ownership regression positive fixture is complete',()=>expect(validateSnapshot(ownershipFixture())).toEqual([]));
 test('N2A normal report rejects a same-leaf file outside the approved owner',()=>{
@@ -190,4 +161,81 @@ test('N2A normal report rejects a swapped context annotation',()=>{
 test('N2A unit evidence rejects a project and engine disagreement',()=>{
   const s=ownershipFixture();for(const record of s.records)if(record.identity.stage==='unit')record.identity.engine='firefox';
   expect(validateSnapshot(s),'N2A_UNIT_ENGINE_FALSE_GREEN').toContain('N1_RECORD_SCHEMA');
+});
+test('N2A normal report requires context annotations and no missing baseline rows',()=>{
+  const s=ownershipFixture();s.browser.suites[0].specs[0].tests[0].annotations=[];expect(validateSnapshot(s)).toContain('N1_BROWSER');
+  const baseline=ownershipFixture();baseline.browser.suites[1].specs.pop();expect(validateSnapshot(baseline)).toContain('N1_BROWSER');
+});
+test('N2A ordinary adopted owners cannot declare expected guard violations',()=>{
+  const s=ownershipFixture(),owner=makeOwner('render','tests/render/a11y.spec.ts',['home: accessible initial and expanded states'],'390-light');
+  s.records[0].identity={...s.records[0].identity,...owner,title:owner.titlePath[0],test:testKey(owner)};s.records[0].expectedErrors=['N1_OBSERVER'];
+  expect(validateSnapshot(s)).toContain('N1_RECORD_SCHEMA');
+});
+test('N2A target inventory is fixed at 1168 without claiming current complete adoption',()=>{
+  const target=expectedOwners(TARGET_FILES);expect(target).toHaveLength(1168);expect(new Set(target.map(testKey)).size).toBe(1168);
+  expect(expectedOwners().every(o=>ADOPTED_FILES.includes(o.file))).toBe(true);
+});
+test('N2A owner keys distinguish files title ancestry projects and stages',()=>{
+  const owners=[makeOwner('render',N1_FILE,['same'],'390-light'),makeOwner('render','tests/render/a11y.spec.ts',['same'],'390-light'),makeOwner('render',N1_FILE,['group','same'],'390-light'),makeOwner('render',N1_FILE,['same'],'390-dark'),makeOwner('unit',UNIT_FILE,['same'],'vitest-chromium')];
+  expect(new Set(owners.map(testKey)).size).toBe(owners.length);
+  expect(testKey(owners[0])).toBe(sha256(JSON.stringify(['render',N1_FILE,['same'],'390-light',0])));
+});
+for(const file of ['tests/render/../unit/test.ts','/tests/render/test.ts','tests/render//test.ts','tests/render/%2e%2e/test.ts','tests/render/test.ts\n'])test(`N2A owner rejects unsafe path ${JSON.stringify(file)}`,()=>expect(()=>makeOwner('render',file,['test'],'390-light')).toThrow('N2A_OWNER'));
+test('N2A owner rejects repeats and control characters without normalizing distinct titles',()=>{
+  expect(()=>makeOwner('render',N1_FILE,['test'],'390-light',1)).toThrow('N2A_OWNER');
+  expect(()=>makeOwner('render',N1_FILE,['test\n'],'390-light')).toThrow('N2A_OWNER');
+  expect(testKey(makeOwner('render',N1_FILE,['Test'],'390-light'))).not.toBe(testKey(makeOwner('render',N1_FILE,['test'],'390-light')));
+});
+test('N2A public TestInfo and reporter ancestry normalize to the same owner',()=>{
+  const file='/repository/'+N1_FILE,repositoryRoot='/repository',project='390-light';
+  const info=infoOwner({file,repositoryRoot,titlePath:['network-isolation.spec.ts','group','leaf'],project,repeatEachIndex:0});
+  const reporter=reporterOwner({file,repositoryRoot,title:'leaf',project,repeatEachIndex:0,ancestry:[{type:'root',title:''},{type:'project',title:project},{type:'file',title:'network-isolation.spec.ts',file},{type:'describe',title:'group'}]});
+  expect(info).toEqual(reporter);expect(testKey(info)).toBe(testKey(reporter));
+  expect(()=>infoOwner({file,repositoryRoot,titlePath:['other.spec.ts','leaf'],project,repeatEachIndex:0})).toThrow('N2A_INFO_ANCESTRY');
+  expect(()=>reporterOwner({file,repositoryRoot,title:'leaf',project,repeatEachIndex:0,ancestry:[{type:'root',title:''}]})).toThrow('N2A_REPORTER_ANCESTRY');
+});
+
+function indexFixture(count=1168){
+  const base=fs.mkdtempSync(path.join(os.tmpdir(),'fcd-n2a-index-')),root=path.join(base,'staged');
+  const manifest=initializeEvidence(root,'a'.repeat(40),'17','1');
+  const tests=count===1168?expectedOwners(TARGET_FILES).map(entryFor):Array.from({length:count},(_,i)=>entryFor(makeOwner('render',N1_FILE,[`index control ${i}`],'390-light')));
+  const index=writeIndexedEvidence(root,{...manifest,kind:'discovery',tests});
+  const files=new Map<string,unknown>(fs.readdirSync(root).map(n=>[n,JSON.parse(fs.readFileSync(path.join(root,n),'utf8'))]));
+  return {base,root,manifest,tests,index,files,read:()=>readIndexedEvidence(files,'discovery',manifest)};
+}
+function changedPage(f:ReturnType<typeof indexFixture>,mutate:(p:{tests:TestEntry[]})=>void){
+  const name=f.index.pages[0].name,page=f.files.get(name) as {tests:TestEntry[]};mutate(page);
+  const index=f.files.get('discovery.json') as EvidenceIndex,bytes=JSON.stringify(page);
+  index.pages[0].bytes=Buffer.byteLength(bytes);index.pages[0].sha256=sha256(bytes);
+}
+test('N2A indexed evidence retains all 1168 owners in 19 bounded pages',()=>{
+  const f=indexFixture();try{
+    expect(f.index.pages).toHaveLength(19);expect(f.read().tests.map(e=>e.key)).toEqual(f.tests.map(e=>e.key).sort());
+    for(const p of f.index.pages){expect(p.bytes).toBeLessThanOrEqual(MAX_FILE);expect(p.count).toBeLessThanOrEqual(64);}
+    expect(()=>writeIndexedEvidence(f.root,{...f.manifest,kind:'discovery',tests:f.tests})).toThrow();
+  }finally{fs.rmSync(f.base,{recursive:true,force:true});}
+});
+for(const change of ['missing','reordered','duplicate-page','extra','stale','mixed-schema','bad-digest','bad-length','bad-count','duplicate-owner','reordered-owner','missing-index'] as const)test(`N2A indexed evidence rejects ${change}`,()=>{
+  const f=indexFixture();try{
+    const index=f.files.get('discovery.json') as EvidenceIndex;
+    if(change==='missing')f.files.delete(index.pages[0].name);
+    if(change==='reordered')index.pages.reverse();
+    if(change==='duplicate-page')index.pages[1]={...index.pages[0]};
+    if(change==='extra')f.files.set('discovery-0019.json',f.files.get(index.pages[0].name));
+    if(change==='stale')Object.assign(f.files.get(index.pages[0].name) as object,{source:'b'.repeat(40)});
+    if(change==='mixed-schema')Object.assign(f.files.get(index.pages[0].name) as object,{schema:1,policy:'n1-v1'});
+    if(change==='bad-digest')index.pages[0].sha256='0'.repeat(64);
+    if(change==='bad-length')index.pages[0].bytes++;
+    if(change==='bad-count')index.pages[0].count--;
+    if(change==='duplicate-owner')changedPage(f,p=>{p.tests[1]=p.tests[0];});
+    if(change==='reordered-owner')changedPage(f,p=>{[p.tests[0],p.tests[1]]=[p.tests[1],p.tests[0]];});
+    if(change==='missing-index')f.files.delete('discovery.json');
+    expect(()=>f.read()).toThrow('N2A_INDEX');
+  }finally{fs.rmSync(f.base,{recursive:true,force:true});}
+});
+test('N2A indexed evidence enforces 32 pages and rejects boundary plus one',()=>{
+  const f=indexFixture(2048);try{expect(f.index.pages).toHaveLength(32);expect(f.read().tests).toHaveLength(2048);const other=path.join(f.base,'other');fs.mkdirSync(other);const extra=entryFor(makeOwner('render',N1_FILE,['one too many'],'390-light'));expect(()=>writeIndexedEvidence(other,{...f.manifest,kind:'discovery',tests:[...f.tests,extra]})).toThrow('N2A_INDEX_SCHEMA');}finally{fs.rmSync(f.base,{recursive:true,force:true});}
+});
+test('N2A indexed evidence does not bypass the unchanged per-file byte limit',()=>{
+  const f=indexFixture(1);try{const other=path.join(f.base,'oversize');fs.mkdirSync(other);const tests=Array.from({length:64},(_,i)=>entryFor(makeOwner('render',N1_FILE,[...Array.from({length:15},()=> 'x'.repeat(200)),`large ${i}`],'390-light')));expect(()=>writeIndexedEvidence(other,{...f.manifest,kind:'discovery',tests})).toThrow('N1_LIMIT');}finally{fs.rmSync(f.base,{recursive:true,force:true});}
 });

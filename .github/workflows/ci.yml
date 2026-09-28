@@ -46,22 +46,34 @@ jobs:
           import path from 'node:path';
           import { validRecord } from './tools/finalize-browser-network.ts';
           const escape=value=>String(value).replaceAll('%','%25').replaceAll('\r','%0D').replaceAll('\n','%0A');
+          const root=path.join(process.env.RUNNER_TEMP,`fcd-isolation-${process.env.GITHUB_RUN_ID}-${process.env.GITHUB_RUN_ATTEMPT}-browser-network`);
+          const preflight=`${root}-preflight.json`;
+          if(fs.existsSync(preflight)){
+            const stat=fs.lstatSync(preflight);
+            if(!stat.isFile()||stat.isSymbolicLink()||stat.size>131072)throw new Error('N2A_PREFLIGHT_BOUND');
+            const bytes=fs.readFileSync(preflight),p=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));
+            const manifest=JSON.parse(fs.readFileSync(path.join(root,'manifest.json'),'utf8'));
+            if(!Buffer.from(JSON.stringify(p)).equals(bytes)||p.kind!=='n2a-preflight'||['schema','policy','source','run','attempt'].some(k=>p[k]!==manifest[k])||p.run!==process.env.GITHUB_RUN_ID||p.attempt!==process.env.GITHUB_RUN_ATTEMPT||!Array.isArray(p.html)||p.html.length!==14||!Array.isArray(p.modules)||p.modules.length>64)throw new Error('N2A_PREFLIGHT_STAMP');
+            const report=(title,value)=>console.log(`::warning title=N2A measured ${title}::${escape(JSON.stringify(value))}`);
+            report('HTML',p.html);report('dynamic inventory',p.dynamic);
+            for(let i=0;i<p.modules.length;i+=16)report(`module page ${i/16}`,p.modules.slice(i,i+16));
+            report('capacity',p.capacity);
+          }
           if(fs.existsSync('unit-report.json')){
             const r=JSON.parse(fs.readFileSync('unit-report.json','utf8'));
             console.log('::notice title=Unit totals::'+JSON.stringify({passed:r.numPassedTests,failed:r.numFailedTests,pending:r.numPendingTests}));
             const n1=[],focused=[];
             for(const s of r.testResults||[])for(const a of s.assertionResults||[])if(a.status==='failed'){
               console.log('::error title=Regression::'+escape(a.fullName));
-              if(s.name.endsWith('/tests/unit/browser-network.test.ts')){
+              if(s.name.endsWith('/tests/unit/browser-network.test.ts')||s.name.endsWith('/tests/unit/browser-network-adoption.test.ts')){
                 const failure=(a.failureMessages||[]).join('\n');
                 n1.push({test:a.fullName,reason:failure.split('\n')[0]});
                 if(!failure.includes('N1_NAVIGATION_PHASE'))focused.push({test:a.fullName,reason:failure.slice(0,3000)});
               }
             }
             if(n1.length){
-              // Keep the original bounded summary and publish each engine's
-              // navigation/identity trace separately so API excerpts do not
-              // hide later engines. Neither path changes acceptance or exits.
+              // Keep bounded summaries and separate real per-engine traces.
+              // Diagnostics never change acceptance or the original failure.
               console.log('::notice title=N1 assertions::'+escape(JSON.stringify(n1).slice(0,16000)));
               for(const row of focused.slice(0,16))console.log('::notice title=N1 focused assertion::'+escape(JSON.stringify(row)));
               for(const row of n1.filter(r=>r.reason.includes('N1_NAVIGATION_PHASE')).slice(0,3)){
@@ -69,7 +81,6 @@ jobs:
                 console.log('::notice title=N1 navigation::'+escape(JSON.stringify({test:row.test,reason:navigation}).slice(0,8000)));
                 if(lifetime)console.log('::notice title=N1 document lifetime::'+escape(JSON.stringify({test:row.test,reason:lifetime}).slice(0,8000)));
               }
-              const root=path.join(process.env.RUNNER_TEMP,`fcd-isolation-${process.env.GITHUB_RUN_ID}-${process.env.GITHUB_RUN_ATTEMPT}-browser-network`);
               if(fs.existsSync(root))for(const name of fs.readdirSync(root).filter(n=>/^[0-9a-f-]{36}\.end\.json$/.test(n)).slice(0,32)){
                 const file=path.join(root,name),stat=fs.lstatSync(file);
                 if(!stat.isFile()||stat.isSymbolicLink()||stat.size>131072)continue;
@@ -115,7 +126,7 @@ jobs:
                 group.tests++;group.testBytes+=bytes(test);
                 const results=test.results||[];
                 if(test.status!=='expected'||test.expectedStatus!=='passed'||results.length!==1||results[0]?.status!=='passed'||results[0]?.retry!==0){
-                  if(failed.length<32)failed.push({file:name,project:String(test.projectName).slice(0,100),title:String(spec.title).slice(0,200),status:test.status,codes:[...new Set(results.flatMap(x=>(x.errors||[]).flatMap(e=>String(e.message||'').match(/N1_[A-Z_]+/g)||[])))].sort()});else omittedFailures++;
+                  if(failed.length<32)failed.push({file:name,project:String(test.projectName).slice(0,100),title:String(spec.title).slice(0,200),status:test.status,codes:[...new Set(results.flatMap(x=>(x.errors||[]).flatMap(e=>String(e.message||'').match(/N[12][A-Z]?_[A-Z_]+/g)||[])))].sort()});else omittedFailures++;
                 }
                 for(const result of results){
                   group.stdoutBytes+=bytes(result.stdout)+bytes(result.stderr);group.errorBytes+=bytes(result.error)+bytes(result.errors);

@@ -1,10 +1,11 @@
 import { expect, test } from 'vitest';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { constants } from 'node:fs';
-import { lstat, open, readFile, realpath } from 'node:fs/promises';
+import { lstat, open, readFile, realpath, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import ts from 'typescript';
 import { assets, pug, root } from '../../tools/generate.ts';
+import { CASES, PROJECTS, POLICY, SCHEMA, UNIT_CONSUMER, engineFor, testKey, loadManifest, stageRoot, validateSnapshot, type Manifest, type Start, type End, type TestEntry, type ResultEntry } from '../../tools/finalize-browser-network.ts';
 
 // N2A-01 characterization only. This does not register routes or adopt suites.
 // Runs under the existing Actions unit stage and its mandatory N0 boundary.
@@ -134,11 +135,59 @@ test('N2A preflight measures the locked entry and flowchart closure against appr
   const fixtures = await measureFixtures();
   const technical = fixtures.find(row => row.name === 'technical')!;
   const moduleBytes = rows.reduce((sum, row) => sum + row.bytes, 0);
-  const rules = rows.length + 2; // One document plus the blocked-entry phase variant.
+  const rules = rows.length + 2;
   const distinctBytes = moduleBytes + technical.bytes;
   const estimatedFulfilledBytes = moduleBytes + technical.bytes * 2;
-  report('capacity', {version: pkg.version, entryStaticModules, modules: rows.length, moduleBytes, maxModuleBytes: Math.max(...rows.map(row => row.bytes)), rules, distinctBytes, estimatedFulfilledBytes, limits, caveat: 'Static preflight only; actual browser imports, repeats, response phases, contexts and evidence remain unverified.'});
+  const capacity = {version: pkg.version, entryStaticModules, modules: rows.length, moduleBytes, maxModuleBytes: Math.max(...rows.map(row => row.bytes)), rules, distinctBytes, estimatedFulfilledBytes, limits, caveat: 'Static preflight only; actual browser imports, repeats, response phases, contexts and evidence remain unverified.'};
+  report('capacity', capacity);
   expect(rules, 'N2A_RULE_LIMIT').toBeLessThanOrEqual(limits.rules);
   expect(distinctBytes, 'N2A_DISTINCT_LIMIT').toBeLessThanOrEqual(limits.distinct);
   expect(estimatedFulfilledBytes, 'N2A_FULFILLED_LIMIT').toBeLessThanOrEqual(limits.fulfilled);
+  // The independent CI reporting stage publishes these complete measurements.
+  // This sibling is outside N0/N1's strict record roots and survives cleanup.
+  const evidence = {...loadManifest(), kind: 'n2a-preflight', html: fixtures, modules: rows, dynamic: {entryStaticModules, candidates: [...dynamics].sort(), selectedFlow: flow}, capacity};
+  await writeFile(`${stageRoot()}-preflight.json`, JSON.stringify(evidence), {flag:'wx', mode:0o600});
 }, 20000);
+
+// AC-02: independent normal-report identity must agree with lifecycle/reporter
+// ownership. Use complete runnable N1 data, then change only one dimension.
+function ownershipFixture() {
+  const manifest:Manifest={schema:SCHEMA,policy:POLICY,kind:'manifest',source:'a'.repeat(40),run:'17',attempt:'1'};
+  const records:(Start|End)[]=[], entries:TestEntry[]=[], results:ResultEntry[]=[];
+  type Spec={file:string;title:string;tests:{projectName:string;expectedStatus:string;status:string;annotations:{type:string;description:string}[];results:{status:string;retry:number;workerIndex:number}[]}[]};
+  type Suite={file?:string;title?:string;specs:Spec[];suites?:Suite[]};
+  const specs:Spec[]=[];
+  for(const project of PROJECTS)for(const title of CASES){
+    const id=randomUUID(),key=testKey(project,title),engine=engineFor(project);
+    const start:Start={...manifest,kind:'start',id,identity:{stage:'render',project,engine,title,test:key,worker:1,retry:0,pid:10},expectedErrors:[]};
+    records.push(start,{...start,kind:'end',setup:true,closed:true,outcome:'passed',errors:[],rules:[],requests:[],documents:[]});
+    entries.push({key,project,engine,title});results.push({key,project,engine,title,status:'passed',expectedStatus:'passed',retry:0,worker:1,contexts:[id]});
+    specs.push({file:'tests/render/network-isolation.spec.ts',title,tests:[{projectName:project,expectedStatus:'passed',status:'expected',annotations:[{type:'n1-context',description:id}],results:[{status:'passed',retry:0,workerIndex:1}]}]});
+  }
+  const start:Start={...manifest,kind:'start',id:randomUUID(),identity:{stage:'unit',project:'vitest-chromium',engine:'chromium',title:UNIT_CONSUMER,test:testKey('vitest-chromium',UNIT_CONSUMER),worker:0,retry:0,pid:11},expectedErrors:[]};
+  records.push(start,{...start,kind:'end',setup:true,closed:true,outcome:'passed',errors:[],rules:[{id:'home',action:'fulfill',count:1,hits:1}],requests:[{seq:1,kind:'http',rule:'home',action:'fulfill',observed:true,handled:true}],documents:[]});
+  const suites:Suite[]=[{specs}];
+  return {manifest,records,discovery:{...manifest,kind:'discovery',tests:entries},results:{...manifest,kind:'results',status:'passed',errors:0,tests:results},browser:{stats:{unexpected:0,skipped:0,flaky:0},errors:[],suites},unit:{numFailedTests:0,numPendingTests:0,numPassedTests:299,testResults:[{name:'/fixture/tests/unit/browser-network.test.ts',assertionResults:[{fullName:UNIT_CONSUMER,status:'passed'}]}]}};
+}
+test('N2A ownership regression positive fixture is complete',()=>expect(validateSnapshot(ownershipFixture())).toEqual([]));
+test('N2A normal report rejects a same-leaf file outside the approved owner',()=>{
+  const s=ownershipFixture();s.browser.suites[0].specs[0].file='tests/render/foreign/network-isolation.spec.ts';
+  expect(validateSnapshot(s),'N2A_FOREIGN_FILE_FALSE_GREEN').toContain('N1_BROWSER');
+});
+test('N2A normal report rejects a different describe ancestry for the same leaf',()=>{
+  const s=ownershipFixture(),spec=s.browser.suites[0].specs.shift()!;
+  s.browser.suites[0].suites=[{file:spec.file,title:'different owner',specs:[spec]}];
+  expect(validateSnapshot(s),'N2A_ANCESTRY_FALSE_GREEN').toContain('N1_BROWSER');
+});
+test('N2A normal report rejects an independent worker mismatch',()=>{
+  const s=ownershipFixture();s.browser.suites[0].specs[0].tests[0].results[0].workerIndex=7;
+  expect(validateSnapshot(s),'N2A_WORKER_FALSE_GREEN').toContain('N1_BROWSER');
+});
+test('N2A normal report rejects a swapped context annotation',()=>{
+  const s=ownershipFixture();s.browser.suites[0].specs[0].tests[0].annotations=s.browser.suites[0].specs[1].tests[0].annotations;
+  expect(validateSnapshot(s),'N2A_CONTEXT_FALSE_GREEN').toContain('N1_BROWSER');
+});
+test('N2A unit evidence rejects a project and engine disagreement',()=>{
+  const s=ownershipFixture();for(const record of s.records)if(record.identity.stage==='unit')record.identity.engine='firefox';
+  expect(validateSnapshot(s),'N2A_UNIT_ENGINE_FALSE_GREEN').toContain('N1_RECORD_SCHEMA');
+});

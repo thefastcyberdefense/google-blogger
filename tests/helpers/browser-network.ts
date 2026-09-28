@@ -571,7 +571,13 @@ async function buildGuard(create:()=>Promise<BrowserContext>, rules:FixtureRule[
     context.on('serviceworker',()=>error('N1_WORKER'));
     context.on('page',page=>{
       const metadata=pageRecord(page);
-      if(metadata){if(metadata.observed)error('N2A_AUX_OWNER');metadata.observed=true;metadata.role=creation?'unowned':'primary';if(creation)creation.pages.push(page);}
+      if(metadata){
+        if(metadata.observed)error('N2A_AUX_OWNER');metadata.observed=true;
+        // One primary page per managed context. Further pages require the
+        // active creation lease; closing the primary never grants a replacement.
+        metadata.role=!creation&&!pages.pages.some(p=>p.role==='primary')?'primary':'unowned';
+        if(creation)creation.pages.push(page);else if(metadata.role==='unowned')error('N2A_AUX_OWNER');
+      }
       page.on('close',()=>{
         if(metadata)metadata.closed=true;
         if(!closing&&!(metadata?.role==='axe-aggregation'&&metadata.finalized&&ownedClosing.has(page))){error('N1_EARLY_CLOSE');if(metadata?.role==='axe-aggregation')error('N2A_AUX_LIFECYCLE');}

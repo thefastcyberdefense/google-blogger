@@ -79,6 +79,7 @@ export function validatePageEvidence(start:Start,end:End):boolean {
   if(!Object.hasOwn(start,'pagePolicy'))return !Object.hasOwn(end,'pagePolicy')&&!Object.hasOwn(end,'pages')&&!(start.identity.stage==='render'&&responseOwner(start.identity));
   const policy=start.pagePolicy,l=end.pages;
   if(!validPagePolicy(policy,start.identity)||!same(policy,end.pagePolicy)||!validPageLedger(l))return false;
+  if(l.pages.filter(p=>p.role==='primary').length>1)return false;
   const explained=(codes:string[])=>codes.some(c=>end.errors.includes(c));
   const interrupted=explained(['N1_SETUP','N1_OPTIONS','N1_POLICY','N1_TEST_FAILED','N2A_AXE_FAILED','N2A_AUX_OWNER','N2A_AUX_LIFECYCLE']);
   if(l.leases.length!==policy.scans&&!interrupted)return false;
@@ -132,7 +133,7 @@ export function validPlanRecord(v:unknown):v is PlanRecord {
     if(!object(r)||!keys(r,['id','phase','gate','asset','origin','match','resource','action','count','bytes','sha256','status','abort'])||!label(r.id)||(r.phase!==null&&!phases.includes(String(r.phase)))||(r.gate!==null&&!gates.includes(String(r.gate)))||!['fixture','mermaid'].includes(String(r.origin))||!digest(r.match)||!['document','stylesheet','image','media','font','script','texttrack','xhr','fetch','eventsource','manifest','other'].includes(String(r.resource))||!['fulfill','deny'].includes(String(r.action))||(r.count!==null&&(!integer(r.count,32)||r.count===0))||!integer(r.bytes,RESPONSE_LIMITS.module))return false;
     const asset=r.asset===null?undefined:assets.find(a=>a.id===r.asset);
     if(r.asset!==null&&!asset)return false;
-    if(r.action==='deny')return r.count!==null&&r.asset===null&&r.bytes===0&&r.sha256===null&&r.status===null&&r.gate===null&&['failed','blockedbyclient'].includes(String(r.abort));
+    if(r.action==='deny')return r.count!==null&&r.asset===null&&r.bytes===0&&r.sha256===null&&r.status===null&&r.gate===null&&['failed','blockedbyclient'].includes(r.abort as string);
     if(!digest(r.sha256)||!integer(r.status,599)||r.status<200||(r.status>=300&&r.status<400)||r.abort!==null)return false;
     if(asset&&(r.bytes!==asset.bytes||r.sha256!==asset.sha256))return false;
     if(r.origin==='mermaid')return asset?.kind==='mermaid'&&r.resource==='script'&&r.status===200;
@@ -145,7 +146,7 @@ function validResponseLedger(v:unknown):v is ResponseLedger {
   return object(v)&&keys(v,['phase','transitions','gates','responses','chargedBytes','fulfilledBytes'])&&label(v.phase)&&Array.isArray(v.transitions)&&v.transitions.length<=7&&v.transitions.every(e=>object(e)&&keys(e,['from','to','after'])&&label(e.from)&&label(e.to)&&integer(e.after,128))&&Array.isArray(v.gates)&&v.gates.length<=8&&v.gates.every(g=>object(g)&&keys(g,['id','released','expired','waits','settled'])&&label(g.id)&&typeof g.released==='boolean'&&typeof g.expired==='boolean'&&integer(g.waits,128)&&integer(g.settled,128))&&Array.isArray(v.responses)&&v.responses.length<=128&&v.responses.every(r=>object(r)&&keys(r,['seq','phase','rule','asset','gate','waited','bytes','sha256','status','outcome'])&&integer(r.seq,128)&&r.seq>0&&label(r.phase)&&(r.rule===null||label(r.rule))&&(r.asset===null||label(r.asset))&&(r.gate===null||label(r.gate))&&typeof r.waited==='boolean'&&integer(r.bytes,RESPONSE_LIMITS.module)&&(r.sha256===null||digest(r.sha256))&&(r.status===null||integer(r.status,599)&&r.status>=200)&&['fulfilled','aborted','failed'].includes(String(r.outcome)))&&integer(v.chargedBytes,RESPONSE_LIMITS.fulfilled)&&integer(v.fulfilledBytes,RESPONSE_LIMITS.fulfilled);
 }
 export function validateResponseEvidence(start:Start,end:End):boolean {
-  if(!Object.hasOwn(start,'plan'))return !Object.hasOwn(end,'plan')&&!Object.hasOwn(end,'response');
+  if(!Object.hasOwn(start,'plan'))return !Object.hasOwn(end,'plan')&&!Object.hasOwn(end,'response')&&!(start.identity.stage==='render'&&responseOwner(start.identity));
   if(!same(start.plan,end.plan)||!responseOwner(start.identity))return false;
   if(start.plan===null)return end.response===null&&!end.setup&&end.errors.includes('N1_POLICY');
   const p=start.plan,l=end.response;if(!p||!l||!validPlanRecord(p)||!validResponseLedger(l))return false;

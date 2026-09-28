@@ -1,10 +1,11 @@
 import { test as base, type BrowserContext, type TestInfo } from '@playwright/test';
 import { attachGuard, createGuardedContext, validateContextOptions, type FixtureRule, type GuardedContext, type GuardOptions } from './browser-network.ts';
+import { infoOwner } from './browser-network-scope.ts';
 
 type Extra = Pick<GuardOptions,'contextOptions'|'expectedErrors'>;
 type Fixtures = { networkRules:FixtureRule[];network:GuardedContext;makeGuard:(rules:FixtureRule[],extra?:Partial<Extra>)=>Promise<GuardedContext> };
 const attached=new WeakMap<BrowserContext,GuardedContext>();
-const identity=(info:TestInfo):GuardOptions=>({title:info.title,project:info.project.name,engine:String(info.project.use.browserName??'chromium'),worker:info.workerIndex,retry:info.retry,register:id=>info.annotations.push({type:'n1-context',description:id})});
+const identity=(info:TestInfo):GuardOptions=>({...infoOwner({file:info.file,repositoryRoot:process.cwd(),titlePath:info.titlePath,project:info.project.name,repeatEachIndex:info.repeatEachIndex}),title:info.title,engine:String(info.project.use.browserName??'chromium'),worker:info.workerIndex,retry:info.retry,register:id=>info.annotations.push({type:'n1-context',description:id})});
 export const test=base.extend<Fixtures>({
   networkRules:[[],{option:true}],
   context:async({context,networkRules,contextOptions,javaScriptEnabled,serviceWorkers,proxy,launchOptions},use,info)=>{

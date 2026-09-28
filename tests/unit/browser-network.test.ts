@@ -224,7 +224,7 @@ function publicAdapter<T extends object>(target:T,overrides:Partial<T>):T {
 }
 for(const mutation of ['none','missing','malformed','accounting','cross-origin'] as const) {
   test(`N1 durable receipt control with ${mutation} evidence`,async()=>{
-    const browser=await engine.launch({headless:true}),context=await browser.newContext({serviceWorkers:'block'});const reasons:string[]=[];
+    const browser=await chromium.launch({headless:true}),context=await browser.newContext({serviceWorkers:'block'});const reasons:string[]=[];
     try {
       await context.route('**/*',r=>r.fulfill({contentType:'text/html',body:'<!doctype html><h1>receipt control</h1>'}));
       // Deliberately suppress only the observer's public console subscription.
@@ -434,7 +434,7 @@ for(const engine of [chromium,firefox,webkit]) {
         exposeBinding:async(name,callback)=>context.exposeBinding(name,(source,...args)=>{
           const value:unknown=args[0];if(value&&typeof value==='object'&&(value as Record<string,unknown>).kind==='ready')return;
           return callback(source,...args);
-        },
+        }),
         on:((event:string,listener:(message:ConsoleMessage)=>void)=>{
           expect(event).toBe('console');return context.on('console',message=>{if(!dropConsole||!message.text().startsWith('FCD_N1_READY_'))listener(message);});
         }) as BrowserContext['on'],

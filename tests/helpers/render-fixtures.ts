@@ -4,7 +4,8 @@ import path from 'node:path';
 import { createHash } from 'node:crypto';
 import ts from 'typescript';
 import { assets, pug, root } from '../../tools/generate.ts';
-import { validateResponsePlan, type FixtureAsset, type FixtureRule, type ResponsePlan } from './browser-network.ts';
+import { FIXTURE_ORIGIN, validateResponsePlan, type FixtureAsset, type FixtureRule, type ResponsePlan } from './browser-network.ts';
+import { SUITES, renderContextModes, type Owner } from './browser-network-scope.ts';
 import { MERMAID_ORIGIN, MERMAID_PREFIX, RESPONSE_LIMITS, validModulePath } from '../../tools/finalize-browser-network.ts';
 
 export interface RenderPlan {rules:FixtureRule[];responsePlan:ResponsePlan}
@@ -125,5 +126,59 @@ export async function mermaidPlan():Promise<RenderPlan> {
     ...modules.map((a):FixtureRule=>({id:a.id,path:MERMAID_PREFIX+a.modulePath,origin:MERMAID_ORIGIN,method:'GET',resource:'script',asset:a.id,phase:'ready'})),
     {id:'blocked-entry',path:MERMAID_PREFIX+ENTRY,origin:MERMAID_ORIGIN,method:'GET',resource:'script',action:'deny',abort:'failed',count:1,phase:'blocked'},
   ];
+  validateResponsePlan(rules,responsePlan);return {rules,responsePlan};
+}
+
+const emptyFeed='{"feed":{"entry":[]}}';
+const recovery='<!doctype html><html lang="en"><title>Recovery destination</title><body><h1>Recovery destination</h1></body></html>';
+const image='<svg xmlns="http://www.w3.org/2000/svg" width="800" height="450"><rect width="800" height="450" fill="#175f9e"/></svg>';
+const displacement='<!doctype html><html><head><title>Recorder control</title><style>body{margin:0}#spacer{height:0}#anchor{width:200px;height:200px;background:#175f9e}</style></head><body><div id="spacer"></div><div id="anchor">Visible displacement control</div></body></html>';
+/** Selected by complete canonical identity before page creation, never a URL. */
+export async function casePlan(owner:Owner,contextIndex=0):Promise<RenderPlan> {
+  const modes=renderContextModes(owner);
+  if(!Number.isSafeInteger(contextIndex)||contextIndex<0||contextIndex>=modes.length)throw new Error('N2A_CASE_OWNER');
+  const index=SUITES[owner.file].indexOf(owner.titlePath[0]),javascript=modes[contextIndex];
+  const rules:FixtureRule[]=[],responsePlan:ResponsePlan={assets:[],phases:['ready'],transitions:[],gates:[]};
+  const document=(id:string,address:string,body:string,count=1,status=200,query?:string)=>{
+    const value=htmlAsset(id,body);responsePlan.assets.push(value);
+    rules.push({id,path:address,method:'GET',resource:'document',asset:id,count,status,...(query===undefined?{}:{query})});
+  };
+  const feed=(maximum:8|50,body:string,count?:number,extra:Partial<FixtureRule>={})=>rules.push({id:'feed',path:'/feeds/posts/default',query:`alt=json&max-results=${maximum}`,method:'GET',resource:'fetch',contentType:'application/json',body,...(count===undefined?{}:{count}),...extra});
+  if(owner.file==='tests/render/a11y.spec.ts'){
+    const view=views[index];document('view','/',await fixtureHTML(view),1,view==='error'?404:200);
+    feed(view==='article'?50:8,emptyFeed,1);
+  }else if(owner.file==='tests/render/interactions.spec.ts'){
+    const view=index<2?'home':'article';document('view',view==='home'?'/':'/article',await fixtureHTML(view));
+    if(index===0)document('search','/search',await fixtureHTML('home'),1,200,'q=cloud+defense');
+    // Keep all interaction failures HTTP 503, not a network abort. Background
+    // requests after search navigation remain completely counted, not guessed.
+    feed(view==='article'?50:8,'Unavailable',undefined,{status:503,contentType:'text/html'});
+  }else if(owner.file==='tests/render/native-states.spec.ts'){
+    const state=['error','label','search','archive','home','generic'][Math.floor(index/2)];
+    document('state',`/state-${state}`,await fixtureHTML(`state-${state}`),2,state==='error'?404:200);
+    document('search','/search',recovery,1,200,'q=cloud+%26+identity');document('home','/',recovery);
+    if(javascript)feed(8,emptyFeed);
+  }else if(owner.file==='tests/render/responsive.spec.ts'){
+    const view=views[Math.floor(index/2)];document('view',javascript&&view==='home'?'/':`/${view}`,await fixtureHTML(view),1,view==='error'?404:200);
+    if(javascript)feed(view==='article'?50:8,JSON.stringify({feed:{entry:['cloud-security','incident-response','zero-trust'].map(slug=>({title:{$t:slug},link:[{rel:'alternate',href:`${FIXTURE_ORIGIN}/2026/09/${slug}.html`}]}))}}),1);
+  }else if(owner.file==='tests/render/publication-acceptance.spec.ts'){
+    if(index===3)return mermaidPlan();
+    if(index===5)document('displacement','/shift-control',displacement);
+    else if(index===4){
+      document('profile','/profile',(await fixtureHTML('home')).replace(/data:image\/svg\+xml,[^"\s]+/g,FIXTURE_ORIGIN+'/profile-image.svg'));
+      responsePlan.gates.push('completion');
+      feed(8,JSON.stringify({feed:{entry:[{title:{$t:'Controlled feed completion'},link:[{rel:'alternate',href:FIXTURE_ORIGIN+'/controlled'}]}]}}),1,{gate:'completion'});
+      rules.push({id:'image',path:'/profile-image.svg',method:'GET',resource:'image',contentType:'image/svg+xml',body:image,gate:'completion'});
+    }else{
+      const view=index===0?'home':'article';let html=await fixtureHTML(view);
+      if(contextIndex===1)html=html.replace('</head>','<style>html{font-size:200%}p{letter-spacing:.12em;word-spacing:.16em}</style></head>');
+      document('view',index===0?'/':'/article',html);
+      if(index===0)document('search','/search',html,1,200,'q=cloud');
+      if(javascript){
+        if(index===2)rules.push({id:'feed',path:'/feeds/posts/default',query:'alt=json&max-results=50',method:'GET',resource:'fetch',action:'deny',abort:'failed',count:1});
+        else feed(index===0?8:50,JSON.stringify({feed:{entry:[{title:{$t:'Cloud publication'},link:[{rel:'alternate',href:FIXTURE_ORIGIN+'/other'}],category:[{term:'Research'}]}]}}),index===1?1:undefined);
+      }
+    }
+  }else throw new Error('N2A_CASE_OWNER');
   validateResponsePlan(rules,responsePlan);return {rules,responsePlan};
 }

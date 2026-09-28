@@ -78,6 +78,15 @@ export function expectedOwners(files:readonly string[]=ADOPTED_FILES):Owner[] {
   if(new Set(files).size!==files.length||files.some(f=>!TARGET_FILES.includes(f)))throw new Error('N2A_SCOPE');
   return files.flatMap(file=>PROJECTS.filter(p=>file===N1_FILE||file==='tests/render/publication-acceptance.spec.ts'||!p.startsWith('firefox-')&&!p.startsWith('webkit-')).flatMap(project=>SUITES[file].map(title=>makeOwner('render',file,[title],project))));
 }
+/** Exact primary/secondary modes, independent of consumer-supplied options. */
+export function renderContextModes(owner:Owner):readonly boolean[] {
+  if(!validOwner(owner)||owner.stage!=='render'||owner.file===N1_FILE||owner.titlePath.length!==1||!SUITES[owner.file]?.includes(owner.titlePath[0]))return [];
+  const index=SUITES[owner.file].indexOf(owner.titlePath[0]);
+  if(owner.file==='tests/render/publication-acceptance.spec.ts')return index===2?[true,false]:[true];
+  if(engineFor(owner.project)!=='chromium')return [];
+  if(owner.file==='tests/render/responsive.spec.ts'||owner.file==='tests/render/native-states.spec.ts')return [index%2===0];
+  return [true];
+}
 export function repositoryFile(file:string,repositoryRoot:string,stage:Owner['stage']):string {
   const normalized=file.replaceAll('\\','/'),root=repositoryRoot.replaceAll('\\','/').replace(/\/$/,'');
   return canonicalFile(normalized.startsWith(root+'/')?normalized.slice(root.length+1):normalized,stage);

@@ -1,6 +1,5 @@
 import { expect, test } from 'vitest';
-import AxeBuilder from '@axe-core/playwright';
-import { chromium, firefox, webkit, type Browser, type BrowserContext, type BrowserContextOptions, type Route, type Response } from '@playwright/test';
+import { chromium, firefox, webkit, type Browser, type BrowserContext, type BrowserContextOptions, type Route, type Response, type Page } from '@playwright/test';
 import { createHash, randomUUID } from 'node:crypto';
 import fs, { constants } from 'node:fs';
 import { lstat, open, readFile, realpath, writeFile } from 'node:fs/promises';
@@ -8,9 +7,10 @@ import path from 'node:path';
 import os from 'node:os';
 import ts from 'typescript';
 import { assets, pug, root } from '../../tools/generate.ts';
-import { createGuardedContext, FIXTURE_ORIGIN, validateFixtureRules, validateResponsePlan, matchFixtureRule, type FixtureAsset, type ResponsePlan, type FixtureRule, type GuardedContext, type GuardOptions } from '../helpers/browser-network.ts';
+import { createGuardedContext, FIXTURE_ORIGIN, observeDocumentWebSockets, validateFixtureRules, validateResponsePlan, matchFixtureRule, type FixtureAsset, type ResponsePlan, type FixtureRule, type GuardedContext, type GuardOptions } from '../helpers/browser-network.ts';
+import { guardedAxe } from '../helpers/guarded-axe.ts';
 import { readAssetText, htmlAsset, fixtureHTML, mermaidCatalog, mermaidPlan } from '../helpers/render-fixtures.ts';
-import { POLICY, SCHEMA, UNIT_CONSUMER, engineFor, testKey, loadManifest, stageRoot, validateSnapshot, initializeEvidence, writeIndexedEvidence, readIndexedEvidence, entryFor, MAX_FILE, MERMAID_ORIGIN, MERMAID_PREFIX, RESPONSE_LIMITS, validateResponseEvidence, validRecord, type Manifest, type Start, type End, type TestEntry, type ResultEntry, type EvidenceIndex } from '../../tools/finalize-browser-network.ts';
+import { POLICY, SCHEMA, UNIT_CONSUMER, engineFor, testKey, loadManifest, stageRoot, validateSnapshot, initializeEvidence, writeIndexedEvidence, readIndexedEvidence, entryFor, MAX_FILE, MERMAID_ORIGIN, MERMAID_PREFIX, RESPONSE_LIMITS, validateResponseEvidence, validatePageEvidence, validPagePolicy, validRecord, type Manifest, type Start, type End, type TestEntry, type ResultEntry, type EvidenceIndex } from '../../tools/finalize-browser-network.ts';
 import { N1_FILE, UNIT_FILE, ADOPTION_UNIT_FILE, TARGET_FILES, ADOPTED_FILES, makeOwner, expectedOwners, infoOwner, reporterOwner } from '../helpers/browser-network-scope.ts';
 
 // N2A-01 characterization only. This does not register routes or adopt suites.
@@ -496,7 +496,7 @@ for(const engine of [chromium,firefox,webkit]){
   },30000);
 }
 
-// AC-06/07: real compatibility requirements, before the lifecycle correction.
+// AC-06/07: all six actual lifecycle reds were observed at 815b50bc.
 // Full normal axe and a broadly throwing storage mock must coexist with guards.
 const axeTags=['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa'];
 for(const engine of [chromium,firefox,webkit]){
@@ -509,19 +509,20 @@ for(const engine of [chromium,firefox,webkit]){
       {id:'socket',path:'/socket',method:'GET',resource:'websocket',kind:'websocket',body:'primary-still-active',count:1},
     ];
     try{
-      guard=await createGuardedContext(browser,rules,{...makeOwner('unit',ADOPTION_UNIT_FILE,[title],`vitest-${engine.name()}`),title,engine:engine.name()});
+      guard=await createGuardedContext(browser,rules,{...makeOwner('unit',ADOPTION_UNIT_FILE,[title],`vitest-${engine.name()}`),title,engine:engine.name(),axeScans:2});
       const page=await guard.context.newPage();await page.goto(FIXTURE_ORIGIN+'/');
-      const first=await new AxeBuilder({page}).withTags(axeTags).analyze();scans++;
+      const analyzer=guardedAxe(guard,page);expect(analyzer.withTags(axeTags)).toBe(analyzer);const first=await analyzer.analyze();scans++;
       expect(first.testEngine.name).toBe('axe-core');expect(first.passes.length).toBeGreaterThan(0);expect(Array.isArray(first.incomplete)).toBe(true);expect(Array.isArray(first.inapplicable)).toBe(true);
       expect(first.violations.some(v=>v.id==='button-name'&&v.nodes.some(n=>n.target.length>1)),'normal axe must retain the child-frame violation').toBe(true);
       await page.frameLocator('iframe').getByRole('button').evaluate(button=>{button.textContent='Named frame action';});
-      const second=await new AxeBuilder({page}).withTags(axeTags).analyze();scans++;expect(second.violations).toEqual([]);expect(second.passes.length).toBeGreaterThan(0);
+      const second=await guardedAxe(guard,page).withTags(axeTags).analyze();scans++;expect(second.violations).toEqual([]);expect(second.passes.length).toBeGreaterThan(0);
       expect(guard.context.pages()).toEqual([page]);expect(page.isClosed()).toBe(false);
       expect(await page.evaluate(()=>new Promise<string>((resolve,reject)=>{
         const socket=new WebSocket('wss://fcd-fixture.invalid/socket'),timer=setTimeout(()=>reject(new Error('primary socket timed out')),3000);
         socket.onopen=()=>socket.send('local');socket.onmessage=e=>{clearTimeout(timer);socket.close();resolve(String(e.data));};socket.onerror=()=>{clearTimeout(timer);reject(new Error('primary socket failed'));};
       }))).toBe('primary-still-active');
       await guard.finish();expect(pairFor(guard).end.errors).toEqual([]);
+      const pair=pairFor(guard);expect(validatePageEvidence(pair.start,pair.end)).toBe(true);expect(pair.end.pages?.leases).toHaveLength(2);expect(pair.end.pages?.pages.filter(p=>p.role==='axe-aggregation')).toHaveLength(2);expect(pair.end.pages?.pages.every(p=>p.observed&&p.finalized&&p.closed)).toBe(true);
     }catch(cause){failure=new Error(`N2A_AXE_LIFECYCLE ${engine.name()} scans=${scans}: ${cause instanceof Error?cause.message:'non-error failure'}`,{cause});}
     finally{if(guard&&!guard.finished)try{await guard.finish(failure?'failed':'passed');}catch(cause){failure??=cause;}await browser.close();}
     if(failure)throw failure;
@@ -556,3 +557,68 @@ for(const engine of [chromium,firefox,webkit])for(const registration of ['before
     if(failure)throw failure;
   },30000);
 }
+
+function pageFixture(){
+  const pair=responseFixture(),primary=randomUUID(),auxiliary=randomUUID(),lease=randomUUID(),docs=[randomUUID(),randomUUID()];
+  pair.start.pagePolicy={javascript:true,scans:1};pair.end.pagePolicy={...pair.start.pagePolicy};
+  pair.end.documents=docs.map(id=>({id,attempts:0,acknowledged:0,intact:true,flushed:true}));
+  pair.end.pages={pages:[{id:primary,role:'primary',lease:null,source:null,observed:true,finalized:true,closed:true,documents:[docs[0]]},{id:auxiliary,role:'axe-aggregation',lease,source:primary,observed:true,finalized:true,closed:true,documents:[docs[1]]}],leases:[{id:lease,owner:pair.start.identity.test,context:pair.start.id,source:primary,page:auxiliary,created:true,finished:true,scan:'passed'}],requests:[{seq:1,page:primary}]};return pair;
+}
+test('N2A owned-page evidence has a complete independent positive control',()=>{
+  const {start,end}=pageFixture();expect(validRecord(start)).toBe(true);expect(validRecord(end)).toBe(true);expect(validateResponseEvidence(start,end)).toBe(true);expect(validatePageEvidence(start,end)).toBe(true);
+});
+for(const change of ['missing','wrong-owner','wrong-context','wrong-source','reused-page','unobserved','missing-flush','leaked','missing-document','duplicate-document','unregistered-page','auxiliary-policy','phantom-scan','extra-scan','missing-request','wrong-request-page'] as const)test(`N2A owned-page evidence rejects ${change}`,()=>{
+  const {start,end}=pageFixture(),l=end.pages!;
+  if(change==='missing')delete end.pages;if(change==='wrong-owner')l.leases[0].owner='0'.repeat(64);if(change==='wrong-context')l.leases[0].context=randomUUID();if(change==='wrong-source')l.leases[0].source=l.pages[1].id;
+  if(change==='reused-page')l.leases.push({...l.leases[0],id:randomUUID()});if(change==='unobserved')l.pages[1].observed=false;if(change==='missing-flush')l.pages[1].finalized=false;if(change==='leaked')l.pages[1].closed=false;
+  if(change==='missing-document')l.pages[1].documents=[];if(change==='duplicate-document')l.pages[1].documents=[...l.pages[0].documents];if(change==='unregistered-page')l.pages[1].lease=randomUUID();
+  if(change==='auxiliary-policy')l.requests[0].page=l.pages[1].id;if(change==='phantom-scan'){l.leases[0].page=null;l.leases[0].created=false;}if(change==='extra-scan')end.pagePolicy!.scans=2;
+  if(change==='missing-request')l.requests=[];if(change==='wrong-request-page')l.requests[0].page=randomUUID();expect(validatePageEvidence(start,end)).toBe(false);
+});
+test('N2A scan policy is bounded and ordinary render counts cannot be overridden',()=>{
+  const unit=makeOwner('unit',ADOPTION_UNIT_FILE,['policy control'],'vitest-chromium');expect(validPagePolicy({javascript:true,scans:16},unit)).toBe(true);expect(validPagePolicy({javascript:true,scans:17},unit)).toBe(false);
+  const owner=makeOwner('render','tests/render/a11y.spec.ts',['home: accessible initial and expanded states'],'390-light');expect(validPagePolicy({javascript:true,scans:2},owner)).toBe(true);expect(validPagePolicy({javascript:true,scans:0},owner)).toBe(false);expect(validPagePolicy({javascript:false,scans:2},owner)).toBe(false);
+});
+const negativeAxe='N2A owned axe controls retain real failures';
+test(negativeAxe,async()=>{
+  const browser=await chromium.launch({headless:true});
+  async function run(codes:string[],body:(g:GuardedContext,p:Page)=>Promise<void>,rules:FixtureRule[]=[{...smallRule,count:1}],factory:Browser=browser,axeScans=1){
+    let guard:GuardedContext|undefined,failure:unknown;
+    try{
+      guard=await createGuardedContext(factory,rules,{...makeOwner('unit',ADOPTION_UNIT_FILE,[negativeAxe],'vitest-chromium'),title:negativeAxe,engine:'chromium',axeScans,expectedErrors:codes});const page=await guard.context.newPage();await page.goto(FIXTURE_ORIGIN+'/');await body(guard,page);
+      await expect(guard.finish()).rejects.toMatchObject({codes:[...codes].sort()});const pair=pairFor(guard);expect(validatePageEvidence(pair.start,pair.end),'negative owner still needs internally consistent page evidence').toBe(true);return pair.end;
+    }catch(cause){failure=cause;throw cause;}
+    finally{if(guard&&!guard.finished)try{await guard.finish(failure?'failed':'passed');}catch(cause){if(!failure)throw cause;}}
+  }
+  try{
+    await run(['N2A_AUX_OWNER','N2A_AUX_LIFECYCLE'],async(g)=>{const foreign=await browser.newContext({serviceWorkers:'block'});try{const p=await foreign.newPage();expect(()=>g.beginAxe(p)).toThrow('N2A_AUX_OWNER');}finally{await foreign.close();}});
+    await run(['N2A_AUX_OWNER'],async(g,p)=>{const lease=g.beginAxe(p),aux=await lease.newPage();await lease.close(aux);await lease.complete('passed');await expect(lease.newPage()).rejects.toThrow('N2A_AUX_OWNER');});
+    await run(['N1_EARLY_CLOSE','N2A_AUX_LIFECYCLE'],async(g,p)=>{const lease=g.beginAxe(p),aux=await lease.newPage();await aux.close();await expect(lease.complete('passed')).rejects.toThrow('N2A_AXE_CLEANUP');});
+    const leaked=await run(['N2A_AUX_LIFECYCLE'],async(g,p)=>{await g.beginAxe(p).newPage();});expect(leaked.pages?.leases[0]).toMatchObject({created:true,finished:false,scan:'pending'});
+    await run(['N1_OBSERVER','N1_EARLY_CLOSE','N2A_AUX_LIFECYCLE'],async(g,p)=>{const lease=g.beginAxe(p),aux=await lease.newPage();await aux.evaluate(()=>{globalThis.WebSocket=new Proxy(globalThis.WebSocket,{});});await expect(lease.close(aux)).rejects.toThrow('N2A_AUX_CLEANUP');await expect(lease.complete('passed')).rejects.toThrow('N2A_AXE_CLEANUP');});
+    await run(['N1_UNEXPECTED_REQUEST','N2A_AUX_NETWORK'],async(g,p)=>{
+      expect(await p.evaluate(()=>fetch('/data').then(r=>r.text()))).toBe('primary-only');const lease=g.beginAxe(p),aux=await lease.newPage();expect(await aux.evaluate(url=>fetch(url).then(()=>false,()=>true),FIXTURE_ORIGIN+'/data')).toBe(true);await lease.close(aux);await lease.complete('passed');
+    },[{...smallRule,count:1},{id:'data',path:'/data',method:'GET',resource:'fetch',body:'primary-only',count:1}]);
+    await run(['N1_UNEXPECTED_REQUEST','N2A_AUX_NETWORK'],async(g,p)=>{
+      expect(await p.evaluate(()=>new Promise<string>((resolve,reject)=>{const ws=new WebSocket('wss://fcd-fixture.invalid/socket'),timer=setTimeout(()=>reject(new Error('primary control timeout')),3000);ws.onopen=()=>ws.send('local');ws.onmessage=e=>{clearTimeout(timer);ws.close();resolve(String(e.data));};}))).toBe('primary-only');
+      const lease=g.beginAxe(p),aux=await lease.newPage();expect(await aux.evaluate(()=>new Promise<number>((resolve,reject)=>{const ws=new WebSocket('wss://fcd-fixture.invalid/socket'),timer=setTimeout(()=>reject(new Error('auxiliary denial timeout')),3000);ws.onclose=e=>{clearTimeout(timer);resolve(e.code);};}))).toBe(1008);await lease.close(aux);await lease.complete('passed');
+    },[{...smallRule,count:1},{id:'socket',path:'/socket',method:'GET',resource:'websocket',kind:'websocket',body:'primary-only',count:1}]);
+    const setupFault={newContext:async(options:BrowserContextOptions)=>{const context=await browser.newContext(options);await context.addInitScript(()=>{if(location.href==='about:blank')Object.defineProperty(globalThis,'axe',{get(){throw new Error('controlled axe aggregation setup failure');},set(){throw new Error('controlled axe aggregation setup failure');}});});return context;}} as unknown as Browser;
+    const failed=await run(['N2A_AXE_FAILED'],async(g,p)=>{await expect(guardedAxe(g,p).withTags(axeTags).analyze()).rejects.toThrow('controlled axe aggregation setup failure');expect(g.context.pages()).toEqual([p]);},undefined,setupFault);expect(failed.pages?.leases[0]).toMatchObject({created:true,finished:true,scan:'failed'});
+    const early=await run(['N2A_AXE_FAILED'],async(g,p)=>{await expect(guardedAxe(g,p).withRules('__fcd_unknown_rule').analyze()).rejects.toThrow();expect(g.context.pages()).toEqual([p]);});expect(early.pages?.leases[0]).toMatchObject({created:false,finished:true,scan:'failed'});
+    await run(['N2A_AXE_FAILED'],async(g,p)=>{
+      const adapter=publicDependency(g,{beginAxe:source=>{const lease=g.beginAxe(source);return publicDependency(lease,{complete:async outcome=>{await lease.complete(outcome);throw new Error('controlled outer cleanup failure');}});}});
+      const failure=await guardedAxe(adapter,p).withRules('__fcd_unknown_rule').analyze().then(()=>undefined,e=>e as unknown);expect(failure).toBeInstanceOf(AggregateError);const errors=(failure as AggregateError).errors;expect(errors).toHaveLength(2);expect(String(errors[0])).toContain('__fcd_unknown_rule');expect(String(errors[1])).toContain('controlled outer cleanup failure');
+    });
+    expect(browser.contexts()).toHaveLength(0);
+  }finally{await browser.close();}
+},30000);
+test('N2A blocked storage does not excuse a genuinely missing retired document',async()=>{
+  const browser=await chromium.launch({headless:true}),context=await browser.newContext({serviceWorkers:'block'}),reasons:string[]=[];
+  try{
+    await context.addInitScript(throwingStorageMock);await context.route('**/*',route=>route.fulfill({contentType:'text/html',body:'<!doctype html><h1>required retirement control</h1>'}));
+    const quiet=publicDependency<BrowserContext>(context,{on:((event:string)=>{expect(event).toBe('console');return context;}) as BrowserContext['on']});
+    const observer=await observeDocumentWebSockets(quiet,()=>{},reason=>reasons.push(reason)),page=await context.newPage();await page.goto(FIXTURE_ORIGIN+'/');await page.goto(FIXTURE_ORIGIN+'/next');
+    const documents=await observer.flush();expect(reasons).toContain('unfinished-document');expect(documents.some(d=>!d.flushed)).toBe(true);
+  }finally{await context.close();await browser.close();}
+},30000);

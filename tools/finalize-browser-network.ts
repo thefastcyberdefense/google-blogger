@@ -6,15 +6,22 @@ import { ADOPTED_FILES, TARGET_FILES, N1_FILE, UNIT_FILE, ADOPTION_UNIT_FILE, UN
 export { UNIT_CONSUMER, CASES, PROJECTS, testKey, engineFor };
 // Data-only: the scope dependency has no browser, filesystem, process or network I/O.
 export const POLICY='n2a-v1';export const SCHEMA=2;
-export const CODES=['N1_UNEXPECTED_REQUEST','N1_BYPASS','N1_COUNT','N1_OPTIONS','N1_POLICY','N1_SETUP','N1_HANDLER','N1_CLOSE','N1_OBSERVER','N1_EARLY_CLOSE','N1_WORKER','N1_LIMIT','N1_WRITE','N1_TEST_FAILED'] as const;
+export const CODES=['N1_UNEXPECTED_REQUEST','N1_BYPASS','N1_COUNT','N1_OPTIONS','N1_POLICY','N1_SETUP','N1_HANDLER','N1_CLOSE','N1_OBSERVER','N1_EARLY_CLOSE','N1_WORKER','N1_LIMIT','N1_WRITE','N1_TEST_FAILED','N2A_PHASE','N2A_GATE'] as const;
+export const RESPONSE_LIMITS=Object.freeze({html:500000,module:2097152,distinct:8388608,fulfilled:16777216,inline:65536,gate:3000});
+export const MERMAID_ORIGIN='https://cdn.jsdelivr.net',MERMAID_PREFIX='/npm/mermaid@11.17.2/dist/';
+export interface AssetRecord {id:string;kind:'html'|'mermaid';bytes:number;sha256:string;modulePath:string|null}
+export interface PlanRuleRecord {id:string;phase:string|null;gate:string|null;asset:string|null;origin:'fixture'|'mermaid';match:string;resource:string;action:'fulfill'|'deny';count:number|null;bytes:number;sha256:string|null;status:number|null;abort:'failed'|'blockedbyclient'|null}
+export interface PlanRecord {assets:AssetRecord[];phases:string[];transitions:{from:string;to:string}[];gates:string[];rules:PlanRuleRecord[];distinctBytes:number}
+export interface ResponseRecord {seq:number;phase:string;rule:string|null;asset:string|null;gate:string|null;waited:boolean;bytes:number;sha256:string|null;status:number|null;outcome:'fulfilled'|'aborted'|'failed'}
+export interface ResponseLedger {phase:string;transitions:{from:string;to:string;after:number}[];gates:{id:string;released:boolean;expired:boolean;waits:number;settled:number}[];responses:ResponseRecord[];chargedBytes:number;fulfilledBytes:number}
 export interface Stamp {schema:number;policy:string;source:string;run:string;attempt:string}
 export interface Manifest extends Stamp {kind:'manifest'}
 export interface Identity extends Owner {engine:string;title:string;test:string;worker:number;retry:number;pid:number}
-export interface Start extends Stamp {kind:'start';id:string;identity:Identity;expectedErrors:string[]}
+export interface Start extends Stamp {kind:'start';id:string;identity:Identity;expectedErrors:string[];plan?:PlanRecord|null}
 export interface RequestRecord {seq:number;kind:'http'|'websocket';rule:string|null;action:'fulfill'|'deny'|'unexpected'|'unhandled';observed:boolean;handled:boolean}
 export interface RuleRecord {id:string;action:'fulfill'|'deny';count:number|null;hits:number}
 export interface DocumentRecord {id:string;attempts:number;acknowledged:number;intact:boolean;flushed:boolean}
-export interface End extends Omit<Start,'kind'> {kind:'end';setup:boolean;closed:boolean;outcome:'passed'|'failed';errors:string[];rules:RuleRecord[];requests:RequestRecord[];documents:DocumentRecord[]}
+export interface End extends Omit<Start,'kind'> {kind:'end';setup:boolean;closed:boolean;outcome:'passed'|'failed';errors:string[];rules:RuleRecord[];requests:RequestRecord[];documents:DocumentRecord[];response?:ResponseLedger|null}
 export interface TestEntry extends Owner {key:string;title:string;engine:string}
 export interface ResultEntry extends TestEntry {status:string;expectedStatus:string;retry:number;worker:number;contexts:string[]}
 // Logical in-memory reports. On disk they MUST be a schema-2 index and pages.
@@ -45,11 +52,72 @@ const errorsValid=(v:unknown):v is string[]=>Array.isArray(v)&&v.length<=CODES.l
 const validIdentity=(v:unknown):v is Identity=>object(v)&&keys(v,[...OWNER_FIELDS,'engine','title','test','worker','retry','pid'])&&validOwner(v)&&v.engine===engineFor(v.project)&&v.title===displayTitle(v)&&typeof v.test==='string'&&HASH.test(v.test)&&v.test===testKey(v)&&integer(v.worker)&&v.retry===0&&integer(v.pid)&&v.pid>0;
 const validEntry=(v:unknown):v is TestEntry=>object(v)&&validOwner(v)&&v.stage==='render'&&v.title===displayTitle(v)&&typeof v.key==='string'&&v.key===testKey(v)&&v.engine===engineFor(v.project);
 const validManifest=(v:unknown):v is Manifest=>object(v)&&validStamp(v)&&keys(v,[...stampKeys,'kind'])&&v.kind==='manifest';
+const label=(v:unknown):v is string=>text(v,64)&&/^[a-z][a-z0-9-]*$/.test(v);
+const digest=(v:unknown):v is string=>typeof v==='string'&&HASH.test(v);
+export function validModulePath(v:unknown):v is string {return text(v,180)&&/^[A-Za-z0-9_./-]+\.mjs$/.test(v)&&v.split('/').every(p=>p!==''&&p!=='.'&&p!=='..');}
+export function responseOwner(owner:Owner):boolean {return owner.stage==='unit'?owner.file===ADOPTION_UNIT_FILE:TARGET_FILES.includes(owner.file)&&owner.file!==N1_FILE;}
+export function validPlanRecord(v:unknown):v is PlanRecord {
+  if(!object(v)||!keys(v,['assets','phases','transitions','gates','rules','distinctBytes'])||!Array.isArray(v.assets)||v.assets.length>64||!Array.isArray(v.phases)||v.phases.length<1||v.phases.length>8||!v.phases.every(label)||new Set(v.phases).size!==v.phases.length||!Array.isArray(v.gates)||v.gates.length>8||!v.gates.every(label)||new Set(v.gates).size!==v.gates.length||!Array.isArray(v.transitions)||v.transitions.length>28||!Array.isArray(v.rules)||v.rules.length>64||!integer(v.distinctBytes,RESPONSE_LIMITS.distinct))return false;
+  const phases=v.phases as string[],gates=v.gates as string[];
+  if(!v.transitions.every(e=>object(e)&&keys(e,['from','to'])&&typeof e.from==='string'&&typeof e.to==='string'&&phases.indexOf(e.from)>=0&&phases.indexOf(e.to)>phases.indexOf(e.from))||new Set(v.transitions.map(e=>JSON.stringify(e))).size!==v.transitions.length)return false;
+  const reachable=new Set([phases[0]]);for(const phase of phases)if(reachable.has(phase))for(const edge of v.transitions as {from:string;to:string}[])if(edge.from===phase)reachable.add(edge.to);
+  if(reachable.size!==phases.length)return false;
+  if(!v.assets.every(a=>object(a)&&keys(a,['id','kind','bytes','sha256','modulePath'])&&label(a.id)&&['html','mermaid'].includes(String(a.kind))&&integer(a.bytes,a.kind==='html'?RESPONSE_LIMITS.html:RESPONSE_LIMITS.module)&&a.bytes>0&&digest(a.sha256)&&(a.kind==='html'?a.modulePath===null:validModulePath(a.modulePath))))return false;
+  const assets=v.assets as AssetRecord[];
+  if(new Set(assets.map(a=>a.id)).size!==assets.length||new Set(assets.filter(a=>a.kind==='mermaid').map(a=>a.modulePath)).size!==assets.filter(a=>a.kind==='mermaid').length||assets.reduce((n,a)=>n+a.bytes,0)!==v.distinctBytes)return false;
+  if(!v.rules.every(r=>{
+    if(!object(r)||!keys(r,['id','phase','gate','asset','origin','match','resource','action','count','bytes','sha256','status','abort'])||!label(r.id)||(r.phase!==null&&!phases.includes(String(r.phase)))||(r.gate!==null&&!gates.includes(String(r.gate)))||!['fixture','mermaid'].includes(String(r.origin))||!digest(r.match)||!['document','stylesheet','image','media','font','script','texttrack','xhr','fetch','eventsource','manifest','other'].includes(String(r.resource))||!['fulfill','deny'].includes(String(r.action))||(r.count!==null&&(!integer(r.count,32)||r.count===0))||!integer(r.bytes,RESPONSE_LIMITS.module))return false;
+    const asset=r.asset===null?undefined:assets.find(a=>a.id===r.asset);
+    if(r.asset!==null&&!asset)return false;
+    if(r.action==='deny')return r.count!==null&&r.asset===null&&r.bytes===0&&r.sha256===null&&r.status===null&&r.gate===null&&['failed','blockedbyclient'].includes(String(r.abort));
+    if(!digest(r.sha256)||!integer(r.status,599)||r.status<200||(r.status>=300&&r.status<400)||r.abort!==null)return false;
+    if(asset&&(r.bytes!==asset.bytes||r.sha256!==asset.sha256))return false;
+    if(r.origin==='mermaid')return asset?.kind==='mermaid'&&r.resource==='script'&&r.status===200;
+    return asset?asset.kind==='html'&&r.resource==='document':r.bytes<=RESPONSE_LIMITS.inline;
+  }))return false;
+  const rules=v.rules as PlanRuleRecord[];
+  return new Set(rules.map(r=>r.id)).size===rules.length&&assets.every(a=>rules.some(r=>r.asset===a.id))&&gates.every(g=>rules.some(r=>r.gate===g))&&!rules.some((r,i)=>rules.slice(0,i).some(p=>p.match===r.match&&(p.phase===null||r.phase===null||p.phase===r.phase)));
+}
+function validResponseLedger(v:unknown):v is ResponseLedger {
+  return object(v)&&keys(v,['phase','transitions','gates','responses','chargedBytes','fulfilledBytes'])&&label(v.phase)&&Array.isArray(v.transitions)&&v.transitions.length<=7&&v.transitions.every(e=>object(e)&&keys(e,['from','to','after'])&&label(e.from)&&label(e.to)&&integer(e.after,128))&&Array.isArray(v.gates)&&v.gates.length<=8&&v.gates.every(g=>object(g)&&keys(g,['id','released','expired','waits','settled'])&&label(g.id)&&typeof g.released==='boolean'&&typeof g.expired==='boolean'&&integer(g.waits,128)&&integer(g.settled,128))&&Array.isArray(v.responses)&&v.responses.length<=128&&v.responses.every(r=>object(r)&&keys(r,['seq','phase','rule','asset','gate','waited','bytes','sha256','status','outcome'])&&integer(r.seq,128)&&r.seq>0&&label(r.phase)&&(r.rule===null||label(r.rule))&&(r.asset===null||label(r.asset))&&(r.gate===null||label(r.gate))&&typeof r.waited==='boolean'&&integer(r.bytes,RESPONSE_LIMITS.module)&&(r.sha256===null||digest(r.sha256))&&(r.status===null||integer(r.status,599)&&r.status>=200)&&['fulfilled','aborted','failed'].includes(String(r.outcome)))&&integer(v.chargedBytes,RESPONSE_LIMITS.fulfilled)&&integer(v.fulfilledBytes,RESPONSE_LIMITS.fulfilled);
+}
+export function validateResponseEvidence(start:Start,end:End):boolean {
+  if(!Object.hasOwn(start,'plan'))return !Object.hasOwn(end,'plan')&&!Object.hasOwn(end,'response');
+  if(!same(start.plan,end.plan)||!responseOwner(start.identity))return false;
+  if(start.plan===null)return end.response===null&&!end.setup&&end.errors.includes('N1_POLICY');
+  const p=start.plan,l=end.response;if(!p||!l||!validPlanRecord(p)||!validResponseLedger(l))return false;
+  if(!same(end.rules.map(({id,action,count})=>({id,action,count})),p.rules.map(({id,action,count})=>({id,action,count}))))return false;
+  let phase=p.phases[0],after=-1;const visited=new Set([phase]);
+  for(const e of l.transitions){if(e.from!==phase||visited.has(e.to)||e.after<after||e.after>end.requests.length||!p.transitions.some(a=>a.from===e.from&&a.to===e.to))return false;phase=e.to;after=e.after;visited.add(phase);}
+  if(phase!==l.phase||new Set(l.responses.map(r=>r.seq)).size!==l.responses.length||l.responses.some((r,i)=>i>0&&l.responses[i-1].seq>=r.seq))return false;
+  if(!same(l.responses.map(r=>r.seq),end.requests.filter(r=>r.kind==='http'&&r.handled).map(r=>r.seq)))return false;
+  for(const r of l.responses){
+    const q=end.requests[r.seq-1],rule=p.rules.find(a=>a.id===r.rule),active=l.transitions.filter(e=>e.after<r.seq).at(-1)?.to??p.phases[0];
+    if(!q||q.rule!==r.rule||r.phase!==active||!p.phases.includes(r.phase))return false;
+    if(rule){
+      if(rule.phase!==null&&rule.phase!==r.phase||r.asset!==rule.asset||r.gate!==rule.gate)return false;
+      if(q.action!==rule.action)return false;
+      if(rule.action==='fulfill'&&r.bytes>0&&(r.bytes!==rule.bytes||r.sha256!==rule.sha256||r.status!==rule.status))return false;
+      if(rule.action==='fulfill'&&r.outcome==='fulfilled'&&(r.bytes!==rule.bytes||r.sha256!==rule.sha256||r.status!==rule.status))return false;
+      if(rule.action==='deny'&&(r.outcome==='fulfilled'?(rule.resource!=='document'||r.status!==451||r.bytes>RESPONSE_LIMITS.inline||!digest(r.sha256)):r.outcome!=='aborted'&&r.outcome!=='failed'))return false;
+    }else if(q.action!=='unexpected'||r.asset!==null||r.gate!==null)return false;
+    if(r.outcome==='aborted'&&(r.bytes!==0||r.sha256!==null||r.status!==null))return false;
+    if(r.outcome==='failed'&&!end.errors.some(c=>['N1_HANDLER','N1_LIMIT','N1_CLOSE','N2A_GATE'].includes(c)))return false;
+    if(r.bytes===0&&r.sha256!==null&&r.outcome!=='fulfilled'&&r.outcome!=='failed')return false;
+    if(r.waited&&r.gate===null)return false;
+  }
+  if(l.chargedBytes!==l.responses.reduce((n,r)=>n+r.bytes,0)||l.fulfilledBytes!==l.responses.filter(r=>r.outcome==='fulfilled').reduce((n,r)=>n+r.bytes,0))return false;
+  if(!same(l.gates.map(g=>g.id),p.gates))return false;
+  for(const g of l.gates){const waited=l.responses.filter(r=>r.gate===g.id&&r.waited).length;if(g.waits!==waited||g.settled!==waited||g.expired&&g.released||(!g.released||g.expired)&&!end.errors.includes('N2A_GATE'))return false;}
+  return true;
+}
 export function entryFor(owner:Owner):TestEntry {return {...owner,key:testKey(owner),title:displayTitle(owner),engine:engineFor(owner.project)};}
 export function validRecord(value:unknown):value is Start|End {
   if(!object(value)||!validStamp(value)||!UUID.test(String(value.id))||!validIdentity(value.identity)||!errorsValid(value.expectedErrors)||(value.expectedErrors.length>0&&!isControlOwner(value.identity)))return false;
-  if(value.kind==='start')return keys(value,startKeys);
-  if(value.kind!=='end'||!keys(value,endKeys)||typeof value.setup!=='boolean'||typeof value.closed!=='boolean'||!['passed','failed'].includes(String(value.outcome))||!errorsValid(value.errors))return false;
+  const planned=Object.hasOwn(value,'plan');
+  if(planned&&(!responseOwner(value.identity)||(value.plan!==null&&!validPlanRecord(value.plan))))return false;
+  if(value.kind==='start')return keys(value,[...startKeys,...(planned?['plan']:[])]);
+  if(value.kind!=='end'||!keys(value,[...endKeys,...(planned?['plan','response']:[])])||typeof value.setup!=='boolean'||typeof value.closed!=='boolean'||!['passed','failed'].includes(String(value.outcome))||!errorsValid(value.errors)||(planned&&value.response!==null&&!validResponseLedger(value.response)))return false;
   if(!Array.isArray(value.rules)||value.rules.length>64||!value.rules.every(r=>object(r)&&keys(r,['id','action','count','hits'])&&text(r.id,64)&&/^[a-z][a-z0-9-]*$/.test(r.id)&&['fulfill','deny'].includes(String(r.action))&&(r.count===null||(integer(r.count,32)&&r.count>0))&&(r.action!=='deny'||r.count!==null)&&integer(r.hits,128)))return false;
   if(!Array.isArray(value.requests)||value.requests.length>128||!value.requests.every((r,i)=>object(r)&&keys(r,['seq','kind','rule','action','observed','handled'])&&r.seq===i+1&&['http','websocket'].includes(String(r.kind))&&(r.rule===null||text(r.rule,64))&&['fulfill','deny','unexpected','unhandled'].includes(String(r.action))&&typeof r.observed==='boolean'&&typeof r.handled==='boolean'))return false;
   return Array.isArray(value.documents)&&value.documents.length<=128&&value.documents.every(d=>object(d)&&keys(d,['id','attempts','acknowledged','intact','flushed'])&&UUID.test(String(d.id))&&integer(d.attempts,128)&&integer(d.acknowledged,128)&&typeof d.intact==='boolean'&&typeof d.flushed==='boolean');
@@ -134,6 +202,7 @@ export function validateSnapshot(raw:unknown,expected?:Stamp):string[] {
   for(const [id,start] of starts) {
     const end=ends.get(id);if(!end){fail('N1_UNFINISHED');continue;}
     if(!same(start.identity,end.identity)||!same(start.expectedErrors,end.expectedErrors))fail('N1_IDENTITY');
+    if(!validateResponseEvidence(start,end))fail('N2A_RESPONSE_ACCOUNTING');
     const assertedFailure=end.outcome==='failed'&&start.expectedErrors.includes('N1_TEST_FAILED')&&end.errors.includes('N1_TEST_FAILED');
     if(!end.closed||(end.outcome!=='passed'&&!assertedFailure)||(!end.setup&&!end.errors.includes('N1_SETUP')&&!end.errors.includes('N1_OPTIONS')&&!end.errors.includes('N1_POLICY')))fail('N1_LIFECYCLE');
     if(!same([...end.errors].sort(),[...end.expectedErrors].sort()))fail('N1_VIOLATION');
@@ -248,7 +317,10 @@ export function finalizeEvidence(root:string,output:string,expected:Stamp,unitFi
   try{snapshot.unit=readJson(unitFile,16*1024*1024);}catch{snapshot.readErrors!.push('N1_UNIT_READ');}
   try{snapshot.browser=readJson(browserFile,80*1024*1024);}catch{snapshot.readErrors!.push('N1_BROWSER_READ');}
   const errors=validateSnapshot(snapshot,expected);
-  const summary={...expected,kind:'summary',accepted:errors.length===0,errors,readErrors:[...new Set(snapshot.readErrors)],stagedBytes:total,stagedFiles:files.size,contexts:array(snapshot.records).filter(v=>object(v)&&v.kind==='end').length,discovered:object(snapshot.discovery)?array(snapshot.discovery.tests).length:0,indexPages:[...files.keys()].filter(n=>/^(discovery|results)-[0-9]{4}\.json$/.test(n)).length,adoptedFiles:ADOPTED_FILES,n2aScopeComplete:ADOPTED_FILES.length===TARGET_FILES.length,nonAdopted:'Only the explicit adoptedFiles and recorded owners in the two approved unit files have browser-layer attribution; other browsers remain N0-only.'};
+  const ends=array(snapshot.records).filter((v):v is End=>validRecord(v)&&v.kind==='end');
+  const planned=ends.filter(e=>e.plan&&e.response);
+  const responseCapacity={plannedContexts:planned.length,maxDistinctBytes:Math.max(0,...planned.map(e=>e.plan!.distinctBytes)),maxChargedBytes:Math.max(0,...planned.map(e=>e.response!.chargedBytes)),maxFulfilledBytes:Math.max(0,...planned.map(e=>e.response!.fulfilledBytes)),maxRules:Math.max(0,...planned.map(e=>e.rules.length)),responses:planned.reduce((n,e)=>n+e.response!.responses.length,0),transitions:planned.reduce((n,e)=>n+e.response!.transitions.length,0),gates:planned.reduce((n,e)=>n+e.response!.gates.length,0)};
+  const summary={...expected,kind:'summary',accepted:errors.length===0,errors,readErrors:[...new Set(snapshot.readErrors)],stagedBytes:total,stagedFiles:files.size,contexts:array(snapshot.records).filter(v=>object(v)&&v.kind==='end').length,discovered:object(snapshot.discovery)?array(snapshot.discovery.tests).length:0,indexPages:[...files.keys()].filter(n=>/^(discovery|results)-[0-9]{4}\.json$/.test(n)).length,adoptedFiles:ADOPTED_FILES,n2aScopeComplete:ADOPTED_FILES.length===TARGET_FILES.length,responseCapacity,nonAdopted:'Only the explicit adoptedFiles and recorded owners in the two approved unit files have browser-layer attribution; other browsers remain N0-only.'};
   fs.mkdirSync(path.dirname(output),{recursive:true});fs.mkdirSync(output,{mode:0o700});
   // Preserve complete valid raw pages/indexes as diagnostics, even on rejection.
   // Only summary.accepted establishes a reconciled set. No invalid file is fixed.

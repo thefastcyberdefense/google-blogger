@@ -6,7 +6,7 @@ import { ADOPTED_FILES, TARGET_FILES, N1_FILE, UNIT_FILE, ADOPTION_UNIT_FILE, UN
 export { UNIT_CONSUMER, CASES, PROJECTS, testKey, engineFor };
 // Data-only: the scope dependency has no browser, filesystem, process or network I/O.
 export const POLICY='n2a-v1';export const SCHEMA=2;
-export const CODES=['N1_UNEXPECTED_REQUEST','N1_BYPASS','N1_COUNT','N1_OPTIONS','N1_POLICY','N1_SETUP','N1_HANDLER','N1_CLOSE','N1_OBSERVER','N1_EARLY_CLOSE','N1_WORKER','N1_LIMIT','N1_WRITE','N1_TEST_FAILED','N2A_PHASE','N2A_GATE'] as const;
+export const CODES=['N1_UNEXPECTED_REQUEST','N1_BYPASS','N1_COUNT','N1_OPTIONS','N1_POLICY','N1_SETUP','N1_HANDLER','N1_CLOSE','N1_OBSERVER','N1_EARLY_CLOSE','N1_WORKER','N1_LIMIT','N1_WRITE','N1_TEST_FAILED','N2A_PHASE','N2A_GATE','N2A_AUX_OWNER','N2A_AUX_NETWORK','N2A_AUX_LIFECYCLE','N2A_AXE_FAILED'] as const;
 export const RESPONSE_LIMITS=Object.freeze({html:500000,module:2097152,distinct:8388608,fulfilled:16777216,inline:65536,gate:3000});
 export const MERMAID_ORIGIN='https://cdn.jsdelivr.net',MERMAID_PREFIX='/npm/mermaid@11.17.2/dist/';
 export interface AssetRecord {id:string;kind:'html'|'mermaid';bytes:number;sha256:string;modulePath:string|null}
@@ -14,14 +14,18 @@ export interface PlanRuleRecord {id:string;phase:string|null;gate:string|null;as
 export interface PlanRecord {assets:AssetRecord[];phases:string[];transitions:{from:string;to:string}[];gates:string[];rules:PlanRuleRecord[];distinctBytes:number}
 export interface ResponseRecord {seq:number;phase:string;rule:string|null;asset:string|null;gate:string|null;waited:boolean;bytes:number;sha256:string|null;status:number|null;outcome:'fulfilled'|'aborted'|'failed'}
 export interface ResponseLedger {phase:string;transitions:{from:string;to:string;after:number}[];gates:{id:string;released:boolean;expired:boolean;waits:number;settled:number}[];responses:ResponseRecord[];chargedBytes:number;fulfilledBytes:number}
+export interface PagePolicy {javascript:boolean;scans:number}
+export interface PageRecord {id:string;role:'primary'|'axe-aggregation'|'unowned';lease:string|null;source:string|null;observed:boolean;finalized:boolean;closed:boolean;documents:string[]}
+export interface AxeRecord {id:string;owner:string;context:string;source:string;page:string|null;created:boolean;finished:boolean;scan:'pending'|'passed'|'failed'}
+export interface PageLedger {pages:PageRecord[];leases:AxeRecord[];requests:{seq:number;page:string|null}[]}
 export interface Stamp {schema:number;policy:string;source:string;run:string;attempt:string}
 export interface Manifest extends Stamp {kind:'manifest'}
 export interface Identity extends Owner {engine:string;title:string;test:string;worker:number;retry:number;pid:number}
-export interface Start extends Stamp {kind:'start';id:string;identity:Identity;expectedErrors:string[];plan?:PlanRecord|null}
+export interface Start extends Stamp {kind:'start';id:string;identity:Identity;expectedErrors:string[];plan?:PlanRecord|null;pagePolicy?:PagePolicy}
 export interface RequestRecord {seq:number;kind:'http'|'websocket';rule:string|null;action:'fulfill'|'deny'|'unexpected'|'unhandled';observed:boolean;handled:boolean}
 export interface RuleRecord {id:string;action:'fulfill'|'deny';count:number|null;hits:number}
 export interface DocumentRecord {id:string;attempts:number;acknowledged:number;intact:boolean;flushed:boolean}
-export interface End extends Omit<Start,'kind'> {kind:'end';setup:boolean;closed:boolean;outcome:'passed'|'failed';errors:string[];rules:RuleRecord[];requests:RequestRecord[];documents:DocumentRecord[];response?:ResponseLedger|null}
+export interface End extends Omit<Start,'kind'> {kind:'end';setup:boolean;closed:boolean;outcome:'passed'|'failed';errors:string[];rules:RuleRecord[];requests:RequestRecord[];documents:DocumentRecord[];response?:ResponseLedger|null;pages?:PageLedger}
 export interface TestEntry extends Owner {key:string;title:string;engine:string}
 export interface ResultEntry extends TestEntry {status:string;expectedStatus:string;retry:number;worker:number;contexts:string[]}
 // Logical in-memory reports. On disk they MUST be a schema-2 index and pages.
@@ -54,8 +58,67 @@ const validEntry=(v:unknown):v is TestEntry=>object(v)&&validOwner(v)&&v.stage==
 const validManifest=(v:unknown):v is Manifest=>object(v)&&validStamp(v)&&keys(v,[...stampKeys,'kind'])&&v.kind==='manifest';
 const label=(v:unknown):v is string=>text(v,64)&&/^[a-z][a-z0-9-]*$/.test(v);
 const digest=(v:unknown):v is string=>typeof v==='string'&&HASH.test(v);
+const uuid=(v:unknown):v is string=>typeof v==='string'&&UUID.test(v);
 export function validModulePath(v:unknown):v is string {return text(v,180)&&/^[A-Za-z0-9_./-]+\.mjs$/.test(v)&&v.split('/').every(p=>p!==''&&p!=='.'&&p!=='..');}
 export function responseOwner(owner:Owner):boolean {return owner.stage==='unit'?owner.file===ADOPTION_UNIT_FILE:TARGET_FILES.includes(owner.file)&&owner.file!==N1_FILE;}
+export function renderAxeScans(owner:Owner):number {
+  if(owner.file==='tests/render/a11y.spec.ts')return 2;
+  if(owner.file==='tests/render/native-states.spec.ts')return displayTitle(owner).endsWith('with JS true')?1:0;
+  if(owner.file==='tests/render/publication-acceptance.spec.ts'&&displayTitle(owner)==='catalog navigation, filtering, focus and image dimensions survive all engines')return 1;
+  return 0;
+}
+export function validPagePolicy(v:unknown,owner:Owner):v is PagePolicy {
+  return object(v)&&keys(v,['javascript','scans'])&&typeof v.javascript==='boolean'&&integer(v.scans,16)&&(v.scans===0||v.javascript)&&responseOwner(owner)&&(owner.stage==='unit'||v.scans===renderAxeScans(owner));
+}
+function validPageLedger(v:unknown):v is PageLedger {
+  if(!object(v)||!keys(v,['pages','leases','requests'])||!Array.isArray(v.pages)||v.pages.length>128||!Array.isArray(v.leases)||v.leases.length>16||!Array.isArray(v.requests)||v.requests.length>128)return false;
+  return v.pages.every(p=>object(p)&&keys(p,['id','role','lease','source','observed','finalized','closed','documents'])&&uuid(p.id)&&['primary','axe-aggregation','unowned'].includes(String(p.role))&&(p.lease===null||uuid(p.lease))&&(p.source===null||uuid(p.source))&&typeof p.observed==='boolean'&&typeof p.finalized==='boolean'&&typeof p.closed==='boolean'&&Array.isArray(p.documents)&&p.documents.length<=128&&p.documents.every(uuid))&&v.leases.every(l=>object(l)&&keys(l,['id','owner','context','source','page','created','finished','scan'])&&uuid(l.id)&&digest(l.owner)&&uuid(l.context)&&uuid(l.source)&&(l.page===null||uuid(l.page))&&typeof l.created==='boolean'&&typeof l.finished==='boolean'&&['pending','passed','failed'].includes(String(l.scan)))&&v.requests.every(r=>object(r)&&keys(r,['seq','page'])&&integer(r.seq,128)&&r.seq>0&&(r.page===null||uuid(r.page)));
+}
+/** Reconcile separately recorded creation, owner, document and close evidence. */
+export function validatePageEvidence(start:Start,end:End):boolean {
+  if(!Object.hasOwn(start,'pagePolicy'))return !Object.hasOwn(end,'pagePolicy')&&!Object.hasOwn(end,'pages')&&!(start.identity.stage==='render'&&responseOwner(start.identity));
+  const policy=start.pagePolicy,l=end.pages;
+  if(!validPagePolicy(policy,start.identity)||!same(policy,end.pagePolicy)||!validPageLedger(l))return false;
+  const explained=(codes:string[])=>codes.some(c=>end.errors.includes(c));
+  const interrupted=explained(['N1_SETUP','N1_OPTIONS','N1_POLICY','N1_TEST_FAILED','N2A_AXE_FAILED','N2A_AUX_OWNER','N2A_AUX_LIFECYCLE']);
+  if(l.leases.length!==policy.scans&&!interrupted)return false;
+  if(new Set(l.pages.map(p=>p.id)).size!==l.pages.length||new Set(l.leases.map(p=>p.id)).size!==l.leases.length)return false;
+  const pages=new Map(l.pages.map(p=>[p.id,p])),leases=new Map(l.leases.map(a=>[a.id,a]));
+  const used=l.leases.flatMap(a=>a.page===null?[]:[a.page]);if(new Set(used).size!==used.length)return false;
+  for(const a of l.leases){
+    const source=pages.get(a.source),page=a.page===null?undefined:pages.get(a.page);
+    if(a.owner!==start.identity.test||a.context!==start.id||!source||source.role!=='primary'||a.page===a.source)return false;
+    if(a.created!==(a.page!==null)||a.page!==null&&(!page||page.role!=='axe-aggregation'||page.lease!==a.id||page.source!==a.source))return false;
+    if((!a.finished||a.scan==='pending')&&!explained(['N2A_AUX_LIFECYCLE']))return false;
+    if(a.scan==='failed'&&!explained(['N2A_AXE_FAILED']))return false;
+    if(a.scan==='passed'&&!a.created)return false;
+  }
+  const documentIds:string[]=[];
+  for(const page of l.pages){
+    if(!page.observed&&!explained(['N2A_AUX_OWNER']))return false;
+    if(page.role==='axe-aggregation'){
+      const lease=page.lease===null?undefined:leases.get(page.lease);
+      if(!lease||lease.page!==page.id||lease.source!==page.source||!policy.javascript)return false;
+      if((!page.closed||!page.finalized||page.documents.length===0)&&!explained(['N2A_AUX_LIFECYCLE']))return false;
+    }else{
+      if(page.lease!==null||page.source!==null)return false;
+      if(page.role==='unowned'&&!explained(['N2A_AUX_OWNER']))return false;
+      if(!page.closed&&!explained(['N1_CLOSE']))return false;
+      if(!page.finalized&&!explained(['N1_OBSERVER','N1_EARLY_CLOSE','N2A_AUX_OWNER']))return false;
+    }
+    if(!policy.javascript&&page.documents.length)return false;
+    if(policy.javascript&&page.documents.length===0&&page.observed&&!explained(['N1_OBSERVER','N2A_AUX_LIFECYCLE']))return false;
+    for(const id of page.documents){const d=end.documents.find(d=>d.id===id);if(!d)return false;documentIds.push(id);if(page.finalized&&(!d.flushed||!d.intact||d.attempts!==d.acknowledged))return false;}
+  }
+  if(new Set(documentIds).size!==documentIds.length||!same([...documentIds].sort(),end.documents.map(d=>d.id).sort()))return false;
+  if(!same(l.requests.map(r=>r.seq),end.requests.map(r=>r.seq)))return false;
+  for(const row of l.requests){
+    const page=row.page===null?undefined:pages.get(row.page),request=end.requests[row.seq-1];
+    if(!page){if(!explained(['N2A_AUX_OWNER']))return false;continue;}
+    if(page.role!=='primary'&&(request.rule!==null||request.action!=='unexpected'||!explained(['N2A_AUX_NETWORK','N2A_AUX_OWNER'])))return false;
+  }
+  return true;
+}
 export function validPlanRecord(v:unknown):v is PlanRecord {
   if(!object(v)||!keys(v,['assets','phases','transitions','gates','rules','distinctBytes'])||!Array.isArray(v.assets)||v.assets.length>64||!Array.isArray(v.phases)||v.phases.length<1||v.phases.length>8||!v.phases.every(label)||new Set(v.phases).size!==v.phases.length||!Array.isArray(v.gates)||v.gates.length>8||!v.gates.every(label)||new Set(v.gates).size!==v.gates.length||!Array.isArray(v.transitions)||v.transitions.length>28||!Array.isArray(v.rules)||v.rules.length>64||!integer(v.distinctBytes,RESPONSE_LIMITS.distinct))return false;
   const phases=v.phases as string[],gates=v.gates as string[];
@@ -119,10 +182,11 @@ export function validateResponseEvidence(start:Start,end:End):boolean {
 export function entryFor(owner:Owner):TestEntry {return {...owner,key:testKey(owner),title:displayTitle(owner),engine:engineFor(owner.project)};}
 export function validRecord(value:unknown):value is Start|End {
   if(!object(value)||!validStamp(value)||!UUID.test(String(value.id))||!validIdentity(value.identity)||!errorsValid(value.expectedErrors)||(value.expectedErrors.length>0&&!isControlOwner(value.identity)))return false;
-  const planned=Object.hasOwn(value,'plan');
+  const planned=Object.hasOwn(value,'plan'),owned=Object.hasOwn(value,'pagePolicy');
   if(planned&&(!responseOwner(value.identity)||(value.plan!==null&&!validPlanRecord(value.plan))))return false;
-  if(value.kind==='start')return keys(value,[...startKeys,...(planned?['plan']:[])]);
-  if(value.kind!=='end'||!keys(value,[...endKeys,...(planned?['plan','response']:[])])||typeof value.setup!=='boolean'||typeof value.closed!=='boolean'||!['passed','failed'].includes(String(value.outcome))||!errorsValid(value.errors)||(planned&&value.response!==null&&!validResponseLedger(value.response)))return false;
+  if(owned&&!validPagePolicy(value.pagePolicy,value.identity))return false;
+  if(value.kind==='start')return keys(value,[...startKeys,...(planned?['plan']:[]),...(owned?['pagePolicy']:[])]);
+  if(value.kind!=='end'||!keys(value,[...endKeys,...(planned?['plan','response']:[]),...(owned?['pagePolicy','pages']:[])])||typeof value.setup!=='boolean'||typeof value.closed!=='boolean'||!['passed','failed'].includes(String(value.outcome))||!errorsValid(value.errors)||(planned&&value.response!==null&&!validResponseLedger(value.response))||(owned&&!validPageLedger(value.pages)))return false;
   if(!Array.isArray(value.rules)||value.rules.length>64||!value.rules.every(r=>object(r)&&keys(r,['id','action','count','hits'])&&text(r.id,64)&&/^[a-z][a-z0-9-]*$/.test(r.id)&&['fulfill','deny'].includes(String(r.action))&&(r.count===null||(integer(r.count,32)&&r.count>0))&&(r.action!=='deny'||r.count!==null)&&integer(r.hits,128)))return false;
   if(!Array.isArray(value.requests)||value.requests.length>128||!value.requests.every((r,i)=>object(r)&&keys(r,['seq','kind','rule','action','observed','handled'])&&r.seq===i+1&&['http','websocket'].includes(String(r.kind))&&(r.rule===null||text(r.rule,64))&&['fulfill','deny','unexpected','unhandled'].includes(String(r.action))&&typeof r.observed==='boolean'&&typeof r.handled==='boolean'))return false;
   return Array.isArray(value.documents)&&value.documents.length<=128&&value.documents.every(d=>object(d)&&keys(d,['id','attempts','acknowledged','intact','flushed'])&&UUID.test(String(d.id))&&integer(d.attempts,128)&&integer(d.acknowledged,128)&&typeof d.intact==='boolean'&&typeof d.flushed==='boolean');
@@ -208,6 +272,7 @@ export function validateSnapshot(raw:unknown,expected?:Stamp):string[] {
     const end=ends.get(id);if(!end){fail('N1_UNFINISHED');continue;}
     if(!same(start.identity,end.identity)||!same(start.expectedErrors,end.expectedErrors))fail('N1_IDENTITY');
     if(!validateResponseEvidence(start,end))fail('N2A_RESPONSE_ACCOUNTING');
+    if(!validatePageEvidence(start,end))fail('N2A_PAGE_ACCOUNTING');
     const assertedFailure=end.outcome==='failed'&&start.expectedErrors.includes('N1_TEST_FAILED')&&end.errors.includes('N1_TEST_FAILED');
     if(!end.closed||(end.outcome!=='passed'&&!assertedFailure)||(!end.setup&&!end.errors.includes('N1_SETUP')&&!end.errors.includes('N1_OPTIONS')&&!end.errors.includes('N1_POLICY')))fail('N1_LIFECYCLE');
     if(!same([...end.errors].sort(),[...end.expectedErrors].sort()))fail('N1_VIOLATION');
@@ -323,9 +388,10 @@ export function finalizeEvidence(root:string,output:string,expected:Stamp,unitFi
   try{snapshot.browser=readJson(browserFile,80*1024*1024);}catch{snapshot.readErrors!.push('N1_BROWSER_READ');}
   const errors=validateSnapshot(snapshot,expected);
   const ends=array(snapshot.records).filter((v):v is End=>validRecord(v)&&v.kind==='end');
-  const planned=ends.filter(e=>e.plan&&e.response);
+  const planned=ends.filter(e=>e.plan&&e.response),owned=ends.filter(e=>e.pagePolicy&&e.pages);
   const responseCapacity={plannedContexts:planned.length,maxDistinctBytes:Math.max(0,...planned.map(e=>e.plan!.distinctBytes)),maxChargedBytes:Math.max(0,...planned.map(e=>e.response!.chargedBytes)),maxFulfilledBytes:Math.max(0,...planned.map(e=>e.response!.fulfilledBytes)),maxRules:Math.max(0,...planned.map(e=>e.rules.length)),responses:planned.reduce((n,e)=>n+e.response!.responses.length,0),transitions:planned.reduce((n,e)=>n+e.response!.transitions.length,0),gates:planned.reduce((n,e)=>n+e.response!.gates.length,0)};
-  const summary={...expected,kind:'summary',accepted:errors.length===0,errors,readErrors:[...new Set(snapshot.readErrors)],stagedBytes:total,stagedFiles:files.size,contexts:array(snapshot.records).filter(v=>object(v)&&v.kind==='end').length,discovered:object(snapshot.discovery)?array(snapshot.discovery.tests).length:0,indexPages:[...files.keys()].filter(n=>/^(discovery|results)-[0-9]{4}\.json$/.test(n)).length,adoptedFiles:ADOPTED_FILES,n2aScopeComplete:ADOPTED_FILES.length===TARGET_FILES.length,responseCapacity,nonAdopted:'Only the explicit adoptedFiles and recorded owners in the two approved unit files have browser-layer attribution; other browsers remain N0-only.'};
+  const pageCapacity={contexts:owned.length,pages:owned.reduce((n,e)=>n+e.pages!.pages.length,0),leases:owned.reduce((n,e)=>n+e.pages!.leases.length,0),auxiliaryPages:owned.reduce((n,e)=>n+e.pages!.pages.filter(p=>p.role==='axe-aggregation').length,0),maxPages:Math.max(0,...owned.map(e=>e.pages!.pages.length)),maxDocuments:Math.max(0,...owned.map(e=>e.documents.length))};
+  const summary={...expected,kind:'summary',accepted:errors.length===0,errors,readErrors:[...new Set(snapshot.readErrors)],stagedBytes:total,stagedFiles:files.size,contexts:array(snapshot.records).filter(v=>object(v)&&v.kind==='end').length,discovered:object(snapshot.discovery)?array(snapshot.discovery.tests).length:0,indexPages:[...files.keys()].filter(n=>/^(discovery|results)-[0-9]{4}\.json$/.test(n)).length,adoptedFiles:ADOPTED_FILES,n2aScopeComplete:ADOPTED_FILES.length===TARGET_FILES.length,responseCapacity,pageCapacity,nonAdopted:'Only the explicit adoptedFiles and recorded owners in the two approved unit files have browser-layer attribution; other browsers remain N0-only.'};
   fs.mkdirSync(path.dirname(output),{recursive:true});fs.mkdirSync(output,{mode:0o700});
   // Preserve complete valid raw pages/indexes as diagnostics, even on rejection.
   // Only summary.accepted establishes a reconciled set. No invalid file is fixed.

@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { chromium, firefox, webkit } from '@playwright/test';
+import { chromium, firefox, webkit, type Browser, type BrowserContext, type BrowserContextOptions, type Route, type Response } from '@playwright/test';
 import { createHash, randomUUID } from 'node:crypto';
 import fs, { constants } from 'node:fs';
 import { lstat, open, readFile, realpath, writeFile } from 'node:fs/promises';
@@ -8,6 +8,7 @@ import os from 'node:os';
 import ts from 'typescript';
 import { assets, pug, root } from '../../tools/generate.ts';
 import { createGuardedContext, FIXTURE_ORIGIN, validateFixtureRules, validateResponsePlan, matchFixtureRule, type FixtureAsset, type ResponsePlan, type FixtureRule, type GuardedContext, type GuardOptions } from '../helpers/browser-network.ts';
+import { readAssetText, htmlAsset, fixtureHTML, mermaidCatalog, mermaidPlan } from '../helpers/render-fixtures.ts';
 import { POLICY, SCHEMA, UNIT_CONSUMER, engineFor, testKey, loadManifest, stageRoot, validateSnapshot, initializeEvidence, writeIndexedEvidence, readIndexedEvidence, entryFor, MAX_FILE, MERMAID_ORIGIN, MERMAID_PREFIX, RESPONSE_LIMITS, validateResponseEvidence, validRecord, type Manifest, type Start, type End, type TestEntry, type ResultEntry, type EvidenceIndex } from '../../tools/finalize-browser-network.ts';
 import { N1_FILE, UNIT_FILE, ADOPTION_UNIT_FILE, TARGET_FILES, ADOPTED_FILES, makeOwner, expectedOwners, infoOwner, reporterOwner } from '../helpers/browser-network-scope.ts';
 
@@ -371,6 +372,124 @@ for(const engine of [chromium,firefox,webkit]){
       expect(validateResponseEvidence(start,end)).toBe(true);expect(end.response?.transitions).toEqual([{from:'ready',to:'later',after:2}]);expect(end.response?.chargedBytes).toBe(Buffer.byteLength(html)*2+8);expect(end.response?.fulfilledBytes).toBe(end.response?.chargedBytes);
       expect(end.response?.gates).toEqual([{id:'release',released:true,expired:false,waits:1,settled:1}]);expect(end.rules.map(r=>r.hits)).toEqual([1,1,1]);expect(browser.contexts()).toHaveLength(0);
     }catch(cause){failure=cause;}
+    finally{if(guard&&!guard.finished)try{await guard.finish(failure?'failed':'passed');}catch(cause){failure??=cause;}await browser.close();}
+    if(failure)throw failure;
+  },30000);
+}
+
+function pairFor(guard:GuardedContext):{start:Start;end:End}{
+  return {start:JSON.parse(fs.readFileSync(path.join(stageRoot(),`${guard.id}.start.json`),'utf8')) as Start,end:JSON.parse(fs.readFileSync(path.join(stageRoot(),`${guard.id}.end.json`),'utf8')) as End};
+}
+const unitOptions=(title:string,responsePlan:ResponsePlan,expectedErrors:string[]=[]):GuardOptions=>({...makeOwner('unit',ADOPTION_UNIT_FILE,[title],'vitest-chromium'),title,engine:'chromium',responsePlan,expectedErrors});
+function publicDependency<T extends object>(target:T,overrides:Partial<T>):T {
+  return new Proxy(target,{get(object,key){const owner=Object.hasOwn(overrides,key)?overrides:object;const value:unknown=Reflect.get(owner,key,owner);return typeof value==='function'?value.bind(owner):value;}});
+}
+test('N2A local asset reads reject escapes symlinks malformed UTF8 and boundary plus one',async()=>{
+  const base=fs.mkdtempSync(path.join(os.tmpdir(),'fcd-n2a-asset-'));
+  try{
+    fs.mkdirSync(path.join(base,'real'));fs.writeFileSync(path.join(base,'real/good.mjs'),'export{}');
+    expect(await readAssetText(base,'real/good.mjs',8)).toBe('export{}');
+    await expect(readAssetText(base,'real/good.mjs',7)).rejects.toThrow('N2A_ASSET_LIMIT');
+    for(const name of ['../escape.mjs','/escape.mjs','real//good.mjs','real/%2e%2e/good.mjs','real\\good.mjs','real/good.mjs\n'])await expect(readAssetText(base,name,64)).rejects.toThrow('N2A_ASSET_PATH');
+    fs.symlinkSync(path.join(base,'real/good.mjs'),path.join(base,'file-link.mjs'));fs.symlinkSync(path.join(base,'real'),path.join(base,'directory-link'),'dir');
+    await expect(readAssetText(base,'file-link.mjs',64)).rejects.toThrow('N2A_ASSET_TYPE');await expect(readAssetText(base,'directory-link/good.mjs',64)).rejects.toThrow('N2A_ASSET_TYPE');
+    await expect(readAssetText(base,'real',64)).rejects.toThrow('N2A_ASSET_TYPE');
+    fs.writeFileSync(path.join(base,'bad.mjs'),Buffer.from([0xc3,0x28]));await expect(readAssetText(base,'bad.mjs',64)).rejects.toThrow();
+    const held=await readAssetText(base,'real/good.mjs',64);fs.writeFileSync(path.join(base,'real/good.mjs'),'changed');expect(held).toBe('export{}');
+    const frozen=htmlAsset('html','<h1>held</h1>');expect(Object.isFrozen(frozen)).toBe(true);expect(frozen.sha256).toBe(sha256(frozen.body));
+    await expect(fixtureHTML('../unapproved')).rejects.toThrow('N2A_FIXTURE_NAME');
+  }finally{fs.rmSync(base,{recursive:true,force:true});}
+});
+test('N2A catalog contains the exact installed flowchart and dagre closure',async()=>{
+  const values=await mermaidCatalog(),plan=await mermaidPlan(),metadata=validateResponsePlan(plan.rules,plan.responsePlan);
+  expect(Object.isFrozen(values)).toBe(true);expect(values.every(Object.isFrozen)).toBe(true);
+  expect(values.some(a=>a.modulePath==='mermaid.esm.min.mjs')).toBe(true);expect(values.some(a=>a.modulePath==='chunks/mermaid.esm.min/flowDiagram-YHGXBVSY.mjs')).toBe(true);expect(values.some(a=>a.modulePath==='chunks/mermaid.esm.min/dagre-MPVFI544.mjs')).toBe(true);
+  expect(values.some(a=>/sizeCapture|katex|sequenceDiagram|architectureDiagram/.test(a.modulePath!))).toBe(false);
+  expect(new Set(values.map(a=>a.modulePath)).size).toBe(values.length);expect(plan.rules.length).toBeLessThanOrEqual(64);expect(metadata.distinctBytes).toBeLessThanOrEqual(limits.distinct);
+  for(const a of values){expect(a.bytes).toBe(Buffer.byteLength(a.body));expect(a.sha256).toBe(sha256(a.body));expect(a.bytes).toBeLessThanOrEqual(limits.module);}
+  report('registered catalog',values.map(({id,modulePath,bytes,sha256})=>({id,modulePath,bytes,sha256})));
+});
+const negativeResponses='N2A bounded response controls retain real failures';
+test(negativeResponses,async()=>{
+  const browser=await chromium.launch({headless:true});
+  const empty=():ResponsePlan=>({assets:[],phases:['ready','later'],transitions:[{from:'ready',to:'later'}],gates:[]});
+  const gated=():ResponsePlan=>({...empty(),gates:['release']});
+  const gatedRules:FixtureRule[]=[{...smallRule,count:1},{id:'data',path:'/data',method:'GET',resource:'fetch',body:'released',gate:'release',count:1}];
+  async function run(codes:string[],rules:FixtureRule[],plan:ResponsePlan,body:(guard:GuardedContext)=>Promise<void>,factory:Browser=browser){
+    let guard:GuardedContext|undefined,failure:unknown;
+    try{
+      guard=await createGuardedContext(factory,rules,unitOptions(negativeResponses,plan,codes));await body(guard);
+      await expect(guard.finish()).rejects.toMatchObject({codes:[...codes].sort()});const pair=pairFor(guard);expect(validateResponseEvidence(pair.start,pair.end)).toBe(true);return pair.end;
+    }catch(cause){failure=cause;throw cause;}
+    finally{if(guard&&!guard.finished)try{await guard.finish(failure?'failed':'passed');}catch(cause){if(!failure)throw cause;}}
+  }
+  try{
+    let calls=0;const unavailable={newContext:async()=>{calls++;throw new Error('registration must precede creation');}} as unknown as Browser;
+    await expect(createGuardedContext(unavailable,[smallRule],{...unitOptions(negativeResponses,empty(),['N1_POLICY']),responsePlan:{...empty(),unapproved:true}})).rejects.toMatchObject({codes:['N1_POLICY']});expect(calls).toBe(0);
+    const phase=await run(['N2A_PHASE'],[],empty(),async g=>{expect(()=>g.transition('unknown')).toThrow('N2A_PHASE');g.transition('later');expect(()=>g.transition('later')).toThrow('N2A_PHASE');expect(()=>g.transition('ready')).toThrow('N2A_PHASE');});expect(phase.response?.transitions).toEqual([{from:'ready',to:'later',after:0}]);
+    const pending=await run(['N2A_PHASE'],gatedRules,gated(),async g=>{const p=await g.context.newPage();await p.goto(FIXTURE_ORIGIN+'/');const fetched=p.evaluate(()=>fetch('/data').then(r=>r.text()));await expect.poll(()=>g.pendingGate('release'),{timeout:2000}).toBe(1);expect(()=>g.transition('later')).toThrow('N2A_PHASE');g.releaseGate('release');expect(await fetched).toBe('released');});expect(pending.response?.gates[0].released).toBe(true);
+    await run(['N2A_GATE'],[{...gatedRules[1],count:undefined}],gated(),async g=>{expect(()=>g.releaseGate('release')).toThrow('N2A_GATE');expect(()=>g.releaseGate('unknown')).toThrow('N2A_GATE');});
+    const expired=await run(['N2A_GATE'],gatedRules,gated(),async g=>{const p=await g.context.newPage();await p.goto(FIXTURE_ORIGIN+'/');const fetched=p.evaluate(()=>fetch('/data').then(()=>false,()=>true));await expect.poll(()=>g.pendingGate('release'),{timeout:2000}).toBe(1);expect(await fetched).toBe(true);expect(()=>g.releaseGate('release')).toThrow('N2A_GATE');});expect(expired.response?.gates).toEqual([{id:'release',released:false,expired:true,waits:1,settled:1}]);
+    let waiting:Promise<unknown>|undefined;
+    const unreleased=await run(['N2A_GATE'],gatedRules,gated(),async g=>{const p=await g.context.newPage();await p.goto(FIXTURE_ORIGIN+'/');waiting=p.evaluate(()=>fetch('/data').then(()=>false,()=>true)).catch(()=>true);await expect.poll(()=>g.pendingGate('release'),{timeout:2000}).toBe(1);});await waiting;expect(unreleased.response?.gates).toEqual([{id:'release',released:false,expired:false,waits:1,settled:1}]);
+    await run(['N2A_GATE'],gatedRules,gated(),async g=>{const p=await g.context.newPage();await p.goto(FIXTURE_ORIGIN+'/');const fetched=p.evaluate(()=>fetch('/data').then(r=>r.text()));await expect.poll(()=>g.pendingGate('release'),{timeout:2000}).toBe(1);g.releaseGate('release');expect(await fetched).toBe('released');expect(()=>g.releaseGate('release')).toThrow('N2A_GATE');});
+    const fault={newContext:async(opts:BrowserContextOptions)=>{const real=await browser.newContext(opts);return publicDependency<BrowserContext>(real,{route:async(url,handler,routeOptions)=>real.route(url,async(route,request)=>{const adapted=publicDependency<Route>(route,{fulfill:async response=>{if(request.resourceType()==='fetch')throw new Error('controlled planned fulfillment failure');await route.fulfill(response);}});await handler(adapted,request);},routeOptions)});}} as unknown as Browser;
+    const handler=await run(['N1_HANDLER'],[smallRule,{id:'data',path:'/data',method:'GET',resource:'fetch',body:'attempted',count:1}],empty(),async g=>{const p=await g.context.newPage();await p.goto(FIXTURE_ORIGIN+'/');expect(await p.evaluate(()=>fetch('/data').then(()=>false,()=>true))).toBe(true);},fault);
+    expect(handler.response?.responses.at(-1)).toMatchObject({outcome:'failed',bytes:9,sha256:sha256('attempted'),status:200});expect(handler.response!.chargedBytes-handler.response!.fulfilledBytes).toBe(9);expect(browser.contexts()).toHaveLength(0);
+  }finally{await browser.close();}
+},30000);
+test('N2A cumulative fulfilled bytes cannot reset across phases',async()=>{
+  const title='N2A cumulative fulfilled bytes cannot reset across phases',prefix='<!doctype html><h1>budget</h1><!--',suffix='-->';
+  const sized=(length:number)=>prefix+'x'.repeat(length-Buffer.byteLength(prefix+suffix))+suffix;
+  const responsePlan:ResponsePlan={assets:[asset('large',sized(500000)),asset('tail',sized(limits.fulfilled-33*500000)),asset('extra','x')],phases:['ready','later'],transitions:[{from:'ready',to:'later'}],gates:[]};
+  const rules:FixtureRule[]=[{id:'first',path:'/',method:'GET',resource:'document',asset:'large',phase:'ready',count:32},{id:'later',path:'/',method:'GET',resource:'document',asset:'large',phase:'later',count:1},{id:'tail',path:'/tail',method:'GET',resource:'document',asset:'tail',count:1},{id:'extra',path:'/extra',method:'GET',resource:'document',asset:'extra',count:1}];
+  const browser=await chromium.launch({headless:true});let guard:GuardedContext|undefined,failure:unknown;
+  try{
+    guard=await createGuardedContext(browser,rules,{...unitOptions(title,responsePlan,['N1_LIMIT']),contextOptions:{javaScriptEnabled:false}});const page=await guard.context.newPage();
+    for(let i=0;i<32;i++)expect((await page.goto(FIXTURE_ORIGIN+'/'))?.status()).toBe(200);
+    guard.transition('later');expect((await page.goto(FIXTURE_ORIGIN+'/'))?.status()).toBe(200);expect((await page.goto(FIXTURE_ORIGIN+'/tail'))?.status()).toBe(200);
+    expect(await page.goto(FIXTURE_ORIGIN+'/extra').then(()=>false,()=>true)).toBe(true);await expect(guard.finish()).rejects.toMatchObject({codes:['N1_LIMIT']});
+    const pair=pairFor(guard);expect(validateResponseEvidence(pair.start,pair.end)).toBe(true);expect(pair.end.response?.chargedBytes).toBe(limits.fulfilled);expect(pair.end.response?.fulfilledBytes).toBe(limits.fulfilled);expect(pair.end.response?.responses).toHaveLength(35);expect(pair.end.response?.responses.at(-1)).toMatchObject({bytes:0,sha256:null,status:null,outcome:'failed'});expect(pair.end.rules.map(r=>r.hits)).toEqual([32,1,1,1]);
+  }catch(cause){failure=cause;}
+  finally{if(guard&&!guard.finished)try{await guard.finish(failure?'failed':'passed');}catch(cause){failure??=cause;}await browser.close();}
+  if(failure)throw failure;
+},30000);
+test('N2A late response controls cannot overwrite a sealed record',async()=>{
+  // Deliberately rejected synthetic evidence, isolated from the acceptance root,
+  // just like the inherited N1 exclusive-write corruption control.
+  const manifest=loadManifest(),previous=process.env.FCD_ISOLATION_EVIDENCE,base=fs.mkdtempSync(path.join(os.tmpdir(),'fcd-n2a-late-'));
+  const browser=await chromium.launch({headless:true});
+  try{
+    process.env.FCD_ISOLATION_EVIDENCE=path.join(base,'isolation');initializeEvidence(stageRoot(),manifest.source,manifest.run,manifest.attempt);
+    const title='N2A late response controls cannot overwrite a sealed record',plan:ResponsePlan={assets:[],phases:['ready','later'],transitions:[{from:'ready',to:'later'}],gates:[]};
+    const guard=await createGuardedContext(browser,[],unitOptions(title,plan));await guard.finish();const file=path.join(stageRoot(),`${guard.id}.end.json`),before=fs.readFileSync(file,'utf8');
+    expect(()=>guard.transition('later')).toThrow('N2A_PHASE');expect(fs.readFileSync(file,'utf8')).toBe(before);expect(JSON.parse(fs.readFileSync(path.join(stageRoot(),'reporter-error.json'),'utf8'))).toMatchObject({source:manifest.source,id:guard.id,code:'N2A_PHASE'});expect(browser.contexts()).toHaveLength(0);
+  }finally{process.env.FCD_ISOLATION_EVIDENCE=previous;await browser.close();fs.rmSync(base,{recursive:true,force:true});}
+},30000);
+test('N2A declared network abort remains distinct from HTTP 503',async()=>{
+  const title='N2A declared network abort remains distinct from HTTP 503',plan:ResponsePlan={assets:[],phases:['ready'],transitions:[],gates:[]};
+  const rules:FixtureRule[]=[{...smallRule,count:1},{id:'abort',path:'/abort',method:'GET',resource:'fetch',action:'deny',abort:'failed',count:1},{id:'unavailable',path:'/unavailable',method:'GET',resource:'fetch',status:503,body:'Unavailable',count:1}];
+  const browser=await chromium.launch({headless:true});let guard:GuardedContext|undefined,failure:unknown;
+  try{
+    guard=await createGuardedContext(browser,rules,unitOptions(title,plan));const p=await guard.context.newPage();await p.goto(FIXTURE_ORIGIN+'/');expect(await p.evaluate(()=>fetch('/abort').then(()=>false,()=>true))).toBe(true);expect(await p.evaluate(()=>fetch('/unavailable').then(async r=>({status:r.status,body:await r.text()})))).toEqual({status:503,body:'Unavailable'});await guard.finish();const pair=pairFor(guard);expect(validateResponseEvidence(pair.start,pair.end)).toBe(true);expect(pair.end.response?.responses[1]).toMatchObject({rule:'abort',outcome:'aborted',bytes:0,status:null});expect(pair.end.response?.responses[2]).toMatchObject({rule:'unavailable',outcome:'fulfilled',status:503,bytes:11});
+  }catch(cause){failure=cause;}
+  finally{if(guard&&!guard.finished)try{await guard.finish(failure?'failed':'passed');}catch(cause){failure??=cause;}await browser.close();}
+  if(failure)throw failure;
+},30000);
+for(const engine of [chromium,firefox,webkit]){
+  const title=`N2A exact local Mermaid renders and blocks in ${engine.name()}`;
+  test(title,async()=>{
+    const plan=await mermaidPlan(),browser=await engine.launch({headless:true});let guard:GuardedContext|undefined,failure:unknown;
+    const responses:Response[]=[],requests:{module:string;resource:string}[]=[];
+    try{
+      guard=await createGuardedContext(browser,plan.rules,{...makeOwner('unit',ADOPTION_UNIT_FILE,[title],`vitest-${engine.name()}`),title,engine:engine.name(),responsePlan:plan.responsePlan});const page=await guard.context.newPage();
+      page.on('response',r=>{if(r.url().startsWith(MERMAID_ORIGIN+MERMAID_PREFIX))responses.push(r);});page.on('request',r=>{if(r.url().startsWith(MERMAID_ORIGIN+MERMAID_PREFIX))requests.push({module:r.url().slice((MERMAID_ORIGIN+MERMAID_PREFIX).length,200),resource:r.resourceType()});});
+      await page.goto(FIXTURE_ORIGIN+'/technical');await expect.poll(()=>page.locator('.fcd-diagram').getAttribute('data-state'),{timeout:20000}).toBe('rendered');expect(await page.locator('.diagram-output svg').count()).toBe(1);const source=await page.locator('.diagram-source pre').textContent();
+      await page.locator('#theme-toggle').click();const theme=await page.locator('html').getAttribute('data-theme');await expect.poll(()=>page.locator('.fcd-diagram').getAttribute('data-rendered-theme'),{timeout:20000}).toBe(theme);expect(await page.locator('.diagram-source pre').textContent()).toBe(source);
+      expect(responses.length).toBeGreaterThan(0);for(const response of responses){const modulePath=response.url().slice((MERMAID_ORIGIN+MERMAID_PREFIX).length),expected=plan.responsePlan.assets.find(a=>a.modulePath===modulePath);expect(expected).toBeDefined();expect(response.status()).toBe(200);expect(response.request().resourceType()).toBe('script');expect(response.headers()['access-control-allow-origin']).toBe(FIXTURE_ORIGIN);expect(response.headers()['content-type']).toContain('application/javascript');const body=await response.body();expect(body.length).toBe(expected!.bytes);expect(sha256(body)).toBe(expected!.sha256);}
+      guard.transition('blocked');await page.reload();await expect.poll(()=>page.locator('.fcd-diagram').getAttribute('data-state'),{timeout:15000}).toBe('error');expect(await page.locator('.diagram-source pre').isVisible()).toBe(true);expect(await page.locator('.diagram-source pre').textContent()).toBe(source);
+      await guard.finish();const pair=pairFor(guard);expect(validateResponseEvidence(pair.start,pair.end)).toBe(true);expect(pair.end.rules.find(r=>r.id==='blocked-entry')?.hits).toBe(1);expect(pair.end.response?.responses.filter(r=>r.rule==='blocked-entry')).toMatchObject([{outcome:'aborted',bytes:0}]);expect(pair.end.response!.fulfilledBytes).toBeLessThanOrEqual(limits.fulfilled);
+    }catch(cause){failure=new Error(`N2A_MERMAID_RUNTIME ${engine.name()} ${JSON.stringify(requests)}: ${cause instanceof Error?cause.message:'non-error failure'}`,{cause});}
     finally{if(guard&&!guard.finished)try{await guard.finish(failure?'failed':'passed');}catch(cause){failure??=cause;}await browser.close();}
     if(failure)throw failure;
   },30000);

@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { chromium } from '@playwright/test';
+import { chromium, firefox, webkit } from '@playwright/test';
 import { createHash, randomUUID } from 'node:crypto';
 import fs, { constants } from 'node:fs';
 import { lstat, open, readFile, realpath, writeFile } from 'node:fs/promises';
@@ -7,8 +7,8 @@ import path from 'node:path';
 import os from 'node:os';
 import ts from 'typescript';
 import { assets, pug, root } from '../../tools/generate.ts';
-import { createGuardedContext, FIXTURE_ORIGIN, validateFixtureRules, type FixtureRule, type GuardedContext, type GuardOptions } from '../helpers/browser-network.ts';
-import { POLICY, SCHEMA, UNIT_CONSUMER, engineFor, testKey, loadManifest, stageRoot, validateSnapshot, initializeEvidence, writeIndexedEvidence, readIndexedEvidence, entryFor, MAX_FILE, type Manifest, type Start, type End, type TestEntry, type ResultEntry, type EvidenceIndex } from '../../tools/finalize-browser-network.ts';
+import { createGuardedContext, FIXTURE_ORIGIN, validateFixtureRules, validateResponsePlan, matchFixtureRule, type FixtureAsset, type ResponsePlan, type FixtureRule, type GuardedContext, type GuardOptions } from '../helpers/browser-network.ts';
+import { POLICY, SCHEMA, UNIT_CONSUMER, engineFor, testKey, loadManifest, stageRoot, validateSnapshot, initializeEvidence, writeIndexedEvidence, readIndexedEvidence, entryFor, MAX_FILE, MERMAID_ORIGIN, MERMAID_PREFIX, RESPONSE_LIMITS, validateResponseEvidence, validRecord, type Manifest, type Start, type End, type TestEntry, type ResultEntry, type EvidenceIndex } from '../../tools/finalize-browser-network.ts';
 import { N1_FILE, UNIT_FILE, ADOPTION_UNIT_FILE, TARGET_FILES, ADOPTED_FILES, makeOwner, expectedOwners, infoOwner, reporterOwner } from '../helpers/browser-network-scope.ts';
 
 // N2A-01 characterization only. This does not register routes or adopt suites.
@@ -273,3 +273,105 @@ test(registeredHTML,async()=>{
   finally{if(guard)try{await guard.finish(failure?'failed':'passed');}catch(cause){failure??=cause;}await browser.close();}
   if(failure)throw failure;
 },30000);
+
+function asset(id:string,body:string,kind:'html'|'mermaid'='html',modulePath?:string):FixtureAsset {
+  return {id,kind,body,bytes:Buffer.byteLength(body),sha256:sha256(body),...(modulePath?{modulePath}:{})};
+}
+function assetPolicy(values:FixtureAsset[]) {
+  const plan:ResponsePlan={assets:values,phases:['ready'],transitions:[],gates:[]};
+  const rules:FixtureRule[]=values.map((a,i)=>({id:`asset-${i}`,method:'GET',resource:a.kind==='html'?'document':'script',path:a.kind==='html'?`/document-${i}`:MERMAID_PREFIX+a.modulePath,asset:a.id,...(a.kind==='mermaid'?{origin:MERMAID_ORIGIN}:{})}));
+  return {plan,rules};
+}
+test('N2A asset classes enforce exact byte boundaries including multibyte content',()=>{
+  for(const [kind,limit] of [['html',limits.html],['mermaid',limits.module]] as const){
+    const p=assetPolicy([asset('bounded','x'.repeat(limit),kind,kind==='mermaid'?'mermaid.esm.min.mjs':undefined)]);
+    expect(validateResponsePlan(p.rules,p.plan).assets[0].bytes).toBe(limit);
+    p.plan.assets[0]=asset('bounded','x'.repeat(limit+1),kind,kind==='mermaid'?'mermaid.esm.min.mjs':undefined);
+    expect(()=>validateResponsePlan(p.rules,p.plan)).toThrow('N1_POLICY');
+  }
+  const p=assetPolicy([asset('utf8','é'.repeat(250000))]);expect(validateResponsePlan(p.rules,p.plan).distinctBytes).toBe(500000);
+  p.plan.assets[0].bytes=p.plan.assets[0].body.length;expect(()=>validateResponsePlan(p.rules,p.plan)).toThrow('N1_POLICY');
+});
+test('N2A distinct registered assets share an eight MiB budget across phases',()=>{
+  const p=assetPolicy(Array.from({length:4},(_,i)=>asset(`module-${i}`,'x'.repeat(limits.module),'mermaid',`chunk-${i}.mjs`)));
+  expect(validateResponsePlan(p.rules,p.plan).distinctBytes).toBe(limits.distinct);
+  p.plan.phases.push('later');p.plan.transitions.push({from:'ready',to:'later'});
+  p.plan.assets.push(asset('extra','x'));p.rules.push({id:'extra',path:'/later',method:'GET',resource:'document',asset:'extra',phase:'later'});
+  expect(()=>validateResponsePlan(p.rules,p.plan)).toThrow('N1_POLICY');
+});
+test('N2A inline rule and all-phase rule limits remain unchanged',()=>{
+  expect(()=>validateFixtureRules([{...smallRule,body:'x'.repeat(65536)}])).not.toThrow();
+  expect(()=>validateFixtureRules([{...smallRule,body:'x'.repeat(65537)}])).toThrow('N1_POLICY');
+  const plan:ResponsePlan={assets:[],phases:['ready','later'],transitions:[{from:'ready',to:'later'}],gates:[]};
+  const rules=Array.from({length:64},(_,i)=>({...smallRule,id:`rule-${i}`,path:`/path-${i}`,phase:i%2?'ready':'later'}));
+  expect(validateResponsePlan(rules,plan).rules).toHaveLength(64);
+  expect(()=>validateResponsePlan([...rules,{...smallRule,id:'extra',path:'/extra'}],plan)).toThrow('N1_POLICY');
+});
+test('N2A asset registration rejects digest kind path mode and graph corruption',()=>{
+  const mutations:((p:ReturnType<typeof assetPolicy>)=>void)[]=[
+    p=>{p.plan.assets[0].sha256='0'.repeat(64);},p=>{p.plan.assets[0].bytes++;},p=>{p.plan.assets[0].body+='mutated';},
+    p=>{p.plan.assets[0].modulePath='../escape.mjs';},p=>{p.plan.assets[0].modulePath='chunks/%2e%2e/escape.mjs';},
+    p=>{p.plan.assets[0].modulePath='chunks//escape.mjs';},p=>{p.plan.assets[0].kind='html';},
+    p=>{p.rules[0].body='second mode';},p=>{p.rules[0].asset='unregistered';},p=>{p.rules[0].resource='image';},
+    p=>{p.rules[0].query='variant=1';},p=>{p.rules[0].headers={'access-control-allow-origin':'*'};},
+    p=>{p.plan.phases.push('unreachable');},p=>{p.plan.phases.push('ready');},p=>{p.plan.gates.push('unused');},
+    p=>{p.plan.transitions.push({from:'ready',to:'ready'});},p=>{p.rules[0].phase='unknown';},p=>{p.rules[0].gate='unknown';},
+  ];
+  for(const mutate of mutations){const p=assetPolicy([asset('module','export const local=true;','mermaid','mermaid.esm.min.mjs')]);mutate(p);expect(()=>validateResponsePlan(p.rules,p.plan)).toThrow('N1_POLICY');}
+});
+test('N2A module matching remains pinned to exact origin version query method and resource',()=>{
+  const p=assetPolicy([asset('module','export const local=true;','mermaid','mermaid.esm.min.mjs')]);validateResponsePlan(p.rules,p.plan);
+  const url=MERMAID_ORIGIN+MERMAID_PREFIX+'mermaid.esm.min.mjs';expect(matchFixtureRule(p.rules,url,'GET','script')?.id).toBe('asset-0');
+  for(const [address,method,resource] of [[url.replace('@11.17.2','@11.17.1'),'GET','script'],[url+'?v=1','GET','script'],[url+'#fragment','GET','script'],[url.replace('cdn.jsdelivr.net','elsewhere.invalid'),'GET','script'],[url,'POST','script'],[url,'GET','fetch'],[url.replace('/dist/','/dist/%2e%2e/dist/'),'GET','script']])expect(matchFixtureRule(p.rules,address,method,resource)).toBeUndefined();
+});
+
+function responseFixture(gated=false){
+  const raw:ResponsePlan={assets:[],phases:['ready'],transitions:[],gates:gated?['release']:[]};
+  const rule:FixtureRule={...smallRule,count:1,...(gated?{gate:'release'}:{})},plan=validateResponsePlan([rule],raw);
+  const owner=makeOwner('unit',ADOPTION_UNIT_FILE,['synthetic response accounting'],'vitest-chromium');
+  const start:Start={schema:SCHEMA,policy:POLICY,source:'a'.repeat(40),run:'17',attempt:'1',kind:'start',id:randomUUID(),identity:{...owner,engine:'chromium',title:owner.titlePath[0],test:testKey(owner),worker:0,retry:0,pid:10},expectedErrors:[],plan};
+  const end:End={...start,kind:'end',setup:true,closed:true,outcome:'passed',errors:[],documents:[],rules:[{id:'home',action:'fulfill',count:1,hits:1}],requests:[{seq:1,kind:'http',rule:'home',action:'fulfill',observed:true,handled:true}],response:{phase:'ready',transitions:[],gates:gated?[{id:'release',released:true,expired:false,waits:1,settled:1}]:[],responses:[{seq:1,phase:'ready',rule:'home',asset:null,gate:gated?'release':null,waited:gated,bytes:plan.rules[0].bytes,sha256:plan.rules[0].sha256,status:200,outcome:'fulfilled'}],chargedBytes:plan.rules[0].bytes,fulfilledBytes:plan.rules[0].bytes}};
+  return {start,end};
+}
+test('N2A response evidence has complete positive controls with and without gates',()=>{
+  for(const gated of [false,true]){const {start,end}=responseFixture(gated);expect(validRecord(start)).toBe(true);expect(validRecord(end)).toBe(true);expect(validateResponseEvidence(start,end)).toBe(true);}
+});
+for(const corruption of ['missing','duplicate','wrong-phase','wrong-asset','wrong-digest','wrong-status','charged-reset','fulfilled-reset','phantom-transition','gate-count'] as const)test(`N2A response evidence rejects ${corruption}`,()=>{
+  const {start,end}=responseFixture(true),l=end.response!,r=l.responses[0];
+  if(corruption==='missing')l.responses=[];if(corruption==='duplicate')l.responses.push({...r});if(corruption==='wrong-phase')r.phase='other';if(corruption==='wrong-asset')r.asset='other';if(corruption==='wrong-digest')r.sha256='0'.repeat(64);if(corruption==='wrong-status')r.status=503;if(corruption==='charged-reset')l.chargedBytes=0;if(corruption==='fulfilled-reset')l.fulfilledBytes=0;if(corruption==='phantom-transition')l.transitions.push({from:'ready',to:'other',after:0});if(corruption==='gate-count')l.gates[0].settled=0;
+  expect(validateResponseEvidence(start,end)).toBe(false);
+});
+test('N2A response evidence rejects an aborted successful fulfillment',()=>{
+  const {start,end}=responseFixture(),l=end.response!;Object.assign(l.responses[0],{outcome:'aborted',bytes:0,sha256:null,status:null});l.chargedBytes=0;l.fulfilledBytes=0;
+  expect(validateResponseEvidence(start,end),'N2A_ABORTED_FULFILLMENT_FALSE_GREEN').toBe(false);
+});
+test('N2A response evidence rejects released gates without an actual wait',()=>{
+  const {start,end}=responseFixture(true),l=end.response!;l.responses[0].waited=false;l.gates[0].waits=0;l.gates[0].settled=0;
+  expect(validateResponseEvidence(start,end),'N2A_PHANTOM_RELEASE_FALSE_GREEN').toBe(false);
+});
+test('N2A response evidence rejects forged uncharged failed response metadata',()=>{
+  const {start,end}=responseFixture(),l=end.response!;end.errors=['N1_LIMIT'];Object.assign(l.responses[0],{outcome:'failed',bytes:0,sha256:'0'.repeat(64),status:503});l.chargedBytes=0;l.fulfilledBytes=0;
+  expect(validateResponseEvidence(start,end),'N2A_UNCHARGED_METADATA_FALSE_GREEN').toBe(false);
+});
+for(const engine of [chromium,firefox,webkit]){
+  const title=`N2A immutable response phases and release gate work in ${engine.name()}`;
+  test(title,async()=>{
+    const html='<!doctype html><h1>immutable phase</h1>',value=asset('html',html);
+    const responsePlan:ResponsePlan={assets:[value],phases:['ready','later'],transitions:[{from:'ready',to:'later'}],gates:['release']};
+    const rules:FixtureRule[]=[{id:'home',path:'/',method:'GET',resource:'document',asset:'html',phase:'ready',count:1},{id:'later',path:'/',method:'GET',resource:'document',asset:'html',phase:'later',count:1},{id:'data',path:'/data',method:'GET',resource:'fetch',body:'released',gate:'release',count:1}];
+    const browser=await engine.launch({headless:true});let guard:GuardedContext|undefined,failure:unknown;
+    try{
+      guard=await createGuardedContext(browser,rules,{...makeOwner('unit',ADOPTION_UNIT_FILE,[title],`vitest-${engine.name()}`),title,engine:engine.name(),responsePlan});
+      value.body='mutated';value.sha256=sha256(value.body);value.bytes=Buffer.byteLength(value.body);rules[2].body='mutated';
+      const page=await guard.context.newPage();expect((await page.goto(FIXTURE_ORIGIN+'/'))?.status()).toBe(200);expect(await page.getByRole('heading').textContent()).toBe('immutable phase');
+      const fetched=page.evaluate(()=>fetch('/data').then(r=>r.text()));await expect.poll(()=>guard!.pendingGate('release'),{timeout:2000}).toBe(1);
+      guard.releaseGate('release');expect(await fetched).toBe('released');expect(guard.pendingGate('release')).toBe(0);
+      guard.transition('later');expect(guard.phase).toBe('later');await page.reload();expect(await page.getByRole('heading').textContent()).toBe('immutable phase');
+      await guard.finish();const start=JSON.parse(fs.readFileSync(path.join(stageRoot(),`${guard.id}.start.json`),'utf8')) as Start,end=JSON.parse(fs.readFileSync(path.join(stageRoot(),`${guard.id}.end.json`),'utf8')) as End;
+      expect(validateResponseEvidence(start,end)).toBe(true);expect(end.response?.transitions).toEqual([{from:'ready',to:'later',after:2}]);expect(end.response?.chargedBytes).toBe(Buffer.byteLength(html)*2+8);expect(end.response?.fulfilledBytes).toBe(end.response?.chargedBytes);
+      expect(end.response?.gates).toEqual([{id:'release',released:true,expired:false,waits:1,settled:1}]);expect(end.rules.map(r=>r.hits)).toEqual([1,1,1]);expect(browser.contexts()).toHaveLength(0);
+    }catch(cause){failure=cause;}
+    finally{if(guard&&!guard.finished)try{await guard.finish(failure?'failed':'passed');}catch(cause){failure??=cause;}await browser.close();}
+    if(failure)throw failure;
+  },30000);
+}

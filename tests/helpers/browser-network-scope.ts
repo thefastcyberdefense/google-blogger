@@ -110,7 +110,9 @@ export function isControlOwner(owner:Owner):boolean {
     'N1 invalid options are rejected before browser context creation',
     'N1 evidence write failure throws after closing the real context',
   ].includes(displayTitle(owner));
-  // Adoption controls are explicitly added with their implementation, not
-  // authorized by a filename or a title prefix alone.
-  return false;
+  // Exact controls only, never a filename-wide or prefix-wide waiver.
+  return owner.file===ADOPTION_UNIT_FILE&&owner.titlePath.length===1&&[
+    'N2A bounded response controls retain real failures',
+    'N2A cumulative fulfilled bytes cannot reset across phases',
+  ].includes(displayTitle(owner));
 }

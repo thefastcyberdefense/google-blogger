@@ -91,8 +91,13 @@ export function validateContextOptions(options: BrowserContextOptions): void {
   if ((options.serviceWorkers!==undefined && options.serviceWorkers!=='block') || options.proxy!==undefined || options.recordHar!==undefined || options.httpCredentials!==undefined || options.storageState!==undefined) throw new NetworkGuardError(['N1_OPTIONS']);
 }
 export function matchFixtureRule(rules: FixtureRule[], raw: string, method: string, resource: string, kind: 'http'|'websocket'='http',phase?:string): FixtureRule | undefined {
+  // URL parsing removes encoded dot segments. Reject the raw address before
+  // normalization, while leaving the separately matched query bytes intact.
+  if(typeof raw!=='string'||/[\x00-\x20\x7f\\]/.test(raw))return undefined;
+  const address=raw.split(/[?#]/,1)[0];
+  if(/%(?:2e|2f|5c)/i.test(address)||/\/\.{1,2}(?:\/|$)/.test(address))return undefined;
   let url: URL; try { url=new URL(raw); } catch { return undefined; }
-  if (url.username || url.password || url.hash || /%(?:2e|2f|5c)/i.test(url.pathname)||raw.includes('\\')||![(kind==='http'?FIXTURE_ORIGIN:SOCKET_ORIGIN),...(kind==='http'?[MERMAID_ORIGIN]:[])].includes(url.origin)) return undefined;
+  if (url.username || url.password || url.hash || ![(kind==='http'?FIXTURE_ORIGIN:SOCKET_ORIGIN),...(kind==='http'?[MERMAID_ORIGIN]:[])].includes(url.origin)) return undefined;
   return rules.find(r=>(r.kind??'http')===kind && url.origin===(r.origin??(kind==='http'?FIXTURE_ORIGIN:SOCKET_ORIGIN)) && (r.origin!==MERMAID_ORIGIN||(r.path.startsWith(MERMAID_PREFIX)&&resource==='script'&&method==='GET'&&url.search==='')) && (r.phase===undefined||r.phase===phase) && r.path===url.pathname && (r.query??'')===url.search.slice(1) && r.method===method && r.resource===resource);
 }
 const bounded = async <T>(promise: Promise<T>, milliseconds = 3000): Promise<T> => {

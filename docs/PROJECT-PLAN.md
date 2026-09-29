@@ -1,5 +1,95 @@
 # FCD development plan
 
+## Current N2A implementation and reporting handoff (2026-09-29 Asia/Dhaka)
+
+This section supersedes every present-tense status and prospective instruction in the preserved historical snapshots below. The approved main baseline is **`457ae98576d2ed101bc9efcba50022d915bf29b8`**, the verified PR #12 merge. N2A work stays on **`feat/fcd-n2a-guard-adoption`**, [draft PR #13](https://github.com/thefastcyberdefense/google-blogger/pull/13), **unmerged with the branch retained**. The latest fully verified implementation checkpoint is **`44dd85cdba038403c9db63b10d51ff4f05e9f620`**. This reporting/ledger commit must receive its own exact-head Actions and review; the PR records that resulting SHA/run after execution, not a self-referential pass asserted before this commit exists.
+
+### Accepted baseline and exact approval
+
+B0+N0, U0, N1 source acceptance and Errata v2 reporting R1-R6 are closed. [PR #12 post-merge run 36345776255](https://github.com/thefastcyberdefense/google-blogger/actions/runs/36345776255/job/108694498836), attempt 1, verified the actual merge on 2026-09-27 at 20:04:44 UTC: all 21 stages, **297 unit/contract cases and 1674 browser cases**, no failed/pending/unexpected/skipped/flaky/retried outcomes, both N0/schema-1 finalizers, audit and XML consistency. Post-merge [CodeQL 36345775163](https://github.com/thefastcyberdefense/google-blogger/actions/runs/36345775163) succeeded. The N1 branch was retained immediately after merge and post-merge verification but was absent from the later N2A planning listing; no deletion cause or restoration is inferred or authorized.
+
+The owner explicitly approved **FCD-N2A-APPROVAL-v1**, 53403 bytes, SHA256 **`54b37650a4243ada790ab06af2d8b22b4a3e60a1f55ec6ed887e8b7b82cb6419`**, based on the exact merge above. Approval covers the seventeen-file maximum manifest and this PR description, including necessary in-scope fixes, Actions verification and this existing ledger. Planning language was not consent; the explicit owner approval was. The packet's phrase about 297 inherited assertions means **297 inherited test cases and every assertion within them**, not permission to reduce their assertion count.
+
+| Approved paths | Purpose |
+| --- | --- |
+| `docs/PROJECT-PLAN.md`, `.github/workflows/ci.yml` | Current ledger; bounded reporting inside existing stages |
+| `tests/helpers/browser-network.ts`, `isolated-test.ts`, `browser-network-reporter.ts`, `browser-network-scope.ts`, `render-fixtures.ts`, `guarded-axe.ts` (all under `tests/helpers/`) | Guard, canonical identities, runner ownership, indexed evidence, finite local plans, owned normal axe |
+| `tools/finalize-browser-network.ts` | Schema-2 reconciliation and truthful complete evidence |
+| `tests/unit/browser-network.test.ts`, `tests/unit/browser-network-adoption.test.ts` | Inherited controls and compatibility/source/capacity regressions |
+| `tests/render/network-isolation.spec.ts`, `a11y.spec.ts`, `interactions.spec.ts`, `native-states.spec.ts`, `responsive.spec.ts`, `publication-acceptance.spec.ts` (all under `tests/render/`) | Existing N1 and five adopted consumers without reduced coverage |
+
+After this ledger addition, sixteen approved paths differ from main; `tests/render/network-isolation.spec.ts` remains byte-identical, Git blob `6938d3551f98a93e760adbeb0e8eb3012f2eb34d`. The reporting follow-up changes only the existing workflow and this ledger. Product source, fixture producers, checked-in XML, packages/lockfile/pins, all test configs, N0 wrapper/probe, artifact verifier/contracts/workflow, staging/deployment checker/workflow, upstream audit and deployment documentation remain outside the N2A diff. Do not restore `docs/fcd-env-example`.
+
+### Implemented compatibility and adoption
+
+N2A-01 through N2A-06 are implemented and full-matrix verified at `44dd85c`. Schema **2**, policy **`n2a-v1`**, uses canonical stage/file/full-title-path/project/repeat ownership, complete indexed discovery/results and paired context records. N0 remains the connectivity boundary; browser guards provide bounded attribution and fixture policy, not universal browser-internal/Node-network coverage or a hostile-code sandbox.
+
+Finite owner-selected plans serve immutable local HTML and the installed pinned Mermaid entry/flowchart/dagre closure. Exact origin/path/query/method/resource, digest/length, distinct/cumulative byte budgets, forward phases and one-time bounded release gates remain enforced. No URL-derived file reads, external forwarding, arbitrary response callbacks or runtime network access was added. The fixture default is now inherited through `base.extend({serviceWorkers:'block', ...})`; explicit invalid option rejection remains strict.
+
+Normal pinned AxeBuilder retains both a11y scans, all tags, frame coverage and complete result structures. Guard-owned aggregation leases observe and finalize only their own pages before close; the primary stays active. Broad storage-failure mocks remain unchanged; only unnecessary receipt reads are avoided, while genuinely missing retirement evidence still fails. Native-state serialization is whitespace-compacted with structural equality, not truncated. Single-context no-JS cases use runner-owned contexts; publication fallback keeps its genuine second guarded no-JS context and real feed abort. Publication also retains real Mermaid render/blocked reload, controlled completion and displacement measurements. No product/UI redesign or upstream runtime import occurs in this test-infrastructure slice.
+
+All five consumer migrations retain titles, browser selection, assertions, full axe evidence, explicit attachments, viewport/theme/no-JS behavior, exact search/recovery semantics, HTTP 503 versus network-abort distinctions, screenshots and failure controls. Bounded AST/call-site checks reject representative raw factories/routes/HAR/forwarding/unguarded axe/import bypasses, with a narrow unchanged N1 low-level exception. They do not claim to defeat arbitrary malicious reflection.
+
+### Meaningful failures and corrections
+
+The PR retains the full commit/run history rather than replacing failed checkpoints. Representative gates:
+
+| Evidence | Actual result and disposition |
+| --- | --- |
+| Ownership/response foundations through `dd0099d`, `3af9cc6`, `4beef293` | Runnable ownership, response-ledger and raw encoded-path regressions preceded fixes; complete accepted checkpoints recorded in PR #13 |
+| Axe/storage controls at `815b50bc`, corrected through `a265488` | Six actual lifecycle failures reproduced; normal scans/storage assertions preserved; frozen-lease test-adapter repair was a separate setup correction |
+| Extra primary/missing-plan controls, verified at `68fa1c8` | Three real false-green regressions corrected; 402 units/1674 browsers passed, but only 240 adopted owners, explicitly N2A-incomplete |
+| [Adoption red 36457905472](https://github.com/thefastcyberdefense/google-blogger/actions/runs/36457905472/job/109048849197) at `9f28acf` | 425 passes/seven failures: five unguarded consumers plus wrong required JS mode and absent actual primary page |
+| [Incomplete adoption 36461260508](https://github.com/thefastcyberdefense/google-blogger/actions/runs/36461260508/job/109060092223) at `b45481c` | 440 passes/ten failures; rejected missing consumer/synthetic population; browser stage not reached |
+| [Full-adoption red 36462968118](https://github.com/thefastcyberdefense/google-blogger/actions/runs/36462968118/job/109066070232) at `36a53c7a` | 450 units passed; 1275 browser passes/399 unexpected; both finalizers rejected |
+| [Fixture fix 36508872515](https://github.com/thefastcyberdefense/google-blogger/actions/runs/36508872515/job/109216573497) at `44dd85c` | 450 units/1674 browsers passed; full 1168-owner adoption accepted |
+| [Reporting red 36511604969](https://github.com/thefastcyberdefense/google-blogger/actions/runs/36511604969/job/109224752556) at `dcfd8c405a36a261dacd2965fdb0d0639ce9a366` | Attempt 1 completed 2026-09-29 02:29:57 UTC: 450 units/1674 browsers passed and both finalizers accepted, but the new reporting contract measured `n1:240`, `n2a:null`, `n0Only:null` and failed the reporting stage; subsequent audit/XML checks were skipped, not passed |
+
+The shared fixture failure was confirmed from representative actual stacks, configuration and pinned Playwright 1.62.1 semantics: module-level `test.use()` applies to the loading suite, not a reliable reusable fixture default for every importer. The net correction from `36a53c7a` to `44dd85c` is one helper file, two additions/one deletion, moving `serviceWorkers:'block'` into `base.extend` and removing the suite-scoped call. Validators, consumers and matrix stayed unchanged. The initial tuple-declaration typecheck failure at `959965e` and the canceled pre-test `14e3aee` run are not behavioral-red evidence; the unrelated child-error mapping was restored exactly. Not all 399 failure stacks were individually inspected.
+
+### Verified implementation checkpoint and measured populations
+
+[Source run 36508872515](https://github.com/thefastcyberdefense/google-blogger/actions/runs/36508872515/job/109216573497), **attempt 1**, job **109216573497**, exact source **`44dd85cdba038403c9db63b10d51ff4f05e9f620`**, ran **2026-09-29 01:39:37 to 01:56:16 UTC**. All **21 stages passed**: install/typecheck/build/XML contracts, N0/unit, preview/full browser matrix, both finalizers, audit, stamp-normalized XML consistency, upload and cleanup. Actual totals were **450 units**, zero failed/pending, and **1674 browser passes**, zero unexpected/skipped/flaky/retried. Complete failure inventory was empty with zero omitted rows/failures. Browser duration: **817763.693 ms**.
+
+| Runtime population | Owners/cases | Render contexts | Ordinary axe auxiliary pages |
+| --- | ---: | ---: | ---: |
+| N1 network isolation | 240 | 690 | 0 |
+| N2A a11y | 110 | 110 | 220 |
+| N2A interactions | 154 | 154 | 0 |
+| N2A native states | 264 | 264 | 132 |
+| N2A responsive | 220 | 220 | 0 |
+| N2A publication | 180 | 210 | 30 |
+| N2A subtotal | 928 | 958 | 382 |
+| Remaining N0-only browser cases | 506 | Not claimed as N2A contexts | Not claimed |
+
+Schema-2 finalization accepted with no errors/readErrors, **1168 adopted owners**, all six files, **38 index pages**, `n2aScopeComplete:true`, **1692 contexts = 690 N1 render + 958 ordinary render + 44 unit guard contexts**. Ordinary contexts include 30 genuine secondary no-JS publication contexts. N1 has legitimate manual contexts; it is not one context per owner.
+
+Accepted capacity measurements at this checkpoint: **3425 staged files / 8697870 bytes**, largest staged file **30580 bytes**, discovery/results indexes **2671/2660 bytes**, no reporter-error marker. Browser/unit JSON: **66803485/114279 bytes**. Artifact inputs: **3843 files / 726 directories / 183123187 bytes**, largest file **66803485**, no symlinks/missing roots/truncation. Response diagnostics: **974 planned contexts**, maximum distinct **933601 bytes**, maximum charged/fulfilled **16777216 bytes** from the deliberate boundary control, maximum **29 rules**, **3660 responses / 38 transitions / 38 gates**. Managed-page diagnostics: **995 contexts / 1388 pages / 397 leases / 395 auxiliary pages**, maximum **3 pages / 6 documents** per context; 395 includes 382 ordinary plus 13 unit-control auxiliary pages. Six complete positive worker diagnostics were inspected; Firefox's matching-worker URL count of zero is an observation without an inferred cause.
+
+[Verifier 36508872493](https://github.com/thefastcyberdefense/google-blogger/actions/runs/36508872493/job/109216374046) ran **31 contracts**, zero failures/errors/skips; candidate job **109216408803** was skipped. [CodeQL 36508869051](https://github.com/thefastcyberdefense/google-blogger/actions/runs/36508869051) passed all three analyses. [Finding 109216531509](https://github.com/thefastcyberdefense/google-blogger/runs/109216531509) explicitly reported **No new alerts in code changed by this pull request**, zero annotations, not repository-wide zero alerts. Complete review-thread enumeration returned zero.
+
+[Artifact 11009007097](https://api.github.com/repos/thefastcyberdefense/google-blogger/actions/artifacts/11009007097): `fcd-evidence-44dd85cdba038403c9db63b10d51ff4f05e9f620`, **108074008 bytes**, digest **`sha256:8ff2bafe7aefb2b4c1e34cd9e6f333a126db2377a573fa9fb1d26ea4d053e115`**, created **2026-09-29 01:56:13 UTC**, expires **2026-10-13 01:56:05 UTC**, not expired when retrieved. Metadata only: not independently downloaded/hash-verified and not selected as a candidate.
+
+### Reporting completion and final-head gate
+
+The reporting correction keeps both finalizers and original failure propagation intact. It classifies actual normal-report outcomes by canonical file membership, publishing **N1/N2A/N0-only**, historical baseline and total counts with passed/unexpected/skipped/flaky/retried fields. Same-leaf foreign paths are not attributed to adopted files. Data-only controls exercise file normalization and failed/missing/skipped/flaky/retried outcomes; the actual three-population regression remains mandatory. These reporting controls are not extra browser identities or part of the 450-unit count.
+
+The complete registered Mermaid catalog is published from the source/run/attempt-bound finalizer summary in pages of at most eight entries, each carrying page count, accepted/rejected state and the SHA256 of the complete ordered catalog. Safe path/id/size/digest metadata, unique membership, lossless page reconstruction and a 12000-byte diagnostic-page bound are checked before publication. Full summary/raw records remain unchanged in the artifact. The 25-module static preflight is only a subset; it is not substituted for the registered dagre-inclusive catalog. Final-head execution must establish the actual complete catalog count, bytes and digest.
+
+No source job, stage identity, permission, checkout policy, upload member, retention, test selection, worker count, retry or timeout changed. No diagnostic sample replaces complete evidence or turns rejected records into acceptance. N2A-07 remains gated until this reporting/ledger head passes the complete normal workflow and substantive final review. The PR must record its exact head, run/attempt/job, actual populations/capacity, complete catalog, verifier/scanner outcomes and artifact metadata; the already verified checkpoint above must not be relabeled as that later execution.
+
+### Review provenance, limits and one next action
+
+Earlier specification/consumer-preservation review and evidence reconciliation used two read-only AI reviewers; the coordinating assistant inspected exact migration and inherited-unit diffs, challenged unsupported findings and retained every assertion/deadline/expected-error control. The fixture correction and this bounded reporting/ledger follow-up use explicit sequential specification, code/security and QA review by the coordinating assistant. This is not a new independent review, human accessibility acceptance or GitHub approval review. Reporting changes require exact diff review and fresh Actions; all automated project builds/tests run only in Actions.
+
+Preserve the approved response ceilings: HTML **500000 bytes**, Mermaid module **2097152**, distinct assets **8388608/context**, fulfilled responses **16777216/context**, release gate **3000 ms**. Unchanged limits include inline **65536**, all-phase rules **64**, declared counts **1-32**, requests/documents **128 each/context**, receipt **512 characters**, evidence file **131072**, lifecycle records **4096**, staging files **4100**, staging **16 MiB**, unit/browser reports **16/80 MiB**, archive/expanded/member/entries **160 MiB/1 GiB/256 MiB/10000**, four workers, zero retries and N0/unit/render/job **120 s/300 s/1100 s/25 minutes**. Boundary-plus-one failures remain required. Product cap remains only total raw generated XML **<=500000 bytes**; checked-in XML is unchanged at **101248 bytes**, with component/gzip figures informational.
+
+**Next action:** verify and review this reporting/ledger head in Actions, record final evidence in [PR #13](https://github.com/thefastcyberdefense/google-blogger/pull/13), then stop draft/unmerged with the branch retained. Separate exact-head merge approval and authorized post-merge verification come later. Conflict-free Git state is not correctness or merge authorization.
+
+DEFECT-05 remains open overall: N2B remaining render/unit and N2C contract/checker/subprocess adoption are not implemented or approved here. Portability, ARIA naming, mixed Mermaid order, rendered-node contrast/target-size dispositions, Layout design and native comments remain separate roadmap work; accepted reporting corrections are not reopened. Native import/save/rendered build, real Layout/comments, human screen-reader/true zoom, field performance, candidate verification and release gates remain unverified here. Preserve native V3/V2, Header1/Blog1, super.main, posts/comments/labels/archives/pagination, FCD identity and licenses. No candidate repin, live-blog request, import, publishing, DNS/settings operation, ready transition, merge, branch deletion or history rewrite. Historical candidate retention deadlines elapsed; durable preservation requires an approved destination. `docs/DEPLOYMENT.md` stays outside this slice and its old present-tense text is not current authority.
+
+---
+
 ## Current baseline and approved U0+N1 (2026-09-27 Asia/Dhaka)
 
 This section supersedes the preserved historical bootstrap and PR #10 snapshots below. Main is the verified PR #11 merge `312954b6f9bf0e39b0f276ea6881f9f82146b4ff`. [Post-merge source run 36288775447](https://github.com/thefastcyberdefense/google-blogger/actions/runs/36288775447/job/108534626444) passed all 21 stages with 211 unit/contract and 1434 browser passes, no reported pending/skipped/unexpected/flaky results, audit and XML consistency. [Post-merge CodeQL](https://github.com/thefastcyberdefense/google-blogger/actions/runs/36288775048) succeeded in three languages; this is not a repository-wide zero-alert claim. The 31 artifact-verifier contracts passed on the identical pre-merge source tree in run 36285583516, not claimed as a post-merge execution. Bootstrap branch remains at `7c30c3cccad22a337cea88c99d1f9ab87238aeb9`; leave it untouched.

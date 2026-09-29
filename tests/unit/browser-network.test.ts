@@ -3,11 +3,12 @@ import { chromium, firefox, webkit, type Browser, type BrowserContextOptions, ty
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';import path from 'node:path';import os from 'node:os';import { randomUUID } from 'node:crypto';
-import { createGuardedContext, FIXTURE_ORIGIN, observeDocumentWebSockets, validateFixtureRules, validateContextOptions, matchFixtureRule, type FixtureRule, type GuardOptions } from '../helpers/browser-network.ts';
-import { validateSnapshot, initializeEvidence, loadManifest, writeEvidence, stageRoot, SCHEMA, POLICY, PROJECTS, CASES, UNIT_CONSUMER, testKey, engineFor, type Manifest, type Start, type End, type TestEntry, type ResultEntry } from '../../tools/finalize-browser-network.ts';
+import { createGuardedContext, FIXTURE_ORIGIN, observeDocumentWebSockets, validateFixtureRules, validateResponsePlan, validateContextOptions, matchFixtureRule, type FixtureRule, type GuardOptions } from '../helpers/browser-network.ts';
+import { validateSnapshot, initializeEvidence, loadManifest, writeEvidence, writeIndexedEvidence, stageRoot, SCHEMA, POLICY, UNIT_CONSUMER, testKey, engineFor, renderAxeScans, type Manifest, type Start, type End, type TestEntry, type ResultEntry } from '../../tools/finalize-browser-network.ts';
+import { makeOwner, N1_FILE, UNIT_FILE, expectedOwners, renderContextModes } from '../helpers/browser-network-scope.ts';
 
 const localRule:FixtureRule={id:'home',path:'/',method:'GET',resource:'document',body:'<h1>protected positive control</h1>'};
-const options=(title:string,expectedErrors:string[]=[]):GuardOptions=>({title,project:'vitest-chromium',engine:'chromium',expectedErrors});
+const options=(title:string,expectedErrors:string[]=[]):GuardOptions=>({...makeOwner('unit',UNIT_FILE,[title],'vitest-chromium'),title,engine:'chromium',expectedErrors});
 const original='N1 attributes an unexpected request even when the caller handles navigation';
 test(original,async()=>{
   const browser=await chromium.launch({headless:true});
@@ -290,20 +291,45 @@ test('N1 evidence write failure throws after closing the real context',async()=>
   }finally{process.env.FCD_ISOLATION_EVIDENCE=previous;await browser.close();fs.rmSync(base,{recursive:true,force:true});}
 });
 
+// Synthetic schema migration only. The first N1 owner and every inherited
+// mutation/assertion remain unchanged; ordinary owners get complete ledgers.
+function modelEnd(start:Start,javascript:boolean|undefined):End {
+  const end:End={...start,kind:'end',setup:true,closed:true,outcome:'passed',errors:[],rules:[],requests:[],documents:[]};
+  if(javascript===undefined)return end;
+  const plan=validateResponsePlan([{...localRule,count:1}],{assets:[],phases:['ready'],transitions:[],gates:[]});
+  start.plan=plan;end.plan=plan;start.pagePolicy={javascript,scans:renderAxeScans(start.identity)};end.pagePolicy={...start.pagePolicy};
+  const primary=randomUUID(),documents=javascript?[randomUUID()]:[];
+  end.rules=[{id:'home',action:'fulfill',count:1,hits:1}];end.requests=[{seq:1,kind:'http',rule:'home',action:'fulfill',observed:true,handled:true}];
+  end.pages={pages:[{id:primary,role:'primary',lease:null,source:null,observed:true,finalized:true,closed:true,documents}],leases:[],requests:[{seq:1,page:primary}]};
+  for(let i=0;i<start.pagePolicy.scans;i++){
+    const id=randomUUID(),lease=randomUUID(),document=randomUUID();
+    end.pages.pages.push({id,role:'axe-aggregation',lease,source:primary,observed:true,finalized:true,closed:true,documents:[document]});
+    end.pages.leases.push({id:lease,owner:start.identity.test,context:start.id,source:primary,page:id,created:true,finished:true,scan:'passed'});
+  }
+  end.documents=end.pages.pages.flatMap(p=>p.documents).map(id=>({id,attempts:0,acknowledged:0,intact:true,flushed:true}));
+  const rule=plan.rules[0];end.response={phase:'ready',transitions:[],gates:[],responses:[{seq:1,phase:'ready',rule:'home',asset:null,gate:null,waited:false,bytes:rule.bytes,sha256:rule.sha256,status:200,outcome:'fulfilled'}],chargedBytes:rule.bytes,fulfilledBytes:rule.bytes};
+  return end;
+}
 function sampleEvidence() {
   const manifest:Manifest={schema:SCHEMA,policy:POLICY,kind:'manifest',source:'a'.repeat(40),run:'17',attempt:'1'};
   const records:(Start|End)[]=[];const entries:TestEntry[]=[];const results:ResultEntry[]=[];
-  const specs:{file:string;title:string;tests:{projectName:string;expectedStatus:string;status:string;results:{status:string;retry:number}[]}[]}[]=[];
-  for(const project of PROJECTS)for(const title of CASES) {
-    const id=randomUUID(),key=testKey(project,title),engine=engineFor(project);
-    const start:Start={...manifest,kind:'start',id,identity:{stage:'render',project,engine,title,test:key,worker:1,retry:0,pid:10},expectedErrors:[]};
-    records.push(start,{...start,kind:'end',setup:true,closed:true,outcome:'passed',errors:[],rules:[],requests:[],documents:[]});
-    entries.push({key,project,engine,title});results.push({key,project,engine,title,status:'passed',expectedStatus:'passed',retry:0,worker:1,contexts:[id]});
-    specs.push({file:'tests/render/network-isolation.spec.ts',title,tests:[{projectName:project,expectedStatus:'passed',status:'expected',results:[{status:'passed',retry:0}]}]});
+  const specs:{file:string;title:string;tests:{projectName:string;expectedStatus:string;status:string;annotations:{type:string;description:string}[];results:{status:string;retry:number;workerIndex:number}[]}[]}[]=[];
+  for(const owner of expectedOwners()) {
+    const project=owner.project,title=owner.titlePath[0],key=testKey(owner),engine=engineFor(project),contexts:string[]=[];
+    for(const javascript of owner.file===N1_FILE?[undefined]:renderContextModes(owner)){
+      const id=randomUUID(),start:Start={...manifest,kind:'start',id,identity:{...owner,engine,title,test:key,worker:1,retry:0,pid:10},expectedErrors:[]};
+      const end=modelEnd(start,javascript);records.push(start,end);contexts.push(id);
+    }
+    entries.push({...owner,key,engine,title});results.push({...owner,key,engine,title,status:'passed',expectedStatus:'passed',retry:0,worker:1,contexts});
+    specs.push({file:owner.file,title,tests:[{projectName:project,expectedStatus:'passed',status:'expected',annotations:contexts.map(description=>({type:'n1-context',description})),results:[{status:'passed',retry:0,workerIndex:1}]}]});
   }
-  const unitStart:Start={...manifest,kind:'start',id:randomUUID(),identity:{stage:'unit',project:'vitest-chromium',engine:'chromium',title:UNIT_CONSUMER,test:testKey('vitest-chromium',UNIT_CONSUMER),worker:0,retry:0,pid:11},expectedErrors:[]};
+  const unitOwner=makeOwner('unit',UNIT_FILE,[UNIT_CONSUMER],'vitest-chromium');
+  const unitStart:Start={...manifest,kind:'start',id:randomUUID(),identity:{...unitOwner,engine:'chromium',title:UNIT_CONSUMER,test:testKey(unitOwner),worker:0,retry:0,pid:11},expectedErrors:[]};
   records.push(unitStart,{...unitStart,kind:'end',setup:true,closed:true,outcome:'passed',errors:[],rules:[{id:'home',action:'fulfill',count:1,hits:1}],requests:[{seq:1,kind:'http',rule:'home',action:'fulfill',observed:true,handled:true}],documents:[]});
-  return {manifest,records,discovery:{...manifest,kind:'discovery',tests:entries},results:{...manifest,kind:'results',status:'passed',errors:0,tests:results},browser:{stats:{unexpected:0,skipped:0,flaky:0},errors:[],suites:[{specs}]},unit:{numFailedTests:0,numPendingTests:0,numPassedTests:212,testResults:[{name:'/fixture/tests/unit/browser-network.test.ts',assertionResults:[{fullName:UNIT_CONSUMER,status:'passed'}]}]}};
+  // Synthetic normal-report rows model the unchanged N0-only population. They
+  // are not new repository cases or a claim to execute the browser matrix here.
+  const unadopted=Array.from({length:1674-specs.length},(_,i)=>({file:'tests/render/unadopted-control.spec.ts',title:`unadopted ${i}`,tests:[{projectName:'390-light',expectedStatus:'passed',status:'expected',annotations:[] as {type:string;description:string}[],results:[{status:'passed',retry:0,workerIndex:1}]}]}));
+  return {manifest,records,discovery:{...manifest,kind:'discovery' as const,tests:entries},results:{...manifest,kind:'results' as const,status:'passed',errors:0,tests:results},browser:{stats:{expected:1674,unexpected:0,skipped:0,flaky:0},errors:[],suites:[{specs},{specs:unadopted}]},unit:{numFailedTests:0,numPendingTests:0,numPassedTests:297,testResults:[{name:'/fixture/tests/unit/browser-network.test.ts',assertionResults:[{fullName:UNIT_CONSUMER,title:UNIT_CONSUMER,ancestorTitles:[] as string[],status:'passed'}]}]}};
 }
 const firstEnd=(s:ReturnType<typeof sampleEvidence>)=>s.records.find((r):r is End=>r.kind==='end')!;
 test('N1 accepts complete reconciled evidence positive control',()=>expect(validateSnapshot(sampleEvidence())).toEqual([]));
@@ -348,7 +374,7 @@ function cliFixture() {
   const base=fs.mkdtempSync(path.join(os.tmpdir(),'fcd-n1-data-')),root=path.join(base,'staged'),output=path.join(base,'published');
   const s=sampleEvidence();initializeEvidence(root,s.manifest.source,s.manifest.run,s.manifest.attempt);
   for(const record of s.records)writeEvidence(root,`${record.id}.${record.kind}.json`,record);
-  writeEvidence(root,'discovery.json',s.discovery);writeEvidence(root,'results.json',s.results);
+  writeIndexedEvidence(root,s.discovery);writeIndexedEvidence(root,s.results);
   const unit=path.join(base,'unit.json'),browser=path.join(base,'browser.json');fs.writeFileSync(unit,JSON.stringify(s.unit));fs.writeFileSync(browser,JSON.stringify(s.browser));
   const run=()=>spawnSync(process.execPath,[cli,'finalize',root,output,s.manifest.source,s.manifest.run,s.manifest.attempt,unit,browser],{encoding:'utf8',timeout:10000});return {base,root,output,s,run};
 }
@@ -359,7 +385,7 @@ test('N1 CLI has a real nonzero missing-evidence path',()=>{
 test('N1 CLI rejects truncated records and preserves valid partial diagnostics',()=>{const f=cliFixture();try{fs.writeFileSync(path.join(f.root,`${f.s.records[0].id}.start.json`),'{');const result=f.run();expect(result.status).toBe(1);expect(result.stderr).toContain('N1_READ');expect(fs.existsSync(path.join(f.output,`${f.s.records[0].id}.end.json`))).toBe(true);}finally{fs.rmSync(f.base,{recursive:true,force:true});}});
 test('N1 CLI rejects duplicate JSON keys in its own evidence',()=>{
   const f=cliFixture();try{
-    const file=path.join(f.root,'manifest.json'),before=fs.readFileSync(file,'utf8'),duplicate=before.replace('"schema":1','"schema":999,"schema":1');
+    const file=path.join(f.root,'manifest.json'),before=fs.readFileSync(file,'utf8'),duplicate=before.replace(`"schema":${SCHEMA}`,`"schema":999,"schema":${SCHEMA}`);
     expect(duplicate).not.toBe(before);fs.writeFileSync(file,duplicate);
     const result=f.run();expect(result.error).toBeUndefined();expect(result.status,'N1_DUPLICATE_KEYS_FALSE_GREEN').toBe(1);expect(result.stderr).toContain('N1_READ');
     expect(fs.existsSync(path.join(f.output,`${f.s.records[0].id}.end.json`))).toBe(true);

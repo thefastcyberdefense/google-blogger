@@ -1,15 +1,6 @@
-import { test, expect } from '@playwright/test';
-import { readFile } from 'node:fs/promises';
-const origin='https://blogs.fastcyberdefense.com';
+import { test, expect, FIXTURE_ORIGIN } from '../helpers/isolated-test.ts';
+const origin=FIXTURE_ORIGIN;
 const recent=['cloud-security','incident-response','zero-trust'];
-test.beforeEach(async({page})=>{
-  await page.route(`${origin}/**`,async route=>{
-    const url=new URL(route.request().url());
-    if(url.pathname.startsWith('/feeds/'))return route.fulfill({contentType:'application/json',body:JSON.stringify({feed:{entry:recent.map(slug=>({title:{$t:slug},link:[{rel:'alternate',href:`${origin}/2026/09/${slug}.html`}]}))}})});
-    const view=['article','paged','empty','error'].includes(url.pathname.slice(1))?url.pathname.slice(1):'home';
-    await route.fulfill({status:view==='error'?404:200,contentType:'text/html',body:await readFile(`.preview/${view}.html`,'utf8')});
-  });
-});
 for(const view of ['home','article','paged','empty','error'])test(`${view} shared presentation fits with native-wrapper fixtures`,async({page},info)=>{
   const response=await page.goto(view==='home'?'/':`/${view}`);
   expect(response?.status()).toBe(view==='error'?404:200);
@@ -28,10 +19,9 @@ for(const view of ['home','article','paged','empty','error'])test(`${view} share
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1)).toBe(true);
   await page.screenshot({path:info.outputPath(`${view}.png`),fullPage:true});
 });
-for(const view of ['home','article','paged','empty','error'])test(`${view} core content survives theme JavaScript disabled`,async({browser},info)=>{
-  const context=await browser.newContext({javaScriptEnabled:false,viewport:info.project.use.viewport,colorScheme:info.project.use.colorScheme});const page=await context.newPage();
-  try{
-    await page.route(`${origin}/**`,async route=>route.fulfill({status:view==='error'?404:200,contentType:'text/html',body:await readFile(`.preview/${view}.html`,'utf8')}));
+test.describe(()=>{
+  test.use({javaScriptEnabled:false});
+  for(const view of ['home','article','paged','empty','error'])test(`${view} core content survives theme JavaScript disabled`,async({page})=>{
     await page.goto(`${origin}/${view}`);
     await expect(page.locator('main#content')).toBeVisible();await expect(page.locator('#site-search[role="search"]')).toBeVisible();
     await expect(page.locator('label[for="search-query"]')).toHaveText('Search articles');
@@ -45,5 +35,5 @@ for(const view of ['home','article','paged','empty','error'])test(`${view} core 
       await expect(page.locator('form[role="search"]')).toHaveCount(2);
     }else await expect(page.locator('form[role="search"]')).toHaveCount(1);
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1)).toBe(true);
-  }finally{await context.close();}
+  });
 });

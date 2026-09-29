@@ -46,22 +46,34 @@ jobs:
           import path from 'node:path';
           import { validRecord } from './tools/finalize-browser-network.ts';
           const escape=value=>String(value).replaceAll('%','%25').replaceAll('\r','%0D').replaceAll('\n','%0A');
+          const root=path.join(process.env.RUNNER_TEMP,`fcd-isolation-${process.env.GITHUB_RUN_ID}-${process.env.GITHUB_RUN_ATTEMPT}-browser-network`);
+          const preflight=`${root}-preflight.json`;
+          if(fs.existsSync(preflight)){
+            const stat=fs.lstatSync(preflight);
+            if(!stat.isFile()||stat.isSymbolicLink()||stat.size>131072)throw new Error('N2A_PREFLIGHT_BOUND');
+            const bytes=fs.readFileSync(preflight),p=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));
+            const manifest=JSON.parse(fs.readFileSync(path.join(root,'manifest.json'),'utf8'));
+            if(!Buffer.from(JSON.stringify(p)).equals(bytes)||p.kind!=='n2a-preflight'||['schema','policy','source','run','attempt'].some(k=>p[k]!==manifest[k])||p.run!==process.env.GITHUB_RUN_ID||p.attempt!==process.env.GITHUB_RUN_ATTEMPT||!Array.isArray(p.html)||p.html.length!==14||!Array.isArray(p.modules)||p.modules.length>64)throw new Error('N2A_PREFLIGHT_STAMP');
+            const report=(title,value)=>console.log(`::warning title=N2A measured ${title}::${escape(JSON.stringify(value))}`);
+            report('HTML',p.html);report('dynamic inventory',p.dynamic);
+            for(let i=0;i<p.modules.length;i+=16)report(`module page ${i/16}`,p.modules.slice(i,i+16));
+            report('capacity',p.capacity);
+          }
           if(fs.existsSync('unit-report.json')){
             const r=JSON.parse(fs.readFileSync('unit-report.json','utf8'));
             console.log('::notice title=Unit totals::'+JSON.stringify({passed:r.numPassedTests,failed:r.numFailedTests,pending:r.numPendingTests}));
             const n1=[],focused=[];
             for(const s of r.testResults||[])for(const a of s.assertionResults||[])if(a.status==='failed'){
               console.log('::error title=Regression::'+escape(a.fullName));
-              if(s.name.endsWith('/tests/unit/browser-network.test.ts')){
+              if(s.name.endsWith('/tests/unit/browser-network.test.ts')||s.name.endsWith('/tests/unit/browser-network-adoption.test.ts')){
                 const failure=(a.failureMessages||[]).join('\n');
                 n1.push({test:a.fullName,reason:failure.split('\n')[0]});
                 if(!failure.includes('N1_NAVIGATION_PHASE'))focused.push({test:a.fullName,reason:failure.slice(0,3000)});
               }
             }
             if(n1.length){
-              // Keep the original bounded summary and publish each engine's
-              // navigation/identity trace separately so API excerpts do not
-              // hide later engines. Neither path changes acceptance or exits.
+              // Keep bounded summaries and separate real per-engine traces.
+              // Diagnostics never change acceptance or the original failure.
               console.log('::notice title=N1 assertions::'+escape(JSON.stringify(n1).slice(0,16000)));
               for(const row of focused.slice(0,16))console.log('::notice title=N1 focused assertion::'+escape(JSON.stringify(row)));
               for(const row of n1.filter(r=>r.reason.includes('N1_NAVIGATION_PHASE')).slice(0,3)){
@@ -69,7 +81,6 @@ jobs:
                 console.log('::notice title=N1 navigation::'+escape(JSON.stringify({test:row.test,reason:navigation}).slice(0,8000)));
                 if(lifetime)console.log('::notice title=N1 document lifetime::'+escape(JSON.stringify({test:row.test,reason:lifetime}).slice(0,8000)));
               }
-              const root=path.join(process.env.RUNNER_TEMP,`fcd-isolation-${process.env.GITHUB_RUN_ID}-${process.env.GITHUB_RUN_ATTEMPT}-browser-network`);
               if(fs.existsSync(root))for(const name of fs.readdirSync(root).filter(n=>/^[0-9a-f-]{36}\.end\.json$/.test(n)).slice(0,32)){
                 const file=path.join(root,name),stat=fs.lstatSync(file);
                 if(!stat.isFile()||stat.isSymbolicLink()||stat.size>131072)continue;
@@ -115,7 +126,7 @@ jobs:
                 group.tests++;group.testBytes+=bytes(test);
                 const results=test.results||[];
                 if(test.status!=='expected'||test.expectedStatus!=='passed'||results.length!==1||results[0]?.status!=='passed'||results[0]?.retry!==0){
-                  if(failed.length<32)failed.push({file:name,project:String(test.projectName).slice(0,100),title:String(spec.title).slice(0,200),status:test.status,codes:[...new Set(results.flatMap(x=>(x.errors||[]).flatMap(e=>String(e.message||'').match(/N1_[A-Z_]+/g)||[])))].sort()});else omittedFailures++;
+                  if(failed.length<32)failed.push({file:name,project:String(test.projectName).slice(0,100),title:String(spec.title).slice(0,200),status:test.status,codes:[...new Set(results.flatMap(x=>(x.errors||[]).flatMap(e=>String(e.message||'').match(/N[12][A-Z]?_[A-Z_]+/g)||[])))].sort()});else omittedFailures++;
                 }
                 for(const result of results){
                   group.stdoutBytes+=bytes(result.stdout)+bytes(result.stderr);group.errorBytes+=bytes(result.error)+bytes(result.errors);
@@ -137,7 +148,10 @@ jobs:
           node --input-type=module <<'JS' || { report=$?; if [ "$result" -eq 0 ]; then result=$report; fi; }
           import fs from 'node:fs';
           import path from 'node:path';
-          import { CASES, PROJECTS, validRecord, engineFor } from './tools/finalize-browser-network.ts';
+          import assert from 'node:assert/strict';
+          import { createHash } from 'node:crypto';
+          import { CASES, PROJECTS, validRecord, engineFor, validModulePath, RESPONSE_LIMITS } from './tools/finalize-browser-network.ts';
+          import { N1_FILE, TARGET_FILES, normalRenderFile } from './tests/helpers/browser-network-scope.ts';
           const escape=value=>String(value).replaceAll('%','%25').replaceAll('\r','%0D').replaceAll('\n','%0A');
           const notice=(title,value)=>console.log(`::notice title=${title}::${escape(JSON.stringify(value))}`);
           const size=file=>{try{const s=fs.lstatSync(file);return s.isFile()&&!s.isSymbolicLink()?s.size:null;}catch{return null;}};
@@ -161,24 +175,43 @@ jobs:
           const reportBytes=size('test-results/browser.json');
           if(reportBytes!==null&&reportBytes<=80*1024*1024){
             const report=JSON.parse(fs.readFileSync('test-results/browser.json','utf8'));
-            const counts={baseline:{tests:0,passed:0,unexpected:0,skipped:0,retried:0},n1:{tests:0,passed:0,unexpected:0,skipped:0,retried:0}};
-            const failed=[];
+            const blank=()=>({tests:0,passed:0,unexpected:0,skipped:0,flaky:0,retried:0});
+            const counts={n1:blank(),n2a:blank(),n0Only:blank()};
+            const groupFor=file=>{const canonical=normalRenderFile(file);return canonical===N1_FILE?'n1':TARGET_FILES.includes(canonical)?'n2a':'n0Only';};
+            const outcomeFor=test=>{
+              const results=test.results||[];
+              if(test.expectedStatus==='passed'&&test.status==='expected'&&results.length===1&&results[0].status==='passed'&&results[0].retry===0)return 'passed';
+              if(test.status==='flaky')return 'flaky';
+              if(test.status==='skipped'||test.expectedStatus==='skipped'||results.length===1&&results[0].status==='skipped')return 'skipped';
+              return 'unexpected';
+            };
+            const retried=test=>(test.results||[]).length>1||(test.results||[]).some(r=>r.retry>0);
+            // Data-only reporting controls, not extra browser cases or a new stage.
+            for(const [file,wanted] of [['network-isolation.spec.ts','n1'],[N1_FILE,'n1'],['tests\\render\\a11y.spec.ts','n2a'],['publication-acceptance.spec.ts','n2a'],['tests/render/foreign/network-isolation.spec.ts','n0Only'],['tests/render/foreign/a11y.spec.ts','n0Only']])assert.equal(groupFor(file),wanted,'N2A_DIAGNOSTIC_FILE_GROUP');
+            const passed={expectedStatus:'passed',status:'expected',results:[{status:'passed',retry:0}]};
+            assert.equal(outcomeFor(passed),'passed');assert.equal(retried(passed),false);
+            assert.equal(outcomeFor({...passed,results:[]}),'unexpected');
+            assert.equal(outcomeFor({...passed,results:[{status:'failed',retry:0}]}),'unexpected');
+            assert.equal(outcomeFor({...passed,expectedStatus:'failed'}),'unexpected');
+            const flaky={...passed,status:'flaky',results:[{status:'failed',retry:0},{status:'passed',retry:1}]};
+            assert.equal(outcomeFor(flaky),'flaky');assert.equal(retried(flaky),true);
+            assert.equal(outcomeFor({...passed,status:'skipped',results:[{status:'skipped',retry:0}]}),'skipped');
+            assert.equal(outcomeFor({...passed,results:[{status:'passed',retry:1}]}),'unexpected');
+            assert.equal(retried({...passed,results:[{status:'passed',retry:1}]}),true);
+            const failed=[];let visited=0,totalTests=0;
             function visit(suites,depth=0,inherited=''){
               if(depth>32)throw new Error('N1_DIAGNOSTIC_DEPTH');
               for(const suite of suites||[]){
+                if(++visited>10000)throw new Error('N2A_DIAGNOSTIC_ENTRIES');
                 const file=suite.file||inherited;
                 for(const spec of suite.specs||[])for(const test of spec.tests||[]){
-                  const scoped=(spec.file||file).replaceAll('\\','/').endsWith('network-isolation.spec.ts');
-                  const count=scoped?counts.n1:counts.baseline,results=test.results||[];count.tests++;
-                  if(results.length>1||results.some(r=>r.retry>0))count.retried++;
-                  if(test.expectedStatus==='passed'&&test.status==='expected'&&results.length===1&&results[0].status==='passed'&&results[0].retry===0)count.passed++;
-                  else if(results.some(r=>r.status==='skipped')||test.expectedStatus==='skipped')count.skipped++;
-                  else {
-                    count.unexpected++;
-                    if(scoped&&PROJECTS.includes(test.projectName)&&CASES.includes(spec.title)){
-                      const codes=[...new Set(results.flatMap(r=>(r.errors||[]).flatMap(e=>(String(e.message||'').match(/N1_[A-Z_]+/g)||[]))))].sort();
-                      failed.push({project:test.projectName,title:spec.title,codes});
-                    }
+                  if(++visited>10000||++totalTests>2000)throw new Error('N2A_DIAGNOSTIC_ENTRIES');
+                  const category=groupFor(spec.file||file),scoped=category==='n1';
+                  const count=counts[category],results=test.results||[],outcome=outcomeFor(test);count.tests++;count[outcome]++;
+                  if(retried(test))count.retried++;
+                  if(outcome==='unexpected'&&scoped&&PROJECTS.includes(test.projectName)&&CASES.includes(spec.title)){
+                    const codes=[...new Set(results.flatMap(r=>(r.errors||[]).flatMap(e=>(String(e.message||'').match(/N1_[A-Z_]+/g)||[]))))].sort();
+                    failed.push({project:test.projectName,title:spec.title,codes});
                   }
                 }
                 visit(suite.suites,depth+1,file);
@@ -187,7 +220,8 @@ jobs:
             visit(report.suites);
             const groups=[];
             for(const row of failed){let group=groups.find(g=>g.title===row.title);if(!group){group={title:row.title,projects:[],codes:[]};groups.push(group);}group.projects.push(row.project);group.codes=[...new Set([...group.codes,...row.codes])].sort();}
-            notice('Browser coverage reconciliation',{...counts,failedN1:failed.length,groups});
+            const sum=values=>Object.fromEntries(Object.keys(blank()).map(key=>[key,values.reduce((n,v)=>n+v[key],0)]));
+            notice('Browser coverage reconciliation',{...counts,baseline:sum([counts.n2a,counts.n0Only]),total:sum(Object.values(counts)),failedN1:failed.length,groups});
             const selected=new Map();
             for(const row of failed){const key=engineFor(row.project)+'\0'+row.title;if(!selected.has(key)&&selected.size<6)selected.set(key,{...row,contexts:[]});}
             for(const name of names.slice(0,4100))if(/^[0-9a-f-]{36}\.end\.json$/.test(name)){
@@ -199,7 +233,44 @@ jobs:
               }
             }
             for(const sample of selected.values())notice('N1 browser lifecycle sample',sample);
+            // The approved completion report must expose all three populations,
+            // not bury the 928 N2A cases inside the historical baseline count.
+            const expected={n1:240,n2a:928,n0Only:506};
+            const actual=Object.fromEntries(Object.keys(expected).map(name=>[name,counts[name]?.tests??null]));
+            notice('Browser coverage reporting contract',{expected,actual});
+            if(Object.keys(expected).some(name=>actual[name]!==expected[name]))throw new Error('N2A_OUTCOME_GROUPS '+JSON.stringify(actual));
           }
+          // Keep the full summary file unchanged; publish its registered catalog
+          // in complete bounded pages rather than one truncated annotation.
+          const readOwned=file=>{
+            const length=size(file);
+            if(length===null||length<2||length>131072)throw new Error('N2A_CATALOG_DIAGNOSTIC_BOUND');
+            const bytes=fs.readFileSync(file),value=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));
+            if(bytes.length!==length||!Buffer.from(JSON.stringify(value)).equals(bytes))throw new Error('N2A_CATALOG_DIAGNOSTIC_JSON');
+            return value;
+          };
+          const summary=readOwned('test-results/browser-network/summary.json'),manifest=readOwned(path.join(root,'manifest.json'));
+          const stampKeys=['schema','policy','source','run','attempt'];
+          if(summary.kind!=='summary'||summary.schema!==2||summary.policy!=='n2a-v1'||!/^[0-9a-f]{40}$/.test(summary.source)||stampKeys.some(k=>summary[k]!==manifest[k])||summary.run!==process.env.GITHUB_RUN_ID||summary.attempt!==process.env.GITHUB_RUN_ATTEMPT||typeof summary.accepted!=='boolean'||!Array.isArray(summary.moduleCatalog)||summary.moduleCatalog.length>64)throw new Error('N2A_CATALOG_DIAGNOSTIC_STAMP');
+          const catalog=summary.moduleCatalog;
+          for(const row of catalog){
+            if(!row||typeof row!=='object'||Array.isArray(row)||Object.keys(row).sort().join(',')!=='bytes,id,kind,modulePath,sha256'||row.kind!=='mermaid'||typeof row.id!=='string'||!/^[a-z][a-z0-9-]{0,63}$/.test(row.id)||!Number.isSafeInteger(row.bytes)||row.bytes<1||row.bytes>RESPONSE_LIMITS.module||typeof row.sha256!=='string'||!/^[0-9a-f]{64}$/.test(row.sha256)||!validModulePath(row.modulePath))throw new Error('N2A_CATALOG_DIAGNOSTIC_ROW');
+          }
+          if(new Set(catalog.map(r=>r.id)).size!==catalog.length||new Set(catalog.map(r=>r.modulePath)).size!==catalog.length||summary.accepted&&catalog.length===0)throw new Error('N2A_CATALOG_DIAGNOSTIC_MEMBERSHIP');
+          const stamp=Object.fromEntries(stampKeys.map(k=>[k,summary[k]]));
+          const catalogSha256=createHash('sha256').update(JSON.stringify(catalog)).digest('hex');
+          const pages=Array.from({length:Math.ceil(catalog.length/8)},(_,page)=>({...stamp,accepted:summary.accepted,catalogSha256,page:page+1,pages:Math.ceil(catalog.length/8),entries:catalog.slice(page*8,page*8+8)}));
+          assert.deepEqual(pages.flatMap(p=>p.entries),catalog,'N2A_CATALOG_DIAGNOSTIC_COMPLETE');
+          const header={...stamp,accepted:summary.accepted,modules:catalog.length,moduleBytes:catalog.reduce((n,r)=>n+r.bytes,0),maxModuleBytes:Math.max(0,...catalog.map(r=>r.bytes)),pages:pages.length,catalogSha256};
+          for(const value of [header,...pages])if(Buffer.byteLength(JSON.stringify(value))>12000)throw new Error('N2A_CATALOG_DIAGNOSTIC_PAGE_BOUND');
+          // The runner retains ten annotations per type/step, each <=4096 characters.
+          // Existing notices exhausted that lane at catalog page one. Reserve this
+          // step's unused warning lane for the header and at most eight full pages.
+          if(pages.length+1>9)throw new Error('N2A_CATALOG_DIAGNOSTIC_COUNT');
+          for(const value of [header,...pages])if(Buffer.byteLength(JSON.stringify(value))>4000)throw new Error('N2A_CATALOG_DIAGNOSTIC_TRANSPORT_BOUND');
+          const catalogNotice=(title,value)=>console.log(`::warning title=${title}::${escape(JSON.stringify(value))}`);
+          catalogNotice('N2A registered catalog',header);
+          for(const page of pages)catalogNotice(`N2A registered catalog page ${page.page} of ${page.pages}`,page);
           JS
           exit "$result"
       - run: npm audit --audit-level=moderate

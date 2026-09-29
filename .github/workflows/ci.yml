@@ -263,8 +263,14 @@ jobs:
           assert.deepEqual(pages.flatMap(p=>p.entries),catalog,'N2A_CATALOG_DIAGNOSTIC_COMPLETE');
           const header={...stamp,accepted:summary.accepted,modules:catalog.length,moduleBytes:catalog.reduce((n,r)=>n+r.bytes,0),maxModuleBytes:Math.max(0,...catalog.map(r=>r.bytes)),pages:pages.length,catalogSha256};
           for(const value of [header,...pages])if(Buffer.byteLength(JSON.stringify(value))>12000)throw new Error('N2A_CATALOG_DIAGNOSTIC_PAGE_BOUND');
-          notice('N2A registered catalog',header);
-          for(const page of pages)notice(`N2A registered catalog page ${page.page} of ${page.pages}`,page);
+          // The runner retains ten annotations per type/step, each <=4096 characters.
+          // Existing notices exhausted that lane at catalog page one. Reserve this
+          // step's unused warning lane for the header and at most eight full pages.
+          if(pages.length+1>9)throw new Error('N2A_CATALOG_DIAGNOSTIC_COUNT');
+          for(const value of [header,...pages])if(Buffer.byteLength(JSON.stringify(value))>4000)throw new Error('N2A_CATALOG_DIAGNOSTIC_TRANSPORT_BOUND');
+          const catalogNotice=(title,value)=>console.log(`::warning title=${title}::${escape(JSON.stringify(value))}`);
+          catalogNotice('N2A registered catalog',header);
+          for(const page of pages)catalogNotice(`N2A registered catalog page ${page.page} of ${page.pages}`,page);
           JS
           exit "$result"
       - run: npm audit --audit-level=moderate

@@ -11,11 +11,11 @@ const identity=(info:TestInfo):GuardOptions=>({...owner(info),title:info.title,e
 async function finishChildren(children:GuardedContext[],info:TestInfo):Promise<void>{
   const results=await Promise.allSettled(children.filter(g=>!g.finished).map(g=>g.finish(info.status==='passed'?'passed':'failed')));
   const rejected=results.filter((r):r is PromiseRejectedResult=>r.status==='rejected');
-  if(rejected.length)throw new AggregateError(rejected.map(r=>r.reason),'N1_CONTEXT_TEARDOWN');
+  if(rejected.length)throw new AggregateError(rejected.map(r=>r.status==='rejected'?r.reason:undefined),'N1_CONTEXT_TEARDOWN');
 }
 export const test=base.extend<Fixtures>({
   // Inherit this default in every importing suite, not only the first file's test.use scope.
-  serviceWorkers:['block',{option:true}],
+  serviceWorkers:'block',
   networkRules:[[],{option:true}],
   baseURL:async({baseURL},use,info)=>{await use(owner(info).file===N1_FILE?baseURL:FIXTURE_ORIGIN);},
   networkPlan:async({},use,info)=>{await use(owner(info).file===N1_FILE?undefined:await casePlan(owner(info)));},

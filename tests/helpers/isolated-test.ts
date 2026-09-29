@@ -14,6 +14,8 @@ async function finishChildren(children:GuardedContext[],info:TestInfo):Promise<v
   if(rejected.length)throw new AggregateError(rejected.map(r=>r.reason),'N1_CONTEXT_TEARDOWN');
 }
 export const test=base.extend<Fixtures>({
+  // Inherit this default in every importing suite, not only the first file's test.use scope.
+  serviceWorkers:['block',{option:true}],
   networkRules:[[],{option:true}],
   baseURL:async({baseURL},use,info)=>{await use(owner(info).file===N1_FILE?baseURL:FIXTURE_ORIGIN);},
   networkPlan:async({},use,info)=>{await use(owner(info).file===N1_FILE?undefined:await casePlan(owner(info)));},
@@ -50,6 +52,5 @@ export const test=base.extend<Fixtures>({
     }finally{await finishChildren(children,info);}
   },
 });
-test.use({serviceWorkers:'block'});
 export { expect } from '@playwright/test';
 export { FIXTURE_ORIGIN };

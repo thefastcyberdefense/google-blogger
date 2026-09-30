@@ -23,6 +23,11 @@ for(const state of ['error','label','search','archive','home','generic']){
  const name=`state-${state}`;views.push(name);
  await writeFile(path.join(root,`.preview/${name}.html`),pug.renderFile(path.join(root,'fixtures/home.pug'),{...compiled,fixtureView:state==='generic'?'paged':state,fixturePosts:[],fixtureEmptyState:state,fixtureEmptyContext:'<img src=x onerror=alert(1)> & "quoted"',pretty:true}));
 }
+// Saved native gadget models (fixtures/native-gadgets.pug): simulations, not Blogger output.
+for(const [name,fixtureNative,empty] of [['native-observed','observed',true],['native-empty-archive','empty-archive',false]] as const){
+ views.push(name);
+ await writeFile(path.join(root,`.preview/${name}.html`),pug.renderFile(path.join(root,'fixtures/home.pug'),{...compiled,fixtureView:'home',fixtureNative,...(empty?{fixturePosts:[]}:{}),pretty:true}));
+}
 if (!process.argv.includes('--build-only')) createServer(async (req,res) => {
   try { const pathname = new URL(req.url || '/', 'http://127.0.0.1:4173').pathname.slice(1); const view = views.includes(pathname) ? pathname : 'home'; res.setHeader('content-type','text/html; charset=utf-8'); res.end(await readFile(path.join(root, `.preview/${view}.html`))); }
   catch { res.writeHead(500); res.end('Preview unavailable'); }

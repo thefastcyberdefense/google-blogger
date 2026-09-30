@@ -12,6 +12,9 @@ mixin fcdHeader(fixture = false)
         #header.header
           #Header1.widget.Header
             +fcdBrand(true)
+          //- Fixture-only hook: saved-gadget models render as Header1 siblings, as Blogger places them.
+          if block
+            block
       else
         b:section(id='header' class='header' name='Brand' showaddelement='false')
           b:widget(id='Header1' type='Header' title='Fast Cyber Defense' version='2' locked='true')

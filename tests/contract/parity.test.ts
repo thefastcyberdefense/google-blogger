@@ -52,6 +52,25 @@ it('shared production structures match fixture controls and article/card slots',
     expect(result.productionBody).toEqual(result.fixtureBody);
   }finally{await browser.close();}
 },25000);
+// L1 P1: saved-gadget models never displace or nest inside the production Header1 chain.
+it('observed saved-gadget fixture keeps the Header1 chain with gadgets only after it', async () => {
+  const browser=await chromium.launch();
+  try {
+    const page=await browser.newPage();
+    const observed=pug.renderFile('fixtures/home.pug',{css:'',script:'',pretty:true,fixtureNative:'observed',fixturePosts:[]});
+    const result=await page.evaluate(({home,observed})=>{
+      const parser=new DOMParser(),clean=parser.parseFromString(home,'text/html'),model=parser.parseFromString(observed,'text/html');
+      const header=model.querySelector('#header');if(!header)throw new Error('Missing observed #header');
+      const gadgets=Array.from(header.children).filter(el=>el.id!=='Header1');
+      const placement={first:header.firstElementChild?.id??null,gadgets:gadgets.map(el=>`${el.className}#${el.id}`),nested:model.querySelectorAll('#Header1 .widget').length,outside:Array.from(model.querySelectorAll('.site-header .widget')).filter(el=>el.parentElement!==header).length};
+      for(const el of gadgets)el.remove();
+      const shape=(doc:Document)=>(doc.querySelector('.site-header')?.outerHTML??'').replace(/\s+/g,' ').replace(/> </g,'><');
+      return {placement,clean:shape(clean),model:shape(model)};
+    },{home:render('home'),observed});
+    expect(result.placement).toEqual({first:'Header1',gadgets:['widget BlogSearch#BlogSearch1','widget Attribution#Attribution1','widget ReportAbuse#ReportAbuse1','widget Profile#Profile1'],nested:0,outside:0});
+    expect(result.model).toBe(result.clean);
+  }finally{await browser.close();}
+},25000);
 it('a deliberate production search-label regression also breaks the shared fixture gate', () => {
   const dir=mkdtempSync(path.join(os.tmpdir(),'fcd-parity-'));
   try {

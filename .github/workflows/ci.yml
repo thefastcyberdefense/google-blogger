@@ -53,7 +53,7 @@ jobs:
             if(!stat.isFile()||stat.isSymbolicLink()||stat.size>131072)throw new Error('N2A_PREFLIGHT_BOUND');
             const bytes=fs.readFileSync(preflight),p=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));
             const manifest=JSON.parse(fs.readFileSync(path.join(root,'manifest.json'),'utf8'));
-            if(!Buffer.from(JSON.stringify(p)).equals(bytes)||p.kind!=='n2a-preflight'||['schema','policy','source','run','attempt'].some(k=>p[k]!==manifest[k])||p.run!==process.env.GITHUB_RUN_ID||p.attempt!==process.env.GITHUB_RUN_ATTEMPT||!Array.isArray(p.html)||p.html.length!==14||!Array.isArray(p.modules)||p.modules.length>64)throw new Error('N2A_PREFLIGHT_STAMP');
+            if(!Buffer.from(JSON.stringify(p)).equals(bytes)||p.kind!=='n2a-preflight'||['schema','policy','source','run','attempt'].some(k=>p[k]!==manifest[k])||p.run!==process.env.GITHUB_RUN_ID||p.attempt!==process.env.GITHUB_RUN_ATTEMPT||!Array.isArray(p.html)||p.html.length!==16||!Array.isArray(p.modules)||p.modules.length>64)throw new Error('N2A_PREFLIGHT_STAMP');
             const report=(title,value)=>console.log(`::warning title=N2A measured ${title}::${escape(JSON.stringify(value))}`);
             report('HTML',p.html);report('dynamic inventory',p.dynamic);
             for(let i=0;i<p.modules.length;i+=16)report(`module page ${i/16}`,p.modules.slice(i,i+16));
@@ -234,8 +234,8 @@ jobs:
             }
             for(const sample of selected.values())notice('N1 browser lifecycle sample',sample);
             // The approved completion report must expose all three populations,
-            // not bury the 928 N2A cases inside the historical baseline count.
-            const expected={n1:240,n2a:928,n0Only:506};
+            // not bury the N2A cases inside the historical baseline count.
+            const expected={n1:240,n2a:1038,n0Only:506};
             const actual=Object.fromEntries(Object.keys(expected).map(name=>[name,counts[name]?.tests??null]));
             notice('Browser coverage reporting contract',{expected,actual});
             if(Object.keys(expected).some(name=>actual[name]!==expected[name]))throw new Error('N2A_OUTCOME_GROUPS '+JSON.stringify(actual));

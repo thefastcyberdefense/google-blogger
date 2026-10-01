@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased: L1 native masthead, gadget and sidebar recovery
+
+- Added observed saved-gadget and empty-sidebar regression fixtures (`native-observed`, `native-empty-archive`), the `native-shell` browser suite (T0 to T4 on all 22 Chromium projects), static contracts C1 and C2 with mutation controls, and header parity P1. Browser cases grew from 1,674 to 1,784 (N2A 928 to 1,038; N1 240 and N0-only 506 unchanged) and unit/contract cases from 450 to 456.
+- Masthead: Theme and Menu now sit in a brand row inside Header1's own markup; other gadgets Blogger places in the header section render in a compact muted tray below it. Platform `svg-icon-24` icons are sized to 24 px and masthead gadget images are bounded to 32 px.
+- Added an FCD text-only Attribution default markup adapted from Ledger v1.7.0 (`messages.poweredByBlogger`, `rel="nofollow"`, no logo).
+- Sidebar: the native `sidebar` section no longer draws its own frame; Blogger's empty `no-items` section is hidden on public pages and stays visible in the Layout editor. Theme sidebar cards are unchanged.
+- LICENSE records FCD Blogger as the Fast Cyber Defense identity and branding edition of the owner's Ledger concept and names Ledger v1.7.0 as the source concept; both Required Notices are unchanged.
+- Explicit footer and sidebar destinations for saved Attribution, Report Abuse and Profile gadgets (US-004) wait on the live widget inventory.
+
+No merge or deployment is implied.
+
 ## Unreleased: PR C acceptance hardening
 
 - Owner correction: only total generated XML <=500000 bytes; removed raw JS/CSS growth caps while retaining informational raw/gzip reports.

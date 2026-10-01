@@ -1,6 +1,28 @@
 # Artifact handoff, native acceptance and release boundaries
 
-## Current status and bootstrap boundary (2026-09-27 Asia/Dhaka)
+## Current L1 status and native-checkpoint procedure (2026-10-01 Asia/Dhaka)
+
+This section supersedes the present-tense status in the sections below, which remain dated history. Main is `ad5e5d9e3e17089ea39d3c62e065d829dd97f235`, the merge of PR #13; [post-merge run 36586048928](https://github.com/thefastcyberdefense/google-blogger/actions/runs/36586048928/job/109466535788) passed every stage with 450 unit/contract and 1,674 browser cases. "Current main is `ecb1d438...`" and the prospective PR #10 and PR #11 statements below are historical. L1 work is on `feat/fcd-l1-native-shell` in [draft PR #14](https://github.com/thefastcyberdefense/google-blogger/pull/14); its exact-head evidence lives in the PR and in the L1 checkpoint of docs/PROJECT-PLAN.md.
+
+**No verified import candidate exists.** The checked-in XML keeps its historical stamp until the US-006 transfer, and that transfer commit is not a candidate selection. The pinned artifact verifier still verifies only historical `9a6f484` and must not be described as validating L1 artifacts; repinning is separate scope. Any upload must use the downloaded and fingerprinted bytes of an explicitly selected accepted head, never a regenerated or hand-edited file.
+
+### L1 native-checkpoint procedure (a procedure, not an authorization)
+
+Each Blogger step below needs its own explicit owner approval. Agents make no automated requests to https://blogs.fastcyberdefense.com/, including read-only fetches; the owner makes every production observation in his own browser.
+
+1. **Inventory, input B1.** On the public homepage, run a read-only console snippet and share the output: the L1 contract's Appendix B snippet (widget id, type and parent section, plus a tag, id and class skeleton of `#header` and `#sidebar`), or at minimum `Array.from(document.querySelectorAll('.widget')).map(w => ({ id: w.id, type: w.className, section: w.closest('.section')?.id }))`. Alternatively open each extra gadget's Layout edit dialog without saving and copy its `widgetId=` value. Guessed ids such as `Attribution1` risk duplicate gadgets after upload.
+2. **Dispositions, input B2.** Confirm the gadget matrix in [DESIGN-SYSTEM.md](DESIGN-SYSTEM.md): Attribution and Report Abuse to the footer, Profile to a sidebar Contributors card, blog search removed at the checkpoint, and Header1, Blog1, Label1 and BlogArchive1 kept.
+3. **Prove on a disposable blog first (recommended R0/R1-early).** Reproduce the broken masthead there with the same four gadgets and the post-N2A artifact, then upload the selected L1 artifact before considering production.
+4. **Backups.** Export the current theme, back up content separately, and screenshot the Layout page with every section and gadget.
+5. **Upload and prompt observation.** Use Blogger's theme controls, never Settings > Import Content. Record any prompt about gadgets the new theme does not declare and the choice made. Delete a gadget only where its approved disposition says so.
+6. **Capture.** Save result and UTC time, the rendered `theme-build` stamp, where each kept gadget lands, the masthead, sidebar and footer at 390 and 1280 px in light and dark, and the Layout editor showing the header, sidebar and footer sections.
+7. **Rollback triggers.** Save failure, stamp mismatch, missing posts or navigation, duplicated gadgets, a masthead or sidebar regression, or lost Attribution: restore the saved theme and Layout settings, confirm the rendered identity and record the evidence. Content recovery is separate.
+
+Fixture screenshots are design references only. Automated evidence cannot prove Blogger save or import, where kept gadgets land, whether they use the theme's default markups, the `no-items` class, Layout editor behavior or real content.
+
+---
+
+## Historical status and bootstrap boundary (2026-09-27 Asia/Dhaka; superseded 2026-10-01)
 
 This section supersedes the dated preparation snapshot below while preserving its candidate tuples and historical procedures. [PR #10](https://github.com/thefastcyberdefense/google-blogger/pull/10) was merged on explicit approval. Current main is `ecb1d438e8b3227911dc76359b9e05f127867b27`; [post-merge run 35303993418](https://github.com/thefastcyberdefense/google-blogger/actions/runs/35303993418/job/105472311414) completed 2026-09-18 03:52:09 UTC with all stages successful, 211 unit/contract and 1434 browser passes, audit and XML consistency. This is source evidence, not native/import/human/release acceptance. CodeQL analysis also succeeded, not a guarantee of zero alerts.
 

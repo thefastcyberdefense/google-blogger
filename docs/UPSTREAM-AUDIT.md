@@ -1,5 +1,26 @@
 # Upstream applicability and verification record
 
+## L1 source concept and reuse (2026-10-01)
+
+**Owner direction.** FCD Blogger is the Fast Cyber Defense identity and branding edition of the same theme concept as Ledger Blogger Theme. Both projects belong to one owner: Ledger is Md Redwan Ahmed's personal project and Fast Cyber Defense is his solely owned company. On 2026-10-01 he named [Ledger v1.7.0](https://github.com/redwan-cse/ledger-blogger-theme/releases/tag/v1.7.0) as FCD's source concept. LICENSE now records this, keeps both Required Notices and the PolyForm Noncommercial 1.0.0 reference unchanged, and keeps `692a824` as historical initial-import provenance. This supersedes the U0 statement below that the reuse and license baseline remains unchanged. FCD identity, safety rules and the reuse boundaries below still apply, and files adapted before this update keep their original provenance comments.
+
+**Release facts.** The v1.7.0 tag resolves to commit `a3da05a8a70243c6ffc239b0e96e88260ed7b536`, committed 2026-10-01 02:40:16 UTC. The ten commits after the earlier L1 pin `91cc043a684d098ed4ac311045cafa18e5765d5c` are Dependabot development-dependency bumps (vitest, fast-check, lighthouse, marked, sass, tsx, @types/node and esbuild), their merge, and the release commit (publishing pipeline, code-block styles and toolchain). Path histories show the five Ledger files L1 adapts were last changed before `91cc043`, so they are identical at v1.7.0: `src/defaultmarkups/attribution.pug` (`f3bdfe1`), `src/widgets/footer.pug` (`a569533`), `src/widgets/header.pug` (`df4adc3`), `src/styles/layout.scss` and `src/theme.pug` (`1f979a0`). Ledger's LICENSE (`10856ef`) is unchanged. No dependency, publisher or pipeline change from the release is imported. This is source inspection through the public GitHub API, not an upstream test execution.
+
+| Ledger v1.7.0 source | L1 decision | FCD form and status |
+| --- | --- | --- |
+| `src/defaultmarkups/attribution.pug` | Adapt | Delivered (US-002) as FCD `src/defaultmarkups/attribution.pug`: same native expressions (`data:bloggerUrl`, `messages.poweredByBlogger`), `rel="nofollow"`, FCD class, no logo, provenance comment naming v1.7.0. |
+| `src/widgets/header.pug`: controls inside Header1 | Adapt | Delivered (US-002): FCD brand row inside Header1 with the existing Theme and Menu buttons, ids and labels. No avatar, personal identity or widget-settings copy. |
+| `src/widgets/footer.pug`: locked Attribution in a `footer` section | Adapt, gated | US-004, blocked on the saved widget ids (B1). No HTML footer widget, personal links or privacy and terms links. |
+| `layout.scss`: header-chain `display: contents` flattening | Reject for L1 | FCD keeps the section box so saved gadgets stay contained below the brand row. |
+| `layout.scss`: footer flex order | Adapt, gated | Arrives with US-004. |
+| `layout.scss`: `.section:empty`, `.no-items.section` and `:has()` rules | Adapt narrowly | Delivered (US-003) only as `body:not(#layout) .sidebar-widgets.no-items{display:none}`; no dependence on `:empty` or `:has()`. |
+| `src/theme.pug`: `b:template-skin` editor rules | Planned, not delivered | Dropped with the owner's US-003 narrowing. FCD's existing rules keep the layout, header and footer visible in the Layout editor. |
+| `src/defaultmarkups/profile.pug` | Not adopted | Masthead gadget images are bounded by CSS; the sidebar Contributors card arrives with US-004. |
+| `src/defaultmarkups/blog-search.pug` | Reject | Blog search duplicates FCD's primary search and is removed at the native checkpoint. |
+| `src/defaultmarkups/blog-archive.pug` | Deferred | Its `data:this.data` condition was planned for the `has-items` card, which US-003 did not deliver. |
+| Cached recent-post HTML restored through `innerHTML` | Reject | Violates FCD's safe-DOM rule. |
+| Personal identity, links, avatars, analytics, publisher, generated XML and dependency tree | Reject | Owner direction and license boundary. |
+
 ## U0 bounded review (2026-09-27)
 
 Compared the complete nine-commit Ledger range [2e5eb328adf096a42b4da50ff676de1cbfe42405...91cc043a684d098ed4ac311045cafa18e5765d5c](https://github.com/redwan-cse/ledger-blogger-theme/compare/2e5eb328adf096a42b4da50ff676de1cbfe42405...91cc043a684d098ed4ac311045cafa18e5765d5c), base exclusive and endpoint inclusive, against FCD main `312954b6f9bf0e39b0f276ea6881f9f82146b4ff`. The endpoint's parent is `9006bbb18b79febd8525ef5026a19a029a6bb002`, not the range base. Reading only the endpoint would have missed earlier changes. All nine commit records and relevant source/test/CSS deltas were inspected; this is source applicability evidence, not an upstream test execution or independent human approval.

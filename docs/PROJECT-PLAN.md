@@ -1,6 +1,43 @@
 # FCD development plan
 
-## Current N2A implementation and reporting handoff (2026-09-29 Asia/Dhaka)
+## Current L1 native-shell checkpoint (2026-10-01 Asia/Dhaka)
+
+### Dated status note
+
+This note supersedes the present-tense status in every section below. Those sections remain dated history; none of their evidence is rewritten. On 2026-10-01, main is **`ad5e5d9e3e17089ea39d3c62e065d829dd97f235`**, the owner-approved merge of [PR #13](https://github.com/thefastcyberdefense/google-blogger/pull/13) (N2A source acceptance `19b8821c58c45e4d0b48f6599fe44056ddcb6d4f` onto `457ae985`). [Post-merge run 36586048928](https://github.com/thefastcyberdefense/google-blogger/actions/runs/36586048928/job/109466535788), attempt 1, push/main, completed 2026-09-29 15:08 UTC with every stage successful: **450 unit/contract cases and 1,674 browser cases (N1 240, N2A 928, N0-only 506)**, zero unexpected, skipped, flaky or retried. The `feat/fcd-n2a-guard-adoption` branch is absent after the merge; the owner accepted that deletion and no restoration is planned. Wording below that calls `457ae985`, `312954b6`, `ecb1d438` or `e1e7bb3` current main, PR #13 unmerged, or `44dd85c` the latest checkpoint is historical as of its own date.
+
+### L1 scope, approval and identity
+
+The owner approved **FCD-L1-SHELL-CONTRACT-v1** (labels L1-regression and L1-shell, stories US-001 to US-007) on 2026-09-29 for `feat/fcd-l1-native-shell` from `ad5e5d9`, tracked in [draft PR #14](https://github.com/thefastcyberdefense/google-blogger/pull/14). It addresses the shell problems in the owner's production screenshot (saved gadgets stacked in the masthead, an oversized Blogger logo, a misaligned Theme button and an empty framed sidebar box) without hiding native content, renaming sections, widgets or classes, or changing Blog1, Header1 or Label1 behavior or the editorial arrangement.
+
+FCD Blogger is the Fast Cyber Defense identity and branding edition of the owner's Ledger theme concept. Both projects belong to the same owner: Ledger is his personal project and Fast Cyber Defense is his solely owned company. On 2026-10-01 he named [Ledger v1.7.0](https://github.com/redwan-cse/ledger-blogger-theme/releases/tag/v1.7.0) (`a3da05a8a70243c6ffc239b0e96e88260ed7b536`) as the source concept and asked for LICENSE to say so. That LICENSE update is an owner-approved addition to the contract's file manifest; see [UPSTREAM-AUDIT.md](UPSTREAM-AUDIT.md).
+
+### Story state
+
+| Story | Commits | Evidence and state |
+| --- | --- | --- |
+| US-001 fixtures and failing regressions | `de37c8b` to `f0e989a`; repair `0c3ad33` | Run 36753875460 at `f0e989a` was a setup failure (adoption-test counts not updated), not red evidence. Behavioral red [36811297221](https://github.com/thefastcyberdefense/google-blogger/actions/runs/36811297221) at `0c3ad33`: 1,696 expected and 88 unexpected browser rows, consistent with the four new native-shell titles T0 to T3 across 22 Chromium projects; T4 and every inherited row passed. |
+| US-001b static contracts C1 and C2 | `beb3492` | Red [36812898882](https://github.com/thefastcyberdefense/google-blogger/actions/runs/36812898882): 453 passed and 3 failed (C1, C2 and the C2 logo mutation control), as predicted. |
+| US-002 masthead | `33aa3e6` | [36813382079](https://github.com/thefastcyberdefense/google-blogger/actions/runs/36813382079): 456 unit/contract cases passed; 1,762 of 1,784 browser rows passed, and the only failures were the 22 T2 sidebar rows owned by US-003. |
+| US-003 sidebar chrome | `a209484` | Green [36821652522](https://github.com/thefastcyberdefense/google-blogger/actions/runs/36821652522/job/110238320165): 456 unit/contract cases and 1,784 browser rows passed (N1 240, N2A 1,038, N0-only 506), zero unexpected, skipped, flaky or retried; both finalizers accepted and audit passed. The stale-XML step failed as expected until US-006. |
+| US-004 explicit destinations | none | **Blocked on input B1**, the live widget inventory (saved widget ids, types and sections). The Ledger Layout screenshots the owner shared are design reference, not B1. |
+| US-005 records and LICENSE | `302d77a` and this commit | Docs and LICENSE only. |
+| US-006 XML transfer and restored CI | pending | The only run that establishes L1 source verification. |
+| US-007 reviews and PR handoff | pending | Sequential self-review, disclosed as not independent. |
+
+Two sequencing deviations are disclosed. The static C1 and C2 checks arrived in their own red commit (US-001b) because a failing unit stage skips the render stage. Owner direction on 2026-10-01 narrowed US-003 to a CSS-only change in `src/styles/layout.scss`, using T2 as its already-failing test: the native section no longer draws its own frame, and Blogger's empty `no-items` section is hidden on public pages only (`body:not(#layout)`). The planned C3, C4 and P2 checks and the data-conditional `has-items` archive card (S4) were not delivered, so a populated archive renders without a card frame until a follow-up story. The `b:template-skin` editor rules are unchanged and no static check covers editor visibility.
+
+Measured populations: N2A 1,038 (from 928), browser total 1,784, contexts 1,802 and 1,278 discovered owners; N1 240 and N0-only 506 are unchanged. The checked-in XML keeps its historical stamp until the transfer. Exact-head runs, artifacts and review records belong in PR #14, not in this ledger.
+
+### Gates and next action
+
+Open source gates: the US-006 transfer, then a restored-CI exact-head run with every stage green including the stale-XML check, then US-007 reviews. Native gates stay with the owner: B1, upload-prompt observation, where kept gadgets land, the rendered build stamp, the Layout editor, and human keyboard, screen-reader and zoom review. No candidate is selected, the verifier stays pinned to historical `9a6f484`, and no Blogger upload, Layout change, gadget deletion, publishing, settings, DNS, merge or ready transition is authorized. Agents make no automated requests to https://blogs.fastcyberdefense.com/.
+
+**Next action:** complete US-006 and US-007 on PR #14 and stop at the draft PR. US-004 resumes on the same branch, with its own red, green and transfer cycle, when the owner supplies B1.
+
+---
+
+## Historical N2A implementation and reporting handoff (2026-09-29 Asia/Dhaka; superseded 2026-10-01)
 
 This section supersedes every present-tense status and prospective instruction in the preserved historical snapshots below. The approved main baseline is **`457ae98576d2ed101bc9efcba50022d915bf29b8`**, the verified PR #12 merge. N2A work stays on **`feat/fcd-n2a-guard-adoption`**, [draft PR #13](https://github.com/thefastcyberdefense/google-blogger/pull/13), **unmerged with the branch retained**. The latest fully verified implementation checkpoint is **`44dd85cdba038403c9db63b10d51ff4f05e9f620`**. This reporting/ledger commit must receive its own exact-head Actions and review; the PR records that resulting SHA/run after execution, not a self-referential pass asserted before this commit exists.
 
@@ -90,7 +127,7 @@ DEFECT-05 remains open overall: N2B remaining render/unit and N2C contract/check
 
 ---
 
-## Current baseline and approved U0+N1 (2026-09-27 Asia/Dhaka)
+## Historical baseline and approved U0+N1 (2026-09-27 Asia/Dhaka; superseded 2026-09-29)
 
 This section supersedes the preserved historical bootstrap and PR #10 snapshots below. Main is the verified PR #11 merge `312954b6f9bf0e39b0f276ea6881f9f82146b4ff`. [Post-merge source run 36288775447](https://github.com/thefastcyberdefense/google-blogger/actions/runs/36288775447/job/108534626444) passed all 21 stages with 211 unit/contract and 1434 browser passes, no reported pending/skipped/unexpected/flaky results, audit and XML consistency. [Post-merge CodeQL](https://github.com/thefastcyberdefense/google-blogger/actions/runs/36288775048) succeeded in three languages; this is not a repository-wide zero-alert claim. The 31 artifact-verifier contracts passed on the identical pre-merge source tree in run 36285583516, not claimed as a post-merge execution. Bootstrap branch remains at `7c30c3cccad22a337cea88c99d1f9ab87238aeb9`; leave it untouched.
 

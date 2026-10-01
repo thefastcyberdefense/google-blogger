@@ -5,13 +5,22 @@ mixin fcdBrand(fixture)
     span.brand-name Fast Cyber Defense
       small Security publication
 
+//- L1: Theme and Menu render inside Header1 with the brand, so saved gadgets that Blogger
+//- places in the masthead section can only follow the complete brand row, never split it.
+mixin fcdBrandRow(fixture)
+  .brand-row
+    +fcdBrand(fixture)
+    .header-actions
+      button#theme-toggle.js-control(type='button' hidden='hidden' aria-label='Switch color theme') Theme
+      button#menu-toggle.js-control(type='button' hidden='hidden' aria-controls='primary-navigation' aria-expanded='false') Menu
+
 mixin fcdHeader(fixture = false)
   header.site-header
     .container.header-row
       if fixture
         #header.header
           #Header1.widget.Header
-            +fcdBrand(true)
+            +fcdBrandRow(true)
           //- Fixture-only hook: saved-gadget models render as Header1 siblings, as Blogger places them.
           if block
             block
@@ -19,10 +28,7 @@ mixin fcdHeader(fixture = false)
         b:section(id='header' class='header' name='Brand' showaddelement='false')
           b:widget(id='Header1' type='Header' title='Fast Cyber Defense' version='2' locked='true')
             b:includable(id='main')
-              +fcdBrand(false)
-      .header-actions
-        button#theme-toggle.js-control(type='button' hidden='hidden' aria-label='Switch color theme') Theme
-        button#menu-toggle.js-control(type='button' hidden='hidden' aria-controls='primary-navigation' aria-expanded='false') Menu
+              +fcdBrandRow(false)
     nav#primary-navigation.container.primary-navigation(aria-label='Primary')
       a(href=fixture ? '/search' : undefined expr:href=fixture ? undefined : 'data:blog.homepageUrl path "search"') Latest
       a(href='#topics') Topics

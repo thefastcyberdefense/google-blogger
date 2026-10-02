@@ -9,6 +9,11 @@ aside.sidebar(aria-label='Publication sidebar')
     p Get new publications in your feed reader.
     a(expr:href='data:blog.homepageUrl path "feeds/posts/default"') Subscribe via Atom
   b:section(id='sidebar' class='sidebar-widgets' name='Sidebar widgets' showaddelement='true')
-    b:widget(id='BlogArchive1' type='BlogArchive' title='Archive' version='2' locked='false')
+    b:widget(id='Profile1' type='Profile' title='Authors' version='2' locked='false')
       b:includable(id='main')
         b:include(name='super.main')/
+    b:widget(id='BlogArchive1' type='BlogArchive' title='Archive' version='2' locked='false')
+      b:includable(id='main')
+        .gadget-card
+          b:class(cond='data:this.data' name='has-items')/
+          b:include(name='super.main')/

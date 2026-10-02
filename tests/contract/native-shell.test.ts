@@ -38,6 +38,36 @@ assert 'nofollow' in (a.get('rel') or '').split(),'N1L_C2_ATTRIBUTION link must 
 assert any(x.get('name')=='messages.poweredByBlogger' for x in a.iter(B+'message')),'N1L_C2_ATTRIBUTION must use messages.poweredByBlogger'
 assert not [e for e in m.iter() if e.tag in (H+'img',H+'svg','{http://www.w3.org/2000/svg}svg')],'N1L_C2_LOGO Attribution markup must not render a logo'
 `,
+  // C3 (US-004b): the archive card only earns chrome when Blogger supplies archive data.
+  C3:String.raw`
+w=widget('BlogArchive1')
+m=includable(w,'main')
+assert m.get('var')=='this','N1L_C3_THIS BlogArchive1 main must declare var=this so data:this.data is bound'
+card=one((e for e in m.iter(H+'div') if 'gadget-card' in classes(e)),'N1L_C3_CARD BlogArchive1 .gadget-card')
+flag=one(card.findall(B+'class'),'N1L_C3_HAS_ITEMS one b:class on .gadget-card')
+assert flag.get('name')=='has-items' and flag.get('cond')=='data:this.data','N1L_C3_HAS_ITEMS has-items must follow data:this.data'
+assert [i.get('name') for i in card.findall(B+'include')]==['super.main'],'N1L_C3_NATIVE archive card must delegate to super.main'
+`,
+  // C4 (US-004b): saved gadgets get native homes instead of landing in the masthead.
+  C4:String.raw`
+assert [w.get('id') for w in section('sidebar').findall(B+'widget')]==['Profile1','BlogArchive1'],'N1L_C4_SIDEBAR sidebar must declare Profile1 then BlogArchive1'
+foot=one((f for f in r.iter(H+'footer') if 'site-footer' in classes(f)),'N1L_C4_FOOTER footer.site-footer')
+home=one((s for s in foot.iter(B+'section') if s.get('id')=='footer-gadgets'),'N1L_C4_FOOTER_SECTION footer-gadgets inside the footer')
+assert [w.get('id') for w in home.findall(B+'widget')]==['Attribution1','ReportAbuse1'],'N1L_C4_FOOTER_GADGETS footer must declare Attribution1 then ReportAbuse1'
+for i,t in [('Profile1','Profile'),('Attribution1','Attribution'),('ReportAbuse1','ReportAbuse')]:
+    w=widget(i);assert w.get('type')==t and w.get('version')=='2','N1L_C4_TYPE '+i
+    m=includable(w,'main');assert m.get('var')=='this','N1L_C4_THIS '+i+' main must declare var=this'
+    assert [x.get('name') for x in m.iter(B+'include')]==['super.main'],'N1L_C4_NATIVE '+i+' must delegate to super.main'
+`,
+  // C5 (US-004b, owner decision): FCD's own search is the single masthead search; the theme
+  // gives the saved Blog Search gadget no search presentation (the owner removes it in Layout).
+  C5:String.raw`
+head=one((h for h in r.iter(H+'header') if 'site-header' in classes(h)),'N1L_C5_HEADER header.site-header')
+form=one((f for f in head.iter(H+'form') if f.get('role')=='search'),'N1L_C5_ONE_SEARCH masthead search forms')
+assert form.get('id')=='site-search' and form.get('method')=='get' and form.get(X+'action')=='data:blog.searchUrl','N1L_C5_NATIVE_SEARCH theme search must GET data:blog.searchUrl'
+assert any(i.get('name')=='q' and i.get('type')=='search' for i in form.iter(H+'input')),'N1L_C5_NATIVE_SEARCH q search input'
+assert not [m for d in r.iter(B+'defaultmarkups') for m in d.findall(B+'defaultmarkup') if m.get('type')=='BlogSearch'],'N1L_C5_GADGET_SEARCH theme must not present the saved Blog Search gadget as a second search'
+`,
 } as const;
 type Check=keyof typeof checks;
 const check=(xml:string,name:Check)=>spawnSync('python3',['-c',prelude+checks[name]],{input:xml,encoding:'utf8'});
@@ -48,6 +78,9 @@ it.each(Object.keys(checks) as Check[])('L1 contract %s holds for the generated 
 const mutations:[Check,string,(s:string)=>string][]=[
   ['C1','a saved gadget declared before Header1',s=>s.replace('<b:widget id="Header1"','<b:widget id="HTML9" type="HTML" title="Mutation" version="2"/><b:widget id="Header1"')],
   ['C2','a logo inside the Attribution link',s=>s.replace(/(<b:defaultmarkup type="Attribution">[\s\S]*?<a\b[^>]*>)/,'$1<svg class="svg-icon-24"></svg>')],
+  ['C3','an archive card bound to the wrong data',s=>s.replace('cond="data:this.data" name="has-items"','cond="data:posts" name="has-items"')],
+  ['C4','the Profile gadget moved out of the sidebar',s=>s.replace('<b:widget id="Profile1"','<b:widget id="Profile9"')],
+  ['C5','a second masthead search form',s=>s.replace(/<form\b(?=[^>]*id="site-search")/,'<form role="search" action="/mutation"></form><form')],
 ];
 it.each(mutations)('L1 contract %s rejects %s',(name,_label,mutate)=>{
   const changed=mutate(original);expect(changed,'N1L_MUTATION_TARGET missing').not.toBe(original);

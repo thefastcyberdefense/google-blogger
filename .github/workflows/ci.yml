@@ -302,3 +302,47 @@ jobs:
             playwright-report/
           if-no-files-found: error
           retention-days: 14
+      # Owner-requested downloadable copy of this run's compiled theme. It runs
+      # only after every gate above passed and uploads one unzipped file, so the
+      # artifact digest is the file's own SHA-256. Not a release candidate by itself.
+      - name: Stage theme XML artifact after every gate passed
+        id: theme
+        env:
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, os, re
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          sha = os.environ['SOURCE_SHA']
+          assert re.fullmatch('[0-9a-f]{40}', sha), 'THEME_ARTIFACT_SOURCE'
+          raw = Path('dist/theme.xml').read_bytes()
+          assert 0 < len(raw) <= 500000, 'THEME_ARTIFACT_SIZE'
+          ns = '{http://www.w3.org/1999/xhtml}'
+          stamps = [m.get('content') or '' for m in ET.fromstring(raw).iter(ns + 'meta') if m.get('name') == 'theme-build']
+          assert len(stamps) == 1 and stamps[0].endswith('+' + sha), 'THEME_ARTIFACT_STAMP'
+          name = 'fcd-theme-' + sha + '.xml'
+          out = Path(os.environ['RUNNER_TEMP']) / 'fcd-theme'
+          out.mkdir()
+          (out / name).write_bytes(raw)
+          record = {'file': name, 'bytes': len(raw), 'sha256': hashlib.sha256(raw).hexdigest(), 'stamp': stamps[0], 'source': sha, 'run': os.environ['GITHUB_RUN_ID'], 'attempt': os.environ['GITHUB_RUN_ATTEMPT']}
+          print('::notice title=Theme XML artifact::' + json.dumps(record))
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+              print('path=' + str(out / name), file=f)
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as f:
+              print('### Theme XML artifact', file=f)
+              print('', file=f)
+              print('| Field | Value |', file=f)
+              print('| --- | --- |', file=f)
+              for key in ('file', 'bytes', 'sha256', 'stamp', 'source', 'run', 'attempt'):
+                  print('| ' + key + ' | `' + str(record[key]) + '` |', file=f)
+              print('', file=f)
+              print('Uploaded only because every gate in this run passed. It is not a release candidate until it is separately selected and approved.', file=f)
+          PY
+      - name: Upload theme XML as its own unzipped artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          path: ${{ steps.theme.outputs.path }}
+          archive: false
+          if-no-files-found: error
+          retention-days: 90

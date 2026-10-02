@@ -33,7 +33,11 @@ it('shared production structures match fixture controls and article/card slots',
         }
         let tag=el.localName;
         if(el.namespaceURI===b){tag='div';delete attrs.type;delete attrs.name;if(el.localName==='widget')attrs.class=`widget ${el.getAttribute('type')}`;}
-        return [{tag,attrs:Object.fromEntries(Object.entries(attrs).sort(([a],[z])=>a.localeCompare(z))),children:Array.from(el.children).flatMap(signature)}];
+        // L1-nav: Blogger repeats the saved-link template and the fixture models the default links,
+        // so the Navigation list compares each distinct item shape once, in order.
+        const children=Array.from(el.children).flatMap(signature);
+        const items=el.localName==='ul'&&(el.getAttribute('class')||'').split(/\s+/).includes('nav-list')?children.filter((child,i)=>i===0||JSON.stringify(child)!==JSON.stringify(children[i-1])):children;
+        return [{tag,attrs:Object.fromEntries(Object.entries(attrs).sort(([a],[z])=>a.localeCompare(z))),children:items}];
       };
       const selected=(doc:Document,selector:string)=>{const el=doc.querySelector(selector);if(!el)throw new Error(`Missing ${selector}`);return el;};
       const slots=(doc:Document,selector:string)=>Array.from(selected(doc,selector).children).flatMap(el=>el.namespaceURI===b?Array.from(el.children):[el]).map(el=>`${el.localName}.${el.getAttribute('class')||''}`);
@@ -53,6 +57,7 @@ it('shared production structures match fixture controls and article/card slots',
   }finally{await browser.close();}
 },25000);
 // L1 P1: saved-gadget models never displace or nest inside the production Header1 chain.
+// L1-nav: the native Navigation gadget is the one masthead widget outside #header, in #navigation.
 it('observed saved-gadget fixture keeps the Header1 chain with gadgets only after it', async () => {
   const browser=await chromium.launch();
   try {
@@ -62,7 +67,7 @@ it('observed saved-gadget fixture keeps the Header1 chain with gadgets only afte
       const parser=new DOMParser(),clean=parser.parseFromString(home,'text/html'),model=parser.parseFromString(observed,'text/html');
       const header=model.querySelector('#header');if(!header)throw new Error('Missing observed #header');
       const gadgets=Array.from(header.children).filter(el=>el.id!=='Header1');
-      const placement={first:header.firstElementChild?.id??null,gadgets:gadgets.map(el=>`${el.className}#${el.id}`),nested:model.querySelectorAll('#Header1 .widget').length,outside:Array.from(model.querySelectorAll('.site-header .widget')).filter(el=>el.parentElement!==header).length};
+      const placement={first:header.firstElementChild?.id??null,gadgets:gadgets.map(el=>`${el.className}#${el.id}`),nested:model.querySelectorAll('#Header1 .widget').length,outside:Array.from(model.querySelectorAll('.site-header .widget')).filter(el=>el.parentElement!==header&&!(el.id==='LinkList1'&&el.parentElement?.id==='navigation')).length};
       for(const el of gadgets)el.remove();
       const shape=(doc:Document)=>(doc.querySelector('.site-header')?.outerHTML??'').replace(/\s+/g,' ').replace(/> </g,'><');
       return {placement,clean:shape(clean),model:shape(model)};

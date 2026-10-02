@@ -68,6 +68,46 @@ assert form.get('id')=='site-search' and form.get('method')=='get' and form.get(
 assert any(i.get('name')=='q' and i.get('type')=='search' for i in form.iter(H+'input')),'N1L_C5_NATIVE_SEARCH q search input'
 assert not [m for d in r.iter(B+'defaultmarkups') for m in d.findall(B+'defaultmarkup') if m.get('type')=='BlogSearch'],'N1L_C5_GADGET_SEARCH theme must not present the saved Blog Search gadget as a second search'
 `,
+  // C6 (L1-nav): Navigation is the owner's native Link List gadget in its own Layout section, with
+  // the approved design v1 links as fresh-install defaults. The theme owns the drawer and the single
+  // search, so the menu target and search never depend on a saved gadget.
+  C6:String.raw`
+parent={c:p for p in r.iter() for c in p}
+def within(e,test):
+    p=parent.get(e)
+    while p is not None:
+        if test(p):return True
+        p=parent.get(p)
+    return False
+head=one((h for h in r.iter(H+'header') if 'site-header' in classes(h)),'N1L_C6_HEADER header.site-header')
+nav=one((e for e in r.iter() if e.get('id')=='primary-navigation'),'N1L_C6_DRAWER #primary-navigation')
+assert nav.tag==H+'nav' and nav.get('aria-label')=='Primary','N1L_C6_DRAWER #primary-navigation must be nav aria-label=Primary'
+assert within(nav,lambda p:p is head) and not within(nav,lambda p:p.tag==B+'section'),'N1L_C6_DRAWER the theme owns the drawer inside the masthead, outside every section'
+assert one((e for e in r.iter() if e.get('id')=='menu-toggle'),'N1L_C6_DRAWER #menu-toggle').get('aria-controls')=='primary-navigation','N1L_C6_DRAWER Menu must control the drawer'
+home=one((s for s in nav.iter(B+'section') if s.get('id')=='navigation'),'N1L_C6_SECTION Navigation section inside the drawer')
+assert (home.get('name'),home.get('maxwidgets'),home.get('showaddelement'))==('Navigation','1','false'),'N1L_C6_SECTION the Navigation section holds exactly one gadget'
+w=one(home.findall(B+'widget'),'N1L_C6_GADGET Navigation gadgets')
+assert (w.get('id'),w.get('type'),w.get('version'),w.get('locked'))==('LinkList1','LinkList','2','true'),'N1L_C6_GADGET Navigation must be the locked Version 2 LinkList1 gadget'
+links=one((u for u in includable(w,'main').iter(H+'ul') if 'nav-list' in classes(u)),'N1L_C6_LIST LinkList1 main ul.nav-list')
+saved=one((i for i in links.iter(B+'if') if i.get('cond')=='data:links'),'N1L_C6_SAVED saved-links branch')
+loop=one(saved.findall(B+'loop'),'N1L_C6_SAVED saved-links loop')
+assert (loop.get('values'),loop.get('var'))==('data:links','link'),'N1L_C6_SAVED the loop must read data:links'
+a=one(loop.iter(H+'a'),'N1L_C6_SAVED saved link anchor')
+assert a.get(X+'href')=='data:link.target' and 'nav-link' in classes(a),'N1L_C6_SAVED saved links must use data:link.target'
+assert [e.get('expr') for e in a.iter(B+'eval')]==['data:link.name'],'N1L_C6_SAVED saved links must show data:link.name'
+kids=list(saved)
+assert [k.tag for k in kids[:2]]==[B+'loop',B+'else'],'N1L_C6_DEFAULTS defaults render only when no links are saved'
+defaults=[x for k in kids[2:] for x in k.iter(H+'a')]
+names=[''.join(x.itertext()).replace('\u2197','').strip() for x in defaults]
+assert names==['Latest','Topics','Guides','Company website'],'N1L_C6_DEFAULTS default links %r'%names
+targets=[x.get(X+'href') or x.get('href') for x in defaults]
+assert targets==['data:blog.homepageUrl path "search"','#topics','data:blog.homepageUrl path "search/label/Guides"','https://fastcyberdefense.com/'],'N1L_C6_DEFAULTS default targets %r'%targets
+assert [s.get('aria-hidden') for s in defaults[3].iter(H+'span')]==['true'],'N1L_C6_EXTERNAL the external mark must be decorative'
+stray=[x for x in nav.iter(H+'a') if not within(x,lambda p:p is w)]
+assert not stray,'N1L_C6_THEME_LINKS the theme must not hardcode links beside the gadget: %d'%len(stray)
+form=one((f for f in nav.iter(H+'form') if f.get('id')=='site-search'),'N1L_C6_SEARCH #site-search inside the drawer')
+assert not within(form,lambda p:p.tag==B+'section'),'N1L_C6_SEARCH FCD search must stay outside every section'
+`,
 } as const;
 type Check=keyof typeof checks;
 const check=(xml:string,name:Check)=>spawnSync('python3',['-c',prelude+checks[name]],{input:xml,encoding:'utf8'});
@@ -81,6 +121,8 @@ const mutations:[Check,string,(s:string)=>string][]=[
   ['C3','an archive card bound to the wrong data',s=>s.replace('cond="data:this.data" name="has-items"','cond="data:posts" name="has-items"')],
   ['C4','the Profile gadget moved out of the sidebar',s=>s.replace('<b:widget id="Profile1"','<b:widget id="Profile9"')],
   ['C5','a second masthead search form',s=>s.replace(/<form\b(?=[^>]*id="site-search")/,'<form role="search" action="/mutation"></form><form')],
+  ['C6','a renamed drawer target',s=>s.replace('id="primary-navigation"','id="primary-nav"')],
+  ['C6','a theme link hardcoded beside the gadget',s=>s.replace(/<form\b(?=[^>]*id="site-search")/,'<a href="/mutation">Extra</a><form')],
 ];
 it.each(mutations)('L1 contract %s rejects %s',(name,_label,mutate)=>{
   const changed=mutate(original);expect(changed,'N1L_MUTATION_TARGET missing').not.toBe(original);

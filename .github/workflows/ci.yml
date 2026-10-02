@@ -37,7 +37,14 @@ jobs:
         run: |
           bash tools/run-isolated-tests.sh self-test
           node tools/finalize-browser-network.ts init "$RUNNER_TEMP/fcd-isolation-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT-browser-network" "$(git rev-parse HEAD)" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT"
-          bash tools/run-isolated-tests.sh run unit 300 npm test -- --reporter=default --reporter=json --outputFile=unit-report.json
+          # Test-printed diagnostics stay plain log lines instead of annotations;
+          # the next step reports every failed assertion as an error annotation.
+          marker="fcd-unit-$(cat /proc/sys/kernel/random/uuid)"
+          echo "::stop-commands::$marker"
+          status=0
+          bash tools/run-isolated-tests.sh run unit 300 npm test -- --reporter=default --reporter=json --outputFile=unit-report.json || status=$?
+          echo "::$marker::"
+          exit "$status"
       - name: Report regression evidence
         if: ${{ always() }}
         run: |
@@ -54,10 +61,14 @@ jobs:
             const bytes=fs.readFileSync(preflight),p=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));
             const manifest=JSON.parse(fs.readFileSync(path.join(root,'manifest.json'),'utf8'));
             if(!Buffer.from(JSON.stringify(p)).equals(bytes)||p.kind!=='n2a-preflight'||['schema','policy','source','run','attempt'].some(k=>p[k]!==manifest[k])||p.run!==process.env.GITHUB_RUN_ID||p.attempt!==process.env.GITHUB_RUN_ATTEMPT||!Array.isArray(p.html)||p.html.length!==16||!Array.isArray(p.modules)||p.modules.length>64)throw new Error('N2A_PREFLIGHT_STAMP');
-            const report=(title,value)=>console.log(`::warning title=N2A measured ${title}::${escape(JSON.stringify(value))}`);
+            // Complete measurements go to the log; one bounded notice summarizes
+            // them. Warnings stay reserved for actionable problems.
+            const report=(title,value)=>console.log(`N2A measured ${title} ${JSON.stringify(value)}`);
             report('HTML',p.html);report('dynamic inventory',p.dynamic);
             for(let i=0;i<p.modules.length;i+=16)report(`module page ${i/16}`,p.modules.slice(i,i+16));
             report('capacity',p.capacity);
+            const measured={html:{variants:p.html.length,maxBytes:Math.max(0,...p.html.map(h=>h.bytes))},dynamic:{candidates:p.dynamic?.candidates?.length??null,selectedFlow:p.dynamic?.selectedFlow??null},modules:{count:p.modules.length,bytes:p.modules.reduce((n,m)=>n+m.bytes,0)},capacity:p.capacity};
+            console.log(`::notice title=N2A measured preflight::${escape(JSON.stringify(measured))}`);
           }
           if(fs.existsSync('unit-report.json')){
             const r=JSON.parse(fs.readFileSync('unit-report.json','utf8'));
@@ -95,7 +106,15 @@ jobs:
           JS
       - run: npm run preview -- --build-only
       - name: Run npm run test:render
-        run: bash tools/run-isolated-tests.sh run render 1100 npm run test:render
+        run: |
+          # Test-printed diagnostics and Playwright's github reporter stay plain log
+          # lines; "Report browser counts" reports each failed test as an error.
+          marker="fcd-render-$(cat /proc/sys/kernel/random/uuid)"
+          echo "::stop-commands::$marker"
+          status=0
+          bash tools/run-isolated-tests.sh run render 1100 npm run test:render || status=$?
+          echo "::$marker::"
+          exit "$status"
       - name: Report browser counts
         if: ${{ always() }}
         run: |
@@ -143,6 +162,9 @@ jobs:
           visit(r.suites);
           notice('Browser diagnostic volume',{groups:[...groups.values()].sort((a,b)=>b.testBytes-a.testBytes),omitted});
           notice('Browser failure inventory',{failed,omitted,omittedFailures});
+          // The render stage keeps Playwright's github reporter in the log, so
+          // surface up to ten failed tests here as error annotations.
+          for(const row of failed.slice(0,10))console.log(`::error title=Browser failure::${escape(JSON.stringify(row))}`);
           JS
           fi
           node --input-type=module <<'JS' || { report=$?; if [ "$result" -eq 0 ]; then result=$report; fi; }
@@ -263,14 +285,15 @@ jobs:
           assert.deepEqual(pages.flatMap(p=>p.entries),catalog,'N2A_CATALOG_DIAGNOSTIC_COMPLETE');
           const header={...stamp,accepted:summary.accepted,modules:catalog.length,moduleBytes:catalog.reduce((n,r)=>n+r.bytes,0),maxModuleBytes:Math.max(0,...catalog.map(r=>r.bytes)),pages:pages.length,catalogSha256};
           for(const value of [header,...pages])if(Buffer.byteLength(JSON.stringify(value))>12000)throw new Error('N2A_CATALOG_DIAGNOSTIC_PAGE_BOUND');
-          // The runner retains ten annotations per type/step, each <=4096 characters.
-          // Existing notices exhausted that lane at catalog page one. Reserve this
-          // step's unused warning lane for the header and at most eight full pages.
+          // Unchanged bounds: the header plus at most eight full pages, each within
+          // the 4096-character annotation limit. The header is this step's last
+          // notice (nine on a green run, under the ten-per-step limit) and every
+          // complete page is printed to the log. Warnings stay reserved for
+          // actionable problems.
           if(pages.length+1>9)throw new Error('N2A_CATALOG_DIAGNOSTIC_COUNT');
           for(const value of [header,...pages])if(Buffer.byteLength(JSON.stringify(value))>4000)throw new Error('N2A_CATALOG_DIAGNOSTIC_TRANSPORT_BOUND');
-          const catalogNotice=(title,value)=>console.log(`::warning title=${title}::${escape(JSON.stringify(value))}`);
-          catalogNotice('N2A registered catalog',header);
-          for(const page of pages)catalogNotice(`N2A registered catalog page ${page.page} of ${page.pages}`,page);
+          notice('N2A registered catalog',header);
+          for(const page of pages)console.log(`N2A registered catalog page ${page.page} of ${page.pages} ${JSON.stringify(page)}`);
           JS
           exit "$result"
       - run: npm audit --audit-level=moderate
@@ -303,8 +326,9 @@ jobs:
           if-no-files-found: error
           retention-days: 14
       # Owner-requested downloadable copy of this run's compiled theme. It runs
-      # only after every gate above passed and uploads one unzipped file, so the
-      # artifact digest is the file's own SHA-256. Not a release candidate by itself.
+      # only after every gate above passed and uploads a zip holding only the
+      # XML; the notice and job summary record the XML's own SHA-256.
+      # Not a release candidate by itself.
       - name: Stage theme XML artifact after every gate passed
         id: theme
         env:
@@ -325,7 +349,7 @@ jobs:
           out = Path(os.environ['RUNNER_TEMP']) / 'fcd-theme'
           out.mkdir()
           (out / name).write_bytes(raw)
-          record = {'file': name, 'bytes': len(raw), 'sha256': hashlib.sha256(raw).hexdigest(), 'stamp': stamps[0], 'source': sha, 'run': os.environ['GITHUB_RUN_ID'], 'attempt': os.environ['GITHUB_RUN_ATTEMPT']}
+          record = {'artifact': 'fcd-theme-' + sha, 'file': name, 'bytes': len(raw), 'sha256': hashlib.sha256(raw).hexdigest(), 'stamp': stamps[0], 'source': sha, 'run': os.environ['GITHUB_RUN_ID'], 'attempt': os.environ['GITHUB_RUN_ATTEMPT']}
           print('::notice title=Theme XML artifact::' + json.dumps(record))
           with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
               print('path=' + str(out / name), file=f)
@@ -334,15 +358,15 @@ jobs:
               print('', file=f)
               print('| Field | Value |', file=f)
               print('| --- | --- |', file=f)
-              for key in ('file', 'bytes', 'sha256', 'stamp', 'source', 'run', 'attempt'):
+              for key in ('artifact', 'file', 'bytes', 'sha256', 'stamp', 'source', 'run', 'attempt'):
                   print('| ' + key + ' | `' + str(record[key]) + '` |', file=f)
               print('', file=f)
-              print('Uploaded only because every gate in this run passed. It is not a release candidate until it is separately selected and approved.', file=f)
+              print('Download the artifact zip from this run and extract the XML; the sha256 above is the XML file itself. Uploaded only because every gate in this run passed. It is not a release candidate until it is separately selected and approved.', file=f)
           PY
-      - name: Upload theme XML as its own unzipped artifact
+      - name: Upload theme XML as its own zip artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
+          name: fcd-theme-${{ github.event.pull_request.head.sha || github.sha }}
           path: ${{ steps.theme.outputs.path }}
-          archive: false
           if-no-files-found: error
           retention-days: 90

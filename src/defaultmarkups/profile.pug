@@ -1,4 +1,5 @@
-//- FCD Profile gadget presentation, adapted from Ledger v1.7.0; identity stays native.
+//- Adapted from Ledger 91cc043a684d098ed4ac311045cafa18e5765d5c; see LICENSE.
+//- FCD redesign: a compact Authors card; author identity stays native to the saved gadget.
 b:defaultmarkup(type='Profile')
   b:includable(id='main' var='this')
     div.profile-card.wrapper
@@ -6,7 +7,6 @@ b:defaultmarkup(type='Profile')
       b:with(value='data:messages.blogAuthors' var='defaultTitle')
         b:include(cond='data:this.team' name='widget-title')/
       b:include(name='content')/
-    
   b:includable(id='authorProfileImage')
     img.profile-img.author-avatar(expr:alt='data:messages.myPhoto' expr:src='data:authorPhoto.image' height='64' loading='lazy' width='64')/
   b:includable(id='defaultProfileImage')
@@ -16,7 +16,7 @@ b:defaultmarkup(type='Profile')
     dd.profile-textblock.profile-snippet.snippet-container.r-snippet-container
       div.snippet-item.r-snippetized
         b:eval(expr='data:aboutme')/
-      div.snippet-fade.snippet-fade.hidden
+      div.snippet-fade.r-snippet-fade.hidden
   b:includable(id='viewProfileLink')
     a.profile-link.visit-profile.pill-button(expr:href='data:userUrl' rel='author')
       b:eval(expr='data:messages.visitProfile')/

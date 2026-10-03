@@ -182,6 +182,35 @@ assert not [e for e in r.iter() if 'article-cta' in classes(e)],'N1L_C8_ONE_CTA 
 heads=[h for h in r.iter() if h.tag in (H+'h2',H+'h3') and ''.join(h.itertext()).strip()=='Need help securing your organization?']
 assert len(heads)==1,'N1L_C8_ONE_CTA call-to-action headings: %d'%len(heads)
 `,
+  // C9 (L4-footer): the brand and the owner's Footer gadget copy beside the theme links, then a base
+  // row with the copyright and the native Attribution and Report Abuse gadgets. No footer headings.
+  C9:String.raw`
+foot=one((f for f in r.iter(H+'footer') if 'site-footer' in classes(f)),'N1L_C9_FOOTER footer.site-footer')
+kids=[d for d in foot if d.tag==H+'div']
+assert [[c for c in classes(d) if c.startswith('footer-')] for d in kids]==[['footer-grid'],['footer-base']] and all('container' in classes(d) for d in kids),'N1L_C9_ROWS the footer is a link grid, then a base row'
+grid,base=kids
+brand=one((d for d in grid if 'footer-brand' in classes(d)),'N1L_C9_BRAND .footer-brand')
+assert [''.join(p.itertext()).strip() for p in brand.findall(H+'p')]==['Fast Cyber Defense'] and 'brand-name' in classes(brand.find(H+'p')),'N1L_C9_BRAND the brand name leads the footer'
+sec=one((s for s in brand.findall(B+'section') if s.get('id')=='footer'),'N1L_C9_SECTION Footer section beside the brand')
+assert (sec.get('name'),sec.get('maxwidgets'),sec.get('showaddelement'))==('Footer','1','false'),'N1L_C9_SECTION the Footer section holds exactly one gadget'
+w=one(sec.findall(B+'widget'),'N1L_C9_GADGET Footer gadgets')
+assert (w.get('id'),w.get('type'),w.get('title'),w.get('version'),w.get('locked'))==('HTML3','HTML','Footer','2','true'),'N1L_C9_GADGET Footer must be the locked Version 2 HTML3 gadget'
+text=one((d for d in includable(w,'main').iter(H+'div') if 'footer-text' in classes(d)),'N1L_C9_TEXT .footer-text')
+saved=one(text.findall(B+'if'),'N1L_C9_SAVED saved-copy branch')
+k=list(saved)
+assert saved.get('cond')=='data:content' and [x.tag for x in k[:2]]==[B+'eval',B+'else'] and k[0].get('expr')=='data:content','N1L_C9_SAVED saved copy first, the default only when it is empty'
+assert [(x.tag,classes(x),''.join(x.itertext()).strip()) for x in k[2:]]==[(H+'p',['footer-tagline'],'Quick to Act, Strong to Protect.'),(H+'p',['footer-blurb'],'Security research and practical guidance from Fast Cyber Defense.')],'N1L_C9_DEFAULT the design v1 tagline and blurb'
+nav=one((n for n in grid if n.tag==H+'nav'),'N1L_C9_LINKS footer nav')
+assert nav.get('aria-label')=='Footer' and 'footer-links' in classes(nav),'N1L_C9_LINKS one labelled footer nav'
+links=nav.findall(H+'a')
+assert [(a.get('href') or a.get(X+'href'),''.join(a.itertext()).replace('\u2197','').strip()) for a in links]==[('https://fastcyberdefense.com/','Company website'),('data:blog.homepageUrl path "feeds/posts/default"','Publication feed'),('#top','Back to top')],'N1L_C9_LINKS the design v1 links'
+assert all('footer-link' in classes(a) for a in links) and [s.get('aria-hidden') for a in links for s in a.iter(H+'span')]==['true'],'N1L_C9_LINKS one decorative external arrow'
+assert [''.join(p.itertext()).strip() for p in base.findall(H+'p') if 'footer-copyright' in classes(p)]==['\u00a9 Fast Cyber Defense'],'N1L_C9_BASE copyright line'
+one((s for s in base.findall(B+'section') if s.get('id')=='footer-gadgets'),'N1L_C9_BASE native gadgets in the base row')
+assert not [e for e in foot.iter() if e.tag in [H+'h%d'%i for i in range(1,7)]],'N1L_C9_NO_HEADINGS the footer carries no headings'
+blurbs=[e for e in r.iter() if ''.join(e.itertext()).strip()=='Security research and practical guidance from Fast Cyber Defense.' and e.tag in (H+'p',H+'div')]
+assert len(blurbs)==1,'N1L_C9_ONE_BLURB the blurb appears once: %d'%len(blurbs)
+`,
 } as const;
 type Check=keyof typeof checks;
 const check=(xml:string,name:Check)=>spawnSync('python3',['-c',prelude+checks[name]],{input:xml,encoding:'utf8'});
@@ -201,6 +230,8 @@ const mutations:[Check,string,(s:string)=>string][]=[
   ['C7','a stray theme h1 in main',s=>s.replace(/<main\b[^>]*>/,m=>m+'<h1>Mutation</h1>')],
   ['C8','a second call to action inside the article',s=>s.replace(/<main\b[^>]*>/,m=>m+'<aside class="article-cta"><h2>Need help securing your organization?</h2></aside>')],
   ['C8','the call-to-action headline repeated in the sidebar',s=>s.replace(/<aside class="sidebar"[^>]*>/,m=>m+'<h2>Need help securing your organization?</h2>')],
+  ['C9','the footer blurb repeated in main',s=>s.replace(/<main\b[^>]*>/,m=>m+'<p>Security research and practical guidance from Fast Cyber Defense.</p>')],
+  ['C9','a heading inside the footer',s=>s.replace(/<\/footer>/,'<h2>Mutation</h2></footer>')],
 ];
 it.each(mutations)('L1 contract %s rejects %s',(name,_label,mutate)=>{
   const changed=mutate(original);expect(changed,'N1L_MUTATION_TARGET missing').not.toBe(original);

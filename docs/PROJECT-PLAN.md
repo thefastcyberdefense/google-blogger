@@ -1,6 +1,64 @@
 # FCD development plan
 
-## Current L1 native-shell checkpoint (2026-10-01 Asia/Dhaka)
+## Current L1 native-shell checkpoint (2026-10-03 Asia/Dhaka)
+
+### Dated status note
+
+This note supersedes the 2026-10-01 L1 checkpoint directly below and the present-tense status in every older section; they remain dated history and none of their evidence is rewritten. Main is unchanged at **`ad5e5d9e3e17089ea39d3c62e065d829dd97f235`**. Every L1 story through US-014 is source-verified on `feat/fcd-l1-native-shell` in [draft PR #14](https://github.com/thefastcyberdefense/google-blogger/pull/14), which stays a draft and unmerged.
+
+The last source head is **`f812ef22c4cd92e4d96e949ac038d480e17fea1b`**. [Run 37110232904](https://github.com/thefastcyberdefense/google-blogger/actions/runs/37110232904/job/111166534189), attempt 1, passed every stage including the restored stale-XML check: **492 unit/contract cases and 1,784 browser cases (N1 240, N2A 1,038, N0-only 506)**, zero unexpected, skipped, flaky or retried, the N1 summary accepted with 1,802 contexts and 1,278 discovered owners, and 23 notices with no warnings or errors. Its theme artifact `fcd-theme-f812ef22c4cd92e4d96e949ac038d480e17fea1b` holds a 115,943-byte XML (sha256 `1ef8368a09d7d7993df4ff7b4ab49815b538b8e82fc6c856b249e20ffe163f6b`), 23% of the 500,000-byte cap. The checked-in XML comes from the transfer bot commit `029c57c` and differs from fresh output only by its build stamp. The records commits after `f812ef2` change docs only; their exact-head run is recorded in PR #14.
+
+### Owner decisions since 2026-10-01
+
+- **2026-10-02, search:** FCD's own `#site-search` is the single masthead search; the theme gives a saved Blog Search gadget no search presentation and the owner deletes it in Layout at the native checkpoint.
+- **2026-10-02, design v1 approved:** the shell becomes four Layout-editable regions (Navigation, Intro, Call to Action and Footer gadgets) delivered in the order L1-nav, L2-intro, L3-CTA, L4-footer, then design tokens and components. B1 is no longer a blocker; it becomes a quick check before upload.
+- **2026-10-02, CI additions:** a downloadable theme zip artifact, annotation hygiene and the `ubuntu-24.04` runner pin (US-008 to US-010). Every gate, threshold, population, permission and action pin is unchanged.
+- **2026-10-03, focus:** theme design and functionality first, with lean tests that prove the design rather than growing test infrastructure.
+
+### Story state since 2026-10-01
+
+Every transfer reused the reviewed US-006 pattern with only its comment changed, every bot commit touched only `dist/theme.xml`, and every restore returned `ci.yml` to blob `5d8081ee24f562444104675e4dfd8d88e56883b2` exactly.
+
+| Story | Red | Green | Transfer, bot, restore and final run |
+| --- | --- | --- | --- |
+| US-004b gadget homes, test-first | `e6e6b46`, [37044880789](https://github.com/thefastcyberdefense/google-blogger/actions/runs/37044880789): 463 passed, 3 failed (C3, C4, C5) | `d2951ca`, `6729340` | `98b1e94` ([37045989151](https://github.com/thefastcyberdefense/google-blogger/actions/runs/37045989151)), bot `0ca312f`, restore `80ab3d3` ([37048395261](https://github.com/thefastcyberdefense/google-blogger/actions/runs/37048395261)): 466 unit, 1,784 browser |
+| US-008 theme zip artifact | before: only the evidence artifact | `dc6f817`, zipped in `5b5db3c` | [36994476778](https://github.com/thefastcyberdefense/google-blogger/actions/runs/36994476778): `fcd-theme-<sha>` zip holding only the XML |
+| US-009 annotation hygiene | 17 warnings at [36965694584](https://github.com/thefastcyberdefense/google-blogger/actions/runs/36965694584) | `5b5db3c` | [36994476778](https://github.com/thefastcyberdefense/google-blogger/actions/runs/36994476778): 0 warnings |
+| US-010 runner pin | `ubuntu-latest` migration notice | `9fd46f1` | [37028886801](https://github.com/thefastcyberdefense/google-blogger/actions/runs/37028886801) on `ubuntu-24.04`, notice gone |
+| US-011 L1-nav | `502b822`, [37054390299](https://github.com/thefastcyberdefense/google-blogger/actions/runs/37054390299): 468 passed, 4 failed (C6 and three navigation-layout checks) | `6b7ac9c` | `9c781bc` ([37088503721](https://github.com/thefastcyberdefense/google-blogger/actions/runs/37088503721)), bot `ad16c28`, restore `3d5409d` ([37090077928](https://github.com/thefastcyberdefense/google-blogger/actions/runs/37090077928)): 472 unit, 1,784 browser, XML 109,174 bytes |
+| US-012 L2-intro | `eacfdd9`, [37095950269](https://github.com/thefastcyberdefense/google-blogger/actions/runs/37095950269): 474 passed, 5 failed (C7 and four intro-layout checks) | `c2efffd`; test-only fix `1877edd` | `7860107` ([37096811376](https://github.com/thefastcyberdefense/google-blogger/actions/runs/37096811376): 478 passed, 1 failed, the negative-control defect below), then [37097206981](https://github.com/thefastcyberdefense/google-blogger/actions/runs/37097206981) at `1877edd`, bot `4c9687f`, restore `29bf93f` ([37098602820](https://github.com/thefastcyberdefense/google-blogger/actions/runs/37098602820)): 479 unit, 1,784 browser, XML 112,498 bytes |
+| US-013 L3-CTA | `b2a9a9a`, [37100736525](https://github.com/thefastcyberdefense/google-blogger/actions/runs/37100736525): 481 passed, 5 failed (C8 and four cta-layout checks) | `73d33cd` | `d3c446a` ([37102573412](https://github.com/thefastcyberdefense/google-blogger/actions/runs/37102573412)), bot `a792646`, restore `3d423c4` ([37103772911](https://github.com/thefastcyberdefense/google-blogger/actions/runs/37103772911)): 486 unit, 1,784 browser, XML 114,028 bytes |
+| US-014 L4-footer | `4f7913b`, [37105773321](https://github.com/thefastcyberdefense/google-blogger/actions/runs/37105773321): 488 passed, 4 failed (C9 and three footer-layout checks) | `26990a5` | `6098c11` ([37109007493](https://github.com/thefastcyberdefense/google-blogger/actions/runs/37109007493)), bot `029c57c`, restore `f812ef2` ([37110232904](https://github.com/thefastcyberdefense/google-blogger/actions/runs/37110232904)): 492 unit, 1,784 browser, XML 115,943 bytes |
+| Records | n/a | this commit and the two before it | docs only |
+
+Every red run failed exactly the new checks it predicted; all mutation controls and inherited tests passed. The 2026-10-01 rows for US-004 (blocked on B1), US-006 and US-007 are superseded: US-004 shipped without a failing-first test and was redone as US-004b, and US-006 and US-007 completed as recorded in PR #14.
+
+### What design v1 delivered
+
+- **US-011 L1-nav:** locked LinkList1 in a `navigation` section inside the theme-owned `#primary-navigation`; saved links render in the owner's order, with design v1 defaults until any are saved. Contract C6 plus navigation-layout checks.
+- **US-012 L2-intro:** on the first home page an ink band holds the theme-owned `h1#intro-heading`, locked HTML1 in an `intro` section (saved copy first, the standfirst otherwise) and the Topics section; every view keeps one h1. Contract C7 plus intro-layout checks.
+- **US-013 L3-CTA:** `aside.cta-band` between the content and the footer on every view with locked HTML2 in a `cta` section; the in-article call to action is gone. Contract C8 plus cta-layout checks.
+- **US-014 L4-footer:** the brand and locked HTML3 in a `footer` section beside theme-owned links, then a base row with the copyright and the native Attribution and Report Abuse gadgets; no footer headings. Contract C9 plus footer-layout checks.
+
+The layout checks apply the shipped `b:skin` CSS to the shared fixtures without theme JavaScript and add no browser titles, so the browser populations stay 1,784. Section and widget names, and every Header1, Blog1 and Label1 behavior, are unchanged; the new ids are sections `navigation`, `intro`, `cta`, `footer` and widgets LinkList1 and HTML1 to HTML3. See [DESIGN-SYSTEM.md](DESIGN-SYSTEM.md) for the regions and copy rules and [UPSTREAM-AUDIT.md](UPSTREAM-AUDIT.md) for Ledger reuse.
+
+### Disclosed deviations
+
+- **US-012 negative control:** its first version looked for the band rule as verbatim source text, which the Sass-compressed skin spells differently, so run 37096811376 failed one test while every intro behavior check passed. Test-only commit `1877edd` finds the rule by selector and property; later controls follow the same method. No theme change.
+- **Red-run reasons:** job logs are not publicly readable, so each red reason is taken from the failing test titles in the run annotations, with unchanged source and passing sibling and mutation tests.
+- **US-013:** the in-article call to action was removed and mixin `fcdShareAndCta` renamed `fcdShare`; the article keeps its share actions.
+- **US-014:** the copyright has no year, so it never goes stale; "Back to content" became "Back to top" (`#top`, the HTML top-of-document fragment); the old footer note line became the blurb.
+- **Fixtures:** the shared mixins model each gadget's default copy. How Blogger renders saved gadget copy is not proven here.
+
+### Gates and next action
+
+Native gates stay with the owner, following [DEPLOYMENT.md](DEPLOYMENT.md): the B1 quick check including free ids LinkList1 and HTML1 to HTML3, deleting the saved Blog Search gadget, the four new gadgets in Layout, home page 2 for `data:newerPageUrl` outside Blog1, saved-gadget reconciliation, upload-prompt observation, the rendered build stamp, and human keyboard, screen-reader and zoom review (R2). No candidate is selected, the verifier stays pinned to historical `9a6f484`, and no Blogger upload, Layout change, gadget deletion, publishing, settings, DNS, merge or ready transition is authorized. Agents make no automated requests to https://blogs.fastcyberdefense.com/.
+
+**Next action:** the design tokens and components story (cards and the signal line) on PR #14, test-first with one reviewed transfer cycle; then the native checkpoint whenever the owner chooses.
+
+---
+
+## Historical L1 native-shell checkpoint (2026-10-01 Asia/Dhaka; superseded 2026-10-03)
 
 ### Dated status note
 

@@ -39,9 +39,17 @@ export const SUITES:Readonly<Record<string,readonly string[]>>=Object.freeze({
     'records controlled feed/image completion shifts and filter-to-frame interactions',
     'layout-shift recorder detects a deliberate displacement control',
   ],
+  // L1 native shell (FCD-L1-SHELL-CONTRACT-v1). Title index 3 is the no-JS context.
+  'tests/render/native-shell.spec.ts':[
+    'observed saved gadgets keep the brand row intact',
+    'observed saved gadgets keep keyboard order and visible focus',
+    'empty native sidebar sections render no chrome',
+    'native shell core survives theme JavaScript disabled',
+    'native shell states have no WCAG A/AA axe violations',
+  ],
 });
 export const TARGET_FILES=Object.freeze(Object.keys(SUITES));
-// All six approved suites are mandatory. No environment switch reduces scope.
+// All seven approved suites are mandatory. No environment switch reduces scope.
 export const ADOPTED_FILES:readonly string[]=Object.freeze([...TARGET_FILES]);
 export interface Owner {stage:'unit'|'render';file:string;titlePath:string[];project:string;repeatEachIndex:number}
 export const OWNER_FIELDS=['stage','file','titlePath','project','repeatEachIndex'];
@@ -84,6 +92,7 @@ export function renderContextModes(owner:Owner):readonly boolean[] {
   if(owner.file==='tests/render/publication-acceptance.spec.ts')return index===2?[true,false]:[true];
   if(engineFor(owner.project)!=='chromium')return [];
   if(owner.file==='tests/render/responsive.spec.ts'||owner.file==='tests/render/native-states.spec.ts')return [index%2===0];
+  if(owner.file==='tests/render/native-shell.spec.ts')return [index!==3];
   return [true];
 }
 export function repositoryFile(file:string,repositoryRoot:string,stage:Owner['stage']):string {

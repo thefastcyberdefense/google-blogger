@@ -34,6 +34,10 @@ function measureFixtures(): Promise<Measurement[]> {
     for (const state of ['error','label','search','archive','home','generic']) {
       values.push({name: `state-${state}`, html: pug.renderFile(path.join(root, 'fixtures/home.pug'), {...compiled, fixtureView: state === 'generic' ? 'paged' : state, fixturePosts: [], fixtureEmptyState: state, fixtureEmptyContext: '<img src=x onerror=alert(1)> & "quoted"', pretty: true})});
     }
+    // L1 native-shell simulations, rendered exactly as tools/preview.ts renders them.
+    for (const [name, fixtureNative, empty] of [['native-observed','observed',true],['native-empty-archive','empty-archive',false]] as const) {
+      values.push({name, html: pug.renderFile(path.join(root, 'fixtures/home.pug'), {...compiled, fixtureView: 'home', fixtureNative, ...(empty ? {fixturePosts: []} : {}), pretty: true})});
+    }
     const home = values.find(v => v.name === 'home')!;
     const article = values.find(v => v.name === 'article')!;
     values.push({name: 'profile', html: home.html.replace(/data:image\/svg\+xml,[^"\s]+/g, 'https://fcd-fixture.invalid/profile-image.svg')});
@@ -48,7 +52,7 @@ function measureFixtures(): Promise<Measurement[]> {
 }
 test('N2A preflight measures every adopted HTML variant without changing producers', async () => {
   const rows = await measureFixtures();report('HTML', rows);
-  expect(rows).toHaveLength(14);expect(new Set(rows.map(row => row.name)).size).toBe(rows.length);
+  expect(rows).toHaveLength(16);expect(new Set(rows.map(row => row.name)).size).toBe(rows.length);
   for (const row of rows) {expect(row.bytes, row.name).toBeGreaterThan(0);expect(row.bytes, `N2A_HTML_LIMIT ${row.name}: ${row.bytes}`).toBeLessThanOrEqual(limits.html);}
 }, 20000);
 /** Read a locked installed module, never a request-derived path. No execution. */
@@ -160,9 +164,9 @@ function ownershipFixture() {
   const owner=makeOwner('unit',UNIT_FILE,[UNIT_CONSUMER],'vitest-chromium');
   const start:Start={...manifest,kind:'start',id:randomUUID(),identity:{...owner,engine:'chromium',title:UNIT_CONSUMER,test:testKey(owner),worker:0,retry:0,pid:11},expectedErrors:[]};
   records.push(start,{...start,kind:'end',setup:true,closed:true,outcome:'passed',errors:[],rules:[{id:'home',action:'fulfill',count:1,hits:1}],requests:[{seq:1,kind:'http',rule:'home',action:'fulfill',observed:true,handled:true}],documents:[]});
-  const unadopted:Spec[]=Array.from({length:1674-specs.length},(_,i)=>({file:'tests/render/unadopted-control.spec.ts',title:`unadopted ${i}`,tests:[{projectName:'390-light',expectedStatus:'passed',status:'expected',annotations:[],results:[{status:'passed',retry:0,workerIndex:1}]}]}));
+  const unadopted:Spec[]=Array.from({length:1784-specs.length},(_,i)=>({file:'tests/render/unadopted-control.spec.ts',title:`unadopted ${i}`,tests:[{projectName:'390-light',expectedStatus:'passed',status:'expected',annotations:[],results:[{status:'passed',retry:0,workerIndex:1}]}]}));
   const suites:Suite[]=[{specs},{specs:unadopted}];
-  return {manifest,records,discovery:{...manifest,kind:'discovery' as const,tests:entries},results:{...manifest,kind:'results' as const,status:'passed',errors:0,tests:results},browser:{stats:{expected:1674,unexpected:0,skipped:0,flaky:0},errors:[],suites},unit:{numFailedTests:0,numPendingTests:0,numPassedTests:299,testResults:[{name:'/fixture/tests/unit/browser-network.test.ts',assertionResults:[{fullName:UNIT_CONSUMER,title:UNIT_CONSUMER,ancestorTitles:[] as string[],status:'passed'}]}]}};
+  return {manifest,records,discovery:{...manifest,kind:'discovery' as const,tests:entries},results:{...manifest,kind:'results' as const,status:'passed',errors:0,tests:results},browser:{stats:{expected:1784,unexpected:0,skipped:0,flaky:0},errors:[],suites},unit:{numFailedTests:0,numPendingTests:0,numPassedTests:299,testResults:[{name:'/fixture/tests/unit/browser-network.test.ts',assertionResults:[{fullName:UNIT_CONSUMER,title:UNIT_CONSUMER,ancestorTitles:[] as string[],status:'passed'}]}]}};
 }
 test('N2A ownership regression positive fixture is complete',()=>expect(validateSnapshot(ownershipFixture())).toEqual([]));
 test('N2A normal report rejects a same-leaf file outside the approved owner',()=>{
@@ -195,8 +199,8 @@ test('N2A ordinary adopted owners cannot declare expected guard violations',()=>
   s.records[0].identity={...s.records[0].identity,...owner,title:owner.titlePath[0],test:testKey(owner)};s.records[0].expectedErrors=['N1_OBSERVER'];
   expect(validateSnapshot(s)).toContain('N1_RECORD_SCHEMA');
 });
-test('N2A target inventory is fixed at 1168 without claiming current complete adoption',()=>{
-  const target=expectedOwners(TARGET_FILES);expect(target).toHaveLength(1168);expect(new Set(target.map(testKey)).size).toBe(1168);
+test('N2A target inventory is fixed at 1278 without claiming current complete adoption',()=>{
+  const target=expectedOwners(TARGET_FILES);expect(target).toHaveLength(1278);expect(new Set(target.map(testKey)).size).toBe(1278);
   expect(expectedOwners().every(o=>ADOPTED_FILES.includes(o.file))).toBe(true);
 });
 test('N2A owner keys distinguish files title ancestry projects and stages',()=>{
@@ -219,10 +223,10 @@ test('N2A public TestInfo and reporter ancestry normalize to the same owner',()=
   expect(()=>reporterOwner({file,repositoryRoot,title:'leaf',project,repeatEachIndex:0,ancestry:[{type:'root',title:''}]})).toThrow('N2A_REPORTER_ANCESTRY');
 });
 
-function indexFixture(count=1168){
+function indexFixture(count=1278){
   const base=fs.mkdtempSync(path.join(os.tmpdir(),'fcd-n2a-index-')),root=path.join(base,'staged');
   const manifest=initializeEvidence(root,'a'.repeat(40),'17','1');
-  const tests=count===1168?expectedOwners(TARGET_FILES).map(entryFor):Array.from({length:count},(_,i)=>entryFor(makeOwner('render',N1_FILE,[`index control ${i}`],'390-light')));
+  const tests=count===1278?expectedOwners(TARGET_FILES).map(entryFor):Array.from({length:count},(_,i)=>entryFor(makeOwner('render',N1_FILE,[`index control ${i}`],'390-light')));
   const index=writeIndexedEvidence(root,{...manifest,kind:'discovery',tests});
   const files=new Map<string,unknown>(fs.readdirSync(root).map(n=>[n,JSON.parse(fs.readFileSync(path.join(root,n),'utf8'))]));
   return {base,root,manifest,tests,index,files,read:()=>readIndexedEvidence(files,'discovery',manifest)};
@@ -232,9 +236,9 @@ function changedPage(f:ReturnType<typeof indexFixture>,mutate:(p:{tests:TestEntr
   const index=f.files.get('discovery.json') as EvidenceIndex,bytes=JSON.stringify(page);
   index.pages[0].bytes=Buffer.byteLength(bytes);index.pages[0].sha256=sha256(bytes);
 }
-test('N2A indexed evidence retains all 1168 owners in 19 bounded pages',()=>{
+test('N2A indexed evidence retains all 1278 owners in 20 bounded pages',()=>{
   const f=indexFixture();try{
-    expect(f.index.pages).toHaveLength(19);expect(f.read().tests.map(e=>e.key)).toEqual(f.tests.map(e=>e.key).sort());
+    expect(f.index.pages).toHaveLength(20);expect(f.read().tests.map(e=>e.key)).toEqual(f.tests.map(e=>e.key).sort());
     for(const p of f.index.pages){expect(p.bytes).toBeLessThanOrEqual(MAX_FILE);expect(p.count).toBeLessThanOrEqual(64);}
     expect(()=>writeIndexedEvidence(f.root,{...f.manifest,kind:'discovery',tests:f.tests})).toThrow();
   }finally{fs.rmSync(f.base,{recursive:true,force:true});}
@@ -245,7 +249,7 @@ for(const change of ['missing','reordered','duplicate-page','extra','stale','mix
     if(change==='missing')f.files.delete(index.pages[0].name);
     if(change==='reordered')index.pages.reverse();
     if(change==='duplicate-page')index.pages[1]={...index.pages[0]};
-    if(change==='extra')f.files.set('discovery-0019.json',f.files.get(index.pages[0].name));
+    if(change==='extra')f.files.set('discovery-0020.json',f.files.get(index.pages[0].name));
     if(change==='stale')Object.assign(f.files.get(index.pages[0].name) as object,{source:'b'.repeat(40)});
     if(change==='mixed-schema')Object.assign(f.files.get(index.pages[0].name) as object,{schema:1,policy:'n1-v1'});
     if(change==='bad-digest')index.pages[0].sha256='0'.repeat(64);
@@ -750,11 +754,11 @@ test('N2A successful ordinary render evidence requires its actual primary page',
   expect(validatePageEvidence(start,end),'N2A_MISSING_PRIMARY_FALSE_GREEN').toBe(false);
 });
 
-test('N2A completion requires all six files and all 1168 owners',()=>{
-  expect(ADOPTED_FILES).toEqual(TARGET_FILES);expect(expectedOwners()).toHaveLength(1168);
+test('N2A completion requires all seven files and all 1278 owners',()=>{
+  expect(ADOPTED_FILES).toEqual(TARGET_FILES);expect(expectedOwners()).toHaveLength(1278);
   const ordinary=expectedOwners().filter(o=>o.file!==N1_FILE);
-  expect(ordinary).toHaveLength(928);expect(ordinary.reduce((n,o)=>n+renderContextModes(o).length,0)).toBe(958);
-  expect(ordinary.reduce((n,o)=>n+renderAxeScans(o),0)).toBe(382);
+  expect(ordinary).toHaveLength(1038);expect(ordinary.reduce((n,o)=>n+renderContextModes(o).length,0)).toBe(1068);
+  expect(ordinary.reduce((n,o)=>n+renderAxeScans(o),0)).toBe(426);
 });
 test('N2A finite plans reject unknown identities and undeclared secondary contexts before reading assets',async()=>{
   const owner=makeOwner('render','tests/render/responsive.spec.ts',['home shared presentation fits with native-wrapper fixtures'],'390-light');

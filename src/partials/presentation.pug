@@ -5,29 +5,172 @@ mixin fcdBrand(fixture)
     span.brand-name Fast Cyber Defense
       small Security publication
 
+//- L1: Theme and Menu render inside Header1 with the brand, so saved gadgets that Blogger
+//- places in the masthead section can only follow the complete brand row, never split it.
+mixin fcdBrandRow(fixture)
+  .brand-row
+    +fcdBrand(fixture)
+    .header-actions
+      button#theme-toggle.js-control(type='button' hidden='hidden' aria-label='Switch color theme') Theme
+      button#menu-toggle.js-control(type='button' hidden='hidden' aria-controls='primary-navigation' aria-expanded='false') Menu
+
+//- L1-nav (design v1): Navigation is the owner's Link List gadget (Layout > Navigation). Saved links
+//- render in the owner's order; until any are saved, a fresh install shows the approved defaults.
+mixin fcdNavDefaults(fixture)
+  li.nav-item
+    a.nav-link(href=fixture ? '/search' : undefined expr:href=fixture ? undefined : 'data:blog.homepageUrl path "search"') Latest
+  li.nav-item
+    a.nav-link(href='#topics') Topics
+  li.nav-item
+    a.nav-link(href=fixture ? '/search/label/Guides' : undefined expr:href=fixture ? undefined : 'data:blog.homepageUrl path "search/label/Guides"') Guides
+  li.nav-item
+    a.nav-link(href='https://fastcyberdefense.com/') Company website
+      span.nav-external(aria-hidden='true') &#8599;
+
+mixin fcdNavList(fixture)
+  ul.nav-list
+    if fixture
+      +fcdNavDefaults(true)
+    else
+      b:if(cond='data:links')
+        b:loop(values='data:links' var='link')
+          li.nav-item
+            a.nav-link(expr:href='data:link.target')
+              b:eval(expr='data:link.name')/
+        b:else/
+        +fcdNavDefaults(false)
+
 mixin fcdHeader(fixture = false)
   header.site-header
     .container.header-row
       if fixture
         #header.header
           #Header1.widget.Header
-            +fcdBrand(true)
+            +fcdBrandRow(true)
+          //- Fixture-only hook: saved-gadget models render as Header1 siblings, as Blogger places them.
+          if block
+            block
       else
         b:section(id='header' class='header' name='Brand' showaddelement='false')
           b:widget(id='Header1' type='Header' title='Fast Cyber Defense' version='2' locked='true')
             b:includable(id='main')
-              +fcdBrand(false)
-      .header-actions
-        button#theme-toggle.js-control(type='button' hidden='hidden' aria-label='Switch color theme') Theme
-        button#menu-toggle.js-control(type='button' hidden='hidden' aria-controls='primary-navigation' aria-expanded='false') Menu
-    nav#primary-navigation.container.primary-navigation(aria-label='Primary')
-      a(href=fixture ? '/search' : undefined expr:href=fixture ? undefined : 'data:blog.homepageUrl path "search"') Latest
-      a(href='#topics') Topics
-      a(href='https://fastcyberdefense.com/') Company website
-      form#site-search.search-form(action=fixture ? '/search' : undefined expr:action=fixture ? undefined : 'data:blog.searchUrl' method='get' role='search')
-        label.sr-only(for='search-query') Search articles
-        input#search-query(type='search' name='q' placeholder='Search security insights' autocomplete='off')/
-        button(type='submit') Search blog
+              +fcdBrandRow(false)
+      //- The theme owns the drawer Menu controls and FCD's single search; only the links are a gadget.
+      nav#primary-navigation.primary-navigation(aria-label='Primary')
+        if fixture
+          #navigation.navigation
+            #LinkList1.widget.LinkList
+              +fcdNavList(true)
+        else
+          b:section(id='navigation' class='navigation' name='Navigation' maxwidgets='1' showaddelement='false')
+            b:widget(id='LinkList1' type='LinkList' title='Navigation' version='2' locked='true')
+              b:includable(id='main')
+                +fcdNavList(false)
+        form#site-search.search-form(action=fixture ? '/search' : undefined expr:action=fixture ? undefined : 'data:blog.searchUrl' method='get' role='search')
+          label.sr-only(for='search-query') Search articles
+          input#search-query(type='search' name='q' placeholder='Search security insights' autocomplete='off')/
+          button(type='submit') Search blog
+
+//- L2-intro (design v1): the first home page opens with an ink band. The theme owns the headline, so
+//- every view keeps exactly one h1; the owner's Intro gadget copy (Layout > Intro) replaces the
+//- default standfirst, and the Topics section follows inside the band.
+mixin fcdIntroHero()
+  header.intro-hero
+    p.eyebrow Fast Cyber Defense Blog
+    h1#intro-heading Security knowledge. Practical defense.
+
+mixin fcdIntroCopy(fixture)
+  .intro-body
+    if fixture
+      p.standfirst Research, threat insights, and guidance for stronger security.
+    else
+      b:if(cond='data:content')
+        b:eval(expr='data:content')/
+        b:else/
+        p.standfirst Research, threat insights, and guidance for stronger security.
+
+mixin fcdIntroBand(fixture = false, home = false)
+  .intro-band
+    if fixture
+      if home
+        +fcdIntroHero()
+      #intro.intro
+        #HTML1.widget.HTML
+          if home
+            +fcdIntroCopy(true)
+    else
+      b:if(cond='data:view.isHomepage and not data:newerPageUrl')
+        +fcdIntroHero()
+      b:section(id='intro' class='intro' name='Intro' maxwidgets='1' showaddelement='false')
+        b:widget(id='HTML1' type='HTML' title='Intro' version='2' locked='true')
+          b:includable(id='main')
+            b:if(cond='data:view.isHomepage and not data:newerPageUrl')
+              +fcdIntroCopy(false)
+    if block
+      block
+
+//- L3-CTA (design v1): one sitewide call to action between the content and the footer. The owner's
+//- Call to Action gadget copy (Layout > Call to Action) replaces the default message and button.
+mixin fcdCtaDefault()
+  .cta-copy
+    h2 Need help securing your organization?
+    p Put knowledge into practice with Fast Cyber Defense.
+  a.cta-button(href='https://fastcyberdefense.com/') Explore FCD services
+    span.cta-external(aria-hidden='true') &#8599;
+
+mixin fcdCtaBand(fixture = false)
+  aside.cta-band(aria-label='Call to action')
+    .container
+      if fixture
+        #cta.cta
+          #HTML2.widget.HTML
+            .cta-row
+              +fcdCtaDefault()
+      else
+        b:section(id='cta' class='cta' name='Call to Action' maxwidgets='1' showaddelement='false')
+          b:widget(id='HTML2' type='HTML' title='Call to Action' version='2' locked='true')
+            b:includable(id='main')
+              .cta-row
+                b:if(cond='data:content')
+                  .cta-copy
+                    b:eval(expr='data:content')/
+                  b:else/
+                  +fcdCtaDefault()
+
+//- L4-footer (design v1): the brand and the owner's Footer gadget copy (Layout > Footer) on the left,
+//- theme-owned links on the right, then a base row with the copyright and the compact native gadgets.
+mixin fcdFooterCopy()
+  p.footer-tagline Quick to Act, Strong to Protect.
+  p.footer-blurb Security research and practical guidance from Fast Cyber Defense.
+
+mixin fcdFooter(fixture = false)
+  footer.site-footer
+    .container.footer-grid
+      .footer-brand
+        p.brand-name Fast Cyber Defense
+        if fixture
+          #footer.footer-copy
+            #HTML3.widget.HTML
+              .footer-text
+                +fcdFooterCopy()
+        else
+          b:section(id='footer' class='footer-copy' name='Footer' maxwidgets='1' showaddelement='false')
+            b:widget(id='HTML3' type='HTML' title='Footer' version='2' locked='true')
+              b:includable(id='main')
+                .footer-text
+                  b:if(cond='data:content')
+                    b:eval(expr='data:content')/
+                    b:else/
+                    +fcdFooterCopy()
+      nav.footer-links(aria-label='Footer')
+        a.footer-link(href='https://fastcyberdefense.com/') Company website
+          span.footer-external(aria-hidden='true') &#8599;
+        a.footer-link(href=fixture ? '/feeds/posts/default' : undefined expr:href=fixture ? undefined : 'data:blog.homepageUrl path "feeds/posts/default"') Publication feed
+        a.footer-link(href='#top') Back to top
+    .container.footer-base
+      p.footer-copyright &#169; Fast Cyber Defense
+      if block
+        block
 
 mixin fcdLabels(post, fixture)
   if fixture
@@ -110,14 +253,10 @@ mixin fcdRelated(post, fixture)
         b:loop(values='data:post.labels take 20' var='relatedLabel')
           span(expr:data-current-label='data:relatedLabel.name')
 
-mixin fcdShareAndCta(post, fixture)
+mixin fcdShare(post, fixture)
   .share-actions(aria-label='Share article')
     button.js-control#copy-link(type='button' hidden='hidden') Copy article link
     a(href=fixture ? 'https://www.linkedin.com/sharing/share-offsite/?url='+encodeURIComponent('https://blogs.fastcyberdefense.com'+post.url) : undefined expr:href=fixture ? undefined : '"https://www.linkedin.com/sharing/share-offsite/" params {url: data:post.url.canonical}' target='_blank' rel='noopener noreferrer') Share on LinkedIn
-  aside.article-cta
-    h2 Need help securing your organization?
-    p Put knowledge into practice with Fast Cyber Defense.
-    a(href='https://fastcyberdefense.com/') Explore FCD services
 
 mixin fcdArticle(post = {}, fixture = false)
   article.article-view
@@ -144,11 +283,11 @@ mixin fcdArticle(post = {}, fixture = false)
     if fixture
       if post.isPost !== false
         +fcdRelated(post, true)
-        +fcdShareAndCta(post, true)
+        +fcdShare(post, true)
     else
       b:if(cond='data:view.isPost')
         +fcdRelated({}, false)
-        +fcdShareAndCta({}, false)
+        +fcdShare({}, false)
 
 //- Copy and recovery markup are shared; Blogger decides native state at render time.
 //- Fixture state selection is a simulation, not an evaluator of Blogger expressions.

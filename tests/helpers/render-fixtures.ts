@@ -55,7 +55,7 @@ export function htmlAsset(id:string,body:string):FixtureAsset {
   if(!/^[a-z][a-z0-9-]{0,63}$/.test(id)||typeof body!=='string'||!body.length||Buffer.byteLength(body)>RESPONSE_LIMITS.html)throw new Error('N2A_ASSET_LIMIT');
   return Object.freeze({id,kind:'html',body,bytes:Buffer.byteLength(body),sha256:sha256(body)});
 }
-const views=['home','article','paged','empty','error','state-error','state-label','state-search','state-archive','state-home','state-generic'] as const;
+const views=['home','article','paged','empty','error','state-error','state-label','state-search','state-archive','state-home','state-generic','native-observed','native-empty-archive'] as const;
 export async function fixtureHTML(view:string):Promise<string> {
   if(!(views as readonly string[]).includes(view))throw new Error('N2A_FIXTURE_NAME');
   return readAssetText(root,`.preview/${view}.html`,RESPONSE_LIMITS.html);
@@ -179,6 +179,12 @@ export async function casePlan(owner:Owner,contextIndex=0):Promise<RenderPlan> {
         else feed(index===0?8:50,JSON.stringify({feed:{entry:[{title:{$t:'Cloud publication'},link:[{rel:'alternate',href:FIXTURE_ORIGIN+'/other'}],category:[{term:'Research'}]}]}}),index===1?1:undefined);
       }
     }
+  }else if(owner.file==='tests/render/native-shell.spec.ts'){
+    // Every native-shell title visits both saved-gadget models except the keyboard title.
+    const both=index!==1;
+    document('observed','/native-observed',await fixtureHTML('native-observed'));
+    if(both)document('archive','/native-empty-archive',await fixtureHTML('native-empty-archive'));
+    if(javascript)feed(8,emptyFeed,both?2:1);
   }else throw new Error('N2A_CASE_OWNER');
   validateResponsePlan(rules,responsePlan);return {rules,responsePlan};
 }

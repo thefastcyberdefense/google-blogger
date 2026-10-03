@@ -1,4 +1,5 @@
 include ../src/partials/presentation.pug
+include native-gadgets.pug
 block config
   - var view = typeof fixtureView === 'string' ? fixtureView : 'home'
 - var titles = ['Hardening cloud access without slowing your team down', 'What a useful incident response checklist actually includes', 'A practical guide to investigating long and unusual authentication chains', 'Making vulnerability remediation measurable']
@@ -8,6 +9,8 @@ block config
 - var posts = typeof fixturePosts !== 'undefined' ? fixturePosts : titles.map((title,i)=>({title,url:'/2026/09/fixture-'+i+'.html',labels,author:'Fixture author',date:'2026-09-08',dateLabel:'September 8, 2026',excerpt:'Synthetic test fixture: security guidance with long titles, labels and text. This content is not shipped as Blogger posts.',image:i % 2 === 0 ? image : null}))
 - var emptyState = typeof fixtureEmptyState === 'string' ? fixtureEmptyState : view === 'error' ? 'error' : view === 'empty' || view === 'search' ? 'search' : view === 'label' ? 'label' : view === 'archive' ? 'archive' : view === 'home' ? 'home' : 'generic'
 - var emptyContext = typeof fixtureEmptyContext === 'string' ? fixtureEmptyContext : ''
+//- Native saved-gadget models (native-gadgets.pug) are simulations, not Blogger output.
+- var nativeFixture = typeof fixtureNative === 'string' ? fixtureNative : ''
 mixin fixtureCard(post, i)
   .post-outer-container
     .post-outer
@@ -22,17 +25,21 @@ html(lang='en')
   body(class=view === 'article' ? 'is-single' : view === 'home' ? 'is-home-lead' : '')
     a.skip-link(href='#content') Skip to content
     +fcdHeader(true)
+      if nativeFixture === 'observed'
+        +fixtureSavedHeaderGadgets()
     main#content.container(tabindex='-1')
-      if view !== 'article'
+      //- The first home page models the L2 intro band; other multi-item views keep the plain heading.
+      if view !== 'article' && view !== 'home'
         header.publication-heading
           p.eyebrow Fast Cyber Defense Blog
-          h1= view === 'home' ? 'Security knowledge. Practical defense.' : view === 'error' ? 'Page not found' : view === 'empty' ? 'Search results' : 'Latest articles'
+          h1= view === 'error' ? 'Page not found' : view === 'empty' ? 'Search results' : 'Latest articles'
           p.standfirst Research, threat insights, and guidance for stronger security.
-      #topics.topics
-        #Label1.widget.Label
-          nav.topic-navigation(aria-label='Article topics')
-            each label in labels
-              a.topic-pill(href=label.url rel='tag')= label.name
+      +fcdIntroBand(true, view === 'home')
+        #topics.topics
+          #Label1.widget.Label
+            nav.topic-navigation(aria-label='Article topics')
+              each label in labels
+                a.topic-pill(href=label.url rel='tag')= label.name
       .fcd-layout
         .publication-stream
           #page_body.main
@@ -68,15 +75,12 @@ html(lang='en')
             h2 Follow the research
             p Get new publications in your feed reader.
             a(href='/feeds/posts/default') Subscribe via Atom
-    footer.site-footer
-      .container.footer-grid
-        div
-          p.brand-name Fast Cyber Defense
-          p Quick to Act, Strong to Protect.
-        nav(aria-label='Company and publication')
-          a(href='https://fastcyberdefense.com/') Company website
-          a(href='/feeds/posts/default') Publication feed
-          a(href='#content') Back to content
-      .container.footer-note Simulation fixture, not Blogger-rendered output or production editorial content.
+          if nativeFixture === 'observed'
+            +fixtureEmptySidebarSection()
+          else if nativeFixture === 'empty-archive'
+            +fixtureEmptyArchiveSidebar()
+    +fcdCtaBand(true)
+    +fcdFooter(true)
+      p.footer-note Simulation fixture, not Blogger-rendered output or production editorial content.
     p#fcd-status.sr-only(role='status' aria-live='polite')
     script!= script

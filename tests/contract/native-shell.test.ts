@@ -149,6 +149,39 @@ blog=widget('Blog1')
 stray=[x for x in main.iter(H+'h1') if not (x is h1 or within(x,lambda p:p is pub) or within(x,lambda p:p is blog))]
 assert not stray,'N1L_C7_ONE_H1 stray h1 in main#content: %d'%len(stray)
 `,
+  // C8 (L3-CTA): one sitewide call to action between the content and the footer. The owner's Call to
+  // Action gadget copy replaces the default message and button; the article no longer repeats it.
+  C8:String.raw`
+parent={c:p for p in r.iter() for c in p}
+def within(e,test):
+    p=parent.get(e)
+    while p is not None:
+        if test(p):return True
+        p=parent.get(p)
+    return False
+body=one(r.iter(H+'body'),'N1L_C8_BODY body')
+band=one((a for a in r.iter(H+'aside') if 'cta-band' in classes(a)),'N1L_C8_BAND aside.cta-band')
+assert parent[band] is body and band.get('aria-label')=='Call to action','N1L_C8_BAND the call to action is a labelled top-level band on every view'
+kids=[c for c in body if c.tag in (H+'main',H+'aside',H+'footer')]
+main=one((c for c in kids if c.tag==H+'main' and c.get('id')=='content'),'N1L_C8_ORDER main#content')
+foot=one((c for c in kids if c.tag==H+'footer' and 'site-footer' in classes(c)),'N1L_C8_ORDER footer.site-footer')
+assert kids.index(main)<kids.index(band) and kids.index(foot)==kids.index(band)+1,'N1L_C8_ORDER the band sits between the content and the footer'
+sec=one((s for s in band.iter(B+'section') if s.get('id')=='cta'),'N1L_C8_SECTION Call to Action section in the band')
+assert (sec.get('name'),sec.get('maxwidgets'),sec.get('showaddelement'))==('Call to Action','1','false'),'N1L_C8_SECTION the Call to Action section holds exactly one gadget'
+w=one(sec.findall(B+'widget'),'N1L_C8_GADGET Call to Action gadgets')
+assert (w.get('id'),w.get('type'),w.get('version'),w.get('locked'))==('HTML2','HTML','2','true'),'N1L_C8_GADGET Call to Action must be the locked Version 2 HTML2 gadget'
+row=one((d for d in includable(w,'main').iter(H+'div') if 'cta-row' in classes(d)),'N1L_C8_ROW .cta-row')
+saved=one(row.findall(B+'if'),'N1L_C8_SAVED saved-copy branch')
+k=list(saved)
+assert saved.get('cond')=='data:content' and [x.tag for x in k[:2]]==[H+'div',B+'else'] and 'cta-copy' in classes(k[0]) and [e.get('expr') for e in k[0].iter(B+'eval')]==['data:content'],'N1L_C8_SAVED saved copy first, the default only when it is empty'
+d=k[2:]
+assert [x.tag for x in d]==[H+'div',H+'a'] and 'cta-copy' in classes(d[0]) and 'cta-button' in classes(d[1]),'N1L_C8_DEFAULT default copy, then the button'
+assert [(x.tag,''.join(x.itertext()).strip()) for x in d[0]]==[(H+'h2','Need help securing your organization?'),(H+'p','Put knowledge into practice with Fast Cyber Defense.')],'N1L_C8_DEFAULT the design v1 message'
+assert d[1].get('href')=='https://fastcyberdefense.com/' and ''.join(d[1].itertext()).replace('\u2197','').strip()=='Explore FCD services' and [s.get('aria-hidden') for s in d[1].iter(H+'span')]==['true'],'N1L_C8_DEFAULT the design v1 button'
+assert not [e for e in r.iter() if 'article-cta' in classes(e)],'N1L_C8_ONE_CTA the article must not repeat the call to action'
+heads=[h for h in r.iter() if h.tag in (H+'h2',H+'h3') and ''.join(h.itertext()).strip()=='Need help securing your organization?']
+assert len(heads)==1,'N1L_C8_ONE_CTA call-to-action headings: %d'%len(heads)
+`,
 } as const;
 type Check=keyof typeof checks;
 const check=(xml:string,name:Check)=>spawnSync('python3',['-c',prelude+checks[name]],{input:xml,encoding:'utf8'});
@@ -166,6 +199,8 @@ const mutations:[Check,string,(s:string)=>string][]=[
   ['C6','a theme link hardcoded beside the gadget',s=>s.replace(/<form\b(?=[^>]*id="site-search")/,'<a href="/mutation">Extra</a><form')],
   ['C7','the publication heading also on the home intro',s=>s.replace(/<b:if cond="not data:view\.isSingleItem[^"]*">(\s*<header class="publication-heading")/,'<b:if cond="true">$1')],
   ['C7','a stray theme h1 in main',s=>s.replace(/<main\b[^>]*>/,m=>m+'<h1>Mutation</h1>')],
+  ['C8','a second call to action inside the article',s=>s.replace(/<main\b[^>]*>/,m=>m+'<aside class="article-cta"><h2>Need help securing your organization?</h2></aside>')],
+  ['C8','the call-to-action headline repeated in the sidebar',s=>s.replace(/<aside class="sidebar"[^>]*>/,m=>m+'<h2>Need help securing your organization?</h2>')],
 ];
 it.each(mutations)('L1 contract %s rejects %s',(name,_label,mutate)=>{
   const changed=mutate(original);expect(changed,'N1L_MUTATION_TARGET missing').not.toBe(original);

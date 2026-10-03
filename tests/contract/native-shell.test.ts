@@ -108,6 +108,47 @@ assert not stray,'N1L_C6_THEME_LINKS the theme must not hardcode links beside th
 form=one((f for f in nav.iter(H+'form') if f.get('id')=='site-search'),'N1L_C6_SEARCH #site-search inside the drawer')
 assert not within(form,lambda p:p.tag==B+'section'),'N1L_C6_SEARCH FCD search must stay outside every section'
 `,
+  // C7 (L2-intro): the first home page opens with the intro band. The theme owns its headline, so each
+  // view keeps exactly one h1; the owner's Intro gadget copy replaces the default standfirst; Topics
+  // follows inside the band. Other multi-item views keep the plain publication heading.
+  C7:String.raw`
+parent={c:p for p in r.iter() for c in p}
+def within(e,test):
+    p=parent.get(e)
+    while p is not None:
+        if test(p):return True
+        p=parent.get(p)
+    return False
+HOME='data:view.isHomepage and not data:newerPageUrl'
+main=one((m for m in r.iter(H+'main') if m.get('id')=='content'),'N1L_C7_MAIN main#content')
+band=one((d for d in main.iter(H+'div') if 'intro-band' in classes(d)),'N1L_C7_BAND .intro-band inside main#content')
+hero=one((h for h in band.iter(H+'header') if 'intro-hero' in classes(h)),'N1L_C7_HERO header.intro-hero')
+gate=parent[hero]
+assert gate.tag==B+'if' and gate.get('cond')==HOME and parent[gate] is band,'N1L_C7_HERO the headline renders only on the first home page'
+assert not within(hero,lambda p:p.tag in (B+'section',B+'widget')),'N1L_C7_HERO the theme owns the headline, outside every gadget'
+h1=one(hero.iter(H+'h1'),'N1L_C7_H1 intro h1')
+assert h1.get('id')=='intro-heading' and ''.join(h1.itertext()).strip()=='Security knowledge. Practical defense.','N1L_C7_H1 the design v1 headline'
+intro=one((s for s in band.findall(B+'section') if s.get('id')=='intro'),'N1L_C7_SECTION Intro section in the band')
+assert (intro.get('name'),intro.get('maxwidgets'),intro.get('showaddelement'))==('Intro','1','false'),'N1L_C7_SECTION the Intro section holds exactly one gadget'
+w=one(intro.findall(B+'widget'),'N1L_C7_GADGET Intro gadgets')
+assert (w.get('id'),w.get('type'),w.get('version'),w.get('locked'))==('HTML1','HTML','2','true'),'N1L_C7_GADGET Intro must be the locked Version 2 HTML1 gadget'
+m=includable(w,'main')
+home=one(m.findall(B+'if'),'N1L_C7_HOME_ONLY Intro copy guard')
+assert home.get('cond')==HOME,'N1L_C7_HOME_ONLY the Intro copy renders only on the first home page'
+body=one((d for d in home.iter(H+'div') if 'intro-body' in classes(d)),'N1L_C7_BODY .intro-body')
+saved=one(body.findall(B+'if'),'N1L_C7_BODY saved-copy branch')
+kids=list(saved)
+assert saved.get('cond')=='data:content' and [k.tag for k in kids[:2]]==[B+'eval',B+'else'] and kids[0].get('expr')=='data:content','N1L_C7_BODY saved Intro copy first, the default only when it is empty'
+assert [(k.tag,classes(k),''.join(k.itertext()).strip()) for k in kids[2:]]==[(H+'p',['standfirst'],'Research, threat insights, and guidance for stronger security.')],'N1L_C7_DEFAULT the design v1 standfirst'
+assert not list(m.iter(H+'h1')),'N1L_C7_ONE_H1 the Intro gadget must not render an h1'
+topics=one((s for s in band.findall(B+'section') if s.get('id')=='topics'),'N1L_C7_TOPICS Topics section in the band')
+assert [c for c in band if c.tag in (B+'if',B+'section')]==[gate,intro,topics],'N1L_C7_ORDER headline, Intro copy, then Topics'
+pub=one((h for h in main.iter(H+'header') if 'publication-heading' in classes(h)),'N1L_C7_HEADING publication heading')
+assert parent[pub].tag==B+'if' and parent[pub].get('cond')=='not data:view.isSingleItem and (not data:view.isHomepage or data:newerPageUrl)','N1L_C7_ONE_H1 the publication heading must yield to the home intro'
+blog=widget('Blog1')
+stray=[x for x in main.iter(H+'h1') if not (x is h1 or within(x,lambda p:p is pub) or within(x,lambda p:p is blog))]
+assert not stray,'N1L_C7_ONE_H1 stray h1 in main#content: %d'%len(stray)
+`,
 } as const;
 type Check=keyof typeof checks;
 const check=(xml:string,name:Check)=>spawnSync('python3',['-c',prelude+checks[name]],{input:xml,encoding:'utf8'});
@@ -123,6 +164,8 @@ const mutations:[Check,string,(s:string)=>string][]=[
   ['C5','a second masthead search form',s=>s.replace(/<form\b(?=[^>]*id="site-search")/,'<form role="search" action="/mutation"></form><form')],
   ['C6','a renamed drawer target',s=>s.replace('id="primary-navigation"','id="primary-nav"')],
   ['C6','a theme link hardcoded beside the gadget',s=>s.replace(/<form\b(?=[^>]*id="site-search")/,'<a href="/mutation">Extra</a><form')],
+  ['C7','the publication heading also on the home intro',s=>s.replace(/<b:if cond="not data:view\.isSingleItem[^"]*">(\s*<header class="publication-heading")/,'<b:if cond="true">$1')],
+  ['C7','a stray theme h1 in main',s=>s.replace(/<main\b[^>]*>/,m=>m+'<h1>Mutation</h1>')],
 ];
 it.each(mutations)('L1 contract %s rejects %s',(name,_label,mutate)=>{
   const changed=mutate(original);expect(changed,'N1L_MUTATION_TARGET missing').not.toBe(original);

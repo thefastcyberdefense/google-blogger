@@ -14,6 +14,32 @@ mixin fcdBrandRow(fixture)
       button#theme-toggle.js-control(type='button' hidden='hidden' aria-label='Switch color theme') Theme
       button#menu-toggle.js-control(type='button' hidden='hidden' aria-controls='primary-navigation' aria-expanded='false') Menu
 
+//- L1-nav (design v1): Navigation is the owner's Link List gadget (Layout > Navigation). Saved links
+//- render in the owner's order; until any are saved, a fresh install shows the approved defaults.
+mixin fcdNavDefaults(fixture)
+  li.nav-item
+    a.nav-link(href=fixture ? '/search' : undefined expr:href=fixture ? undefined : 'data:blog.homepageUrl path "search"') Latest
+  li.nav-item
+    a.nav-link(href='#topics') Topics
+  li.nav-item
+    a.nav-link(href=fixture ? '/search/label/Guides' : undefined expr:href=fixture ? undefined : 'data:blog.homepageUrl path "search/label/Guides"') Guides
+  li.nav-item
+    a.nav-link(href='https://fastcyberdefense.com/') Company website
+      span.nav-external(aria-hidden='true') &#8599;
+
+mixin fcdNavList(fixture)
+  ul.nav-list
+    if fixture
+      +fcdNavDefaults(true)
+    else
+      b:if(cond='data:links')
+        b:loop(values='data:links' var='link')
+          li.nav-item
+            a.nav-link(expr:href='data:link.target')
+              b:eval(expr='data:link.name')/
+        b:else/
+        +fcdNavDefaults(false)
+
 mixin fcdHeader(fixture = false)
   header.site-header
     .container.header-row
@@ -29,14 +55,21 @@ mixin fcdHeader(fixture = false)
           b:widget(id='Header1' type='Header' title='Fast Cyber Defense' version='2' locked='true')
             b:includable(id='main')
               +fcdBrandRow(false)
-    nav#primary-navigation.container.primary-navigation(aria-label='Primary')
-      a(href=fixture ? '/search' : undefined expr:href=fixture ? undefined : 'data:blog.homepageUrl path "search"') Latest
-      a(href='#topics') Topics
-      a(href='https://fastcyberdefense.com/') Company website
-      form#site-search.search-form(action=fixture ? '/search' : undefined expr:action=fixture ? undefined : 'data:blog.searchUrl' method='get' role='search')
-        label.sr-only(for='search-query') Search articles
-        input#search-query(type='search' name='q' placeholder='Search security insights' autocomplete='off')/
-        button(type='submit') Search blog
+      //- The theme owns the drawer Menu controls and FCD's single search; only the links are a gadget.
+      nav#primary-navigation.primary-navigation(aria-label='Primary')
+        if fixture
+          #navigation.navigation
+            #LinkList1.widget.LinkList
+              +fcdNavList(true)
+        else
+          b:section(id='navigation' class='navigation' name='Navigation' maxwidgets='1' showaddelement='false')
+            b:widget(id='LinkList1' type='LinkList' title='Navigation' version='2' locked='true')
+              b:includable(id='main')
+                +fcdNavList(false)
+        form#site-search.search-form(action=fixture ? '/search' : undefined expr:action=fixture ? undefined : 'data:blog.searchUrl' method='get' role='search')
+          label.sr-only(for='search-query') Search articles
+          input#search-query(type='search' name='q' placeholder='Search security insights' autocomplete='off')/
+          button(type='submit') Search blog
 
 mixin fcdLabels(post, fixture)
   if fixture

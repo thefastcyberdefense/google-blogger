@@ -1,23 +1,29 @@
 # Upstream applicability and verification record
 
-## L1 source concept and reuse (2026-10-01)
+## L1 source concept and reuse (2026-10-01; status updated 2026-10-03)
 
 **Owner direction.** FCD Blogger is the Fast Cyber Defense identity and branding edition of the same theme concept as Ledger Blogger Theme. Both projects belong to one owner: Ledger is Md Redwan Ahmed's personal project and Fast Cyber Defense is his solely owned company. On 2026-10-01 he named [Ledger v1.7.0](https://github.com/redwan-cse/ledger-blogger-theme/releases/tag/v1.7.0) as FCD's source concept. LICENSE now records this, keeps both Required Notices and the PolyForm Noncommercial 1.0.0 reference unchanged, and keeps `692a824` as historical initial-import provenance. This supersedes the U0 statement below that the reuse and license baseline remains unchanged. FCD identity, safety rules and the reuse boundaries below still apply, and files adapted before this update keep their original provenance comments.
 
 **Release facts.** The v1.7.0 tag resolves to commit `a3da05a8a70243c6ffc239b0e96e88260ed7b536`, committed 2026-10-01 02:40:16 UTC. The ten commits after the earlier L1 pin `91cc043a684d098ed4ac311045cafa18e5765d5c` are Dependabot development-dependency bumps (vitest, fast-check, lighthouse, marked, sass, tsx, @types/node and esbuild), their merge, and the release commit (publishing pipeline, code-block styles and toolchain). Path histories show the five Ledger files L1 adapts were last changed before `91cc043`, so they are identical at v1.7.0: `src/defaultmarkups/attribution.pug` (`f3bdfe1`), `src/widgets/footer.pug` (`a569533`), `src/widgets/header.pug` (`df4adc3`), `src/styles/layout.scss` and `src/theme.pug` (`1f979a0`). Ledger's LICENSE (`10856ef`) is unchanged. No dependency, publisher or pipeline change from the release is imported. This is source inspection through the public GitHub API, not an upstream test execution.
 
+**Status update (2026-10-03).** US-004b and the design v1 stories US-011 to US-014 used further Ledger patterns read at `91cc043`: the separate Navigation Link List (`src/widgets/linklist.pug`), the Intro and Call to Action HTML gadgets, and the Footer HTML gadget in `src/widgets/footer.pug`. Their identity at v1.7.0 was not separately rechecked. FCD reuses the native gadget pattern only (a Layout-editable section whose saved copy renders first and whose default renders when it is empty); every heading, link, copy line, class and style is FCD's own. The table below records the current state; the 2026-10-01 wording of changed rows is in this file's history.
+
 | Ledger v1.7.0 source | L1 decision | FCD form and status |
 | --- | --- | --- |
 | `src/defaultmarkups/attribution.pug` | Adapt | Delivered (US-002) as FCD `src/defaultmarkups/attribution.pug`: same native expressions (`data:bloggerUrl`, `messages.poweredByBlogger`), `rel="nofollow"`, FCD class, no logo, provenance comment naming v1.7.0. |
 | `src/widgets/header.pug`: controls inside Header1 | Adapt | Delivered (US-002): FCD brand row inside Header1 with the existing Theme and Menu buttons, ids and labels. No avatar, personal identity or widget-settings copy. |
-| `src/widgets/footer.pug`: locked Attribution in a `footer` section | Adapt, gated | US-004, blocked on the saved widget ids (B1). No HTML footer widget, personal links or privacy and terms links. |
+| `src/widgets/footer.pug`: locked Attribution in a footer section | Adapt | Delivered (US-004b): the `footer-gadgets` section inside `footer.site-footer` declares Attribution1 then ReportAbuse1, each delegating to `super.main`. |
+| `src/widgets/footer.pug`: Footer HTML gadget | Adapt the pattern | Delivered (US-014): locked HTML3 in a `footer` section beside the theme-owned brand name and links. Not copied: Ledger's three columns, `h3` headings, `data:blog.title` copy, personal, ORCID, GitHub and LinkedIn links, privacy and terms links, and its copyright year. |
+| `src/widgets/linklist.pug`: separate Navigation Link List | Adapt the pattern | Delivered (US-011): locked LinkList1 in a `navigation` section inside the theme-owned `#primary-navigation`, rendering `data:links` with FCD defaults. No Ledger links or identity. |
+| Intro HTML gadget | Adapt the pattern | Delivered (US-012): locked HTML1 in an `intro` section; FCD owns the band and the h1, the gadget only the standfirst. |
+| Call to Action HTML gadget | Adapt the pattern | Delivered (US-013): locked HTML2 in a `cta` section inside `aside.cta-band`, with FCD copy and button. |
 | `layout.scss`: header-chain `display: contents` flattening | Reject for L1 | FCD keeps the section box so saved gadgets stay contained below the brand row. |
-| `layout.scss`: footer flex order | Adapt, gated | Arrives with US-004. |
+| `layout.scss`: footer flex order | Superseded | FCD's footer uses its own grid and base row (US-014); no Ledger footer CSS is copied. |
 | `layout.scss`: `.section:empty`, `.no-items.section` and `:has()` rules | Adapt narrowly | Delivered (US-003) only as `body:not(#layout) .sidebar-widgets.no-items{display:none}`; no dependence on `:empty` or `:has()`. |
-| `src/theme.pug`: `b:template-skin` editor rules | Planned, not delivered | Dropped with the owner's US-003 narrowing. FCD's existing rules keep the layout, header and footer visible in the Layout editor. |
-| `src/defaultmarkups/profile.pug` | Not adopted | Masthead gadget images are bounded by CSS; the sidebar Contributors card arrives with US-004. |
-| `src/defaultmarkups/blog-search.pug` | Reject | Blog search duplicates FCD's primary search and is removed at the native checkpoint. |
-| `src/defaultmarkups/blog-archive.pug` | Deferred | Its `data:this.data` condition was planned for the `has-items` card, which US-003 did not deliver. |
+| `src/theme.pug`: `b:template-skin` editor rules | Not adopted | FCD's own editor rules keep the layout, header and footer visible, and now also stack the Navigation section (US-011) and the footer grid and base row (US-014) in the Layout editor. |
+| `src/defaultmarkups/profile.pug` | Adapt | Delivered (US-004b, from `91cc043`): compact Authors card with native identity and `r-snippet-fade` restored; Profile1 lives in the sidebar. |
+| `src/defaultmarkups/blog-search.pug` | Reject | Owner decision 2026-10-02: FCD's own `#site-search` is the single search, and the owner deletes the saved Blog Search gadget in Layout at the native checkpoint. |
+| `src/defaultmarkups/blog-archive.pug` | Adopt the condition only | Delivered (US-004b): BlogArchive1 `main` declares `var='this'` and its `.gadget-card` takes `has-items` from `data:this.data`, in FCD markup. |
 | Cached recent-post HTML restored through `innerHTML` | Reject | Violates FCD's safe-DOM rule. |
 | Personal identity, links, avatars, analytics, publisher, generated XML and dependency tree | Reject | Owner direction and license boundary. |
 

@@ -32,19 +32,19 @@ Tokens added: ink (`--ink`, `--ink-edge`, `--ink-line`, `--on-ink`, `--on-ink-mu
 
 ## Tokens and components (design v1, US-015)
 
-The last design v1 story is CSS only: markup, sections, widgets and ids are unchanged. It brings the design artifact's signature details to the shell.
+The last design v1 story is CSS only: markup, sections, widget ids and every Header1, Blog1 and Label1 behavior are unchanged. It brings the design artifact's signature details to the shipped shell.
 
-Tokens added: `--soft-border` (#d8e2ee light, #2d3d5a dark) for quiet card edges, `--mark` (#1a2a48 light, #2b4a7a dark) for the FCD mark tile, `--shadow` for the card hover, and `--radius-card` (.875rem, 14 px) shared by every card.
+Tokens added: `--soft-border` (#d8e2ee light, #2d3d5a dark) for quiet card edges, `--mark` (#1a2a48 light, #2b4a7a dark) for the FCD mark tile, `--shadow` for the card hover and `--radius-card` (.875rem, 14 px) shared by every card.
 
-- Signal line: a 3 px `--brand` line along the masthead's top edge (`.site-header::before`) replaces the old thick top border. A light highlight sweeps across it every 8 s only without a reduced-motion request; otherwise the line is static.
-- FCD mark: a 44 px `--mark` tile with white type and a faint accent inner ring; still hidden below 640 px.
+- Signal line: a 3 px `--brand` line along the masthead's top edge (`.site-header::before`) replaces the earlier thick top border. A light highlight sweeps across it every 8 s only without a reduced-motion request; otherwise the line is static.
+- FCD mark: a 44 px `--mark` tile with white type and a faint accent inner ring; it stays hidden below 640 px.
 - Cards: soft border, 14 px corners, 22 px padding and a 21 px title; the lead and secondary top rules are unchanged. On hover the border darkens to `--border` and the shadow appears; the 3 px lift and a 1.03 image zoom run only without a reduced-motion request.
-- Advisory strip: labels above card and article titles read as mono uppercase 14 px text in `--primary`, separated by slashes that carry empty alternative text, so assistive technology does not announce them.
+- Advisory strip: labels above card and article titles read as mono uppercase 14 px text in `--primary`, separated by decorative slashes with empty alternative text, so assistive technology never announces them.
 - Sidebar cards: Recent Posts, Follow the research, the Profile card and a populated archive card share the card radius, the soft border and 22 px padding, with one mono uppercase 14 px heading voice in `--muted-text`.
 
-Measured contrast: advisory strip 6.6:1 light and 9.0:1 dark on the card surface; the mark's white type 14.3:1 light and 8.9:1 dark; sidebar card headings 6.2:1 light and 8.8:1 dark. These are token-pair calculations, not rendered-node or human contrast acceptance; the commit message of `ec0565b` gave earlier, inaccurate strip and mark figures, corrected in `4f381ec`.
+Measured contrast (token pairs, not rendered-node or human acceptance): advisory strip 6.6:1 light and 9.0:1 dark on the card surface; the mark's white type 14.3:1 light and 8.9:1 dark; sidebar headings 6.2:1 light and 8.8:1 dark. The fix commit `ec0565b` stated 6.4:1, 9.7:1 and 14.6:1; the figures here are the recomputed ones, also recorded in `4f381ec`.
 
-Not carried over from the design artifact: card reading time and an author avatar row on cards, because Blogger does not supply them natively.
+Not added from the design artifact: card reading time and an avatar meta row, which Blogger does not provide natively.
 
 ## Native gadgets and shell chrome (L1)
 

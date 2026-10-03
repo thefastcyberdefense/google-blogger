@@ -3,6 +3,7 @@
   --background:#f8fbfe; --surface:#ffffff; --elevated:#edf6fb; --border:#bccbdc; --muted-surface:#edf3f8;
   --primary:#175f9e; --brand:#3d8fe1; --secondary:#c8e8f4; --text:#202e48; --muted-text:#53627b;
   --danger:#a92135; --warning:#805400; --success:#176538; --information:#175f9e; --code:#eef3f9; --focus:#1259a0;
+  --ink:#0f1c33; --ink-edge:#0f1c33; --ink-line:rgba(139,201,250,.32); --on-ink:#eaf2fb; --on-ink-muted:#b3c4da; --on-ink-accent:#8bc9fa;
   --sans:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   --mono:"Fira Code",ui-monospace,SFMono-Regular,Consolas,monospace;
 }
@@ -11,6 +12,7 @@
   --background:#0e1527; --surface:#172139; --elevated:#1d2e48; --border:#425575; --muted-surface:#1d2a42;
   --primary:#8bc9fa; --secondary:#24486b; --text:#e4edf7; --muted-text:#b4c1d4;
   --danger:#ff9cad; --warning:#efca81; --success:#8cdfb0; --information:#8bc9fa; --code:#111b2e; --focus:#a6d8ff;
+  --ink:#0a1120; --ink-edge:#425575;
 }
 @media(prefers-color-scheme:dark){:root:not([data-theme='light']){@include dark;}}
 :root[data-theme='dark']{@include dark;}

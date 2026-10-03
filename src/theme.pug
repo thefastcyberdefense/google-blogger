@@ -32,7 +32,8 @@ html&attributes(rootAttributes)
     a.skip-link(href='#content') Skip to content
     include widgets/header.pug
     main#content.container(tabindex='-1')
-      b:if(cond='not data:view.isSingleItem')
+      //- L2-intro: the first home page uses the intro band's headline instead, so each view keeps one h1.
+      b:if(cond='not data:view.isSingleItem and (not data:view.isHomepage or data:newerPageUrl)')
         header.publication-heading
           p.eyebrow Fast Cyber Defense Blog
           h1
@@ -40,7 +41,8 @@ html&attributes(rootAttributes)
             b:if(cond='not data:view.isHomepage')
               b:eval(expr='data:view.title')/
           p.standfirst Research, threat insights, and guidance for stronger security.
-      include widgets/label.pug
+      +fcdIntroBand(false)
+        include widgets/label.pug
       .fcd-layout
         .publication-stream
           include widgets/blog.pug

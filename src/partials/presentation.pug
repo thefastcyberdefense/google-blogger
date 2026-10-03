@@ -71,6 +71,44 @@ mixin fcdHeader(fixture = false)
           input#search-query(type='search' name='q' placeholder='Search security insights' autocomplete='off')/
           button(type='submit') Search blog
 
+//- L2-intro (design v1): the first home page opens with an ink band. The theme owns the headline, so
+//- every view keeps exactly one h1; the owner's Intro gadget copy (Layout > Intro) replaces the
+//- default standfirst, and the Topics section follows inside the band.
+mixin fcdIntroHero()
+  header.intro-hero
+    p.eyebrow Fast Cyber Defense Blog
+    h1#intro-heading Security knowledge. Practical defense.
+
+mixin fcdIntroCopy(fixture)
+  .intro-body
+    if fixture
+      p.standfirst Research, threat insights, and guidance for stronger security.
+    else
+      b:if(cond='data:content')
+        b:eval(expr='data:content')/
+        b:else/
+        p.standfirst Research, threat insights, and guidance for stronger security.
+
+mixin fcdIntroBand(fixture = false, home = false)
+  .intro-band
+    if fixture
+      if home
+        +fcdIntroHero()
+      #intro.intro
+        #HTML1.widget.HTML
+          if home
+            +fcdIntroCopy(true)
+    else
+      b:if(cond='data:view.isHomepage and not data:newerPageUrl')
+        +fcdIntroHero()
+      b:section(id='intro' class='intro' name='Intro' maxwidgets='1' showaddelement='false')
+        b:widget(id='HTML1' type='HTML' title='Intro' version='2' locked='true')
+          b:includable(id='main')
+            b:if(cond='data:view.isHomepage and not data:newerPageUrl')
+              +fcdIntroCopy(false)
+    if block
+      block
+
 mixin fcdLabels(post, fixture)
   if fixture
     if post.labels && post.labels.length

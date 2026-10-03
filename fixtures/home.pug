@@ -28,16 +28,18 @@ html(lang='en')
       if nativeFixture === 'observed'
         +fixtureSavedHeaderGadgets()
     main#content.container(tabindex='-1')
-      if view !== 'article'
+      //- The first home page models the L2 intro band; other multi-item views keep the plain heading.
+      if view !== 'article' && view !== 'home'
         header.publication-heading
           p.eyebrow Fast Cyber Defense Blog
-          h1= view === 'home' ? 'Security knowledge. Practical defense.' : view === 'error' ? 'Page not found' : view === 'empty' ? 'Search results' : 'Latest articles'
+          h1= view === 'error' ? 'Page not found' : view === 'empty' ? 'Search results' : 'Latest articles'
           p.standfirst Research, threat insights, and guidance for stronger security.
-      #topics.topics
-        #Label1.widget.Label
-          nav.topic-navigation(aria-label='Article topics')
-            each label in labels
-              a.topic-pill(href=label.url rel='tag')= label.name
+      +fcdIntroBand(true, view === 'home')
+        #topics.topics
+          #Label1.widget.Label
+            nav.topic-navigation(aria-label='Article topics')
+              each label in labels
+                a.topic-pill(href=label.url rel='tag')= label.name
       .fcd-layout
         .publication-stream
           #page_body.main

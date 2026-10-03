@@ -30,6 +30,22 @@ Layout behavior:
 
 Tokens added: ink (`--ink`, `--ink-edge`, `--ink-line`, `--on-ink`, `--on-ink-muted`, `--on-ink-accent`) and call to action (`--cta-bg`, `--cta-fg`; navy with white text in light mode, the light accent with dark text in dark mode). Measured contrast: intro h1 17:1, eyebrow, links and focus 9.6:1, copy 9.6:1 and chips 13.2:1; CTA copy 12.4:1 and 5.6:1 light, 11.6:1 and 7.5:1 dark, button 17:1 light and 10.2:1 dark; footer text 13.6:1 light and 13.5:1 dark, muted footer text 6.2:1 light and 8.8:1 dark. These are token-pair calculations, not rendered-node or human contrast acceptance.
 
+## Tokens and components (design v1, US-015)
+
+The last design v1 story is CSS only: markup, sections, widgets and ids are unchanged. It brings the design artifact's signature details to the shell.
+
+Tokens added: `--soft-border` (#d8e2ee light, #2d3d5a dark) for quiet card edges, `--mark` (#1a2a48 light, #2b4a7a dark) for the FCD mark tile, `--shadow` for the card hover, and `--radius-card` (.875rem, 14 px) shared by every card.
+
+- Signal line: a 3 px `--brand` line along the masthead's top edge (`.site-header::before`) replaces the old thick top border. A light highlight sweeps across it every 8 s only without a reduced-motion request; otherwise the line is static.
+- FCD mark: a 44 px `--mark` tile with white type and a faint accent inner ring; still hidden below 640 px.
+- Cards: soft border, 14 px corners, 22 px padding and a 21 px title; the lead and secondary top rules are unchanged. On hover the border darkens to `--border` and the shadow appears; the 3 px lift and a 1.03 image zoom run only without a reduced-motion request.
+- Advisory strip: labels above card and article titles read as mono uppercase 14 px text in `--primary`, separated by slashes that carry empty alternative text, so assistive technology does not announce them.
+- Sidebar cards: Recent Posts, Follow the research, the Profile card and a populated archive card share the card radius, the soft border and 22 px padding, with one mono uppercase 14 px heading voice in `--muted-text`.
+
+Measured contrast: advisory strip 6.6:1 light and 9.0:1 dark on the card surface; the mark's white type 14.3:1 light and 8.9:1 dark; sidebar card headings 6.2:1 light and 8.8:1 dark. These are token-pair calculations, not rendered-node or human contrast acceptance; the commit message of `ec0565b` gave earlier, inaccurate strip and mark figures, corrected in `4f381ec`.
+
+Not carried over from the design artifact: card reading time and an author avatar row on cards, because Blogger does not supply them natively.
+
 ## Native gadgets and shell chrome (L1)
 
 Masthead: Header1 owns one brand row (brand link plus Theme and, below 640 px, Menu). Gadgets that Blogger places in the `header` section render after Header1 in a compact tray: text at most 0.875rem in the muted token, images and icons at most 32 px, headings no larger than body text, inline wrapping. The theme hides nothing. Blogger's platform `svg-icon-24` icons are sized to 24 px because the theme turns off Blogger's widget CSS.

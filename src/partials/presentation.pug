@@ -109,6 +109,34 @@ mixin fcdIntroBand(fixture = false, home = false)
     if block
       block
 
+//- L3-CTA (design v1): one sitewide call to action between the content and the footer. The owner's
+//- Call to Action gadget copy (Layout > Call to Action) replaces the default message and button.
+mixin fcdCtaDefault()
+  .cta-copy
+    h2 Need help securing your organization?
+    p Put knowledge into practice with Fast Cyber Defense.
+  a.cta-button(href='https://fastcyberdefense.com/') Explore FCD services
+    span.cta-external(aria-hidden='true') &#8599;
+
+mixin fcdCtaBand(fixture = false)
+  aside.cta-band(aria-label='Call to action')
+    .container
+      if fixture
+        #cta.cta
+          #HTML2.widget.HTML
+            .cta-row
+              +fcdCtaDefault()
+      else
+        b:section(id='cta' class='cta' name='Call to Action' maxwidgets='1' showaddelement='false')
+          b:widget(id='HTML2' type='HTML' title='Call to Action' version='2' locked='true')
+            b:includable(id='main')
+              .cta-row
+                b:if(cond='data:content')
+                  .cta-copy
+                    b:eval(expr='data:content')/
+                  b:else/
+                  +fcdCtaDefault()
+
 mixin fcdLabels(post, fixture)
   if fixture
     if post.labels && post.labels.length
@@ -190,14 +218,10 @@ mixin fcdRelated(post, fixture)
         b:loop(values='data:post.labels take 20' var='relatedLabel')
           span(expr:data-current-label='data:relatedLabel.name')
 
-mixin fcdShareAndCta(post, fixture)
+mixin fcdShare(post, fixture)
   .share-actions(aria-label='Share article')
     button.js-control#copy-link(type='button' hidden='hidden') Copy article link
     a(href=fixture ? 'https://www.linkedin.com/sharing/share-offsite/?url='+encodeURIComponent('https://blogs.fastcyberdefense.com'+post.url) : undefined expr:href=fixture ? undefined : '"https://www.linkedin.com/sharing/share-offsite/" params {url: data:post.url.canonical}' target='_blank' rel='noopener noreferrer') Share on LinkedIn
-  aside.article-cta
-    h2 Need help securing your organization?
-    p Put knowledge into practice with Fast Cyber Defense.
-    a(href='https://fastcyberdefense.com/') Explore FCD services
 
 mixin fcdArticle(post = {}, fixture = false)
   article.article-view
@@ -224,11 +248,11 @@ mixin fcdArticle(post = {}, fixture = false)
     if fixture
       if post.isPost !== false
         +fcdRelated(post, true)
-        +fcdShareAndCta(post, true)
+        +fcdShare(post, true)
     else
       b:if(cond='data:view.isPost')
         +fcdRelated({}, false)
-        +fcdShareAndCta({}, false)
+        +fcdShare({}, false)
 
 //- Copy and recovery markup are shared; Blogger decides native state at render time.
 //- Fixture state selection is a simulation, not an evaluator of Blogger expressions.

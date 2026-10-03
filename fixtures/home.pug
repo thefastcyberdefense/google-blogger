@@ -80,15 +80,7 @@ html(lang='en')
           else if nativeFixture === 'empty-archive'
             +fixtureEmptyArchiveSidebar()
     +fcdCtaBand(true)
-    footer.site-footer
-      .container.footer-grid
-        div
-          p.brand-name Fast Cyber Defense
-          p Quick to Act, Strong to Protect.
-        nav(aria-label='Company and publication')
-          a(href='https://fastcyberdefense.com/') Company website
-          a(href='/feeds/posts/default') Publication feed
-          a(href='#content') Back to content
-      .container.footer-note Simulation fixture, not Blogger-rendered output or production editorial content.
+    +fcdFooter(true)
+      p.footer-note Simulation fixture, not Blogger-rendered output or production editorial content.
     p#fcd-status.sr-only(role='status' aria-live='polite')
     script!= script

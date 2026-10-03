@@ -137,6 +137,41 @@ mixin fcdCtaBand(fixture = false)
                   b:else/
                   +fcdCtaDefault()
 
+//- L4-footer (design v1): the brand and the owner's Footer gadget copy (Layout > Footer) on the left,
+//- theme-owned links on the right, then a base row with the copyright and the compact native gadgets.
+mixin fcdFooterCopy()
+  p.footer-tagline Quick to Act, Strong to Protect.
+  p.footer-blurb Security research and practical guidance from Fast Cyber Defense.
+
+mixin fcdFooter(fixture = false)
+  footer.site-footer
+    .container.footer-grid
+      .footer-brand
+        p.brand-name Fast Cyber Defense
+        if fixture
+          #footer.footer-copy
+            #HTML3.widget.HTML
+              .footer-text
+                +fcdFooterCopy()
+        else
+          b:section(id='footer' class='footer-copy' name='Footer' maxwidgets='1' showaddelement='false')
+            b:widget(id='HTML3' type='HTML' title='Footer' version='2' locked='true')
+              b:includable(id='main')
+                .footer-text
+                  b:if(cond='data:content')
+                    b:eval(expr='data:content')/
+                    b:else/
+                    +fcdFooterCopy()
+      nav.footer-links(aria-label='Footer')
+        a.footer-link(href='https://fastcyberdefense.com/') Company website
+          span.footer-external(aria-hidden='true') &#8599;
+        a.footer-link(href=fixture ? '/feeds/posts/default' : undefined expr:href=fixture ? undefined : 'data:blog.homepageUrl path "feeds/posts/default"') Publication feed
+        a.footer-link(href='#top') Back to top
+    .container.footer-base
+      p.footer-copyright &#169; Fast Cyber Defense
+      if block
+        block
+
 mixin fcdLabels(post, fixture)
   if fixture
     if post.labels && post.labels.length

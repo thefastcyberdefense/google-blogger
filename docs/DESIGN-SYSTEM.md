@@ -2,27 +2,54 @@
 
 Source-grounded blue/navy identity from the corporate website's globals.css, audited at f2b0cfa205ce9009ae0f1abbdd2a6d2e438dd643. The brand accent is #3d8fe1 / oklch(0.6386 0.1467 251.2451); functional link colors are darker in light mode and lighter in dark mode for contrast. Tokens live in src/styles/tokens.scss. System sans/monospace fallbacks intentionally avoid network font dependencies; Inter/Fira Code are used if available locally, not claimed as bundled fonts.
 
-Editorial signature: restrained masthead, ink-blue headlines, a lead card spanning two columns above the latest stream, useful Recent Posts sidebar. No huge hero, fake status panel, neon animation, glass or terminal decoration. Native labels provide actual topic navigation.
+Editorial signature: restrained masthead, a home-only ink intro band (design v1), ink-blue headlines, a lead card spanning two columns above the latest stream, useful Recent Posts sidebar, one quiet call-to-action band and a two-row footer. No fake status panel, neon animation, glass or terminal decoration. Native labels provide actual topic navigation.
 
 Widths covered in Actions: 320/360/375/390/430/640/768/1024/1280/1440/1920, light/dark. Menu is a non-modal mobile disclosure, not a popup search dialog. No focus trap is appropriate for this design. Core navigation remains visible without JS.
 
 Simulation screenshots test stylesheet/script behavior but do not validate Blogger's actual wrapper DOM. The first implementation does not yet provide a separate one-lead-plus-two-secondary editorial region, syntax highlighting, rendered Mermaid, related articles, or card reading time. These remain explicit follow-up work, not hidden assumptions.
 
-## Native gadgets and shell chrome (L1, 2026-10-01)
+## Layout regions (design v1, 2026-10-03)
+
+Owner-approved design v1 (2026-10-02) makes the shell four Layout-editable regions. The theme owns structure, headings, controls and search; each gadget owns only its copy or links, and a fresh install shows the design v1 defaults until the owner saves content. Each new gadget is a locked Version 2 widget alone in its own section (`maxwidgets='1'`, `showaddelement='false'`). Shared Pug mixins render the same markup for the theme and the fixtures.
+
+| Region | Section / gadget | Theme-owned | Gadget-owned (default) |
+| --- | --- | --- | --- |
+| Masthead, every view | `header` / Header1; `navigation` / LinkList1 | brand row, Theme and Menu, the `#primary-navigation` drawer, `#site-search` | Navigation links (Latest, Topics, Guides, Company website with a decorative external mark) |
+| Intro, first home page only | `intro` / HTML1, then `topics` / Label1 | ink band, eyebrow, `h1#intro-heading` "Security knowledge. Practical defense." | standfirst ("Research, threat insights, and guidance for stronger security.") |
+| Call to action, every view | `cta` / HTML2 in `aside.cta-band` | full-width band between the content and the footer | h2 "Need help securing your organization?", one line and the Explore FCD services button |
+| Footer, every view | `footer` / HTML3; `footer-gadgets` / Attribution1, ReportAbuse1 | brand name; Company website, Publication feed and Back to top links; copyright | tagline "Quick to Act, Strong to Protect." and blurb |
+
+Copy rules for the owner's saved gadget content: Intro copy carries no heading (the theme owns the page h1); the Call to Action uses exactly one heading, a line and a link; Footer copy is a sentence or two with no heading. Saved content replaces the whole default for that gadget, including the default Call to Action button.
+
+Layout behavior:
+
+- Masthead: brand, links and search share one row when they fit and wrap on medium widths. Below 640 px, Menu discloses a stacked drawer with 48 px links above full-width search. Navigation links are at least 44 px tall.
+- Intro: on the first home page only (`data:view.isHomepage and not data:newerPageUrl`) the band bleeds to the viewport edge with an ink background, white display headline, mono eyebrow with a brand dot that pulses only without reduced motion, and on-ink Topics chips. Other multi-item views keep the plain publication heading, so every view has exactly one h1. Print resets the band to plain text.
+- Call to action: elevated full-width band with a top rule; copy and the 46 px button share a row when they fit, and the button is full width below 640 px. Print hides the band.
+- Footer: brand and gadget copy on the left, links right-aligned on one row from 768 px; below 768 px the links stack under the copy with their text aligned to the brand. A bordered base row holds the copyright and the compact Attribution and Report Abuse gadgets (text at most 14 px). The footer carries no headings.
+
+Tokens added: ink (`--ink`, `--ink-edge`, `--ink-line`, `--on-ink`, `--on-ink-muted`, `--on-ink-accent`) and call to action (`--cta-bg`, `--cta-fg`; navy with white text in light mode, the light accent with dark text in dark mode). Measured contrast: intro h1 17:1, eyebrow, links and focus 9.6:1, copy 9.6:1 and chips 13.2:1; CTA copy 12.4:1 and 5.6:1 light, 11.6:1 and 7.5:1 dark, button 17:1 light and 10.2:1 dark; footer text 13.6:1 light and 13.5:1 dark, muted footer text 6.2:1 light and 8.8:1 dark. These are token-pair calculations, not rendered-node or human contrast acceptance.
+
+## Native gadgets and shell chrome (L1)
 
 Masthead: Header1 owns one brand row (brand link plus Theme and, below 640 px, Menu). Gadgets that Blogger places in the `header` section render after Header1 in a compact tray: text at most 0.875rem in the muted token, images and icons at most 32 px, headings no larger than body text, inline wrapping. The theme hides nothing. Blogger's platform `svg-icon-24` icons are sized to 24 px because the theme turns off Blogger's widget CSS.
 
-Chrome rule: theme-owned cards (`.sidebar-panel`: Recent Posts and Follow the research) keep their chrome. The native `sidebar` section (`.sidebar-widgets`) never draws its own border, background, padding or shadow, and Blogger's empty `no-items` section is not displayed on public pages (`body:not(#layout)`), so it stays editable in the Layout editor. A data-conditional `has-items` card for populated gadgets is planned, not shipped: a populated archive currently renders without a card frame.
+Chrome rule: theme-owned cards (`.sidebar-panel`: Recent Posts and Follow the research) keep their chrome. The native `sidebar` section (`.sidebar-widgets`) never draws its own border, background, padding or shadow, and Blogger's empty `no-items` section is not displayed on public pages (`body:not(#layout)`), so it stays editable in the Layout editor. A populated archive gets a card only when Blogger supplies archive data (`has-items` from `data:this.data`, US-004b); an empty archive draws nothing.
 
-| Gadget | L1 destination | Presentation | Disposition |
+| Gadget | L1 home | Presentation | Disposition |
 | --- | --- | --- | --- |
 | Header1 | `header`, locked | brand row with controls | keep |
-| Blog1, Label1 | unchanged | unchanged | keep |
-| BlogArchive1 | `sidebar` | native content, no section frame | keep |
-| Attribution | `footer` by saved id (US-004, pending B1) | compact text link, no logo | retain in footer |
-| Report Abuse | `footer` by saved id (US-004, pending B1) | small link | retain in footer |
-| Profile | `sidebar` Contributors card by saved id (US-004, pending B1) | avatars at most 48 px | retain in sidebar |
-| Blog search | not supported (duplicates the primary search) | compact in the masthead tray while saved | remove at the native checkpoint |
+| LinkList1 (Navigation) | `navigation`, inside the masthead drawer | Navigation links | new; the owner manages links in Layout |
+| HTML1 (Intro) | `intro`, first home page only | intro band copy | new |
+| HTML2 (Call to Action) | `cta`, every view | band copy and link | new |
+| HTML3 (Footer) | `footer`, every view | footer tagline and blurb | new |
+| Blog1 | unchanged | unchanged | keep |
+| Label1 | `topics`, now inside the intro band | Topics chips (on-ink on the first home page) | keep |
+| BlogArchive1 | `sidebar` | card only with archive data | keep |
+| Profile1 | `sidebar` | compact Authors card, avatars at most 32 px | keep |
+| Attribution1 | `footer-gadgets` | compact text link, no logo | keep |
+| ReportAbuse1 | `footer-gadgets` | small link | keep |
+| Blog Search | none: FCD's `#site-search` is the single search (owner decision 2026-10-02) | compact in the masthead tray while saved | the owner deletes it in Layout at the native checkpoint |
 | Any other gadget | `sidebar` | neutral, no card chrome | n/a |
 
-Until US-004 lands, saved Attribution, Report Abuse and Profile gadgets stay wherever Blogger saved them and are contained in the masthead tray. Fixture screenshots are design references, not Blogger proof.
+The new gadget ids LinkList1 and HTML1 to HTML3 are assumed free; the pre-upload B1 inventory confirms that before any upload. Fixture screenshots are design references, not Blogger proof.

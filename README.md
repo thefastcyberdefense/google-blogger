@@ -1,6 +1,6 @@
 # Fast Cyber Defense Blog
 
-Unreleased Blogger Layouts V3 / Widget Version 2 theme. Foundation, technical content, editorial presentation and content discovery are merged without deployment. PR C is the isolated metadata/cross-browser acceptance phase.
+Unreleased Blogger Layouts V3 / Widget Version 2 theme. Foundation, technical content, editorial presentation and content discovery are merged without deployment. PR C is the isolated metadata/cross-browser acceptance phase. L1, in draft PR #14 and unmerged, adds the native shell and the design v1 Layout gadgets.
 
 ## Build and size policy
 
@@ -9,6 +9,17 @@ Node 24.20.0, npm 11+, genuine locked dependencies. Pug/SCSS/bundled TypeScript 
 **Owner policy, 10 September 2026: only total raw generated XML is capped at 500,000 bytes (500 KB). There are no fixed raw bundled JavaScript, compiled CSS or per-phase growth limits.** Raw/gzip component sizes remain informational for performance review. This supersedes historical PR A/B growth budgets without changing their historical evidence. Security, accessibility, input limits and dependency audits still apply.
 
 Normal CI is read-only with pinned actions and no deployment credentials. Tests, native XML contracts, metadata validation, audit and generated-output consistency remain mandatory. A historical source stamp is the sole normalized difference between checked-in XML and fresh output.
+
+## Layout regions (L1, unmerged)
+
+After upload, the owner edits four regions in Blogger's Layout page; until then a fresh install shows the design v1 defaults.
+
+- **Navigation** (Link List): the masthead links. FCD's own search stays in the masthead and is not a gadget.
+- **Intro** (HTML/JavaScript): the first home page's standfirst inside the ink intro band. The theme owns the headline; keep this copy heading-free.
+- **Call to Action** (HTML/JavaScript): the band above the footer on every view; one heading, a line and a link.
+- **Footer** (HTML/JavaScript): the tagline and blurb beside the theme's footer links; a sentence or two, no heading.
+
+Profile sits in the sidebar, and Attribution and Report Abuse sit in the footer's base row. See docs/DESIGN-SYSTEM.md for what the theme owns, and docs/DEPLOYMENT.md for the native checkpoint before any upload.
 
 ## Retained features
 

@@ -10,7 +10,8 @@ import { chromium, type Browser } from 'playwright-core';
 const pug=createRequire(import.meta.url)('pug') as {renderFile(file:string,options:Record<string,unknown>):string};
 const xml=readFileSync('dist/theme.xml','utf8');
 const css=/<b:skin\b[^>]*>\s*<!\[CDATA\[([\s\S]*?)\]\]>\s*<\/b:skin>/.exec(xml)?.[1]??'';
-const bandRule='.is-home-lead .intro-band{background:var(--ink);color:var(--on-ink);border-image-source:linear-gradient(var(--ink) calc(100% - 1px),var(--ink-edge) 0);border-image-slice:0 fill;border-image-outset:0 100vw}';
+// The shipped band rule is found by selector and properties, not by the compiler's exact spelling.
+const bandRules=(css.match(/\.is-home-lead\s+\.intro-band\s*\{[^}]*\}/g)??[]).filter(rule=>/background:\s*var\(--ink\)/.test(rule)&&rule.includes('100vw'));
 const ink=[15,28,51];
 const render=(view:string,styles=css)=>pug.renderFile('fixtures/home.pug',{css:styles,script:'',pretty:true,fixtureView:view});
 // RGB of a 1x1 screenshot. With no left or upper neighbour every PNG filter leaves bytes 1-3 unchanged.
@@ -65,7 +66,7 @@ it('other multi-item views keep the plain publication heading and Topics',async(
   expect(view.overflow,'N1L_OVERFLOW').toBe(false);
 },25000);
 it('negative control: without the shipped band rule the intro loses its ink band',async()=>{
-  expect(css,'N1L_INTRO_RULE').toContain(bandRule);
-  const view=await measure('home',1280,css.replace(bandRule,''));
+  expect(bandRules.length,'N1L_INTRO_RULE').toBe(1);
+  const view=await measure('home',1280,css.replace(bandRules[0],''));
   expect(view.band.background).toBe('rgba(0, 0, 0, 0)');expect(view.edge).not.toEqual(ink);
 },25000);

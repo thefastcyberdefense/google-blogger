@@ -9,9 +9,21 @@ aside.sidebar(aria-label='Publication sidebar')
     p Get new publications in your feed reader.
     a(expr:href='data:blog.homepageUrl path "feeds/posts/default"') Subscribe via Atom
   b:section(id='sidebar' class='sidebar-widgets' name='Sidebar widgets' showaddelement='true')
+    //- US-016 (first native upload 2026-10-04): Blogger resolved super.main to its built-in Profile
+    //- markup, so the theme renders the card and heading itself and keeps Blogger's own author list
+    //- inside it. The default avatar is theme-drawn; an author photo sits beside the name.
     b:widget(id='Profile1' type='Profile' title='Authors' version='2' locked='false')
       b:includable(id='main' var='this')
-        b:include(name='super.main')/
+        .profile-card.wrapper
+          b:class(cond='not data:this.team' name='solo')/
+          b:if(cond='data:this.team')
+            h2.widget-title
+              b:eval(expr='data:this.title ?: "Authors"')/
+          b:include(name='content')/
+      b:includable(id='defaultProfileImage')
+        span.default-avatar-wrapper.fcd-avatar(aria-hidden='true')
+      b:includable(id='authorProfileImage')
+        img.profile-img.author-avatar(alt='' expr:src='data:authorPhoto.image' height='64' loading='lazy' width='64')/
     b:widget(id='BlogArchive1' type='BlogArchive' title='Archive' version='2' locked='false')
       b:includable(id='main' var='this')
         .gadget-card

@@ -1,9 +1,13 @@
 //- L4-footer: the shared footer, with the native Attribution and Report Abuse gadgets in its base row.
 +fcdFooter(false)
   b:section(id='footer-gadgets' class='footer-gadgets' name='Footer gadgets' showaddelement='false')
+    //- US-016 (first native upload 2026-10-04): super.main rendered Blogger's built-in credit with its
+    //- logo, so the theme renders the text-only credit here, as Ledger v1.7.0 does.
     b:widget(id='Attribution1' type='Attribution' title='' version='2' locked='true')
       b:includable(id='main' var='this')
-        b:include(name='super.main')/
+        p.fcd-attribution
+          a(expr:href='data:bloggerUrl' rel='nofollow')
+            b:message(name='messages.poweredByBlogger')/
     b:widget(id='ReportAbuse1' type='ReportAbuse' title='' version='2' locked='false')
       b:includable(id='main' var='this')
         b:include(name='super.main')/

@@ -48,7 +48,8 @@ flag=one(card.findall(B+'class'),'N1L_C3_HAS_ITEMS one b:class on .gadget-card')
 assert flag.get('name')=='has-items' and flag.get('cond')=='data:this.data','N1L_C3_HAS_ITEMS has-items must follow data:this.data'
 assert [i.get('name') for i in card.findall(B+'include')]==['super.main'],'N1L_C3_NATIVE archive card must delegate to super.main'
 `,
-  // C4 (US-004b): saved gadgets get native homes instead of landing in the masthead.
+  // C4 (US-004b): saved gadgets get native homes instead of landing in the masthead. Which markup
+  // each of them renders is pinned by C10 (US-016).
   C4:String.raw`
 assert [w.get('id') for w in section('sidebar').findall(B+'widget')]==['Profile1','BlogArchive1'],'N1L_C4_SIDEBAR sidebar must declare Profile1 then BlogArchive1'
 foot=one((f for f in r.iter(H+'footer') if 'site-footer' in classes(f)),'N1L_C4_FOOTER footer.site-footer')
@@ -57,7 +58,6 @@ assert [w.get('id') for w in home.findall(B+'widget')]==['Attribution1','ReportA
 for i,t in [('Profile1','Profile'),('Attribution1','Attribution'),('ReportAbuse1','ReportAbuse')]:
     w=widget(i);assert w.get('type')==t and w.get('version')=='2','N1L_C4_TYPE '+i
     m=includable(w,'main');assert m.get('var')=='this','N1L_C4_THIS '+i+' main must declare var=this'
-    assert [x.get('name') for x in m.iter(B+'include')]==['super.main'],'N1L_C4_NATIVE '+i+' must delegate to super.main'
 `,
   // C5 (US-004b, owner decision): FCD's own search is the single masthead search; the theme
   // gives the saved Blog Search gadget no search presentation (the owner removes it in Layout).
@@ -211,6 +211,34 @@ assert not [e for e in foot.iter() if e.tag in [H+'h%d'%i for i in range(1,7)]],
 blurbs=[e for e in r.iter() if ''.join(e.itertext()).strip()=='Security research and practical guidance from Fast Cyber Defense.' and e.tag in (H+'p',H+'div')]
 assert len(blurbs)==1,'N1L_C9_ONE_BLURB the blurb appears once: %d'%len(blurbs)
 `,
+  // C10 (US-016, first native upload 2026-10-04): Blogger resolved super.main to its own built-in
+  // markup, so its logo and an unstyled author list replaced the theme's. Attribution1 and Profile1
+  // render the theme markup themselves (as Ledger v1.7.0 does for its credit); Report Abuse stays native.
+  C10:String.raw`
+w=widget('Attribution1')
+m=includable(w,'main')
+assert m.get('var')=='this','N1L_C10_THIS Attribution1 main must declare var=this'
+assert not [x for x in w.iter(B+'include') if x.get('name')=='super.main'],'N1L_C10_OWN_CREDIT Attribution1 must render the theme credit itself, not super.main'
+p=one((e for e in m if e.tag==H+'p' and 'fcd-attribution' in classes(e)),'N1L_C10_CREDIT Attribution1 main p.fcd-attribution')
+a=one(p.findall(H+'a'),'N1L_C10_CREDIT credit link')
+assert a.get(X+'href')=='data:bloggerUrl' and 'nofollow' in (a.get('rel') or '').split(),'N1L_C10_CREDIT the credit links data:bloggerUrl with rel=nofollow'
+assert [x.get('name') for x in a.iter(B+'message')]==['messages.poweredByBlogger'],'N1L_C10_CREDIT the credit uses messages.poweredByBlogger'
+assert not [e for e in w.iter() if e.tag in (H+'img',H+'svg','{http://www.w3.org/2000/svg}svg') or (e.tag==B+'include' and 'Icon' in (e.get('name') or ''))],'N1L_C10_NO_LOGO the credit renders no logo'
+w=widget('Profile1')
+m=includable(w,'main')
+assert m.get('var')=='this','N1L_C10_THIS Profile1 main must declare var=this'
+assert not [x for x in w.iter(B+'include') if x.get('name')=='super.main'],'N1L_C10_OWN_CARD Profile1 must render the theme card itself, not super.main'
+card=one((e for e in m if e.tag==H+'div' and 'profile-card' in classes(e)),'N1L_C10_CARD Profile1 main .profile-card')
+team=one((i for i in card.findall(B+'if') if i.get('cond')=='data:this.team'),'N1L_C10_HEADING team heading guard')
+h=one(team.findall(H+'h2'),'N1L_C10_HEADING team heading')
+assert 'widget-title' in classes(h) and [e.get('expr') for e in h.iter(B+'eval')]==['data:this.title ?: "Authors"'],'N1L_C10_HEADING the heading shows the gadget title'
+assert [x.get('name') for x in card.findall(B+'include')]==['content'],'N1L_C10_LIST Blogger keeps the author list through content'
+d=list(includable(w,'defaultProfileImage'))
+assert [(e.tag,classes(e),e.get('aria-hidden'),len(e)) for e in d]==[(H+'span',['default-avatar-wrapper','fcd-avatar'],'true',0)],'N1L_C10_AVATAR the default avatar is theme-drawn'
+img=one(includable(w,'authorProfileImage').iter(H+'img'),'N1L_C10_PHOTO author photo')
+assert img.get('alt')=='' and img.get(X+'src')=='data:authorPhoto.image' and 'author-avatar' in classes(img),'N1L_C10_PHOTO the photo beside the name is decorative'
+assert [x.get('name') for x in includable(widget('ReportAbuse1'),'main').iter(B+'include')]==['super.main'],'N1L_C10_REPORT Report Abuse stays native'
+`,
 } as const;
 type Check=keyof typeof checks;
 const check=(xml:string,name:Check)=>spawnSync('python3',['-c',prelude+checks[name]],{input:xml,encoding:'utf8'});
@@ -232,6 +260,8 @@ const mutations:[Check,string,(s:string)=>string][]=[
   ['C8','the call-to-action headline repeated in the sidebar',s=>s.replace(/<aside class="sidebar"[^>]*>/,m=>m+'<h2>Need help securing your organization?</h2>')],
   ['C9','the footer blurb repeated in main',s=>s.replace(/<main\b[^>]*>/,m=>m+'<p>Security research and practical guidance from Fast Cyber Defense.</p>')],
   ['C9','a heading inside the footer',s=>s.replace(/<\/footer>/,'<h2>Mutation</h2></footer>')],
+  ['C10','a Blogger logo in the Attribution credit',s=>s.replace(/(<b:widget id="Attribution1"[^>]*>[\s\S]*?<b:includable id="main"[^>]*>)/,'$1<svg class="svg-icon-24"></svg>')],
+  ['C10','the Profile card handed back to super.main',s=>s.replace(/(<b:widget id="Profile1"[^>]*>[\s\S]*?<b:includable id="main"[^>]*>)/,'$1<b:include name="super.main"/>')],
 ];
 it.each(mutations)('L1 contract %s rejects %s',(name,_label,mutate)=>{
   const changed=mutate(original);expect(changed,'N1L_MUTATION_TARGET missing').not.toBe(original);

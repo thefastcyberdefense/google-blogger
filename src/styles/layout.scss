@@ -39,6 +39,8 @@ body:not(#layout) .sidebar-widgets.no-items{display:none}
 .footer-base{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem 1.375rem;padding-block:1rem 1.75rem;border-top:1px solid var(--border);color:var(--muted-text);font-size:.875rem}.footer-base p{margin:0}.footer-base>.footer-gadgets{width:auto;margin:0}
 // Design tokens and components (design v1): the signal line along the masthead's top edge, and one
 // quiet mono heading voice for every sidebar card. The sweep runs only without a reduced-motion request.
+// It moves the line as one compositor layer (transform only): the line is three masthead widths wide
+// with the highlight at its centre, and the masthead clips the excess, so no frame repaints the line.
 .site-header::before{content:"";display:block;height:3px;background-color:var(--brand);background-image:linear-gradient(90deg,transparent,rgba(255,255,255,.9),transparent);background-repeat:no-repeat;background-size:22% 100%;background-position:-30% 0}
-@media(prefers-reduced-motion:no-preference){.site-header::before{animation:fcd-sweep 8s cubic-bezier(.45,0,.25,1) infinite}}@keyframes fcd-sweep{0%{background-position:-30% 0}55%,100%{background-position:130% 0}}
+@media(prefers-reduced-motion:no-preference){.site-header{overflow-x:hidden;overflow-x:clip}.site-header::before{width:300%;background-size:7.3333% 100%;background-position:50% 0;animation:fcd-sweep 8s cubic-bezier(.45,0,.25,1) infinite}}@keyframes fcd-sweep{0%{transform:translateX(-54.133%)}55%,100%{transform:translateX(-12.533%)}}
 .sidebar-panel h2,.profile-card :is(h2,h3),.sidebar-widgets .gadget-card.has-items .widget-title{font:600 .875rem/1.2 var(--mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted-text)}

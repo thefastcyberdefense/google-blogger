@@ -63,10 +63,20 @@ Chrome rule: theme-owned cards (`.sidebar-panel`: Recent Posts and Follow the re
 | Blog1 | unchanged | unchanged | keep |
 | Label1 | `topics`, now inside the intro band | Topics chips (on-ink on the first home page) | keep |
 | BlogArchive1 | `sidebar` | card only with archive data | keep |
-| Profile1 | `sidebar` | compact Authors card, avatars at most 32 px | keep |
-| Attribution1 | `footer-gadgets` | compact text link, no logo | keep |
+| Profile1 | `sidebar` | Authors card: a heading from the gadget title ("Authors" when untitled) on team blogs, one row per author with a small avatar beside the name, theme-drawn default avatar | keep; theme-owned main since US-016 |
+| Attribution1 | `footer-gadgets` | compact text-only credit, no logo | keep; theme-owned main since US-016 |
 | ReportAbuse1 | `footer-gadgets` | small link | keep |
 | Blog Search | none: FCD's `#site-search` is the single search (owner decision 2026-10-02) | compact in the masthead tray while saved | the owner deletes it in Layout at the native checkpoint |
 | Any other gadget | `sidebar` | neutral, no card chrome | n/a |
 
-The new gadget ids LinkList1 and HTML1 to HTML3 are assumed free; the pre-upload B1 inventory confirms that before any upload. Fixture screenshots are design references, not Blogger proof.
+The new gadget ids LinkList1 and HTML1 to HTML3 were assumed free. At the first native upload each new section held one gadget, but Navigation arrived hidden; a widget snapshot from the owner would show whether an earlier saved LinkList1 kept its hidden state. Fixture screenshots are design references, not Blogger proof.
+
+## First native upload (owner, 2026-10-04)
+
+The owner uploaded a CI theme artifact to production and shared light and dark home-page screenshots and three Layout screenshots; agents made no request to the blog. Rendered as designed: the signal line, the FCD mark, the intro band with its defaults, the initial empty-home state, the sidebar cards, the call to action, the two-row footer, dark mode and one h1.
+
+Native rule learned: on Blogger, a widget's `super.main` resolves to Blogger's built-in markup for that widget type, not to the theme's `b:defaultmarkup`. Attribution1 rendered the Blogger logo (near invisible in dark mode) and Profile1 a bulleted list with an oversized photo, a black default icon and no heading. Where the design depends on a gadget's markup, the theme now renders that gadget's own main (US-016); ReportAbuse1 and BlogArchive1 keep `super.main`.
+
+Authors card (US-016): the team heading uses the gadget title, or "Authors" when it is untitled; each author is one row with the avatar beside, not inside, the name link. Author photos are decorative (empty alternative text) because the name follows; the default avatar is a theme-drawn circle in `--muted-surface` and `--muted-text`, hidden from assistive technology, so it reads in both themes; if Blogger still renders its sprite avatar, it takes `--muted-text`.
+
+Owner Layout items, not theme defects: unhide the Navigation gadget and save its links; delete the saved Blog Search gadget, which still renders its own search row above `#site-search`; Popular Posts and Featured Post saved in the Posts section are recommended for deletion; the two hidden AdSense gadgets and the hidden Pages gadget in Brand render nothing.

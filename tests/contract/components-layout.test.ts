@@ -94,3 +94,31 @@ it('negative control: without the shipped signal-line rule the masthead has no l
   const view=await measure('fixtures/home.pug',1280,{styles:css.replace(signalRules[0],'')});
   expect(view.line.height).not.toBe('3px');
 },25000);
+// Signal sweep cost: the keyframes may animate only transform, so the line moves as one compositor
+// layer and is never repainted per frame, and the line must still span the masthead at every sample.
+const sweepKeyframes=/@keyframes\s+fcd-sweep\s*\{((?:[^{}]*\{[^{}]*\})+)\s*\}/.exec(css)?.[1]??'';
+it('signal sweep: animates only transform and the line spans the masthead throughout',async()=>{
+  const properties=[...new Set([...sweepKeyframes.matchAll(/([a-z-]+)\s*:/g)].map(match=>match[1]))];
+  expect(properties,'N1L_SWEEP_COMPOSITED').toEqual(['transform']);
+  for(const width of [390,1280,1920]){
+    const page=await browser.newPage({viewport:{width,height:900},reducedMotion:'no-preference'});
+    try{
+      await page.setContent(pug.renderFile('fixtures/home.pug',{css,script:'',pretty:true}));
+      const view=await page.evaluate(()=>{
+        const header=document.querySelector('header.site-header');
+        const sweep=document.getAnimations().find(animation=>(animation as CSSAnimation).animationName==='fcd-sweep');
+        if(!header||!sweep)throw new Error('N1L_SWEEP_MISSING');
+        const samples:{left:number,width:number}[]=[];
+        for(const time of [0,1100,2200,3300,4400,6000]){
+          sweep.pause();sweep.currentTime=time;
+          const line=getComputedStyle(header,'::before');
+          const matrix=new DOMMatrixReadOnly(line.transform==='none'?undefined:line.transform);
+          samples.push({left:matrix.m41,width:parseFloat(line.width)});
+        }
+        return {header:header.getBoundingClientRect().width,samples,overflow:document.documentElement.scrollWidth>innerWidth+1};
+      });
+      for(const sample of view.samples)expect(sample.left<=0.5&&sample.left+sample.width>=view.header-0.5,'N1L_SWEEP_COVER').toBe(true);
+      expect(view.overflow,'N1L_OVERFLOW').toBe(false);
+    }finally{await page.close();}
+  }
+},25000);

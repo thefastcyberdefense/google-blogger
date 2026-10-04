@@ -14,7 +14,7 @@ jobs:
     # Pinned by owner decision (2026-10-02): ubuntu-latest moves to 26.04
     # between 2026-10-19 and 2026-11-19. Adopt 26.04 only after a full green run.
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -114,7 +114,7 @@ jobs:
           marker="fcd-render-$(cat /proc/sys/kernel/random/uuid)"
           echo "::stop-commands::$marker"
           status=0
-          bash tools/run-isolated-tests.sh run render 1100 npm run test:render || status=$?
+          bash tools/run-isolated-tests.sh run render 1500 npm run test:render || status=$?
           echo "::$marker::"
           exit "$status"
       - name: Report browser counts

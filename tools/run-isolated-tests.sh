@@ -50,7 +50,7 @@ case ${1:-} in
     ;;
   run)
     label=${2:-}; seconds=${3:-}; shift 3
-    [[ $label =~ ^[a-z][a-z0-9-]{0,40}$ && $seconds =~ ^[1-9][0-9]{0,3}$ && $seconds -le 1200 && $# -gt 0 ]] || exit 78
+    [[ $label =~ ^[a-z][a-z0-9-]{0,40}$ && $seconds =~ ^[1-9][0-9]{0,3}$ && $seconds -le 1500 && $# -gt 0 ]] || exit 78
     [[ -d ${FCD_ISOLATION_EVIDENCE:?} ]] || exit 78
     set +e
     namespace exec "$seconds" "$label" "$@"

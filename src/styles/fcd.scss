@@ -67,7 +67,14 @@ html[data-theme='dark'] {
   .post-author-mini .post-author-mini-avatar,
   .sidebar-card .sidebar-card-header,
   .footer-container .footer-bottom,
-  .post .post-header {
+  .post .post-header,
+  .post-share-bar,
+  .post-nav,
+  .post-navigation,
+  .comments,
+  .post-author-bio img.author-avatar,
+  .author-bio-card img.author-avatar,
+  #comments .avatar-image-container img {
     border-color: $dark-rule;
   }
 }

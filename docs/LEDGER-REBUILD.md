@@ -15,7 +15,7 @@ ledger-port.yml workflow (bot commits do not trigger CI).
 | US-L5 hardening | green in run 37340398543 | tests/fcd/hardening.test.ts 7/7 (red first in run 37333013292) |
 | Ledger V3 contract | green in run 37340398543 | PASS: 39 V3 contract rules verified |
 | First test-blog upload | done 2026-10-05 | build 1118f66, owner screenshots light and dark, home and post |
-| US-L7 test-blog polish | red first in run 37349111173 (7 of 9 new cases failing as predicted); fix in e50bded and f7494c4, awaiting CI | tests/fcd/polish.test.ts over tests/fcd/blogger-static.ts |
+| US-L7 test-blog polish | red first in run 37349111173 (7 of 9 new cases failing as predicted); run 37351665554 after e50bded and f7494c4: 25 of 26 pass, 5 dark-mode rules left, fixed in the next commit, awaiting CI | tests/fcd/polish.test.ts over tests/fcd/blogger-static.ts |
 | US-L6 cleanup and records | pending | remove port/, ledger-port.yml, staging-check.yml, excerpt step; CHANGELOG, AGENTS.md, PR body |
 
 ## US-L5 changes (main.ts, via port edits)

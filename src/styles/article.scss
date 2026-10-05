@@ -21,9 +21,9 @@
   .reading-progress-bar {
     height: 100%;
     width: 0%;
-    background: linear-gradient(90deg, $accent, oklch(62.308% 0.1880 259.815));
+    background: linear-gradient(90deg, $accent, oklch(63.86% 0.1467 251.2451));
     transition: width 50ms linear;
-    box-shadow: 0 0 10px oklch(54.615% 0.2152 262.881 / 0.35);
+    box-shadow: 0 0 10px oklch(53.5% 0.1467 251.2451 / 0.35);
   }
 }
 
@@ -187,10 +187,10 @@
 
   .code-block-wrap {
     margin: $space-5 0;
-    border: 1px solid oklch(92.876% 0.0126 255.508);
+    border: 1px solid oklch(91.55% 0.0178 240.0081);
     border-radius: 8px;
     overflow: hidden;
-    background: oklch(98.415% 0.0034 247.858);
+    background: oklch(97.43% 0.0101 228.8865);
     box-shadow: $shadow-sm;
 
     .code-block-header {
@@ -199,7 +199,7 @@
       justify-content: space-between;
       padding: 8px 14px;
       background: oklch(96% 0.006 255);
-      border-bottom: 1px solid oklch(92.876% 0.0126 255.508);
+      border-bottom: 1px solid oklch(91.55% 0.0178 240.0081);
       font-family: $font-mono;
       font-size: 0.75rem;
       font-weight: 600;
@@ -248,8 +248,8 @@
 
   pre {
     overflow-x: auto;
-    background-color: oklch(98.415% 0.0034 247.858);
-    border: 1px solid oklch(92.876% 0.0126 255.508);
+    background-color: oklch(97.43% 0.0101 228.8865);
+    border: 1px solid oklch(91.55% 0.0178 240.0081);
     padding: $space-4 $space-5;
     border-radius: 6px;
     white-space: pre;
@@ -388,7 +388,7 @@
     background: #ffffff;
     border-radius: 8px;
     margin: $space-6 0;
-    border: 1px solid oklch(92.876% 0.0126 255.508);
+    border: 1px solid oklch(91.55% 0.0178 240.0081);
     box-shadow: $shadow-sm;
     padding: 0;
 
@@ -628,7 +628,7 @@
     overflow-x: auto;
     margin: $space-5 0;
     border-radius: 6px;
-    border: 1px solid oklch(92.876% 0.0126 255.508);
+    border: 1px solid oklch(91.55% 0.0178 240.0081);
 
     table {
       width: 100%;
@@ -639,21 +639,21 @@
     }
 
     thead {
-      background: oklch(98.415% 0.0034 247.858);
-      border-bottom: 2px solid oklch(92.876% 0.0126 255.508);
+      background: oklch(97.43% 0.0101 228.8865);
+      border-bottom: 2px solid oklch(91.55% 0.0178 240.0081);
     }
 
     th {
       padding: 0.85rem 1.2rem;
       font-weight: 700;
       color: $ink;
-      border-bottom: 2px solid oklch(92.876% 0.0126 255.508);
+      border-bottom: 2px solid oklch(91.55% 0.0178 240.0081);
       font-family: $font-sans;
     }
 
     td {
       padding: 0.85rem 1.2rem;
-      border-bottom: 1px solid oklch(92.876% 0.0126 255.508);
+      border-bottom: 1px solid oklch(91.55% 0.0178 240.0081);
       color: $ink;
     }
 
@@ -753,7 +753,7 @@
     justify-content: space-between;
     padding-bottom: $space-3;
     margin-bottom: $space-3;
-    border-bottom: 1px solid oklch(92.876% 0.0126 255.508);
+    border-bottom: 1px solid oklch(91.55% 0.0178 240.0081);
   }
 
   .toc-title {
@@ -957,7 +957,7 @@
     &:hover {
       color: $accent;
       background-color: $accent-wash;
-      border-color: oklch(54.615% 0.2152 262.881 / 0.25);
+      border-color: oklch(53.5% 0.1467 251.2451 / 0.25);
       transform: translateY(-2px);
       box-shadow: $shadow-accent-sm;
     }
@@ -1105,7 +1105,7 @@
         box-shadow: $shadow-accent-sm;
 
         &:hover {
-          background: oklch(48% 0.205 263);
+          background: oklch(50% 0.1467 251.2451);
           transform: translateY(-1px);
         }
       }
@@ -1292,7 +1292,7 @@
 
   &:hover {
     color: $accent;
-    border-color: oklch(62.308% 0.1880 259.815 / 0.4);
+    border-color: oklch(63.86% 0.1467 251.2451 / 0.4);
     background-color: $accent-wash;
     transform: translateY(-1px);
   }
@@ -1332,7 +1332,7 @@
 
   &:hover {
     color: $accent;
-    border-color: oklch(62.308% 0.1880 259.815 / 0.4);
+    border-color: oklch(63.86% 0.1467 251.2451 / 0.4);
     background-color: $accent-wash;
     transform: translateY(-1px);
   }
@@ -1375,7 +1375,7 @@
   transition: color $motion-fast $ease-out-quart, border-color $motion-fast $ease-out-quart, background-color $motion-fast $ease-out-quart;
 
   &:hover {
-    color: oklch(48% 0.205 263);
+    color: oklch(50% 0.1467 251.2451);
     border-color: $accent;
     background-color: $accent-wash;
   }
@@ -1440,7 +1440,7 @@
   transition: border-color $motion-fast $ease-out-quart;
 
   &:hover {
-    border-color: oklch(62.308% 0.1880 259.815 / 0.3);
+    border-color: oklch(63.86% 0.1467 251.2451 / 0.3);
   }
 }
 
@@ -1522,7 +1522,7 @@
     transition: transform $motion-fast $ease-out-quart, box-shadow $motion-fast $ease-out-quart, background-color $motion-fast $ease-out-quart;
 
     &:hover {
-      background-color: oklch(48% 0.205 263);
+      background-color: oklch(50% 0.1467 251.2451);
       box-shadow: $shadow-accent-md;
       transform: translateY(-1px);
     }
@@ -1656,11 +1656,11 @@
   }
 
   &.alert-callout-note {
-    border-left-color: oklch(54.615% 0.2152 262.881);
-    background: oklch(54.615% 0.2152 262.881 / 0.06);
+    border-left-color: oklch(53.5% 0.1467 251.2451);
+    background: oklch(53.5% 0.1467 251.2451 / 0.06);
 
     .alert-callout-title {
-      color: oklch(54.615% 0.2152 262.881);
+      color: oklch(53.5% 0.1467 251.2451);
     }
   }
 

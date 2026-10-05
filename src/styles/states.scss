@@ -68,7 +68,7 @@
     &:focus {
       width: 360px;
       border-color: $accent;
-      box-shadow: 0 0 0 3px oklch(54.615% 0.2152 262.881 / 0.12);
+      box-shadow: 0 0 0 3px oklch(53.5% 0.1467 251.2451 / 0.12);
       outline: none;
     }
   }
@@ -89,7 +89,7 @@
     transition: transform $motion-fast $ease-out-quart, box-shadow $motion-fast $ease-out-quart, background-color $motion-fast $ease-out-quart;
 
     &:hover {
-      background-color: oklch(48% 0.205 263);
+      background-color: oklch(50% 0.1467 251.2451);
       box-shadow: $shadow-accent-md;
       transform: translateY(-1px);
     }
@@ -329,7 +329,7 @@ input[type='submit']:active,
 
   &:hover {
     color: $accent;
-    border-color: oklch(54.615% 0.2152 262.881 / 0.3);
+    border-color: oklch(53.5% 0.1467 251.2451 / 0.3);
     background-color: $accent-wash;
     box-shadow: $shadow-accent-sm;
     transform: translateX(-2px);
@@ -369,7 +369,7 @@ input[type='submit']:active,
 
   &:hover {
     color: $accent;
-    border-color: oklch(54.615% 0.2152 262.881 / 0.3);
+    border-color: oklch(53.5% 0.1467 251.2451 / 0.3);
     background-color: $accent-wash;
     box-shadow: $shadow-accent-sm;
     transform: translateX(2px);

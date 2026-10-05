@@ -7,17 +7,17 @@
 
 html[data-theme='dark'] {
   color-scheme: dark;
-  background-color: oklch(13.627% 0.0364 259.201);
-  color: oklch(98.415% 0.0034 247.858);
+  background-color: oklch(19.71% 0.0414 269.7076);
+  color: oklch(92.88% 0.0126 255.5078);
 
   body {
-    background-color: oklch(13.627% 0.0364 259.201);
-    color: oklch(98.415% 0.0034 247.858);
+    background-color: oklch(19.71% 0.0414 269.7076);
+    color: oklch(92.88% 0.0126 255.5078);
   }
 
   .header-outer {
-    background: oklch(13.627% 0.0364 259.201 / 0.85);
-    border-bottom-color: oklch(27.950% 0.0368 260.031);
+    background: oklch(19.71% 0.0414 269.7076 / 0.85);
+    border-bottom-color: oklch(33.51% 0.0331 260.912);
   }
 
   .site-title,
@@ -37,7 +37,7 @@ html[data-theme='dark'] {
   .cta-title,
   .footer-heading,
   .hero-btn-tertiary {
-    color: oklch(98.415% 0.0034 247.858);
+    color: oklch(92.88% 0.0126 255.5078);
   }
 
   .status-pill {
@@ -64,12 +64,12 @@ html[data-theme='dark'] {
   .older-link,
   .blog-pager-newer-link,
   .blog-pager-older-link {
-    color: oklch(98.415% 0.0034 247.858);
-    background-color: oklch(22.749% 0.0288 266.273);
-    border-color: oklch(27.950% 0.0368 260.031);
+    color: oklch(92.88% 0.0126 255.5078);
+    background-color: oklch(24.41% 0.0456 268.3692);
+    border-color: oklch(33.51% 0.0331 260.912);
 
     &:hover {
-      background-color: oklch(27.950% 0.0368 260.031);
+      background-color: oklch(33.51% 0.0331 260.912);
       border-color: oklch(75% 0.15 259.735 / 0.5);
       color: oklch(75% 0.15 259.735);
     }
@@ -100,24 +100,24 @@ html[data-theme='dark'] {
   .post-nav-item,
   .post-hero-wrap,
   .table-of-contents {
-    background-color: oklch(22.749% 0.0288 266.273);
-    border-color: oklch(27.950% 0.0368 260.031);
+    background-color: oklch(24.41% 0.0456 268.3692);
+    border-color: oklch(33.51% 0.0331 260.912);
     box-shadow: none;
   }
 
   .post-body blockquote,
   blockquote {
-    background-color: oklch(22.749% 0.0288 266.273) !important;
-    border-left-color: oklch(62.308% 0.1880 259.815) !important;
-    color: oklch(98.415% 0.0034 247.858) !important;
+    background-color: oklch(24.41% 0.0456 268.3692) !important;
+    border-left-color: oklch(63.86% 0.1467 251.2451) !important;
+    color: oklch(92.88% 0.0126 255.5078) !important;
 
     strong {
-      color: oklch(98.415% 0.0034 247.858) !important;
+      color: oklch(92.88% 0.0126 255.5078) !important;
     }
   }
 
   .lead {
-    color: oklch(98.415% 0.0034 247.858) !important;
+    color: oklch(92.88% 0.0126 255.5078) !important;
   }
 
   .post-thumbnail-link {
@@ -127,15 +127,15 @@ html[data-theme='dark'] {
   .mobile-drawer,
   .search-modal-container {
     background-color: oklch(16% 0.025 260 / 0.96) !important;
-    border-color: oklch(27.950% 0.0368 260.031) !important;
+    border-color: oklch(33.51% 0.0331 260.912) !important;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     box-shadow: 0 16px 36px oklch(0% 0 0 / 0.5);
   }
 
   .sidebar-card {
-    background-color: oklch(22.749% 0.0288 266.273);
-    border-color: oklch(27.950% 0.0368 260.031);
+    background-color: oklch(24.41% 0.0456 268.3692);
+    border-color: oklch(33.51% 0.0331 260.912);
     box-shadow: none;
 
     &:hover {
@@ -147,12 +147,12 @@ html[data-theme='dark'] {
   .sidebar-card-title,
   .drawer-section-title,
   .drawer-title {
-    color: oklch(98.415% 0.0034 247.858);
+    color: oklch(92.88% 0.0126 255.5078);
   }
 
   .sidebar-recent-title,
   .sidebar-recent-link {
-    color: oklch(98.415% 0.0034 247.858);
+    color: oklch(92.88% 0.0126 255.5078);
 
     &:hover {
       color: oklch(75% 0.15 259.735) !important;
@@ -179,8 +179,8 @@ html[data-theme='dark'] {
   .sidebar-search-input,
   .drawer-search-input {
     background-color: oklch(16% 0.025 260) !important;
-    border-color: oklch(27.950% 0.0368 260.031) !important;
-    color: oklch(98.415% 0.0034 247.858) !important;
+    border-color: oklch(33.51% 0.0331 260.912) !important;
+    color: oklch(92.88% 0.0126 255.5078) !important;
 
     &::placeholder {
       color: oklch(65% 0.015 255) !important;
@@ -195,7 +195,7 @@ html[data-theme='dark'] {
   .sidebar-search-results,
   .drawer-search-results {
     background-color: oklch(18% 0.025 260) !important;
-    border-color: oklch(27.950% 0.0368 260.031) !important;
+    border-color: oklch(33.51% 0.0331 260.912) !important;
     box-shadow: 0 16px 36px oklch(0% 0 0 / 0.6) !important;
   }
 
@@ -203,31 +203,31 @@ html[data-theme='dark'] {
   .drawer-social-btn,
   .drawer-close,
   .share-btn {
-    background-color: oklch(22.749% 0.0288 266.273) !important;
-    border-color: oklch(27.950% 0.0368 260.031) !important;
-    color: oklch(98.415% 0.0034 247.858) !important;
+    background-color: oklch(24.41% 0.0456 268.3692) !important;
+    border-color: oklch(33.51% 0.0331 260.912) !important;
+    color: oklch(92.88% 0.0126 255.5078) !important;
 
     &:hover {
-      background-color: oklch(27.950% 0.0368 260.031) !important;
+      background-color: oklch(33.51% 0.0331 260.912) !important;
       border-color: oklch(75% 0.15 259.735 / 0.5) !important;
       color: oklch(75% 0.15 259.735) !important;
     }
   }
 
   .drawer-recent-card {
-    background-color: oklch(22.749% 0.0288 266.273) !important;
-    border-color: oklch(27.950% 0.0368 260.031) !important;
+    background-color: oklch(24.41% 0.0456 268.3692) !important;
+    border-color: oklch(33.51% 0.0331 260.912) !important;
 
     .sidebar-card-header {
-      border-bottom-color: oklch(27.950% 0.0368 260.031) !important;
+      border-bottom-color: oklch(33.51% 0.0331 260.912) !important;
     }
 
     .sidebar-recent-item {
-      border-bottom-color: oklch(27.950% 0.0368 260.031) !important;
+      border-bottom-color: oklch(33.51% 0.0331 260.912) !important;
     }
 
     .sidebar-recent-title {
-      color: oklch(98.415% 0.0034 247.858) !important;
+      color: oklch(92.88% 0.0126 255.5078) !important;
 
       &:hover {
         color: oklch(75% 0.15 259.735) !important;
@@ -241,7 +241,7 @@ html[data-theme='dark'] {
   }
 
   .search-result-title {
-    color: oklch(98.415% 0.0034 247.858) !important;
+    color: oklch(92.88% 0.0126 255.5078) !important;
   }
 
   .search-result-meta,
@@ -256,7 +256,7 @@ html[data-theme='dark'] {
   .sidebar-name,
   .sidebar-cta-title,
   .sidebar-status-label {
-    color: oklch(98.415% 0.0034 247.858);
+    color: oklch(92.88% 0.0126 255.5078);
   }
 
   .sidebar-bio,
@@ -266,17 +266,17 @@ html[data-theme='dark'] {
   }
 
   .sidebar-avatar {
-    border-color: oklch(27.950% 0.0368 260.031);
+    border-color: oklch(33.51% 0.0331 260.912);
   }
 
   .sidebar-btn-secondary,
   .sidebar-cta-btn {
-    background-color: oklch(22.749% 0.0288 266.273);
-    border-color: oklch(27.950% 0.0368 260.031);
-    color: oklch(98.415% 0.0034 247.858);
+    background-color: oklch(24.41% 0.0456 268.3692);
+    border-color: oklch(33.51% 0.0331 260.912);
+    color: oklch(92.88% 0.0126 255.5078);
 
     &:hover {
-      background-color: oklch(27.950% 0.0368 260.031);
+      background-color: oklch(33.51% 0.0331 260.912);
       border-color: oklch(75% 0.15 259.735 / 0.5);
       color: oklch(75% 0.15 259.735);
     }
@@ -307,8 +307,8 @@ html[data-theme='dark'] {
 
   .post,
   .post-row {
-    background-color: oklch(22.749% 0.0288 266.273);
-    border-color: oklch(27.950% 0.0368 260.031);
+    background-color: oklch(24.41% 0.0456 268.3692);
+    border-color: oklch(33.51% 0.0331 260.912);
     box-shadow: 0 2px 8px oklch(0% 0 0 / 0.25);
 
     &:hover {
@@ -322,17 +322,17 @@ html[data-theme='dark'] {
   .pagination,
   .blog-pager,
   hr {
-    border-color: oklch(27.950% 0.0368 260.031);
+    border-color: oklch(33.51% 0.0331 260.912);
   }
 
   .site-nav .nav-list {
     background-color: oklch(16% 0.018 260);
-    border-color: oklch(27.950% 0.0368 260.031);
+    border-color: oklch(33.51% 0.0331 260.912);
   }
 
   .topics-container {
     background: oklch(17% 0.018 260);
-    border-color: oklch(27.950% 0.0368 260.031);
+    border-color: oklch(33.51% 0.0331 260.912);
   }
 
   .site-nav .nav-link {
@@ -340,7 +340,7 @@ html[data-theme='dark'] {
 
     &:hover {
       color: oklch(75% 0.15 259.735);
-      background-color: oklch(27.950% 0.0368 260.031);
+      background-color: oklch(33.51% 0.0331 260.912);
       border-color: oklch(75% 0.15 259.735 / 0.4);
     }
   }
@@ -383,12 +383,12 @@ html[data-theme='dark'] {
 
   .code-block-header {
     background: oklch(15% 0.018 260);
-    border-bottom-color: oklch(27.950% 0.0368 260.031);
+    border-bottom-color: oklch(33.51% 0.0331 260.912);
   }
 
   .post-body > pre {
-    background: oklch(13.627% 0.0364 259.201);
-    color: oklch(98.415% 0.0034 247.858);
+    background: oklch(19.71% 0.0414 269.7076);
+    color: oklch(92.88% 0.0126 255.5078);
   }
 
   code {
@@ -423,12 +423,12 @@ html[data-theme='dark'] {
   .hero-btn-secondary,
   .hero-btn-tertiary,
   .cta-btn-secondary {
-    background-color: oklch(22.749% 0.0288 266.273) !important;
-    border-color: oklch(27.950% 0.0368 260.031) !important;
-    color: oklch(98.415% 0.0034 247.858) !important;
+    background-color: oklch(24.41% 0.0456 268.3692) !important;
+    border-color: oklch(33.51% 0.0331 260.912) !important;
+    color: oklch(92.88% 0.0126 255.5078) !important;
 
     &:hover {
-      background-color: oklch(27.950% 0.0368 260.031) !important;
+      background-color: oklch(33.51% 0.0331 260.912) !important;
       border-color: oklch(75% 0.15 259.735 / 0.5) !important;
       color: oklch(75% 0.15 259.735) !important;
     }
@@ -436,33 +436,33 @@ html[data-theme='dark'] {
 
   .topics-container {
     background-color: oklch(18% 0.025 260) !important;
-    border-color: oklch(27.950% 0.0368 260.031) !important;
+    border-color: oklch(33.51% 0.0331 260.912) !important;
   }
 
   .cta-cyber-card {
-    background-color: oklch(22.749% 0.0288 266.273);
-    border-color: oklch(27.950% 0.0368 260.031);
+    background-color: oklch(24.41% 0.0456 268.3692);
+    border-color: oklch(33.51% 0.0331 260.912);
   }
 
   .drawer-toggle,
   .search-toggle,
   .theme-toggle {
-    color: oklch(98.415% 0.0034 247.858);
+    color: oklch(92.88% 0.0126 255.5078);
 
     &:hover {
-      background-color: oklch(27.950% 0.0368 260.031);
+      background-color: oklch(33.51% 0.0331 260.912);
       color: oklch(75% 0.15 259.735);
     }
   }
 
   .header-profile-badge {
-    background-color: oklch(22.749% 0.0288 266.273);
-    border-color: oklch(27.950% 0.0368 260.031);
-    color: oklch(98.415% 0.0034 247.858);
+    background-color: oklch(24.41% 0.0456 268.3692);
+    border-color: oklch(33.51% 0.0331 260.912);
+    color: oklch(92.88% 0.0126 255.5078);
 
     &:hover {
       border-color: oklch(75% 0.15 259.735);
-      background-color: oklch(27.950% 0.0368 260.031);
+      background-color: oklch(33.51% 0.0331 260.912);
       color: oklch(75% 0.15 259.735);
     }
   }
@@ -473,7 +473,7 @@ html[data-theme='dark'] {
   }
 
   .hero-portrait-img {
-    border-color: oklch(27.950% 0.0368 260.031);
+    border-color: oklch(33.51% 0.0331 260.912);
 
     &:hover {
       border-color: oklch(75% 0.15 259.735);
@@ -486,7 +486,7 @@ html[data-theme='dark'] {
   }
 
   .cta-cyber-img {
-    border-color: oklch(27.950% 0.0368 260.031);
+    border-color: oklch(33.51% 0.0331 260.912);
 
     &:hover {
       border-color: oklch(75% 0.15 259.735);
@@ -494,8 +494,8 @@ html[data-theme='dark'] {
   }
 
   .cta-container .cta-box {
-    background-color: oklch(22.749% 0.0288 266.273);
-    border-color: oklch(27.950% 0.0368 260.031);
+    background-color: oklch(24.41% 0.0456 268.3692);
+    border-color: oklch(33.51% 0.0331 260.912);
     border-top-color: oklch(75% 0.15 259.735);
 
     .cta-desc,
@@ -504,7 +504,7 @@ html[data-theme='dark'] {
     }
 
     .cta-title {
-      color: oklch(98.415% 0.0034 247.858);
+      color: oklch(92.88% 0.0126 255.5078);
     }
 
     .cta-btn-secondary {
@@ -529,7 +529,7 @@ html[data-theme='dark'] {
 
   .author-link-pill {
     background-color: oklch(22% 0.025 260);
-    border-color: oklch(27.950% 0.0368 260.031);
+    border-color: oklch(33.51% 0.0331 260.912);
     color: oklch(75% 0.15 259.735);
 
     &:hover {
@@ -541,12 +541,12 @@ html[data-theme='dark'] {
 
   .post-author-bio,
   .author-bio-card {
-    background-color: oklch(22.749% 0.0288 266.273);
-    border-color: oklch(27.950% 0.0368 260.031);
+    background-color: oklch(24.41% 0.0456 268.3692);
+    border-color: oklch(33.51% 0.0331 260.912);
   }
 
   .author-avatar-fallback {
-    background-color: oklch(27.950% 0.0368 260.031);
+    background-color: oklch(33.51% 0.0331 260.912);
     border-color: oklch(75% 0.15 259.735);
 
     .author-initials {
@@ -556,7 +556,7 @@ html[data-theme='dark'] {
 
   .author-name,
   .author-name a {
-    color: oklch(98.415% 0.0034 247.858);
+    color: oklch(92.88% 0.0126 255.5078);
 
     &:hover {
       color: oklch(75% 0.15 259.735);
@@ -578,32 +578,32 @@ html[data-theme='dark'] {
   #comments .comment,
   .comments-list .comment,
   .comment-thread .comment {
-    background-color: oklch(22.749% 0.0288 266.273) !important;
-    border-color: oklch(27.950% 0.0368 260.031) !important;
+    background-color: oklch(24.41% 0.0456 268.3692) !important;
+    border-color: oklch(33.51% 0.0331 260.912) !important;
   }
 
   .comment-form {
     h4#comment-post-message {
-      color: oklch(98.415% 0.0034 247.858);
+      color: oklch(92.88% 0.0126 255.5078);
     }
 
     iframe#comment-editor,
     iframe.blogger-iframe-colorize {
-      border-color: oklch(27.950% 0.0368 260.031);
+      border-color: oklch(33.51% 0.0331 260.912);
       color-scheme: dark;
       background: transparent !important;
     }
   }
 
   .comment-body {
-    color: oklch(98.415% 0.0034 247.858);
+    color: oklch(92.88% 0.0126 255.5078);
   }
 
   .comments-title,
   .comment-form h4#comment-post-message,
   .comment-author,
   .comment-author a {
-    color: oklch(98.415% 0.0034 247.858);
+    color: oklch(92.88% 0.0126 255.5078);
   }
 
   .comment-footer,
@@ -618,8 +618,8 @@ html[data-theme='dark'] {
   }
 
   .post-nav-item {
-    background-color: oklch(22.749% 0.0288 266.273);
-    border-color: oklch(27.950% 0.0368 260.031);
+    background-color: oklch(24.41% 0.0456 268.3692);
+    border-color: oklch(33.51% 0.0331 260.912);
 
     &:hover {
       border-color: oklch(75% 0.15 259.735 / 0.5);
@@ -627,14 +627,14 @@ html[data-theme='dark'] {
   }
 
   .post-nav-title {
-    color: oklch(98.415% 0.0034 247.858);
+    color: oklch(92.88% 0.0126 255.5078);
   }
 
   .listen-btn,
   .listen-speed-btn {
-    background-color: oklch(22.749% 0.0288 266.273);
-    border-color: oklch(27.950% 0.0368 260.031);
-    color: oklch(98.415% 0.0034 247.858);
+    background-color: oklch(24.41% 0.0456 268.3692);
+    border-color: oklch(33.51% 0.0331 260.912);
+    color: oklch(92.88% 0.0126 255.5078);
 
     &:hover {
       border-color: oklch(75% 0.15 259.735 / 0.5);
@@ -644,7 +644,7 @@ html[data-theme='dark'] {
 
   .table-of-contents {
     background-color: oklch(18% 0.025 266) !important;
-    border-color: oklch(27.950% 0.0368 260.031) !important;
+    border-color: oklch(33.51% 0.0331 260.912) !important;
     box-shadow: 0 4px 20px oklch(0% 0 0 / 0.25) !important;
 
     &::before {
@@ -652,7 +652,7 @@ html[data-theme='dark'] {
     }
 
     .toc-header {
-      border-bottom-color: oklch(27.950% 0.0368 260.031) !important;
+      border-bottom-color: oklch(33.51% 0.0331 260.912) !important;
     }
 
     .toc-title {
@@ -718,11 +718,11 @@ html[data-theme='dark'] {
 
   .code-block-wrap {
     background-color: oklch(16% 0.028 266) !important;
-    border-color: oklch(27.950% 0.0368 260.031) !important;
+    border-color: oklch(33.51% 0.0331 260.912) !important;
 
     .code-block-header {
       background: oklch(14% 0.028 266) !important;
-      border-bottom-color: oklch(27.950% 0.0368 260.031) !important;
+      border-bottom-color: oklch(33.51% 0.0331 260.912) !important;
       color: oklch(80% 0.015 255) !important;
     }
 
@@ -749,13 +749,13 @@ html[data-theme='dark'] {
 
   pre {
     background-color: oklch(16% 0.028 266) !important;
-    border-color: oklch(27.950% 0.0368 260.031) !important;
-    color: oklch(98.415% 0.0034 247.858) !important;
+    border-color: oklch(33.51% 0.0331 260.912) !important;
+    color: oklch(92.88% 0.0126 255.5078) !important;
   }
 
   code {
     background-color: oklch(25% 0.03 260 / 0.7) !important;
-    color: oklch(98.415% 0.0034 247.858) !important;
+    color: oklch(92.88% 0.0126 255.5078) !important;
   }
 
   .post-body pre code,
@@ -844,7 +844,7 @@ html[data-theme='dark'] {
 
   .mermaid-diagram-wrap {
     background: oklch(16% 0.028 266) !important;
-    border-color: oklch(27.950% 0.0368 260.031) !important;
+    border-color: oklch(33.51% 0.0331 260.912) !important;
 
     .mermaid-stage {
       scrollbar-color: oklch(35% 0.02 260) transparent;
@@ -899,7 +899,7 @@ html[data-theme='dark'] {
     }
 
     pre.mermaid {
-      color: oklch(98.415% 0.0034 247.858) !important;
+      color: oklch(92.88% 0.0126 255.5078) !important;
     }
 
     &.is-fallback {
@@ -910,15 +910,15 @@ html[data-theme='dark'] {
 
     .mermaid-fallback-card {
       background: oklch(18% 0.025 260) !important;
-      border-color: oklch(27.950% 0.0368 260.031) !important;
+      border-color: oklch(33.51% 0.0331 260.912) !important;
 
       .mermaid-fallback-header {
         background: oklch(15% 0.025 260) !important;
-        border-bottom-color: oklch(27.950% 0.0368 260.031) !important;
+        border-bottom-color: oklch(33.51% 0.0331 260.912) !important;
       }
 
       .mermaid-fallback-title {
-        color: oklch(98.415% 0.0034 247.858) !important;
+        color: oklch(92.88% 0.0126 255.5078) !important;
 
         .mermaid-fallback-badge {
           background: oklch(25% 0.03 260) !important;
@@ -950,21 +950,21 @@ html[data-theme='dark'] {
   }
 
   .table-container {
-    border-color: oklch(27.950% 0.0368 260.031) !important;
+    border-color: oklch(33.51% 0.0331 260.912) !important;
 
     thead {
       background: oklch(20% 0.028 266) !important;
-      border-bottom-color: oklch(27.950% 0.0368 260.031) !important;
+      border-bottom-color: oklch(33.51% 0.0331 260.912) !important;
     }
 
     th {
       background: oklch(20% 0.028 266) !important;
-      color: oklch(98.415% 0.0034 247.858) !important;
-      border-bottom: 2px solid oklch(27.950% 0.0368 260.031) !important;
+      color: oklch(92.88% 0.0126 255.5078) !important;
+      border-bottom: 2px solid oklch(33.51% 0.0331 260.912) !important;
     }
 
     td {
-      border-bottom-color: oklch(27.950% 0.0368 260.031) !important;
+      border-bottom-color: oklch(33.51% 0.0331 260.912) !important;
       color: oklch(85% 0.015 255) !important;
     }
 
@@ -975,17 +975,17 @@ html[data-theme='dark'] {
 
   .posts-filter-bar {
     background-color: oklch(18% 0.025 266) !important;
-    border-color: oklch(27.950% 0.0368 260.031) !important;
+    border-color: oklch(33.51% 0.0331 260.912) !important;
     box-shadow: 0 4px 16px oklch(0% 0 0 / 0.2) !important;
 
     .filter-label {
-      color: oklch(98.415% 0.0034 247.858) !important;
+      color: oklch(92.88% 0.0126 255.5078) !important;
     }
 
     .filter-input {
       background-color: oklch(14% 0.02 266) !important;
-      border-color: oklch(27.950% 0.0368 260.031) !important;
-      color: oklch(98.415% 0.0034 247.858) !important;
+      border-color: oklch(33.51% 0.0331 260.912) !important;
+      color: oklch(92.88% 0.0126 255.5078) !important;
 
       &::placeholder {
         color: oklch(65% 0.015 255) !important;
@@ -1003,8 +1003,8 @@ html[data-theme='dark'] {
 
     .filter-select {
       background-color: oklch(14% 0.02 266) !important;
-      border-color: oklch(27.950% 0.0368 260.031) !important;
-      color: oklch(98.415% 0.0034 247.858) !important;
+      border-color: oklch(33.51% 0.0331 260.912) !important;
+      color: oklch(92.88% 0.0126 255.5078) !important;
 
       &:focus {
         border-color: oklch(68% 0.19 250) !important;
@@ -1019,7 +1019,7 @@ html[data-theme='dark'] {
   }
 
   .pagination {
-    border-top-color: oklch(27.950% 0.0368 260.031) !important;
+    border-top-color: oklch(33.51% 0.0331 260.912) !important;
 
     .page-nav-btn {
       border-color: oklch(62% 0.19 250) !important;

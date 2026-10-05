@@ -21,7 +21,7 @@
   &:hover {
     transform: translateY(-3px);
     box-shadow: $shadow-md;
-    border-color: oklch(54.615% 0.2152 262.881 / 0.35);
+    border-color: oklch(53.5% 0.1467 251.2451 / 0.35);
   }
 }
 
@@ -36,7 +36,7 @@
   &:hover {
     transform: $card-hover-lift;
     box-shadow: $shadow-md;
-    border-color: oklch(54.615% 0.2152 262.881 / 0.25);
+    border-color: oklch(53.5% 0.1467 251.2451 / 0.25);
   }
 }
 
@@ -278,7 +278,7 @@
     }
 
     &:hover {
-      color: oklch(48% 0.205 263);
+      color: oklch(50% 0.1467 251.2451);
 
       .jump-link-arrow {
         transform: translateX(3px);
@@ -307,7 +307,7 @@ a.label-link,
   letter-spacing: 0.03em;
   color: $accent;
   background: $accent-wash;
-  border: 1px solid oklch(54.615% 0.2152 262.881 / 0.25);
+  border: 1px solid oklch(53.5% 0.1467 251.2451 / 0.25);
   border-radius: 4px;
   padding: 2px 8px !important;
   min-height: unset !important;
@@ -317,7 +317,7 @@ a.label-link,
   transition: background-color $motion-fast $ease-out-quart, border-color $motion-fast $ease-out-quart, transform $motion-fast $ease-out-quart;
 
   &:hover {
-    background-color: oklch(54.615% 0.2152 262.881 / 0.15);
+    background-color: oklch(53.5% 0.1467 251.2451 / 0.15);
     border-color: $accent;
     transform: translateY(-1px);
   }
@@ -472,7 +472,7 @@ body.is-home-lead .post:first-of-type {
 
     &:focus {
       border-color: $accent;
-      box-shadow: 0 0 0 3px oklch(54.615% 0.2152 262.881 / 0.15);
+      box-shadow: 0 0 0 3px oklch(53.5% 0.1467 251.2451 / 0.15);
     }
   }
 
@@ -492,7 +492,7 @@ body.is-home-lead .post:first-of-type {
 
     &:focus {
       border-color: $accent;
-      box-shadow: 0 0 0 3px oklch(54.615% 0.2152 262.881 / 0.15);
+      box-shadow: 0 0 0 3px oklch(53.5% 0.1467 251.2451 / 0.15);
     }
   }
 

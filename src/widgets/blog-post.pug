@@ -107,13 +107,13 @@ b:includable(id='postAuthorBio' var='post')
     aside.post-author-bio.author-bio-card.author-bio(aria-label='About the author')
       b:if(cond='data:post.author.authorPhoto.image')
         .author-avatar-wrap
-          img.author-avatar(expr:src='data:post.author.authorPhoto.image' expr:alt='data:post.author.name ?: "Md. Redwan Ahmed"' loading='lazy' width='64' height='64')/
+          img.author-avatar(expr:src='data:post.author.authorPhoto.image' expr:alt='data:post.author.name ?: data:blog.title' loading='lazy' width='64' height='64')/
       b:if(cond='not data:post.author.authorPhoto.image')
         .author-avatar-wrap
           //- Static text monogram, not another external photo fetch. See
           //- article.scss .author-avatar-fallback / .author-initials.
-          div.author-avatar.author-avatar-fallback(role='img' aria-label='Md Redwan Ahmed')
-            span.author-initials RA
+          div.author-avatar.author-avatar-fallback(role='img' expr:aria-label='data:post.author.name ?: data:blog.title')
+            span.author-initials FCD
       .author-details
         span.author-label Written by
         h3.author-name

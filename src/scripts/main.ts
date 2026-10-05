@@ -1299,99 +1299,8 @@ export function initBloggerFollowPopup(): void {
 // Thumbnail Resolver & Card Hydration
 // ---------------------------------------------------------------------------
 
-export function getPostThumbnailUrl(url: string, title: string): string {
-  const cleanUrl = (url || '').toLowerCase();
-  const cleanTitle = (title || '').toLowerCase();
-
-  if (
-    cleanUrl.includes('breaking-active-directory') ||
-    cleanTitle.includes('active directory') ||
-    cleanTitle.includes('esc1') ||
-    cleanTitle.includes('pki hardening')
-  ) {
-    return 'https://cdn.jsdelivr.net/gh/redwan-cse/blog-assets@main/posts/breaking-active-directory-certificate-services-esc1-exploitation-mechanics-san-i/thumbnail.png';
-  }
-  if (
-    cleanUrl.includes('kernel-privilege-escalation') ||
-    cleanTitle.includes('kernel privilege escalation') ||
-    cleanTitle.includes('ebpf verifier')
-  ) {
-    return 'https://cdn.jsdelivr.net/gh/redwan-cse/blog-assets@main/posts/kernel-privilege-escalation-via-ebpf-verifier-bypass-and-defensive-telemetry/thumbnail.png';
-  }
-  if (
-    cleanUrl.includes('dissecting-kerberoasting') ||
-    cleanTitle.includes('kerberoasting') ||
-    cleanTitle.includes('detection engineering')
-  ) {
-    return 'https://cdn.jsdelivr.net/gh/redwan-cse/blog-assets@main/posts/dissecting-kerberoasting-protocol-mechanics-telemetry-blindspots-and-modern-dete/thumbnail.png';
-  }
-  if (
-    cleanUrl.includes('hardening-sonicwall') ||
-    cleanTitle.includes('hardening sonicwall') ||
-    cleanTitle.includes('waf signatures')
-  ) {
-    return 'https://cdn.jsdelivr.net/gh/redwan-cse/blog-assets@main/posts/hardening-sonicwall-sma1000-waf-signatures-ebpf-te/thumbnail.png';
-  }
-  if (
-    cleanUrl.includes('edge-appliance-compromise') ||
-    cleanTitle.includes('edge appliance') ||
-    cleanTitle.includes('ssrf and rce')
-  ) {
-    return 'https://cdn.jsdelivr.net/gh/redwan-cse/blog-assets@main/posts/edge-appliance-compromise-threat-modeling-the-soni/thumbnail.png';
-  }
-  if (
-    cleanUrl.includes('byovd-edr-evasion') ||
-    cleanTitle.includes('byovd') ||
-    cleanTitle.includes('signed drivers')
-  ) {
-    return 'https://cdn.jsdelivr.net/gh/redwan-cse/blog-assets@main/posts/byovd-edr-evasion-weaponizing-validly/thumbnail.png';
-  }
-  if (
-    cleanUrl.includes('linux-user-namespaces') ||
-    cleanTitle.includes('user namespaces') ||
-    cleanTitle.includes('container isolation')
-  ) {
-    return 'https://cdn.jsdelivr.net/gh/redwan-cse/blog-assets@main/posts/linux-user-namespaces-security-paradox/thumbnail.png';
-  }
-  if (
-    cleanUrl.includes('postgresql-row-level') ||
-    cleanTitle.includes('postgresql') ||
-    cleanTitle.includes('row-level security')
-  ) {
-    return 'https://cdn.jsdelivr.net/gh/redwan-cse/blog-assets@main/posts/postgresql-row-level-security-threat/thumbnail.png';
-  }
-  if (
-    cleanUrl.includes('model-context-protocol') ||
-    cleanTitle.includes('model context protocol') ||
-    cleanTitle.includes('mcp') ||
-    cleanTitle.includes('prompt injection')
-  ) {
-    return 'https://cdn.jsdelivr.net/gh/redwan-cse/blog-assets@main/posts/model-context-protocol-threat-modeling-indirect-pr/thumbnail.png';
-  }
-  if (
-    cleanUrl.includes('hardening-model-context') ||
-    cleanTitle.includes('hardening model context')
-  ) {
-    return 'https://cdn.jsdelivr.net/gh/redwan-cse/blog-assets@main/posts/hardening-model-context-protocol-deterministic-too/thumbnail.png';
-  }
-  if (
-    cleanUrl.includes('xdp') ||
-    cleanUrl.includes('ebpf-packet-filtering') ||
-    cleanTitle.includes('xdp') ||
-    cleanTitle.includes('packet filtering')
-  ) {
-    return 'https://cdn.jsdelivr.net/gh/redwan-cse/blog-assets@main/posts/xdp-ebpf-packet-filtering/thumbnail.png';
-  }
-
-  // Generic fallback: extract post slug from Blogger URL pattern (.../yyyy/mm/slug_id.html)
-  const match = cleanUrl.match(/\/([^/]+?)(?:_\d+)?\.html(?:$|\?)/i);
-  if (match && match[1]) {
-    const slug = match[1].replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-    if (slug) {
-      return `https://cdn.jsdelivr.net/gh/redwan-cse/blog-assets@main/posts/${slug}/thumbnail.png`;
-    }
-  }
-
+export function getPostThumbnailUrl(_url: string, _title: string): string {
+  // FCD: posts carry their own images; there is no external thumbnail CDN.
   return '';
 }
 
@@ -1447,10 +1356,10 @@ function init(): void {
   };
 
   function initAvatarFallbacks(): void {
-    const fallbackUrl = 'https://blogger.googleusercontent.com/img/a/AVvXsEid2pK6sS9Z_2jCm6SFeomZwfHDSq0li0pY6e8i_NNiuJkwHKqMqJ9gLw2qws2Xp42oCc5QGFvDw-PjbWF6CHaF7D-BShybE1d5A4OglhgVfsNPm0dg-1CRHkmrBZnAv8neHaTTb_hEzsaZZMgUP9mnTJqSAvtYtuzbOEKnsE2OJ1viJolqiQU7D532vxQ=s96-rw';
+    // FCD: no shared portrait fallback; a broken avatar image is hidden.
     document.querySelectorAll<HTMLImageElement>('.post-author-mini-avatar, .sidebar-avatar, .drawer-avatar, .header-avatar, .author-avatar').forEach((img) => {
       img.addEventListener('error', () => {
-        if (img.src !== fallbackUrl) img.src = fallbackUrl;
+        img.style.visibility = 'hidden';
       }, { once: true });
     });
   }
@@ -1506,6 +1415,7 @@ interface CatalogPost {
   categories: string[];
   excerpt: string;
   thumbnail?: string;
+  author: string;
 }
 
 export function initHomepageCatalog(): void {
@@ -1613,7 +1523,8 @@ export function initHomepageCatalog(): void {
           month,
           categories,
           excerpt,
-          thumbnail
+          thumbnail,
+          author: entry.author?.[0]?.name?.$t || ''
         };
       });
 
@@ -1697,7 +1608,7 @@ export function initHomepageCatalog(): void {
       postsContainer!.innerHTML = `
         <div class="empty-state" style="padding: 40px 20px; text-align: center;">
           <${h3Tag} class="empty-state-title" style="margin-bottom: 8px;">No articles found</${h3Tag}>
-          <p class="empty-state-desc" style="color: var(--ink-muted, #57606a);">Try clearing your search query or selecting a different year or category.</p>
+          <p class="empty-state-desc" style="color: var(--ink-muted, #606d8e);">Try clearing your search query or selecting a different year or category.</p>
         </div>
       `;
     } else {
@@ -1717,8 +1628,7 @@ export function initHomepageCatalog(): void {
                 </${h2Tag}>
                 <div class="post-meta-row">
                   <div class="post-author-mini">
-                    <img class="post-author-mini-avatar" src="https://blogger.googleusercontent.com/img/a/AVvXsEid2pK6sS9Z_2jCm6SFeomZwfHDSq0li0pY6e8i_NNiuJkwHKqMqJ9gLw2qws2Xp42oCc5QGFvDw-PjbWF6CHaF7D-BShybE1d5A4OglhgVfsNPm0dg-1CRHkmrBZnAv8neHaTTb_hEzsaZZMgUP9mnTJqSAvtYtuzbOEKnsE2OJ1viJolqiQU7D532vxQ=s96-rw" alt="Md Redwan Ahmed" width="24" height="24" loading="lazy" />
-                    <span class="post-author-mini-name">Md. Redwan Ahmed</span>
+                    <span class="post-author-mini-name">${escapeHtml(p.author)}</span>
                   </div>
                   <span class="post-meta-sep">·</span>
                   <time class="post-date" datetime="${p.published}">${escapeHtml(p.dateStr)}</time>
@@ -2265,17 +2175,17 @@ export function initMermaidDiagrams(targetTheme?: 'dark' | 'default'): void {
       theme: currentTheme,
       themeVariables: isDark ? {
         darkMode: true,
-        background: '#161B22',
-        primaryColor: '#2563EB',
-        primaryTextColor: '#F8FAFC',
-        lineColor: '#58A6FF'
+        background: '#171f36',
+        primaryColor: '#166fbe',
+        primaryTextColor: '#e2e8f0',
+        lineColor: '#5d9ce0'
       } : {
         darkMode: false,
-        background: '#FFFFFF',
-        primaryColor: '#F6F8FA',
-        primaryTextColor: '#1F2328',
-        primaryBorderColor: '#D0D7DE',
-        lineColor: '#57606A'
+        background: '#ffffff',
+        primaryColor: '#f0f8fc',
+        primaryTextColor: '#1d2b4d',
+        primaryBorderColor: '#d9e5ee',
+        lineColor: '#606d8e'
       },
       securityLevel: 'loose'
     });
@@ -2601,7 +2511,7 @@ export function initMermaidDiagrams(targetTheme?: 'dark' | 'default'): void {
           bg.setAttribute('y', String(minY));
           bg.setAttribute('width', String(vbWidth));
           bg.setAttribute('height', String(vbHeight));
-          bg.setAttribute('fill', isDarkNow ? '#161b22' : '#ffffff');
+          bg.setAttribute('fill', isDarkNow ? '#171f36' : '#ffffff');
           svgClone.insertBefore(bg, svgClone.firstChild);
 
           const svgData = new XMLSerializer().serializeToString(svgClone);

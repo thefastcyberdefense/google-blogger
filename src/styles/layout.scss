@@ -238,7 +238,7 @@
     &:hover {
       color: $accent;
       background-color: $accent-wash;
-      border-color: oklch(54.615% 0.2152 262.881 / 0.2);
+      border-color: oklch(53.5% 0.1467 251.2451 / 0.2);
     }
   }
 }
@@ -263,7 +263,7 @@ html[data-theme='dark'] .theme-icon-moon {
 .drawer-backdrop {
   position: fixed;
   inset: 0;
-  background: oklch(14.479% 0 0 / 0.55);
+  background: oklch(29.54% 0.0649 265.7059 / 0.55);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   z-index: $z-drawer-backdrop;
@@ -432,7 +432,7 @@ html[data-theme='dark'] .theme-icon-moon {
 
       &:focus {
         border-color: $accent;
-        box-shadow: 0 0 0 2px oklch(54.615% 0.2152 262.881 / 0.25);
+        box-shadow: 0 0 0 2px oklch(53.5% 0.1467 251.2451 / 0.25);
       }
     }
 
@@ -481,7 +481,7 @@ html[data-theme='dark'] .theme-icon-moon {
     &:hover {
       background-color: $accent-wash;
       color: $accent;
-      border-color: oklch(54.615% 0.2152 262.881 / 0.35);
+      border-color: oklch(53.5% 0.1467 251.2451 / 0.35);
       transform: translateX(2px);
     }
   }
@@ -635,7 +635,7 @@ html[data-theme='dark'] .theme-icon-moon {
     .sidebar-recent-tag {
       color: $accent;
       background: $accent-wash;
-      border: 1px solid oklch(54.615% 0.2152 262.881 / 0.2);
+      border: 1px solid oklch(53.5% 0.1467 251.2451 / 0.2);
       padding: 1.5px 6px;
       border-radius: 4px;
       font-weight: 600;
@@ -685,7 +685,7 @@ html[data-theme='dark'] .theme-icon-moon {
     &:hover {
       background: $accent-wash;
       color: $accent;
-      border-color: oklch(54.615% 0.2152 262.881 / 0.3);
+      border-color: oklch(53.5% 0.1467 251.2451 / 0.3);
     }
   }
 }
@@ -730,7 +730,7 @@ html[data-theme='dark'] .theme-icon-moon {
 
     &:focus {
       border-color: $accent;
-      box-shadow: 0 0 0 2px oklch(54.615% 0.2152 262.881 / 0.2);
+      box-shadow: 0 0 0 2px oklch(53.5% 0.1467 251.2451 / 0.2);
     }
   }
 
@@ -827,7 +827,7 @@ html[data-theme='dark'] .theme-icon-moon {
   .search-result-tag {
     color: $accent;
     background: $accent-wash;
-    border: 1px solid oklch(54.615% 0.2152 262.881 / 0.2);
+    border: 1px solid oklch(53.5% 0.1467 251.2451 / 0.2);
     padding: 1px 6px;
     border-radius: 4px;
     font-weight: 600;
@@ -1102,7 +1102,7 @@ html[data-theme='dark'] .theme-icon-moon {
       box-shadow: $shadow-sm;
 
       &:hover {
-        background: oklch(48% 0.205 263);
+        background: oklch(50% 0.1467 251.2451);
         transform: translateY(-2px);
         box-shadow: $shadow-accent-sm;
       }
@@ -1206,13 +1206,13 @@ html[data-theme='dark'] .theme-icon-moon {
     &:hover {
       color: $accent;
       background-color: $accent-wash;
-      border-color: oklch(54.615% 0.2152 262.881 / 0.2);
+      border-color: oklch(53.5% 0.1467 251.2451 / 0.2);
     }
 
     &.is-active {
       color: $accent;
       background-color: $accent-wash;
-      border-color: oklch(54.615% 0.2152 262.881 / 0.25);
+      border-color: oklch(53.5% 0.1467 251.2451 / 0.25);
       font-weight: 700;
     }
 
@@ -1241,7 +1241,7 @@ html[data-theme='dark'] .theme-icon-moon {
     &:hover .label-count,
     &.is-active .topic-count,
     &.is-active .label-count {
-      background: oklch(54.615% 0.2152 262.881 / 0.12);
+      background: oklch(53.5% 0.1467 251.2451 / 0.12);
       color: $accent;
     }
   }
@@ -1333,7 +1333,7 @@ html[data-theme='dark'] .theme-icon-moon {
     transition: transform $motion-fast $ease-out-quart, box-shadow $motion-fast $ease-out-quart, background-color $motion-fast $ease-out-quart;
 
     &:hover {
-      background-color: oklch(48% 0.205 263);
+      background-color: oklch(50% 0.1467 251.2451);
       box-shadow: $shadow-md;
       transform: translateY(-1px);
     }
@@ -1363,7 +1363,7 @@ html[data-theme='dark'] .theme-icon-moon {
   }
 
   &:hover {
-    border-color: oklch(54.615% 0.2152 262.881 / 0.3);
+    border-color: oklch(53.5% 0.1467 251.2451 / 0.3);
     box-shadow: $shadow-lg;
   }
 }
@@ -1557,7 +1557,7 @@ html[data-theme='dark'] .theme-icon-moon {
       border: 1px solid $accent;
 
       &:hover {
-        background: oklch(48% 0.205 263);
+        background: oklch(50% 0.1467 251.2451);
         transform: translateY(-2px);
         box-shadow: $shadow-accent-sm;
       }
@@ -1566,10 +1566,10 @@ html[data-theme='dark'] .theme-icon-moon {
     &.cta-btn-secondary {
       background: $page;
       color: $accent;
-      border: 1px solid oklch(54.615% 0.2152 262.881 / 0.25);
+      border: 1px solid oklch(53.5% 0.1467 251.2451 / 0.25);
 
       &:hover {
-        color: oklch(48% 0.205 263);
+        color: oklch(50% 0.1467 251.2451);
         border-color: $accent;
         background: $accent-wash;
         transform: translateY(-2px);
@@ -1970,14 +1970,14 @@ html[data-theme='dark'] .theme-icon-moon {
     transition: transform $motion-fast $ease-out-quart, box-shadow $motion-fast $ease-out-quart, background-color $motion-fast $ease-out-quart;
 
     &:hover {
-      background-color: oklch(48% 0.205 263);
+      background-color: oklch(50% 0.1467 251.2451);
       box-shadow: $shadow-md;
       transform: translateY(-1px);
     }
 
     &:active {
       transform: translateY(1px) scale(0.96);
-      box-shadow: 0 1px 2px oklch(14.479% 0 0 / 0.15);
+      box-shadow: 0 1px 2px oklch(29.54% 0.0649 265.7059 / 0.15);
     }
   }
 }
@@ -2119,7 +2119,7 @@ html[data-theme='dark'] .theme-icon-moon {
 
   &:active {
     transform: $pill-active-scale;
-    box-shadow: 0 1px 2px oklch(54.615% 0.2152 262.881 / 0.08);
+    box-shadow: 0 1px 2px oklch(53.5% 0.1467 251.2451 / 0.08);
   }
 }
 
@@ -2253,7 +2253,7 @@ pre {
 
   &:hover {
     box-shadow: $shadow-md;
-    border-color: oklch(54.615% 0.2152 262.881 / 0.3);
+    border-color: oklch(53.5% 0.1467 251.2451 / 0.3);
   }
 }
 
@@ -2331,7 +2331,7 @@ pre {
 
     &:focus {
       border-color: $accent;
-      box-shadow: 0 0 0 2px oklch(54.615% 0.2152 262.881 / 0.25);
+      box-shadow: 0 0 0 2px oklch(53.5% 0.1467 251.2451 / 0.25);
     }
   }
 
@@ -2425,7 +2425,7 @@ pre {
   .sidebar-recent-tag {
     color: $accent;
     background: $accent-wash;
-    border: 1px solid oklch(54.615% 0.2152 262.881 / 0.2);
+    border: 1px solid oklch(53.5% 0.1467 251.2451 / 0.2);
     padding: 1.5px 6px;
     border-radius: 4px;
     font-weight: 600;
@@ -2545,7 +2545,7 @@ pre {
         box-shadow: $shadow-accent-sm;
 
         &:hover {
-          background: oklch(48% 0.205 263);
+          background: oklch(50% 0.1467 251.2451);
           transform: translateY(-1px);
           box-shadow: $shadow-accent-md;
         }
@@ -2605,7 +2605,7 @@ pre {
     padding: $space-1 $space-3;
     background: $page;
     color: $accent;
-    border: 1px solid oklch(54.615% 0.2152 262.881 / 0.35);
+    border: 1px solid oklch(53.5% 0.1467 251.2451 / 0.35);
     border-radius: 8px;
     font-family: $font-sans;
     font-size: 0.8125rem;

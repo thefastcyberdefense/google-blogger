@@ -93,7 +93,28 @@ jobs:
           }
           JS
       - name: Run the Ledger V3 contract inside the no-egress namespace
-        run: bash tools/run-isolated-tests.sh run contract 120 npm run contract:check
+        run: |
+          marker="fcd-contract-$(cat /proc/sys/kernel/random/uuid)"
+          echo "::stop-commands::$marker"
+          set +e
+          bash tools/run-isolated-tests.sh run contract 120 npm run contract:check > contract.log 2>&1
+          status=$?
+          cat contract.log
+          echo "::$marker::"
+          exit "$status"
+      - name: Report contract evidence
+        if: ${{ always() }}
+        run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          const escape = (value) => String(value).replaceAll('%', '%25').replaceAll('\r', '%0D').replaceAll('\n', '%0A');
+          if (fs.existsSync('contract.log')) {
+            const lines = fs.readFileSync('contract.log', 'utf8').split('\n');
+            const bad = lines.filter((l) => /fail|error|\u2717|\u2718|not ok|violation/i.test(l));
+            const tail = lines.slice(-40);
+            console.log('::notice title=Contract summary::' + escape([...bad.slice(0, 80), '--- tail ---', ...tail].join('\n').slice(0, 12000)));
+          }
+          JS
       - name: Finalize isolation evidence
         if: ${{ always() }}
         env:

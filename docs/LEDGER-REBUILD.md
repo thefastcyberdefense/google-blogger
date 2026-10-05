@@ -10,9 +10,10 @@ ledger-port.yml workflow (bot commits do not trigger CI).
 | --- | --- | --- |
 | US-L1 native engine checks | green | tests/fcd/native-contract.test.ts 5/5 |
 | US-L2 verbatim Ledger import | done | 065a95f blob SHAs match upstream |
-| US-L3 FCD identity | fix applied (6ede33c) | run 37333013292 located the last hits: comment avatars, blog-author match, follow/RSS links, ORCID styles |
-| US-L4 FCD palette | fix applied (6ede33c) | dark.scss map (5b2a7d6); article/layout/threaded-comments leftovers |
-| US-L5 hardening | fix applied (6ede33c) | red in run 37333013292: cache restore, feed URLs in recent/search/catalog, 1718 catalog pages, Mermaid loose |
+| US-L3 FCD identity | green in unit run 37339032545 | brand identity tests pass; follow URL moved to params (contract R-V3-2 AC4) in 7aed783 |
+| US-L4 FCD palette | green in unit run 37339032545 | no upstream palette literal; all FCD tokens present |
+| US-L5 hardening | green in unit run 37339032545 | tests/fcd/hardening.test.ts 7/7 (red first in run 37333013292) |
+| Ledger V3 contract | red in run 37339032545 | url-path-operator only; fixed in 7aed783, awaiting CI |
 | US-L6 cleanup and records | pending | remove port/, ledger-port.yml, staging-check.yml, excerpt step; CHANGELOG, AGENTS.md, PR body |
 
 ## US-L5 changes (main.ts, via port edits)

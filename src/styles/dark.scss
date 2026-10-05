@@ -70,8 +70,8 @@ html[data-theme='dark'] {
 
     &:hover {
       background-color: oklch(33.51% 0.0331 260.912);
-      border-color: oklch(75% 0.15 259.735 / 0.5);
-      color: oklch(75% 0.15 259.735);
+      border-color: oklch(68% 0.12 251.2451 / 0.5);
+      color: oklch(68% 0.12 251.2451);
     }
   }
 
@@ -90,7 +90,7 @@ html[data-theme='dark'] {
   .footer-container,
   .footer-container a,
   .comments-title {
-    color: oklch(80% 0.015 255) !important;
+    color: oklch(71.37% 0.0192 261.3246) !important;
   }
 
 
@@ -139,7 +139,7 @@ html[data-theme='dark'] {
     box-shadow: none;
 
     &:hover {
-      border-color: oklch(75% 0.15 259.735 / 0.4);
+      border-color: oklch(68% 0.12 251.2451 / 0.4);
       box-shadow: none;
     }
   }
@@ -155,23 +155,23 @@ html[data-theme='dark'] {
     color: oklch(92.88% 0.0126 255.5078);
 
     &:hover {
-      color: oklch(75% 0.15 259.735) !important;
+      color: oklch(68% 0.12 251.2451) !important;
     }
   }
 
   .sidebar-recent-item:hover .sidebar-recent-title {
-    color: oklch(75% 0.15 259.735);
+    color: oklch(68% 0.12 251.2451);
   }
 
   .sidebar-recent-date,
   .sidebar-recent-meta,
   .drawer-subtitle,
   .sidebar-tagline {
-    color: oklch(80% 0.015 255);
+    color: oklch(71.37% 0.0192 261.3246);
   }
 
   .sidebar-recent-tag {
-    color: oklch(80% 0.14 260) !important;
+    color: oklch(80% 0.08 251.2451) !important;
     background-color: oklch(22% 0.04 260) !important;
     border-color: oklch(35% 0.06 260) !important;
   }
@@ -183,12 +183,12 @@ html[data-theme='dark'] {
     color: oklch(92.88% 0.0126 255.5078) !important;
 
     &::placeholder {
-      color: oklch(65% 0.015 255) !important;
+      color: oklch(71.37% 0.0192 261.3246) !important;
     }
 
     &:focus {
-      border-color: oklch(75% 0.15 259.735) !important;
-      box-shadow: 0 0 0 2px oklch(75% 0.15 259.735 / 0.3) !important;
+      border-color: oklch(68% 0.12 251.2451) !important;
+      box-shadow: 0 0 0 2px oklch(68% 0.12 251.2451 / 0.3) !important;
     }
   }
 
@@ -209,8 +209,8 @@ html[data-theme='dark'] {
 
     &:hover {
       background-color: oklch(33.51% 0.0331 260.912) !important;
-      border-color: oklch(75% 0.15 259.735 / 0.5) !important;
-      color: oklch(75% 0.15 259.735) !important;
+      border-color: oklch(68% 0.12 251.2451 / 0.5) !important;
+      color: oklch(68% 0.12 251.2451) !important;
     }
   }
 
@@ -230,7 +230,7 @@ html[data-theme='dark'] {
       color: oklch(92.88% 0.0126 255.5078) !important;
 
       &:hover {
-        color: oklch(75% 0.15 259.735) !important;
+        color: oklch(68% 0.12 251.2451) !important;
       }
     }
   }
@@ -246,11 +246,11 @@ html[data-theme='dark'] {
 
   .search-result-meta,
   .search-result-date {
-    color: oklch(75% 0.015 255) !important;
+    color: oklch(71.37% 0.0192 261.3246) !important;
   }
 
   .sidebar-cta-tag {
-    color: oklch(75% 0.15 259.735);
+    color: oklch(68% 0.12 251.2451);
   }
 
   .sidebar-name,
@@ -262,7 +262,7 @@ html[data-theme='dark'] {
   .sidebar-bio,
   .sidebar-cta-desc,
   .sidebar-status-text {
-    color: oklch(80% 0.015 255);
+    color: oklch(71.37% 0.0192 261.3246);
   }
 
   .sidebar-avatar {
@@ -277,8 +277,8 @@ html[data-theme='dark'] {
 
     &:hover {
       background-color: oklch(33.51% 0.0331 260.912);
-      border-color: oklch(75% 0.15 259.735 / 0.5);
-      color: oklch(75% 0.15 259.735);
+      border-color: oklch(68% 0.12 251.2451 / 0.5);
+      color: oklch(68% 0.12 251.2451);
     }
   }
 
@@ -287,12 +287,12 @@ html[data-theme='dark'] {
   .cta-btn-primary,
   .cta-button,
   .cta-btn {
-    background-color: oklch(50% 0.22 260) !important;
+    background-color: oklch(53.5% 0.1467 251.2451) !important;
     color: #ffffff !important;
 
     &:hover {
-      background-color: oklch(45% 0.22 260) !important;
-      box-shadow: 0 4px 16px oklch(50% 0.22 260 / 0.4);
+      background-color: oklch(50% 0.1467 251.2451) !important;
+      box-shadow: 0 4px 16px oklch(53.5% 0.1467 251.2451 / 0.4);
       color: #ffffff !important;
     }
   }
@@ -301,7 +301,7 @@ html[data-theme='dark'] {
   .cta-container .cta-box:hover,
   .author-bio-card:hover,
   .post-nav-item:hover {
-    border-color: oklch(75% 0.15 259.735 / 0.4);
+    border-color: oklch(68% 0.12 251.2451 / 0.4);
     box-shadow: none;
   }
 
@@ -312,7 +312,7 @@ html[data-theme='dark'] {
     box-shadow: 0 2px 8px oklch(0% 0 0 / 0.25);
 
     &:hover {
-      border-color: oklch(75% 0.15 259.735 / 0.4);
+      border-color: oklch(68% 0.12 251.2451 / 0.4);
       box-shadow: none;
     }
   }
@@ -339,9 +339,9 @@ html[data-theme='dark'] {
     color: oklch(86% 0.008 260);
 
     &:hover {
-      color: oklch(75% 0.15 259.735);
+      color: oklch(68% 0.12 251.2451);
       background-color: oklch(33.51% 0.0331 260.912);
-      border-color: oklch(75% 0.15 259.735 / 0.4);
+      border-color: oklch(68% 0.12 251.2451 / 0.4);
     }
   }
 
@@ -352,15 +352,15 @@ html[data-theme='dark'] {
 
     &.is-active {
       background-color: oklch(26% 0.06 260) !important;
-      border-color: oklch(75% 0.15 259.735) !important;
-      color: oklch(75% 0.15 259.735) !important;
+      border-color: oklch(68% 0.12 251.2451) !important;
+      color: oklch(68% 0.12 251.2451) !important;
       font-weight: 600;
     }
 
     &:hover {
       background-color: oklch(26% 0.06 260) !important;
-      border-color: oklch(75% 0.15 259.735 / 0.6) !important;
-      color: oklch(75% 0.15 259.735) !important;
+      border-color: oklch(68% 0.12 251.2451 / 0.6) !important;
+      color: oklch(68% 0.12 251.2451) !important;
     }
   }
 
@@ -368,7 +368,7 @@ html[data-theme='dark'] {
   .label-link {
     background-color: oklch(22% 0.04 260) !important;
     border-color: oklch(35% 0.06 260) !important;
-    color: oklch(80% 0.14 260) !important;
+    color: oklch(80% 0.08 251.2451) !important;
     min-height: unset !important;
     height: auto !important;
     padding: 2px 8px !important;
@@ -376,8 +376,8 @@ html[data-theme='dark'] {
 
     &:hover {
       background-color: oklch(28% 0.08 260) !important;
-      border-color: oklch(75% 0.15 259.735) !important;
-      color: oklch(90% 0.15 260) !important;
+      border-color: oklch(68% 0.12 251.2451) !important;
+      color: oklch(90% 0.05 251.2451) !important;
     }
   }
 
@@ -393,7 +393,7 @@ html[data-theme='dark'] {
 
   code {
     background: oklch(22% 0.025 260);
-    color: oklch(75% 0.15 259.735);
+    color: oklch(68% 0.12 251.2451);
   }
 
   pre code {
@@ -402,22 +402,11 @@ html[data-theme='dark'] {
   }
 
 
-  .orcid-badge {
-    background: oklch(20% 0.028 260) !important;
-    border-color: oklch(30% 0.035 260) !important;
-    color: oklch(88% 0.01 260) !important;
-
-    &:hover {
-      background: oklch(24% 0.04 135) !important;
-      border-color: rgba(166, 206, 57, 0.6) !important;
-      color: #A6CE39 !important;
-    }
-  }
 
   .footer-links-list a:hover,
   .footer-back-to-top:hover,
   .hero-btn-tertiary:hover {
-    color: oklch(75% 0.15 259.735);
+    color: oklch(68% 0.12 251.2451);
   }
 
   .hero-btn-secondary,
@@ -429,8 +418,8 @@ html[data-theme='dark'] {
 
     &:hover {
       background-color: oklch(33.51% 0.0331 260.912) !important;
-      border-color: oklch(75% 0.15 259.735 / 0.5) !important;
-      color: oklch(75% 0.15 259.735) !important;
+      border-color: oklch(68% 0.12 251.2451 / 0.5) !important;
+      color: oklch(68% 0.12 251.2451) !important;
     }
   }
 
@@ -451,7 +440,7 @@ html[data-theme='dark'] {
 
     &:hover {
       background-color: oklch(33.51% 0.0331 260.912);
-      color: oklch(75% 0.15 259.735);
+      color: oklch(68% 0.12 251.2451);
     }
   }
 
@@ -461,46 +450,46 @@ html[data-theme='dark'] {
     color: oklch(92.88% 0.0126 255.5078);
 
     &:hover {
-      border-color: oklch(75% 0.15 259.735);
+      border-color: oklch(68% 0.12 251.2451);
       background-color: oklch(33.51% 0.0331 260.912);
-      color: oklch(75% 0.15 259.735);
+      color: oklch(68% 0.12 251.2451);
     }
   }
 
   .header-brand:hover .site-title,
   .header-brand:hover .site-tagline {
-    color: oklch(75% 0.15 259.735);
+    color: oklch(68% 0.12 251.2451);
   }
 
   .hero-portrait-img {
     border-color: oklch(33.51% 0.0331 260.912);
 
     &:hover {
-      border-color: oklch(75% 0.15 259.735);
+      border-color: oklch(68% 0.12 251.2451);
       box-shadow: 0 8px 32px oklch(0% 0 0 / 0.5);
     }
   }
 
   .cta-tag {
-    color: oklch(75% 0.15 259.735);
+    color: oklch(68% 0.12 251.2451);
   }
 
   .cta-cyber-img {
     border-color: oklch(33.51% 0.0331 260.912);
 
     &:hover {
-      border-color: oklch(75% 0.15 259.735);
+      border-color: oklch(68% 0.12 251.2451);
     }
   }
 
   .cta-container .cta-box {
     background-color: oklch(24.41% 0.0456 268.3692);
     border-color: oklch(33.51% 0.0331 260.912);
-    border-top-color: oklch(75% 0.15 259.735);
+    border-top-color: oklch(68% 0.12 251.2451);
 
     .cta-desc,
     p {
-      color: oklch(80% 0.015 255);
+      color: oklch(71.37% 0.0192 261.3246);
     }
 
     .cta-title {
@@ -509,33 +498,33 @@ html[data-theme='dark'] {
 
     .cta-btn-secondary {
       background-color: transparent;
-      border-color: oklch(50% 0.22 260 / 0.4);
-      color: oklch(75% 0.15 259.735) !important;
+      border-color: oklch(53.5% 0.1467 251.2451 / 0.4);
+      color: oklch(68% 0.12 251.2451) !important;
 
       &:hover {
         background-color: oklch(22% 0.035 260);
-        border-color: oklch(75% 0.15 259.735);
+        border-color: oklch(68% 0.12 251.2451);
       }
     }
   }
 
   .jump-link a {
-    color: oklch(75% 0.15 259.735);
+    color: oklch(68% 0.12 251.2451);
 
     &:hover {
-      color: oklch(80% 0.15 259.735);
+      color: oklch(74% 0.1 251.2451);
     }
   }
 
   .author-link-pill {
     background-color: oklch(22% 0.025 260);
     border-color: oklch(33.51% 0.0331 260.912);
-    color: oklch(75% 0.15 259.735);
+    color: oklch(68% 0.12 251.2451);
 
     &:hover {
       background-color: oklch(26% 0.045 250);
-      border-color: oklch(75% 0.15 259.735 / 0.6);
-      color: oklch(80% 0.15 259.735);
+      border-color: oklch(68% 0.12 251.2451 / 0.6);
+      color: oklch(74% 0.1 251.2451);
     }
   }
 
@@ -547,10 +536,10 @@ html[data-theme='dark'] {
 
   .author-avatar-fallback {
     background-color: oklch(33.51% 0.0331 260.912);
-    border-color: oklch(75% 0.15 259.735);
+    border-color: oklch(68% 0.12 251.2451);
 
     .author-initials {
-      color: oklch(75% 0.15 259.735);
+      color: oklch(68% 0.12 251.2451);
     }
   }
 
@@ -559,19 +548,19 @@ html[data-theme='dark'] {
     color: oklch(92.88% 0.0126 255.5078);
 
     &:hover {
-      color: oklch(75% 0.15 259.735);
+      color: oklch(68% 0.12 251.2451);
     }
   }
 
   .author-description {
-    color: oklch(80% 0.015 255);
+    color: oklch(71.37% 0.0192 261.3246);
   }
 
   .cta-box a,
   .cta-desc a,
   .footer a,
   .footer-copyright a {
-    color: oklch(75% 0.15 259.735);
+    color: oklch(68% 0.12 251.2451);
   }
 
   .comment-form,
@@ -614,7 +603,7 @@ html[data-theme='dark'] {
   .author-label,
   .post-nav-label,
   .post-nav-direction {
-    color: oklch(80% 0.015 255);
+    color: oklch(71.37% 0.0192 261.3246);
   }
 
   .post-nav-item {
@@ -622,7 +611,7 @@ html[data-theme='dark'] {
     border-color: oklch(33.51% 0.0331 260.912);
 
     &:hover {
-      border-color: oklch(75% 0.15 259.735 / 0.5);
+      border-color: oklch(68% 0.12 251.2451 / 0.5);
     }
   }
 
@@ -637,8 +626,8 @@ html[data-theme='dark'] {
     color: oklch(92.88% 0.0126 255.5078);
 
     &:hover {
-      border-color: oklch(75% 0.15 259.735 / 0.5);
-      color: oklch(75% 0.15 259.735);
+      border-color: oklch(68% 0.12 251.2451 / 0.5);
+      color: oklch(68% 0.12 251.2451);
     }
   }
 
@@ -648,7 +637,7 @@ html[data-theme='dark'] {
     box-shadow: 0 4px 20px oklch(0% 0 0 / 0.25) !important;
 
     &::before {
-      background: linear-gradient(90deg, oklch(75% 0.15 259.735), oklch(50% 0.12 250 / 0.2)) !important;
+      background: linear-gradient(90deg, oklch(68% 0.12 251.2451), oklch(50% 0.12 250 / 0.2)) !important;
     }
 
     .toc-header {
@@ -656,26 +645,26 @@ html[data-theme='dark'] {
     }
 
     .toc-title {
-      color: oklch(75% 0.015 255) !important;
+      color: oklch(71.37% 0.0192 261.3246) !important;
 
       .toc-icon {
-        color: oklch(75% 0.15 259.735) !important;
+        color: oklch(68% 0.12 251.2451) !important;
       }
     }
 
     .toc-badge {
-      background: oklch(75% 0.15 259.735 / 0.15) !important;
-      color: oklch(75% 0.15 259.735) !important;
+      background: oklch(68% 0.12 251.2451 / 0.15) !important;
+      color: oklch(68% 0.12 251.2451) !important;
     }
 
     .toc-toggle {
       border-color: oklch(30% 0.03 260) !important;
-      color: oklch(75% 0.015 255) !important;
+      color: oklch(71.37% 0.0192 261.3246) !important;
 
       &:hover {
-        background: oklch(75% 0.15 259.735 / 0.15) !important;
-        border-color: oklch(75% 0.15 259.735) !important;
-        color: oklch(75% 0.15 259.735) !important;
+        background: oklch(68% 0.12 251.2451 / 0.15) !important;
+        border-color: oklch(68% 0.12 251.2451) !important;
+        color: oklch(68% 0.12 251.2451) !important;
       }
     }
 
@@ -683,36 +672,36 @@ html[data-theme='dark'] {
       color: oklch(85% 0.012 255) !important;
 
       .toc-num {
-        color: oklch(60% 0.015 255) !important;
+        color: oklch(71.37% 0.0192 261.3246) !important;
       }
 
       &:hover {
-        color: oklch(98% 0.003 247) !important;
-        background: oklch(75% 0.15 259.735 / 0.12) !important;
-        border-left-color: oklch(75% 0.15 259.735) !important;
+        color: oklch(97.43% 0.0101 228.8865) !important;
+        background: oklch(68% 0.12 251.2451 / 0.12) !important;
+        border-left-color: oklch(68% 0.12 251.2451) !important;
 
         .toc-num {
-          color: oklch(75% 0.15 259.735) !important;
+          color: oklch(68% 0.12 251.2451) !important;
         }
       }
 
       &.is-active {
-        color: oklch(98% 0.003 247) !important;
-        background: oklch(75% 0.15 259.735 / 0.15) !important;
-        border-left-color: oklch(75% 0.15 259.735) !important;
+        color: oklch(97.43% 0.0101 228.8865) !important;
+        background: oklch(68% 0.12 251.2451 / 0.15) !important;
+        border-left-color: oklch(68% 0.12 251.2451) !important;
 
         .toc-num {
-          color: oklch(75% 0.15 259.735) !important;
+          color: oklch(68% 0.12 251.2451) !important;
         }
       }
     }
   }
 
   .heading-anchor {
-    color: oklch(75% 0.015 255) !important;
+    color: oklch(71.37% 0.0192 261.3246) !important;
 
     &:hover {
-      color: oklch(75% 0.15 259.735) !important;
+      color: oklch(68% 0.12 251.2451) !important;
     }
   }
 
@@ -723,18 +712,18 @@ html[data-theme='dark'] {
     .code-block-header {
       background: oklch(14% 0.028 266) !important;
       border-bottom-color: oklch(33.51% 0.0331 260.912) !important;
-      color: oklch(80% 0.015 255) !important;
+      color: oklch(71.37% 0.0192 261.3246) !important;
     }
 
     .code-copy-btn {
-      background: oklch(22% 0.028 266 / 0.85) !important;
+      background: oklch(24.41% 0.0456 268.3692 / 0.85) !important;
       border-color: oklch(30% 0.03 260) !important;
-      color: oklch(75% 0.01 255) !important;
+      color: oklch(71.37% 0.0192 261.3246) !important;
 
       &:hover {
         background: oklch(26% 0.03 260) !important;
         color: #ffffff !important;
-        border-color: oklch(75% 0.15 259.735) !important;
+        border-color: oklch(68% 0.12 251.2451) !important;
       }
     }
 
@@ -768,9 +757,9 @@ html[data-theme='dark'] {
   }
 
   .code-copy-btn {
-    background: oklch(22% 0.028 266 / 0.85) !important;
+    background: oklch(24.41% 0.0456 268.3692 / 0.85) !important;
     border-color: oklch(30% 0.03 260) !important;
-    color: oklch(75% 0.01 255) !important;
+    color: oklch(71.37% 0.0192 261.3246) !important;
 
     &:hover {
       background: oklch(26% 0.03 260) !important;
@@ -873,11 +862,11 @@ html[data-theme='dark'] {
       }
 
       .mm-btn {
-        color: oklch(75% 0.015 255) !important;
+        color: oklch(71.37% 0.0192 261.3246) !important;
 
         &:hover:not(:disabled) {
-          background: oklch(75% 0.15 259.735 / 0.15) !important;
-          color: oklch(75% 0.15 259.735) !important;
+          background: oklch(68% 0.12 251.2451 / 0.15) !important;
+          color: oklch(68% 0.12 251.2451) !important;
         }
 
         &:disabled {
@@ -886,15 +875,15 @@ html[data-theme='dark'] {
       }
 
       .mm-level {
-        color: oklch(75% 0.015 255) !important;
+        color: oklch(71.37% 0.0192 261.3246) !important;
 
         &:hover {
-          color: oklch(75% 0.15 259.735) !important;
+          color: oklch(68% 0.12 251.2451) !important;
         }
       }
 
       .mm-sep {
-        background: oklch(28% 0.035 260) !important;
+        background: oklch(33.51% 0.0331 260.912) !important;
       }
     }
 
@@ -922,19 +911,19 @@ html[data-theme='dark'] {
 
         .mermaid-fallback-badge {
           background: oklch(25% 0.03 260) !important;
-          color: oklch(80% 0.015 255) !important;
+          color: oklch(71.37% 0.0192 261.3246) !important;
         }
       }
 
       .fallback-copy-btn {
         background: oklch(20% 0.028 266) !important;
         border-color: oklch(32% 0.03 260) !important;
-        color: oklch(80% 0.015 255) !important;
+        color: oklch(71.37% 0.0192 261.3246) !important;
 
         &:hover {
           background: oklch(25% 0.04 260) !important;
-          color: oklch(75% 0.15 259.735) !important;
-          border-color: oklch(75% 0.15 259.735) !important;
+          color: oklch(68% 0.12 251.2451) !important;
+          border-color: oklch(68% 0.12 251.2451) !important;
         }
 
         &.is-copied {
@@ -988,17 +977,17 @@ html[data-theme='dark'] {
       color: oklch(92.88% 0.0126 255.5078) !important;
 
       &::placeholder {
-        color: oklch(65% 0.015 255) !important;
+        color: oklch(71.37% 0.0192 261.3246) !important;
       }
 
       &:focus {
-        border-color: oklch(68% 0.19 250) !important;
-        box-shadow: 0 0 0 3px oklch(68% 0.19 250 / 0.2) !important;
+        border-color: oklch(63.86% 0.1467 251.2451) !important;
+        box-shadow: 0 0 0 3px oklch(63.86% 0.1467 251.2451 / 0.2) !important;
       }
     }
 
     .filter-select-wrap::after {
-      border-top-color: oklch(75% 0.015 255) !important;
+      border-top-color: oklch(71.37% 0.0192 261.3246) !important;
     }
 
     .filter-select {
@@ -1007,13 +996,13 @@ html[data-theme='dark'] {
       color: oklch(92.88% 0.0126 255.5078) !important;
 
       &:focus {
-        border-color: oklch(68% 0.19 250) !important;
-        box-shadow: 0 0 0 3px oklch(68% 0.19 250 / 0.2) !important;
+        border-color: oklch(63.86% 0.1467 251.2451) !important;
+        box-shadow: 0 0 0 3px oklch(63.86% 0.1467 251.2451 / 0.2) !important;
       }
 
       option {
-        background-color: #161b22;
-        color: #f0f6fc;
+        background-color: #171f36;
+        color: #e2e8f0;
       }
     }
   }
@@ -1022,11 +1011,11 @@ html[data-theme='dark'] {
     border-top-color: oklch(33.51% 0.0331 260.912) !important;
 
     .page-nav-btn {
-      border-color: oklch(62% 0.19 250) !important;
-      color: oklch(75% 0.15 250) !important;
+      border-color: oklch(53.5% 0.1467 251.2451) !important;
+      color: oklch(68% 0.12 251.2451) !important;
 
       &:hover:not(:disabled):not(.is-disabled) {
-        background: oklch(62% 0.19 250) !important;
+        background: oklch(53.5% 0.1467 251.2451) !important;
         color: #ffffff !important;
       }
 
@@ -1038,23 +1027,23 @@ html[data-theme='dark'] {
     }
 
     .page-num-btn {
-      border-color: oklch(62% 0.19 250) !important;
-      color: oklch(75% 0.15 250) !important;
+      border-color: oklch(53.5% 0.1467 251.2451) !important;
+      color: oklch(68% 0.12 251.2451) !important;
 
       &:hover:not(.is-active):not(.page-ellipsis) {
-        background: oklch(62% 0.19 250 / 0.15) !important;
+        background: oklch(53.5% 0.1467 251.2451 / 0.15) !important;
         color: #ffffff !important;
       }
 
       &.is-active {
-        background: oklch(62% 0.19 250) !important;
-        border-color: oklch(62% 0.19 250) !important;
+        background: oklch(53.5% 0.1467 251.2451) !important;
+        border-color: oklch(53.5% 0.1467 251.2451) !important;
         color: #ffffff !important;
-        box-shadow: 0 2px 10px oklch(62% 0.19 250 / 0.4) !important;
+        box-shadow: 0 2px 10px oklch(53.5% 0.1467 251.2451 / 0.4) !important;
       }
 
       &.page-ellipsis {
-        color: oklch(60% 0.015 255) !important;
+        color: oklch(71.37% 0.0192 261.3246) !important;
       }
     }
   }

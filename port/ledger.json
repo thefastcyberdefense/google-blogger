@@ -87,7 +87,7 @@
   {"path": "src/scripts/main.ts", "find": "img.alt = 'Md. Redwan Ahmed';", "replace": "img.alt = authorName;"},
   {"path": "src/scripts/main.ts", "find": "'#2563eb', // Blue", "replace": "'#166fbe', // FCD action blue"},
   {"path": "src/widgets/blog-post.pug", "find": "\\n[ \\t]*b:if\\(cond='not data:post\\.author\\.authorPhoto\\.image'\\)\\n[ \\t]*img\\.post-author-mini-avatar\\(src='https://blogger\\.googleusercontent\\.com/img/a/AVvXsEid2pK6sS9Z[^\\n]*", "replace": "", "regex": true},
-  {"path": "src/widgets/blog-post.pug", "find": "href='https://www.blogger.com/followers/follow/5972841034338492159'", "replace": "expr:href='\"https://www.blogger.com/followers/follow/\" + data:blog.blogId'"},
+  {"path": "src/widgets/blog-post.pug", "find": "href='https://www.blogger.com/followers/follow/5972841034338492159'", "replace": "expr:href='\"https://www.blogger.com/follow-blog.g\" params {blogID: data:blog.blogId}'"},
   {"path": "src/widgets/blog-post.pug", "find": "href='https://blogs.redwan.work/feeds/posts/default'", "replace": "expr:href='data:blog.homepageUrl path \"feeds/posts/default\"'"},
   {"paths": ["src/styles/layout.scss"], "regex": true, "find": "(?m)^([ \\t]*)\\.orcid-badge \\{.*?\\n\\1\\}[ \\t]*\\n", "replace": "", "count": "all"},
   {"paths": ["src/styles/layout.scss"], "regex": true, "find": "(?m)^([ \\t]*)svg\\.orcid-icon \\{.*?\\n\\1\\}[ \\t]*\\n", "replace": "", "count": "any"},

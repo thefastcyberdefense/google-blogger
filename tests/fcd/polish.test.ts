@@ -76,8 +76,8 @@ const PAGE_HELPERS = String.raw`
     const r = el.getBoundingClientRect();
     return { left: Math.round(r.left), right: Math.round(r.right), top: Math.round(r.top), width: Math.round(r.width), height: Math.round(r.height) };
   };
-  // Skin rules that match el (or its ::before/::after) and declare one of props.
-  const rulesFor = (el, props, pseudo) => {
+  // Screen rules of the skin that match el (or its ::before/::after), in order.
+  const matching = (el, pseudo) => {
     const out = [];
     const visit = (list, media) => {
       for (const r of Array.from(list)) {
@@ -90,12 +90,7 @@ const PAGE_HELPERS = String.raw`
           } catch (e) {
             hit = false;
           }
-          if (hit) {
-            const decl = props
-              .map((p) => { const v = r.style.getPropertyValue(p); return v ? p + ': ' + v + (r.style.getPropertyPriority(p) ? ' !important' : '') : ''; })
-              .filter(Boolean);
-            if (decl.length) out.push((media ? '@media ' + media + ' ' : '') + r.selectorText.replace(/\s+/g, ' ').slice(0, 240) + ' { ' + decl.join('; ') + ' }');
-          }
+          if (hit && !/\bprint\b/.test(media)) out.push([r, media]);
           if (r.cssRules && r.cssRules.length) visit(r.cssRules, media);
         } else if (r.cssRules) {
           visit(r.cssRules, r.media ? r.media.mediaText : media);
@@ -106,6 +101,23 @@ const PAGE_HELPERS = String.raw`
       try { visit(s.cssRules, ''); } catch (e) { /* unreadable sheet */ }
     }
     return out;
+  };
+  const selector = (r, media) => (media ? '@media ' + media + ' ' : '') + r.selectorText.replace(/\s+/g, ' ').slice(0, 200);
+  // Matching rules that declare one of props, with the declarations.
+  const rulesFor = (el, props, pseudo) => matching(el, pseudo)
+    .map(([r, media]) => {
+      const decl = props
+        .map((p) => { const v = r.style.getPropertyValue(p); return v ? p + ': ' + v + (r.style.getPropertyPriority(p) ? ' !important' : '') : ''; })
+        .filter(Boolean);
+      return decl.length ? selector(r, media) + ' { ' + decl.join('; ') + ' }' : '';
+    })
+    .filter(Boolean);
+  // The last matching rule whose declared colour for prop is the computed one.
+  const winner = (el, prop, computed, pseudo) => {
+    const target = rgba(computed).join(',');
+    const hits = matching(el, pseudo).filter(([r]) => { const v = r.style.getPropertyValue(prop); return v && rgba(v).join(',') === target; });
+    const last = hits[hits.length - 1];
+    return last ? selector(last[0], last[1]) : 'no rule sets it (inherited or currentColor)';
   };
   // Nearest element, self first, whose own rules set one of props.
   const origin = (el, props) => {
@@ -123,7 +135,16 @@ const PAGE_HELPERS = String.raw`
       display: getComputedStyle(el).display,
       shown: shown(el)
     })),
-    widgets: (ids) => ids.map((id) => { const el = document.getElementById(id); return { id, present: !!el, shown: !!el && shown(el) }; }),
+    widgets: (ids) => ids.map((id) => { const el = document.getElementById(id); return { id, present: !!el, display: el ? getComputedStyle(el).display : '' }; }),
+    nav: () => {
+      const links = Array.from(document.querySelectorAll('#LinkList1 .nav-link'));
+      const chain = [document.querySelector('.nav-container'), document.getElementById('navlinks'), document.getElementById('LinkList1'), document.querySelector('#LinkList1 .site-nav'), document.querySelector('#LinkList1 .nav-list')].filter(Boolean);
+      return {
+        links: links.length,
+        shown: links.filter((a) => shown(a) && a.getBoundingClientRect().right <= innerWidth + 1).length,
+        chain: chain.map((el) => name(el) + ' ' + getComputedStyle(el).display + ' ' + JSON.stringify(box(el)) + ' [' + rulesFor(el, ['display', 'visibility', 'width', 'max-width', 'overflow', 'flex']).join(' | ').slice(0, 300) + ']')
+      };
+    },
     masthead: () => {
       const bar = document.querySelector('.header-bar');
       const title = document.querySelector('#Header1 .site-title');
@@ -198,17 +219,21 @@ const PAGE_HELPERS = String.raw`
         if (el.closest('svg') || !shown(el)) continue;
         const cs = getComputedStyle(el);
         let behind = null;
+        const sides = [];
         for (const side of ['top', 'right', 'bottom', 'left']) {
           const width = parseFloat(cs.getPropertyValue('border-' + side + '-width')) || 0;
           const style = cs.getPropertyValue('border-' + side + '-style');
           if (width < 0.5 || style === 'none' || style === 'hidden') continue;
-          const color = cs.getPropertyValue('border-' + side + '-color');
-          const c = rgba(color);
+          const c = rgba(cs.getPropertyValue('border-' + side + '-color'));
           if (c[3] < 0.05) continue;
           behind = behind || face(el.parentElement || el);
-          if (lum(over(c, behind)) <= 0.45) continue;
-          const key = name(el) + ' border-' + side;
-          if (!seen.has(key)) seen.set(key, { line: key, color, rules: seen.size < 14 ? rulesFor(el, ['border-' + side + '-color']) : [] });
+          if (lum(over(c, behind)) > 0.45) sides.push(side);
+        }
+        if (sides.length) {
+          const prop = 'border-' + sides[0] + '-color';
+          const rule = winner(el, prop, cs.getPropertyValue(prop));
+          const key = rule + ' :: ' + name(el);
+          if (!seen.has(key)) seen.set(key, { rule, el: name(el), sides: sides.map((x) => x[0]).join('') });
         }
         for (const pseudo of ['::before', '::after']) {
           const ps = getComputedStyle(el, pseudo);
@@ -218,8 +243,9 @@ const PAGE_HELPERS = String.raw`
           if (!((h > 0 && h <= 2) || (w > 0 && w <= 2))) continue;
           const c = rgba(ps.backgroundColor);
           if (c[3] < 0.05 || lum(over(c, face(el))) <= 0.45) continue;
-          const key = name(el) + pseudo;
-          if (!seen.has(key)) seen.set(key, { line: key, color: ps.backgroundColor, rules: seen.size < 14 ? rulesFor(el, ['background', 'background-color'], pseudo) : [] });
+          const rule = winner(el, 'background-color', ps.backgroundColor, pseudo);
+          const key = rule + ' :: ' + name(el) + pseudo;
+          if (!seen.has(key)) seen.set(key, { rule, el: name(el) + pseudo, sides: 'line' });
         }
       }
       return Array.from(seen.values());
@@ -280,12 +306,13 @@ function relocated(): Record<string, Orphan[]> {
 }
 
 interface OrphanState { id: string; section: string; display: string; shown: boolean }
-interface WidgetState { id: string; present: boolean; shown: boolean }
+interface WidgetState { id: string; present: boolean; display: string }
+interface NavState { links: number; shown: number; chain: string[] }
 interface Masthead { bar: Box | null; padLeft: number; section: Box | null; widget: Box | null; brand: Box | null; title: Box | null; titleLines: number; toggle: Box | null }
 interface Mark { mark: string; width: number; height: number; rules: string[] }
 interface Button { sel: string; el: string; fill: Rgba; surface: Rgba; surfaceLum: number; behind: Rgba; fillContrast: number; ink: Rgba; contrast: number; border: Rgba; borderWidth: number; borderStyle: string; borderContrast: number; rules: string[] }
 interface Serif { el: string; family: string; origin: string }
-interface Line { line: string; color: string; rules: string[] }
+interface Line { rule: string; el: string; sides: string }
 
 const rgb = (c: Rgba): string => `rgb(${c.slice(0, 3).join(' ')}${c[3] < 1 ? ' / ' + c[3] : ''})`;
 const describeButton = (view: string, b: Button): string =>
@@ -305,7 +332,7 @@ describe('Test-blog upload, 2026-10-05: relocated gadgets', () => {
     expect(state.length, 'relocated gadgets in the fixture').toBe(Object.values(orphans).flat().length);
     const leaks = state.filter((s) => s.shown).map((s) => `${s.id} in #${s.section} (display ${s.display})`);
     expect(leaks, `relocated gadgets showing on the live page: ${leaks.join(' | ')}`).toEqual([]);
-    const lost = own.filter((w) => !w.shown).map((w) => w.id);
+    const lost = own.filter((w) => !w.present || w.display === 'none').map((w) => `${w.id} (${w.present ? w.display : 'missing'})`);
     expect(lost, `theme widgets hidden by the guard: ${lost.join(', ')}`).toEqual([]);
   }, 30_000);
 
@@ -315,6 +342,13 @@ describe('Test-blog upload, 2026-10-05: relocated gadgets', () => {
     await page.close();
     const hidden = state.filter((s) => s.display === 'none').map((s) => `${s.id} in #${s.section}`);
     expect(hidden, `relocated gadgets hidden in Layout: ${hidden.join(' | ')}`).toEqual([]);
+  }, 30_000);
+
+  it('shows the Navigation links in the desktop masthead', async () => {
+    const page = await open({ view: 'home', theme: 'light' });
+    const nav = await measure<NavState>(page, 'nav()');
+    await page.close();
+    expect(nav.shown, `navigation links not visible at 1280px: ${JSON.stringify(nav)}`).toBeGreaterThan(0);
   }, 30_000);
 
   it('keeps the brand at the start of the masthead, its title on one line', async () => {
@@ -386,13 +420,14 @@ describe('Test-blog upload, 2026-10-05: palette and type', () => {
   }, 30_000);
 
   it('keeps dark-mode rules as quiet as the main site borders', async () => {
-    const problems: string[] = [];
+    const byRule = new Map<string, string[]>();
     for (const view of ['home', 'post'] as const) {
       const page = await open({ view, theme: 'dark' });
       const hits = await measure<Line[]>(page, 'lines()');
       await page.close();
-      for (const h of hits) problems.push(`${view} ${h.line} ${h.color}${h.rules.length ? ` [${h.rules.join(' | ')}]` : ''}`);
+      for (const h of hits) byRule.set(h.rule, [...(byRule.get(h.rule) ?? []), `${view} ${h.el} ${h.sides}`]);
     }
-    expect(problems, `near-white rules on the dark page: ${problems.join(' || ')}`).toEqual([]);
+    const problems = [...byRule].map(([rule, at]) => `${rule} => ${at.slice(0, 3).join(', ')}${at.length > 3 ? ` (+${at.length - 3})` : ''}`);
+    expect(problems, `near-white rules on the dark page, ${problems.length} rules: ${problems.join(' || ')}`).toEqual([]);
   }, 30_000);
 });

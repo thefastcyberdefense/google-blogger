@@ -24,9 +24,12 @@ $dark-highlight: oklch(68% 0.12 251.2451);       // #5d9ce0  dark highlight (6.3
 
 
 
-// Typography font stacks: Inter and Fira Code as on the main site, system fallbacks
-$font-serif: georgia, 'Iowan Old Style', 'Palatino Linotype', palatino, serif;
+// Typography font stacks: Inter and Fira Code as on the main site, system
+// fallbacks. Ledger sets long-form text in $font-serif; fastcyberdefense.com
+// sets its articles in Inter, so the token keeps its name and carries the
+// Inter stack (US-L7, test-blog upload 2026-10-05).
 $font-sans: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+$font-serif: $font-sans;
 $font-mono: 'Fira Code', ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', consolas, monospace;
 
 // Typography Scale (1.333 ratio): row value locked by contract test

@@ -17,7 +17,8 @@
   "src/widgets/footer.pug",
   "src/widgets/header.pug",
   "src/widgets/intro.pug",
-  "src/widgets/linklist.pug"
+  "src/widgets/linklist.pug",
+  "src/styles/fcd.scss"
  ],
  "remove": [
   "dist/theme.xml",
@@ -108,6 +109,7 @@
   {"path": "src/scripts/main.ts", "find": "href=\"${p.url}\"", "replace": "href=\"${escapeHtml(p.url)}\"", "count": 3},
   {"path": "src/scripts/main.ts", "find": "src=\"${p.thumbnail}\"", "replace": "src=\"${escapeHtml(p.thumbnail)}\""},
   {"path": "src/scripts/main.ts", "find": "datetime=\"${p.published}\"", "replace": "datetime=\"${escapeHtml(p.published)}\""},
-  {"path": "src/scripts/main.ts", "find": "      securityLevel: 'loose'", "replace": "      securityLevel: 'strict'"}
+  {"path": "src/scripts/main.ts", "find": "      securityLevel: 'loose'", "replace": "      securityLevel: 'strict'"},
+  {"path": "src/styles/main.scss", "find": "@use 'dark';", "replace": "@use 'dark';\n// FCD overrides on the Ledger styles (US-L7), loaded last.\n@use 'fcd';"}
  ]
 }

@@ -1,0 +1,73 @@
+// ---------------------------------------------------------------------------
+// FCD overrides on the Ledger v1.7.0 styles (US-L7)
+// Findings from the first test-blog upload, 2026-10-05. Loaded last in
+// main.scss. Each selector mirrors the Ledger rule it corrects, one step more
+// specific, so the cascade stays readable.
+// ---------------------------------------------------------------------------
+
+@use 'tokens' as *;
+
+// 1. Relocated gadgets. On upload Blogger keeps gadgets an earlier theme
+// declared and moves them into the first section, the masthead, where Ledger's
+// display: contents wrappers make each one a header item. These sections take
+// no gadgets of their own (showaddelement false), so anything but the theme's
+// widget stays hidden on the live blog. Layout (body#layout) still lists it so
+// the owner can delete it there.
+body:not(#layout) {
+  #header > .widget:not(#Header1),
+  #navlinks > .widget:not(#LinkList1),
+  #intro > .widget:not(#HTML1),
+  #topics > .widget:not(#Label1),
+  #page_body > .widget:not(#Blog1),
+  #cta > .widget:not(#HTML2) {
+    display: none;
+  }
+}
+
+// 2. The FCD mark is an inline SVG in rows sized for Ledger's portrait; keep it
+// square beside the long blog title instead of letting the row shrink it.
+.fcd-mark {
+  flex-shrink: 0;
+}
+
+// 3. Light call-to-action secondary. Ledger paints every link in the box as the
+// filled primary; FCD's second action is an outline, as it already is in dark
+// mode. #166fbe on the card is 4.82:1.
+html:not([data-theme='dark']) .cta-container .cta-box .cta-btn.cta-btn-secondary {
+  background: transparent;
+  border: 1px solid oklch(53.5% 0.1467 251.2451 / 0.45);
+  color: $accent !important;
+
+  &:hover,
+  &:focus-visible {
+    background: $accent-wash;
+    border-color: $accent;
+  }
+}
+
+// 4. Dark theme: secondary buttons whose light rules outrank Ledger's dark
+// overrides, and rules that kept the light border colour on the dark page.
+html[data-theme='dark'] {
+  .sidebar-profile-card .sidebar-actions .sidebar-btn.sidebar-btn-secondary,
+  .post-author-bio .author-follow-actions .author-follow-btn.author-follow-rss,
+  .author-bio-card .author-follow-actions .author-follow-btn.author-follow-rss {
+    background-color: $dark-surface;
+    border-color: $dark-rule;
+    color: $dark-ink;
+
+    &:hover,
+    &:focus-visible {
+      background-color: $dark-rule;
+      border-color: oklch(68% 0.12 251.2451 / 0.5);
+      color: $dark-highlight;
+    }
+  }
+
+  .post-thumbnail-link,
+  .post-author-mini .post-author-mini-avatar,
+  .sidebar-card .sidebar-card-header,
+  .footer-container .footer-bottom,
+  .post .post-header {
+    border-color: $dark-rule;
+  }
+}

@@ -71,7 +71,7 @@ jobs:
               if (s.status === 'failed' && !(s.assertionResults || []).length) console.log('::error title=Suite failure::' + escape(file + ': ' + String(s.message || '').split('\n')[0].slice(0, 400)));
               for (const a of s.assertionResults || []) {
                 if (a.status !== 'failed') continue;
-                const reason = String((a.failureMessages || [])[0] || '').split('\n').slice(0, 3).join(' ').slice(0, 600);
+                const reason = String((a.failureMessages || [])[0] || '').split('\n').slice(0, 3).join(' ').slice(0, 3000);
                 console.log('::error title=Regression::' + escape(a.fullName + ' :: ' + reason));
               }
             }

@@ -1,34 +1,3270 @@
-import {initTheme} from './theme.ts';
-import {initNavigation} from './navigation.ts';
-import {initSearch} from './search.ts';
-import {postIdentity,postId,renderRecentPosts} from './feed.ts';
-import {createFeedClient} from './feed-client.ts';
-import {renderRelated,withoutCurrent,type CurrentPost} from './related-posts.ts';
-import {initArticle} from './article.ts';
-import {initTechnicalContent} from './technical-content.ts';
-import {initHighlighting} from './highlighting.ts';
-import {initDiagrams} from './diagrams.ts';
-let discoveryStarted=false;
-export function initDiscovery(){
- if(discoveryStarted)return;discoveryStarted=true;
- const list=document.querySelector<HTMLOListElement>('#recent-posts');const recentStatus=document.getElementById('recent-status');
- const shell=document.querySelector<HTMLElement>('[data-related-post]');const identity=postIdentity(shell?.dataset.postUrl,location.href);
- const current:CurrentPost|undefined=shell&&identity?{identity,id:postId(shell.dataset.postId),labels:Array.from(shell.querySelectorAll<HTMLElement>('[data-current-label]'),el=>el.dataset.currentLabel||'').slice(0,20)}:undefined;
- const relatedStatus=current?shell?.querySelector<HTMLElement>('[data-related-status]'):null;
- const consumers:{root:HTMLElement;status:HTMLElement;render:(posts:import('./feed.ts').DiscoveryPost[])=>void;button?:HTMLButtonElement}[]=[];
- if(list&&recentStatus)consumers.push({root:list.parentElement||list,status:recentStatus,render:posts=>renderRecentPosts(list,recentStatus,current?withoutCurrent(posts,current):posts)});
- if(shell&&current&&relatedStatus)consumers.push({root:shell,status:relatedStatus,render:posts=>renderRelated(shell,posts,current)});
- if(!consumers.length)return;
- // One local live status per page avoids competing announcements; both widgets remain readable.
- (relatedStatus||recentStatus)?.setAttribute('role','status');
- const client=createFeedClient(location.origin,shell?50:8);let active=false;
- function state(busy:boolean){for(const c of consumers){c.root.setAttribute('aria-busy',String(busy));if(c.button)c.button.disabled=busy||!client.canRetry();}}
- async function load(retry=false){
-  if(active)return;active=true;state(true);for(const c of consumers)c.status.textContent='Loading publications…';
-  try{const posts=await client.load(retry);for(const c of consumers){try{c.render(posts);}catch{c.status.textContent='Suggestions unavailable. Use the publication links.';}}}
-  catch{for(const c of consumers)c.status.textContent='Publications could not be loaded. Use the publication links below.';}
-  finally{active=false;state(false);for(const c of consumers){if(client.canRetry()&&!c.button){const button=document.createElement('button');button.type='button';button.className='discovery-retry';button.textContent='Retry publications';button.addEventListener('click',()=>void load(true));c.status.after(button);c.button=button;}if(c.button){c.button.disabled=!client.canRetry();if(!client.canRetry())c.button.textContent='Retry used';}}}
- }
- void load();
+/**
+ * Ledger Blogger Theme — Main Client Script
+ * Milestone 3: Interactive Client Script Enhancements
+ */
+
+// Progressive enhancement marker
+if (typeof document !== 'undefined') {
+  document.documentElement.classList.add('js');
 }
-initTheme();initNavigation();initSearch();initArticle();initTechnicalContent();initHighlighting();initDiagrams();initDiscovery();
+
+
+
+
+
+// ---------------------------------------------------------------------------
+// Accessibility & Focus Management Helpers
+// ---------------------------------------------------------------------------
+
+const FOCUSABLE_SELECTOR =
+  'a[href], area[href], input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), [tabindex]:not([tabindex="-1"]):not([disabled])';
+
+function getFocusableElements(container: HTMLElement): HTMLElement[] {
+  return Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter(
+    (el) => el.offsetWidth > 0 || el.offsetHeight > 0 || el.getClientRects().length > 0
+  );
+}
+
+function trapFocus(container: HTMLElement, event: KeyboardEvent): void {
+  if (event.key !== 'Tab') return;
+  const focusables = getFocusableElements(container);
+  if (focusables.length === 0) {
+    event.preventDefault();
+    return;
+  }
+  const first = focusables[0];
+  const last = focusables[focusables.length - 1];
+  if (!first || !last) return;
+
+  if (event.shiftKey) {
+    if (document.activeElement === first || !container.contains(document.activeElement)) {
+      event.preventDefault();
+      last.focus();
+    }
+  } else {
+    if (document.activeElement === last || !container.contains(document.activeElement)) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Module 1: Reading Progress Bar (Post Views)
+// ---------------------------------------------------------------------------
+
+/**
+ * Initializes the reading progress bar for post views.
+ * Attaches passive scroll and resize listeners throttled via requestAnimationFrame.
+ */
+export function initReadingProgress(): void {
+  const container = document.getElementById('reading-progress');
+  if (!container) return;
+
+  const bar = container.querySelector<HTMLElement>('.reading-progress-bar');
+  if (!bar) return;
+
+  const progressContainer: HTMLElement = container;
+  const progressBar: HTMLElement = bar;
+
+  let ticking = false;
+
+  function update(): void {
+    const doc = document.documentElement;
+    const scrollTop = window.scrollY || doc.scrollTop || 0;
+    const scrollHeight = doc.scrollHeight || document.body.scrollHeight || 0;
+    const clientHeight = window.innerHeight || doc.clientHeight || 0;
+    const maxScroll = scrollHeight - clientHeight;
+
+    const percentage = maxScroll > 0
+      ? Math.min(100, Math.max(0, (scrollTop / maxScroll) * 100))
+      : 0;
+
+    progressBar.style.width = `${percentage}%`;
+    progressContainer.setAttribute('aria-valuenow', Math.round(percentage).toString());
+  }
+
+  function onScrollOrResize(): void {
+    if (!ticking) {
+      ticking = true;
+      window.requestAnimationFrame(() => {
+        update();
+        ticking = false;
+      });
+    }
+  }
+
+  // Initial calculation for pre-scrolled page loads
+  update();
+
+  window.addEventListener('scroll', onScrollOrResize, { passive: true });
+  window.addEventListener('resize', onScrollOrResize, { passive: true });
+}
+
+// ---------------------------------------------------------------------------
+// Module 2: Mobile Navigation Drawer
+// ---------------------------------------------------------------------------
+
+export interface MobileDrawerController {
+  open: () => void;
+  close: () => void;
+  isOpen: () => boolean;
+}
+
+/**
+ * Initializes the mobile slide-in drawer navigation.
+ */
+export function initMobileDrawer(): MobileDrawerController | null {
+  const drawer = document.querySelector<HTMLElement>('#mobile-drawer');
+  const backdrop = document.querySelector<HTMLElement>('.drawer-backdrop');
+  const toggleButtons = document.querySelectorAll<HTMLElement>('.drawer-toggle');
+  const closeButtons = drawer ? drawer.querySelectorAll<HTMLElement>('.drawer-close') : [];
+
+  if (!drawer || !backdrop) return null;
+
+  let lastActiveElement: HTMLElement | null = null;
+
+  function isDrawerOpen(): boolean {
+    return drawer!.classList.contains('is-open') || document.body.classList.contains('drawer-open');
+  }
+
+  function setDrawerState(open: boolean): void {
+    drawer!.classList.toggle('is-open', open);
+    backdrop!.classList.toggle('is-open', open);
+    document.body.classList.toggle('drawer-open', open);
+
+    drawer!.setAttribute('aria-hidden', open ? 'false' : 'true');
+    backdrop!.setAttribute('aria-hidden', open ? 'false' : 'true');
+    if (open) {
+      drawer!.removeAttribute('inert');
+    } else {
+      drawer!.setAttribute('inert', 'true');
+    }
+
+    toggleButtons.forEach((btn) => {
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+
+    if (open) {
+      lastActiveElement = document.activeElement as HTMLElement | null;
+      document.body.style.overflow = 'hidden';
+      const firstFocusable = drawer!.querySelector<HTMLElement>('.drawer-close, a, button');
+      if (firstFocusable) {
+        firstFocusable.focus();
+      }
+    } else {
+      document.body.style.overflow = '';
+      if (lastActiveElement && typeof lastActiveElement.focus === 'function') {
+        lastActiveElement.focus();
+      }
+    }
+  }
+
+  function openDrawer(): void {
+    setDrawerState(true);
+  }
+
+  function closeDrawer(): void {
+    setDrawerState(false);
+  }
+
+  toggleButtons.forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (isDrawerOpen()) {
+        closeDrawer();
+      } else {
+        openDrawer();
+      }
+    });
+  });
+
+  closeButtons.forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      closeDrawer();
+    });
+  });
+
+  backdrop.addEventListener('click', () => {
+    closeDrawer();
+  });
+
+  drawer.addEventListener('keydown', (e: KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      closeDrawer();
+    } else if (e.key === 'Tab') {
+      trapFocus(drawer, e);
+    }
+  });
+
+  document.addEventListener('keydown', (e: KeyboardEvent) => {
+    if (e.key === 'Escape' && isDrawerOpen()) {
+      closeDrawer();
+    }
+  });
+
+  return { open: openDrawer, close: closeDrawer, isOpen: isDrawerOpen };
+}
+
+// ---------------------------------------------------------------------------
+// Module 3: Inline Live Header Search & Sidebar Dynamic Hydration
+// ---------------------------------------------------------------------------
+
+function escapeHtml(str: string): string {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function extractPlainText(html: string): string {
+  if (!html) return '';
+  if (typeof DOMParser !== 'undefined') {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    return doc.body.textContent || '';
+  }
+  let prev: string;
+  let text = html;
+  do {
+    prev = text;
+    text = text.replace(/<[^>]+>/g, '');
+  } while (text !== prev);
+  return text;
+}
+
+export function initLiveSearch(): void {
+  const searchContainers = document.querySelectorAll<HTMLElement>(
+    '.sidebar-search-card, .drawer-search-wrap, .header-search-wrap'
+  );
+
+  searchContainers.forEach((container) => {
+    const searchInput = container.querySelector<HTMLInputElement>(
+      '.sidebar-search-input, .drawer-search-input, .header-search-input'
+    );
+    const resultsDropdown = container.querySelector<HTMLElement>('.search-results-dropdown');
+    if (!searchInput || !resultsDropdown) return;
+
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    let activeIndex = -1;
+    let currentResults: Array<{ title: string; url: string; date?: string; label?: string; snippet?: string }> = [];
+
+    searchInput.addEventListener('input', () => {
+      const query = searchInput.value.trim();
+      if (debounceTimer) clearTimeout(debounceTimer);
+
+      if (query.length < 2) {
+        resultsDropdown.style.display = 'none';
+        resultsDropdown.innerHTML = '';
+        currentResults = [];
+        activeIndex = -1;
+        return;
+      }
+
+      resultsDropdown.style.display = 'block';
+      resultsDropdown.innerHTML = '<div class="search-status-message">Searching publications…</div>';
+
+      debounceTimer = setTimeout(async () => {
+        try {
+          const feedUrl = `/feeds/posts/summary?alt=json&q=${encodeURIComponent(query)}&max-results=6`;
+          const res = await fetch(feedUrl, { headers: { Accept: 'application/json' } });
+          if (!res.ok) throw new Error('Search request failed');
+          const data = await res.json();
+          const entries = data?.feed?.entry || [];
+
+          if (entries.length === 0) {
+            resultsDropdown.innerHTML = '<div class="search-status-message">No matching publications found.</div>';
+            currentResults = [];
+            activeIndex = -1;
+            return;
+          }
+
+          currentResults = entries.map((entry: any) => {
+            const title = entry.title?.$t || 'Untitled';
+            const link = entry.link?.find((l: any) => l.rel === 'alternate')?.href || '#';
+            const date = entry.published?.$t
+              ? new Date(entry.published.$t).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+              : '';
+            const label = entry.category?.[0]?.term || '';
+            const snippet = entry.summary?.$t ? extractPlainText(entry.summary.$t).slice(0, 90) + '…' : '';
+            return { title, url: link, date, label, snippet };
+          });
+
+          renderResults();
+        } catch {
+          resultsDropdown.innerHTML = '<div class="search-status-message">Search unavailable. Press Enter for full search.</div>';
+          currentResults = [];
+          activeIndex = -1;
+        }
+      }, 250);
+    });
+
+    function renderResults(): void {
+      if (currentResults.length === 0) {
+        resultsDropdown!.style.display = 'none';
+        resultsDropdown!.innerHTML = '';
+        return;
+      }
+
+      resultsDropdown!.innerHTML = `
+        <ul class="search-results-list" role="listbox">
+          ${currentResults
+            .map(
+              (item, idx) => `
+            <li class="search-result-item ${idx === activeIndex ? 'is-active' : ''}" role="option" aria-selected="${idx === activeIndex}">
+              <a class="search-result-link" href="${item.url}">
+                <span class="search-result-title">${escapeHtml(item.title)}</span>
+                <div class="search-result-meta">
+                  ${item.label ? `<span class="search-result-tag">${escapeHtml(item.label)}</span>` : ''}
+                  ${item.date ? `<span class="search-result-date">${escapeHtml(item.date)}</span>` : ''}
+                </div>
+              </a>
+            </li>
+          `
+            )
+            .join('')}
+        </ul>
+      `;
+      resultsDropdown!.style.display = 'block';
+    }
+
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        resultsDropdown.style.display = 'none';
+        resultsDropdown.innerHTML = '';
+        activeIndex = -1;
+      } else if (e.key === 'ArrowDown') {
+        if (currentResults.length > 0) {
+          e.preventDefault();
+          activeIndex = (activeIndex + 1) % currentResults.length;
+          renderResults();
+        }
+      } else if (e.key === 'ArrowUp') {
+        if (currentResults.length > 0) {
+          e.preventDefault();
+          activeIndex = (activeIndex - 1 + currentResults.length) % currentResults.length;
+          renderResults();
+        }
+      } else if (e.key === 'Enter') {
+        if (activeIndex >= 0) {
+          const item = currentResults[activeIndex];
+          if (item) {
+            e.preventDefault();
+            window.location.href = item.url;
+          }
+        }
+      }
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!container.contains(e.target as Node)) {
+        resultsDropdown.style.display = 'none';
+      }
+    });
+  });
+
+  const searchToggles = document.querySelectorAll<HTMLElement>('.search-toggle');
+  searchToggles.forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const searchInput = document.querySelector<HTMLInputElement>('#catalog-search, .sidebar-search-input, .drawer-search-input');
+      const drawerToggle = document.querySelector<HTMLElement>('.drawer-toggle');
+      const drawer = document.getElementById('mobile-drawer');
+      if (window.innerWidth < 1024 && drawer && !drawer.classList.contains('is-open')) {
+        drawerToggle?.click();
+        setTimeout(() => searchInput?.focus(), 150);
+      } else if (searchInput) {
+        searchInput.focus();
+        searchInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+  });
+}
+
+// Backward compatibility alias
+export const initInlineLiveSearch = initLiveSearch;
+
+export function initSidebarRecentPosts(): void {
+  const recentLists = document.querySelectorAll<HTMLElement>('.sidebar-recent-list');
+  if (recentLists.length === 0) return;
+
+  // 1. Instant Cache Hydration (0ms delay from localStorage)
+  try {
+    const cachedHtml = localStorage.getItem('ledger_recent_posts_v1');
+    if (cachedHtml) {
+      recentLists.forEach((list) => {
+        const items = list.querySelectorAll('.sidebar-recent-item');
+        if (items.length < 4 || Array.from(items).some((item) => !item.querySelector('.sidebar-recent-tag'))) {
+          list.innerHTML = cachedHtml;
+        }
+      });
+    }
+  } catch {}
+
+  // 2. Fresh Background Fetch & Cache Update
+  fetch('/feeds/posts/summary?alt=json&max-results=6', { headers: { Accept: 'application/json' } })
+    .then((res) => (res.ok ? res.json() : null))
+    .then((data) => {
+      const entries = data?.feed?.entry || [];
+      if (entries.length === 0) return;
+
+      const items = entries.slice(0, 4);
+
+      const html = items
+        .map((entry: any) => {
+          const title = entry.title?.$t || 'Untitled';
+          const link = entry.link?.find((l: any) => l.rel === 'alternate')?.href || '#';
+          const date = entry.published?.$t
+            ? new Date(entry.published.$t).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+            : '';
+          const label = entry.category?.[0]?.term || '';
+
+          return `
+          <article class="sidebar-recent-item">
+            <a class="sidebar-recent-link" href="${link}">
+              <span class="sidebar-recent-title">${escapeHtml(title)}</span>
+              <div class="sidebar-recent-meta">
+                ${label ? `<span class="sidebar-recent-tag">${escapeHtml(label)}</span>` : ''}
+                ${date ? `<time class="sidebar-recent-date">${escapeHtml(date)}</time>` : ''}
+              </div>
+            </a>
+          </article>
+        `;
+        })
+        .join('');
+
+      try {
+        localStorage.setItem('ledger_recent_posts_v1', html);
+      } catch {}
+
+      recentLists.forEach((list) => {
+        if (list.innerHTML !== html) {
+          list.innerHTML = html;
+        }
+      });
+    })
+    .catch(() => {});
+}
+
+// ---------------------------------------------------------------------------
+// Module 4: Toast Notification System & Copy-to-Clipboard
+// ---------------------------------------------------------------------------
+
+const MAX_TOASTS = 3;
+const DEFAULT_TOAST_DURATION = 3000;
+
+/**
+ * Retrieves or creates the fixed toast notification container.
+ */
+function getToastContainer(): HTMLElement {
+  let container = document.getElementById('toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toast-container';
+    container.className = 'toast-container';
+    container.setAttribute('aria-live', 'polite');
+    document.body.appendChild(container);
+  }
+  return container;
+}
+
+/**
+ * Dismisses a toast element with exit animation and DOM cleanup.
+ */
+function dismissToast(toast: HTMLElement): void {
+  if (toast.classList.contains('is-hiding')) return;
+
+  toast.classList.remove('is-visible');
+  toast.classList.add('is-hiding');
+
+  let cleaned = false;
+  const cleanup = () => {
+    if (!cleaned) {
+      cleaned = true;
+      toast.remove();
+    }
+  };
+
+  toast.addEventListener('transitionend', cleanup, { once: true });
+  setTimeout(cleanup, 350);
+}
+
+/**
+ * Displays a toast notification message.
+ */
+export function showToast(message: string, duration = DEFAULT_TOAST_DURATION): HTMLElement {
+  const container = getToastContainer();
+
+  while (container.children.length >= MAX_TOASTS) {
+    const oldest = container.firstElementChild as HTMLElement | null;
+    if (oldest) {
+      oldest.remove();
+    } else {
+      break;
+    }
+  }
+
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.setAttribute('role', 'status');
+  toast.textContent = message;
+
+  container.appendChild(toast);
+
+  requestAnimationFrame(() => {
+    toast.classList.add('is-visible');
+  });
+
+  setTimeout(() => {
+    dismissToast(toast);
+  }, duration);
+
+  return toast;
+}
+
+/**
+ * Determines the target URL to copy.
+ */
+function getShareUrl(button?: HTMLElement | null): string {
+  if (button?.dataset['url']) {
+    return button.dataset['url'];
+  }
+  const canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+  if (canonical?.href) {
+    return canonical.href;
+  }
+  return window.location.href;
+}
+
+/**
+ * Copies plain text to the clipboard with modern API and fallback support.
+ */
+export async function copyToClipboard(text: string): Promise<boolean> {
+  if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      // Fallback below
+    }
+  }
+
+  const textarea = document.createElement('textarea');
+  try {
+    textarea.value = text;
+    textarea.setAttribute('readonly', '');
+    textarea.style.position = 'fixed';
+    textarea.style.top = '0';
+    textarea.style.left = '-9999px';
+    textarea.style.opacity = '0';
+    textarea.style.pointerEvents = 'none';
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+    return document.execCommand('copy');
+  } catch {
+    return false;
+  } finally {
+    if (textarea.parentNode) {
+      textarea.parentNode.removeChild(textarea);
+    }
+  }
+}
+
+/**
+ * Initializes the delegated click listener for copy-link buttons.
+ */
+export function initShareCopy(): void {
+  document.addEventListener('click', async (event: MouseEvent) => {
+    const target = event.target as Element | null;
+    if (!target) return;
+
+    const copyBtn = target.closest<HTMLElement>('[data-action="copy-link"]');
+    if (!copyBtn) return;
+
+    event.preventDefault();
+
+    const url = getShareUrl(copyBtn);
+    const copied = await copyToClipboard(url);
+
+    if (copied) {
+      showToast('Link copied to clipboard!');
+    } else {
+      showToast('Unable to copy link.');
+    }
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Module 5: Theme Toggle (Dark / Light)
+// ---------------------------------------------------------------------------
+
+export function initThemeToggle(): void {
+  const toggleButtons = document.querySelectorAll<HTMLElement>('.theme-toggle');
+  if (toggleButtons.length === 0) return;
+
+  const STORAGE_KEY = 'ledger_theme';
+  let savedTheme: string | null = null;
+  try {
+    savedTheme = localStorage.getItem(STORAGE_KEY);
+  } catch {
+    // Storage unavailable
+  }
+  const initialTheme = savedTheme || 'dark';
+
+  document.documentElement.setAttribute('data-theme', initialTheme);
+
+  function toggleTheme(): void {
+    const current = document.documentElement.getAttribute('data-theme') || 'dark';
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try {
+      localStorage.setItem(STORAGE_KEY, next);
+    } catch {
+      // Storage unavailable
+    }
+    showToast(`Switched to ${next} theme`);
+    initMermaidDiagrams(next === 'dark' ? 'dark' : 'default');
+  }
+
+  toggleButtons.forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      toggleTheme();
+    });
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Module 6: Code Block Copy & Terminal Header
+// ---------------------------------------------------------------------------
+
+/**
+ * Defensively cleans nested markdown code fences (e.g. ```c or ```) that were
+ * accidentally preserved inside <pre><code> blocks during markdown conversion.
+ */
+export function cleanCodeSnippetFences(): void {
+  const codeBlocks = document.querySelectorAll<HTMLElement>('.post-body pre code');
+  codeBlocks.forEach((code) => {
+    // Ignore Mermaid diagrams
+    if (code.closest('.mermaid') || code.closest('.mermaid-diagram-wrap')) return;
+    const raw = code.textContent || '';
+    if (raw.includes('```')) {
+      const cleaned = raw
+        .replace(/^`{3,}[a-zA-Z0-9_-]*\s*$/gm, '')
+        .replace(/^\s*`{3,}\s*$/gm, '')
+        .trim();
+      code.textContent = cleaned;
+    }
+  });
+}
+
+export function initCodeBlockEnhancements(): void {
+  // 0a. Defensively flatten any accidental nested .code-block-wrap containers
+  document.querySelectorAll<HTMLElement>('.code-block-wrap .code-block-wrap').forEach((innerWrap) => {
+    const outerWrap = innerWrap.closest('.code-block-wrap');
+    if (outerWrap && outerWrap !== innerWrap) {
+      outerWrap.replaceWith(innerWrap);
+    }
+  });
+
+  // 0b. Clean stray fence artifacts from code snippets before initializing
+  cleanCodeSnippetFences();
+
+  // 1. Header-based or existing copy buttons
+  document.querySelectorAll<HTMLButtonElement>('.code-copy-btn').forEach((btn) => {
+    if (btn.dataset['initialized']) return;
+    btn.dataset['initialized'] = 'true';
+
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const wrap = btn.closest('.code-block-wrap');
+      const pre = wrap ? wrap.querySelector('pre') : btn.closest('pre');
+      if (!pre) return;
+      const code = pre.querySelector('code');
+      const textToCopy = (code ? code.innerText : pre.innerText) || '';
+      const copied = await copyToClipboard(textToCopy);
+      if (copied) {
+        btn.classList.add('copied');
+        const span = btn.querySelector('span');
+        if (span) span.textContent = 'Copied!';
+        showToast('Code copied to clipboard!');
+        setTimeout(() => {
+          btn.classList.remove('copied');
+          if (span) span.textContent = 'Copy';
+        }, 2000);
+      }
+    });
+  });
+
+  // 2. Legacy / bare <pre> elements without a copy button
+  const preElements = document.querySelectorAll<HTMLPreElement>('.post-body pre');
+  preElements.forEach((pre) => {
+    // Ignore Mermaid diagrams
+    if (pre.classList.contains('mermaid') || pre.closest('.mermaid') || pre.closest('.mermaid-diagram-wrap')) {
+      return;
+    }
+    if (pre.closest('.code-block-wrap')) return;
+    // Avoid double-attaching
+    if (pre.querySelector('.code-copy-btn')) return;
+
+    pre.style.position = 'relative';
+
+    const copyBtn = document.createElement('button');
+    copyBtn.type = 'button';
+    copyBtn.className = 'code-copy-btn';
+    copyBtn.setAttribute('aria-label', 'Copy code to clipboard');
+    copyBtn.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg><span>Copy</span>`;
+
+    copyBtn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const code = pre.querySelector('code');
+      const textToCopy = (code ? code.innerText : pre.innerText) || '';
+      const copied = await copyToClipboard(textToCopy);
+      if (copied) {
+        copyBtn.classList.add('copied');
+        const span = copyBtn.querySelector('span');
+        if (span) span.textContent = 'Copied!';
+        showToast('Code copied to clipboard!');
+        setTimeout(() => {
+          copyBtn.classList.remove('copied');
+          if (span) span.textContent = 'Copy';
+        }, 2000);
+      }
+    });
+
+    pre.appendChild(copyBtn);
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Module 6b: Prism.js Asynchronous Syntax Highlighting
+// ---------------------------------------------------------------------------
+
+export function initSyntaxHighlighting(): void {
+  const codeBlocks = document.querySelectorAll('.post-body pre code[class*="language-"]');
+  if (codeBlocks.length === 0) return;
+
+  const win = window as any;
+  function runHighlight(): void {
+    if (win.Prism) {
+      if (win.Prism.plugins && win.Prism.plugins.autoloader) {
+        win.Prism.plugins.autoloader.languages_path = 'https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/';
+      }
+      win.Prism.highlightAll();
+    }
+  }
+
+  if (win.Prism) {
+    runHighlight();
+    return;
+  }
+
+  const prismScript = document.createElement('script');
+  prismScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js';
+  prismScript.setAttribute('data-manual', 'true');
+  prismScript.onload = () => {
+    const autoloaderScript = document.createElement('script');
+    autoloaderScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js';
+    autoloaderScript.onload = runHighlight;
+    document.head.appendChild(autoloaderScript);
+  };
+  document.head.appendChild(prismScript);
+}
+
+// ---------------------------------------------------------------------------
+// Module 7: Auto Table of Contents (TOC) with Active Heading Tracking
+// ---------------------------------------------------------------------------
+
+export function initTableOfContents(): void {
+  const postBody = document.querySelector<HTMLElement>('.is-post .post-body, article.post .post-body, .post-body');
+  if (!postBody) return;
+  if (postBody.querySelector('.table-of-contents') || document.querySelector('.table-of-contents')) return;
+
+  const headings = Array.from(postBody.querySelectorAll<HTMLHeadingElement>('h2, h3'));
+  if (headings.length < 2) return;
+
+  const tocNav = document.createElement('nav');
+  tocNav.className = 'table-of-contents';
+  tocNav.setAttribute('aria-label', 'Table of Contents');
+
+  // Header container with title and section badge
+  const tocHeader = document.createElement('div');
+  tocHeader.className = 'toc-header';
+
+  const tocTitle = document.createElement('div');
+  tocTitle.className = 'toc-title';
+  tocTitle.innerHTML = `
+    <svg class="toc-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <line x1="8" y1="6" x2="21" y2="6"></line>
+      <line x1="8" y1="12" x2="21" y2="12"></line>
+      <line x1="8" y1="18" x2="21" y2="18"></line>
+      <line x1="3" y1="6" x2="3.01" y2="6"></line>
+      <line x1="3" y1="12" x2="3.01" y2="12"></line>
+      <line x1="3" y1="18" x2="3.01" y2="18"></line>
+    </svg>
+    <span>Table of Contents</span>
+  `;
+
+  const tocBadge = document.createElement('span');
+  tocBadge.className = 'toc-badge';
+  tocBadge.textContent = `${headings.length} sections`;
+
+  const tocActions = document.createElement('div');
+  tocActions.className = 'toc-actions';
+
+  const tocToggle = document.createElement('button');
+  tocToggle.type = 'button';
+  tocToggle.className = 'toc-toggle';
+  tocToggle.setAttribute('aria-expanded', 'true');
+  tocToggle.setAttribute('aria-label', 'Toggle Table of Contents');
+  tocToggle.innerHTML = `
+    <span class="toc-toggle-text">Collapse</span>
+    <svg class="toc-toggle-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <polyline points="6 9 12 15 18 9"></polyline>
+    </svg>
+  `;
+
+  tocToggle.addEventListener('click', () => {
+    tocNav.classList.toggle('is-collapsed');
+    const isCollapsed = tocNav.classList.contains('is-collapsed');
+    tocToggle.setAttribute('aria-expanded', String(!isCollapsed));
+    const text = tocToggle.querySelector('.toc-toggle-text');
+    if (text) text.textContent = isCollapsed ? 'Expand' : 'Collapse';
+  });
+
+  tocActions.appendChild(tocBadge);
+  tocActions.appendChild(tocToggle);
+
+  tocHeader.appendChild(tocTitle);
+  tocHeader.appendChild(tocActions);
+  tocNav.appendChild(tocHeader);
+
+  const tocList = document.createElement('ol');
+  tocList.className = 'toc-list';
+
+  let h2Index = 0;
+  headings.forEach((heading, idx) => {
+    // Clone heading to extract clean text without anchor (#) or icons
+    const clone = heading.cloneNode(true) as HTMLElement;
+    clone.querySelectorAll('.heading-anchor, a[href^="#"]').forEach((el) => el.remove());
+    const cleanTitle = (clone.textContent || '')
+      .replace(/^[#\s]+/, '')
+      .replace(/[#\s]+$/, '')
+      .trim();
+
+    if (!heading.id) {
+      const slug = cleanTitle
+        .toLowerCase()
+        .replace(/[^\w\s-]/g, '')
+        .trim()
+        .replace(/\s+/g, '-');
+      heading.id = slug || `section-${idx + 1}`;
+    }
+
+    const isH2 = heading.tagName.toLowerCase() === 'h2';
+    if (isH2) h2Index++;
+
+    const li = document.createElement('li');
+    li.className = `toc-item toc-${heading.tagName.toLowerCase()}`;
+
+    const link = document.createElement('a');
+    link.href = `#${heading.id}`;
+    link.className = 'toc-link';
+
+    const numSpan = document.createElement('span');
+    numSpan.className = 'toc-num';
+    numSpan.textContent = isH2 ? String(h2Index).padStart(2, '0') : '—';
+
+    const textSpan = document.createElement('span');
+    textSpan.className = 'toc-text';
+    textSpan.textContent = cleanTitle || `Section ${idx + 1}`;
+
+    link.appendChild(numSpan);
+    link.appendChild(textSpan);
+
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const target = document.getElementById(heading.id);
+      if (target) {
+        const headerOffset = 85;
+        const elementPosition = target.getBoundingClientRect().top;
+        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+        window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+        history.pushState(null, '', `#${heading.id}`);
+      }
+    });
+
+    li.appendChild(link);
+    tocList.appendChild(li);
+  });
+
+  tocNav.appendChild(tocList);
+
+  const firstHeading = headings[0];
+  if (firstHeading && firstHeading.parentNode) {
+    firstHeading.parentNode.insertBefore(tocNav, firstHeading);
+  }
+
+  if ('IntersectionObserver' in window) {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const id = entry.target.id;
+            tocList.querySelectorAll('.toc-link').forEach((a) => {
+              if (a.getAttribute('href') === `#${id}`) {
+                a.classList.add('is-active');
+              } else {
+                a.classList.remove('is-active');
+              }
+            });
+          }
+        });
+      },
+      { rootMargin: '0px 0px -70% 0px', threshold: 0 }
+    );
+
+    headings.forEach((h) => observer.observe(h));
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Module 8: Article Audio Reader ("Listen to Article" - Medium Style)
+// ---------------------------------------------------------------------------
+
+export function initArticleAudioReader(): void {
+  const listenBtn = document.querySelector<HTMLButtonElement>('[data-action="listen-article"]');
+  if (!listenBtn) return;
+
+  const postBody = document.querySelector<HTMLElement>('.post-body');
+  if (!postBody) return;
+
+  const speedBtn = document.querySelector<HTMLButtonElement>('[data-action="audio-speed"]');
+  const speedLabel = speedBtn?.querySelector<HTMLElement>('.speed-label');
+  const playIcon = listenBtn.querySelector<HTMLElement>('.listen-icon-play');
+  const pauseIcon = listenBtn.querySelector<HTMLElement>('.listen-icon-pause');
+  const label = listenBtn.querySelector<HTMLElement>('.listen-label');
+  const statusEl = document.querySelector<HTMLElement>('.listen-status');
+
+  if (!('speechSynthesis' in window)) {
+    listenBtn.style.display = 'none';
+    if (speedBtn) speedBtn.style.display = 'none';
+    return;
+  }
+
+  const speeds = [1.0, 1.25, 1.5, 0.5, 0.75] as const;
+  let currentSpeedIndex = 0;
+  let playbackRate: number = speeds[currentSpeedIndex] ?? 1.0;
+
+  let isPlaying = false;
+  let isPaused = false;
+  let sentences: string[] = [];
+  let currentSentenceIndex = 0;
+
+  function updateSpeedButton(): void {
+    if (speedLabel) {
+      speedLabel.textContent = `${playbackRate}x`;
+    }
+    if (speedBtn) {
+      speedBtn.setAttribute('aria-label', `Playback speed: ${playbackRate}x`);
+      speedBtn.setAttribute('title', `Playback speed: ${playbackRate}x (click to change)`);
+    }
+  }
+
+  function setPlayingState(playing: boolean, paused: boolean): void {
+    isPlaying = playing;
+    isPaused = paused;
+    if (playIcon) playIcon.style.display = playing && !paused ? 'none' : 'inline-block';
+    if (pauseIcon) pauseIcon.style.display = playing && !paused ? 'inline-block' : 'none';
+    if (label) {
+      label.textContent = playing ? (paused ? 'Resume Audio' : 'Pause Audio') : 'Listen (Audio)';
+    }
+    if (statusEl) {
+      statusEl.textContent = playing ? (paused ? 'Audio paused' : `Playing (${playbackRate}x)...`) : '';
+    }
+  }
+
+  function getCleanArticleText(): string {
+    const clone = postBody!.cloneNode(true) as HTMLElement;
+    clone.querySelectorAll('pre, code, script, style, .table-of-contents').forEach((el) => el.remove());
+    const title = document.querySelector<HTMLElement>('.post-title')?.textContent || '';
+    return `${title}. ${clone.textContent || ''}`.replace(/\s+/g, ' ').trim();
+  }
+
+  function prepareSentences(): void {
+    const text = getCleanArticleText();
+    if (!text) {
+      sentences = [];
+      return;
+    }
+    // Sentence chunking avoids the 15-second SpeechSynthesis timeout bug on Chromium
+    const chunks = text.match(/[^.!?]+[.!?]+|\S+/g) || [text];
+    sentences = chunks.map((s) => s.trim()).filter(Boolean);
+  }
+
+  function speakSentence(index: number): void {
+    if (!isPlaying || isPaused) return;
+
+    if (index >= sentences.length) {
+      setPlayingState(false, false);
+      currentSentenceIndex = 0;
+      showToast('Finished audio narration');
+      return;
+    }
+
+    currentSentenceIndex = index;
+    const utterance = new SpeechSynthesisUtterance(sentences[index]);
+    utterance.rate = playbackRate;
+    utterance.pitch = 1.0;
+
+    utterance.onend = () => {
+      if (isPlaying && !isPaused) {
+        speakSentence(index + 1);
+      }
+    };
+
+    utterance.onerror = (err) => {
+      // Ignored if cancelled by speed change or user pause
+      if (err.error === 'interrupted' || err.error === 'canceled') return;
+      setPlayingState(false, false);
+      currentSentenceIndex = 0;
+    };
+
+    window.speechSynthesis.speak(utterance);
+  }
+
+  if (speedBtn) {
+    speedBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      currentSpeedIndex = (currentSpeedIndex + 1) % speeds.length;
+      playbackRate = speeds[currentSpeedIndex] ?? 1.0;
+      updateSpeedButton();
+      showToast(`Playback speed: ${playbackRate}x`);
+
+      if (isPlaying && !isPaused) {
+        // Cancel current utterance and resume immediately with the new rate
+        window.speechSynthesis.cancel();
+        speakSentence(currentSentenceIndex);
+      }
+    });
+  }
+
+  listenBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (!isPlaying) {
+      window.speechSynthesis.cancel();
+      prepareSentences();
+      if (sentences.length === 0) return;
+
+      setPlayingState(true, false);
+      speakSentence(0);
+      showToast(`Playing audio narration (${playbackRate}x)`);
+    } else if (isPaused) {
+      window.speechSynthesis.resume();
+      setPlayingState(true, false);
+      showToast('Resumed audio');
+    } else {
+      window.speechSynthesis.pause();
+      setPlayingState(true, true);
+      showToast('Paused audio');
+    }
+  });
+
+  window.addEventListener('beforeunload', () => {
+    if (isPlaying) {
+      window.speechSynthesis.cancel();
+    }
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Module 9: Accessible Iframe Titles (Comment Form & Embeds)
+// ---------------------------------------------------------------------------
+
+/**
+ * Ensures embedded iframes (e.g. Blogger comment form) always carry an accessible title attribute.
+ */
+export function initIframeAccessibility(): void {
+  function fixIframes(): void {
+    document.querySelectorAll<HTMLIFrameElement>('iframe').forEach((iframe) => {
+      if (!iframe.getAttribute('title')) {
+        const id = iframe.id || iframe.name || 'comment-form';
+        iframe.setAttribute('title', id.includes('comment') ? 'Comment Form' : 'Embedded Content');
+      }
+      if (!iframe.getAttribute('aria-label')) {
+        const id = iframe.id || iframe.name || 'comment-form';
+        iframe.setAttribute('aria-label', id.includes('comment') ? 'Comment Form' : 'Embedded Content');
+      }
+    });
+  }
+
+  fixIframes();
+}
+
+// ---------------------------------------------------------------------------
+// Module 10: GitHub-Style Alert Callouts ([!NOTE], [!TIP], etc.)
+// ---------------------------------------------------------------------------
+
+const ALERT_TYPES: Record<string, { title: string; class: string; svg: string }> = {
+  NOTE: {
+    title: 'Note',
+    class: 'alert-callout-note',
+    svg: '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>'
+  },
+  TIP: {
+    title: 'Tip',
+    class: 'alert-callout-tip',
+    svg: '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/></svg>'
+  },
+  IMPORTANT: {
+    title: 'Important',
+    class: 'alert-callout-important',
+    svg: '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>'
+  },
+  WARNING: {
+    title: 'Warning',
+    class: 'alert-callout-warning',
+    svg: '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>'
+  },
+  CAUTION: {
+    title: 'Caution',
+    class: 'alert-callout-caution',
+    svg: '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z"/></svg>'
+  }
+};
+
+export function initAlertCallouts(): void {
+  const blockquotes = document.querySelectorAll<HTMLQuoteElement>('.post-body blockquote');
+  blockquotes.forEach((bq) => {
+    const text = bq.textContent || '';
+    const match = text.match(/^\s*\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]/i);
+    if (!match || !match[1]) return;
+
+    const alertKey = match[1].toUpperCase();
+    const alertConfig = ALERT_TYPES[alertKey];
+    if (!alertConfig) return;
+
+    bq.classList.add('alert-callout', alertConfig.class);
+
+    const firstP = bq.querySelector('p') || bq;
+    if (firstP.firstChild && firstP.firstChild.nodeType === Node.TEXT_NODE) {
+      firstP.firstChild.textContent = (firstP.firstChild.textContent || '').replace(/^\s*\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*/i, '');
+    }
+
+    const titleEl = document.createElement('div');
+    titleEl.className = 'alert-callout-title';
+    titleEl.innerHTML = `${alertConfig.svg}<span>${alertConfig.title}</span>`;
+    bq.insertBefore(titleEl, bq.firstChild);
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Module 11: Dynamic Client-Side Reading Time
+// ---------------------------------------------------------------------------
+
+export function initReadingTime(): void {
+  const postBody = document.querySelector<HTMLElement>('.post-body');
+  const mount = document.getElementById('reading-time-mount');
+  const sep = document.querySelector<HTMLElement>('.reading-time-sep');
+  if (!postBody || !mount) return;
+
+  const text = postBody.innerText || '';
+  const words = text.trim().split(/\s+/).filter(Boolean).length;
+  if (words < 20) return;
+
+  const minutes = Math.max(1, Math.ceil(words / 200));
+  const textSpan = mount.querySelector<HTMLElement>('.reading-time-text');
+  if (textSpan) {
+    textSpan.textContent = `${minutes} min read`;
+  } else {
+    mount.textContent = `${minutes} min read`;
+  }
+  mount.style.display = 'inline-flex';
+  if (sep) sep.style.display = 'inline-flex';
+}
+
+// ---------------------------------------------------------------------------
+// Module 12: Global Keyboard Shortcuts
+// ---------------------------------------------------------------------------
+
+export function initKeyboardShortcuts(): void {
+  document.addEventListener('keydown', (e: KeyboardEvent) => {
+    const target = e.target as HTMLElement | null;
+    if (target) {
+      const tag = target.tagName.toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || tag === 'select' || target.isContentEditable) {
+        return;
+      }
+    }
+
+    if (e.key === '/' || ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k')) {
+      e.preventDefault();
+      const searchInput = document.querySelector<HTMLInputElement>('#catalog-search, .sidebar-search-input, .drawer-search-input');
+      if (searchInput) {
+        const drawerToggle = document.querySelector<HTMLElement>('.drawer-toggle');
+        const drawer = document.getElementById('mobile-drawer');
+        if (window.innerWidth < 1024 && drawer && !drawer.classList.contains('is-open')) {
+          drawerToggle?.click();
+          setTimeout(() => searchInput.focus(), 150);
+        } else {
+          searchInput.focus();
+        }
+      }
+    } else if (e.key.toLowerCase() === 't' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      const themeToggle = document.querySelector<HTMLElement>('.theme-toggle');
+      if (themeToggle) {
+        themeToggle.click();
+      }
+    }
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Module 13: Centered Native Blogger Follow Popup Dialog
+// ---------------------------------------------------------------------------
+
+/**
+ * Intercepts clicks on Google Blogger Follow links and opens a centered,
+ * clean OAuth-style modal popup window instead of navigating away.
+ * Keeps the visitor on the site while Google's compact follow dialog completes.
+ */
+export function initBloggerFollowPopup(): void {
+  document.addEventListener('click', (event: MouseEvent) => {
+    const target = event.target as Element | null;
+    if (!target) return;
+
+    const followLink = target.closest<HTMLAnchorElement>('a[href*="followers/follow"], [data-action="blogger-follow"]');
+    if (!followLink) return;
+
+    // Allow middle click or keyboard modifier clicks to open in background if explicitly desired
+    if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) {
+      return;
+    }
+
+    event.preventDefault();
+
+    const width = 540;
+    const height = 520;
+
+    // Center window relative to current monitor screen and browser window
+    const screenLeft = window.screenX !== undefined ? window.screenX : (window as any).screenLeft || 0;
+    const screenTop = window.screenY !== undefined ? window.screenY : (window as any).screenTop || 0;
+    const outerWidth = window.outerWidth || document.documentElement.clientWidth || screen.width;
+    const outerHeight = window.outerHeight || document.documentElement.clientHeight || screen.height;
+
+    const left = Math.max(0, Math.round(screenLeft + (outerWidth - width) / 2));
+    const top = Math.max(0, Math.round(screenTop + (outerHeight - height) / 2));
+
+    const popupFeatures = [
+      `width=${width}`,
+      `height=${height}`,
+      `top=${top}`,
+      `left=${left}`,
+      'resizable=yes',
+      'scrollbars=yes',
+      'status=no',
+      'location=yes',
+      'toolbar=no',
+      'menubar=no'
+    ].join(',');
+
+    try {
+      const popup = window.open(followLink.href, 'BloggerFollowPrompt', popupFeatures);
+
+      if (popup) {
+        popup.focus();
+
+        // Check for popup closure to provide feedback on the parent page
+        const checkClosed = setInterval(() => {
+          try {
+            if (popup.closed) {
+              clearInterval(checkClosed);
+              showToast('Thank you for following on Blogger!');
+            }
+          } catch {
+            clearInterval(checkClosed);
+          }
+        }, 800);
+      } else {
+        // If popup was blocked by browser, fallback gracefully to opening in a new tab
+        window.open(followLink.href, '_blank', 'noopener,noreferrer');
+      }
+    } catch {
+      window.open(followLink.href, '_blank', 'noopener,noreferrer');
+    }
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Thumbnail Resolver & Card Hydration
+// ---------------------------------------------------------------------------
+
+export function getPostThumbnailUrl(url: string, title: string): string {
+  const cleanUrl = (url || '').toLowerCase();
+  const cleanTitle = (title || '').toLowerCase();
+
+  if (
+    cleanUrl.includes('breaking-active-directory') ||
+    cleanTitle.includes('active directory') ||
+    cleanTitle.includes('esc1') ||
+    cleanTitle.includes('pki hardening')
+  ) {
+    return 'https://cdn.jsdelivr.net/gh/redwan-cse/blog-assets@main/posts/breaking-active-directory-certificate-services-esc1-exploitation-mechanics-san-i/thumbnail.png';
+  }
+  if (
+    cleanUrl.includes('kernel-privilege-escalation') ||
+    cleanTitle.includes('kernel privilege escalation') ||
+    cleanTitle.includes('ebpf verifier')
+  ) {
+    return 'https://cdn.jsdelivr.net/gh/redwan-cse/blog-assets@main/posts/kernel-privilege-escalation-via-ebpf-verifier-bypass-and-defensive-telemetry/thumbnail.png';
+  }
+  if (
+    cleanUrl.includes('dissecting-kerberoasting') ||
+    cleanTitle.includes('kerberoasting') ||
+    cleanTitle.includes('detection engineering')
+  ) {
+    return 'https://cdn.jsdelivr.net/gh/redwan-cse/blog-assets@main/posts/dissecting-kerberoasting-protocol-mechanics-telemetry-blindspots-and-modern-dete/thumbnail.png';
+  }
+  if (
+    cleanUrl.includes('hardening-sonicwall') ||
+    cleanTitle.includes('hardening sonicwall') ||
+    cleanTitle.includes('waf signatures')
+  ) {
+    return 'https://cdn.jsdelivr.net/gh/redwan-cse/blog-assets@main/posts/hardening-sonicwall-sma1000-waf-signatures-ebpf-te/thumbnail.png';
+  }
+  if (
+    cleanUrl.includes('edge-appliance-compromise') ||
+    cleanTitle.includes('edge appliance') ||
+    cleanTitle.includes('ssrf and rce')
+  ) {
+    return 'https://cdn.jsdelivr.net/gh/redwan-cse/blog-assets@main/posts/edge-appliance-compromise-threat-modeling-the-soni/thumbnail.png';
+  }
+  if (
+    cleanUrl.includes('byovd-edr-evasion') ||
+    cleanTitle.includes('byovd') ||
+    cleanTitle.includes('signed drivers')
+  ) {
+    return 'https://cdn.jsdelivr.net/gh/redwan-cse/blog-assets@main/posts/byovd-edr-evasion-weaponizing-validly/thumbnail.png';
+  }
+  if (
+    cleanUrl.includes('linux-user-namespaces') ||
+    cleanTitle.includes('user namespaces') ||
+    cleanTitle.includes('container isolation')
+  ) {
+    return 'https://cdn.jsdelivr.net/gh/redwan-cse/blog-assets@main/posts/linux-user-namespaces-security-paradox/thumbnail.png';
+  }
+  if (
+    cleanUrl.includes('postgresql-row-level') ||
+    cleanTitle.includes('postgresql') ||
+    cleanTitle.includes('row-level security')
+  ) {
+    return 'https://cdn.jsdelivr.net/gh/redwan-cse/blog-assets@main/posts/postgresql-row-level-security-threat/thumbnail.png';
+  }
+  if (
+    cleanUrl.includes('model-context-protocol') ||
+    cleanTitle.includes('model context protocol') ||
+    cleanTitle.includes('mcp') ||
+    cleanTitle.includes('prompt injection')
+  ) {
+    return 'https://cdn.jsdelivr.net/gh/redwan-cse/blog-assets@main/posts/model-context-protocol-threat-modeling-indirect-pr/thumbnail.png';
+  }
+  if (
+    cleanUrl.includes('hardening-model-context') ||
+    cleanTitle.includes('hardening model context')
+  ) {
+    return 'https://cdn.jsdelivr.net/gh/redwan-cse/blog-assets@main/posts/hardening-model-context-protocol-deterministic-too/thumbnail.png';
+  }
+  if (
+    cleanUrl.includes('xdp') ||
+    cleanUrl.includes('ebpf-packet-filtering') ||
+    cleanTitle.includes('xdp') ||
+    cleanTitle.includes('packet filtering')
+  ) {
+    return 'https://cdn.jsdelivr.net/gh/redwan-cse/blog-assets@main/posts/xdp-ebpf-packet-filtering/thumbnail.png';
+  }
+
+  // Generic fallback: extract post slug from Blogger URL pattern (.../yyyy/mm/slug_id.html)
+  const match = cleanUrl.match(/\/([^/]+?)(?:_\d+)?\.html(?:$|\?)/i);
+  if (match && match[1]) {
+    const slug = match[1].replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    if (slug) {
+      return `https://cdn.jsdelivr.net/gh/redwan-cse/blog-assets@main/posts/${slug}/thumbnail.png`;
+    }
+  }
+
+  return '';
+}
+
+export function hydrateCardThumbnails(): void {
+  const cards = document.querySelectorAll<HTMLElement>('.post-card-inner.no-thumbnail');
+  cards.forEach((card) => {
+    const titleLink = card.querySelector<HTMLAnchorElement>('.post-title a');
+    if (!titleLink) return;
+    const url = titleLink.getAttribute('href') || '';
+    const title = titleLink.textContent || '';
+    const thumbUrl = getPostThumbnailUrl(url, title);
+    if (!thumbUrl) return;
+
+    const wrap = card.querySelector('.post-content-wrap');
+    if (!wrap) return;
+
+    const thumbLink = document.createElement('a');
+    thumbLink.className = 'post-thumbnail-link';
+    thumbLink.href = url;
+    thumbLink.tabIndex = -1;
+    thumbLink.setAttribute('aria-hidden', 'true');
+    thumbLink.innerHTML = `<img class="post-thumbnail" src="${thumbUrl}" alt="${escapeHtml(title)}" width="640" height="360" loading="lazy" decoding="async" referrerpolicy="no-referrer" />`;
+
+    card.insertBefore(thumbLink, wrap);
+    card.classList.remove('no-thumbnail');
+    card.classList.add('has-thumbnail');
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Global Initialization
+// ---------------------------------------------------------------------------
+
+function init(): void {
+  initThemeToggle();
+
+  const isPost = typeof document !== 'undefined' && (document.body?.classList.contains('is-post') || Boolean(document.querySelector('.is-post')));
+  if (isPost) {
+    initPostHeroImage();
+    initDateTimeLocalization();
+    initCommentInteractions();
+  } else {
+    hydrateCardThumbnails();
+    initDateTimeLocalization();
+  }
+
+  const scheduleTask = (task: () => void, delay = 0) => {
+    if (typeof window.requestIdleCallback === 'function') {
+      window.requestIdleCallback(task, { timeout: Math.max(100, delay) });
+    } else {
+      setTimeout(task, delay);
+    }
+  };
+
+  function initAvatarFallbacks(): void {
+    const fallbackUrl = 'https://blogger.googleusercontent.com/img/a/AVvXsEid2pK6sS9Z_2jCm6SFeomZwfHDSq0li0pY6e8i_NNiuJkwHKqMqJ9gLw2qws2Xp42oCc5QGFvDw-PjbWF6CHaF7D-BShybE1d5A4OglhgVfsNPm0dg-1CRHkmrBZnAv8neHaTTb_hEzsaZZMgUP9mnTJqSAvtYtuzbOEKnsE2OJ1viJolqiQU7D532vxQ=s96-rw';
+    document.querySelectorAll<HTMLImageElement>('.post-author-mini-avatar, .sidebar-avatar, .drawer-avatar, .header-avatar, .author-avatar').forEach((img) => {
+      img.addEventListener('error', () => {
+        if (img.src !== fallbackUrl) img.src = fallbackUrl;
+      }, { once: true });
+    });
+  }
+
+  // Immediate phase: essential navigation, recent posts cache hydration, and click delegates
+  scheduleTask(() => {
+    initSidebarRecentPosts();
+    initAvatarFallbacks();
+    initMobileDrawer();
+    initShareCopy();
+    initBloggerFollowPopup();
+    initCommentInteractions();
+  }, 0);
+
+  // Secondary phase: search, iframes, keyboard listeners
+  scheduleTask(() => {
+    initInlineLiveSearch();
+    initIframeAccessibility();
+    initKeyboardShortcuts();
+  }, 60);
+
+  // Tertiary phase: content-dependent enhancers
+  scheduleTask(() => {
+    const isPost = document.body?.classList.contains('is-post') || Boolean(document.querySelector('.is-post'));
+    if (isPost) {
+      initReadingProgress();
+      initCodeBlockEnhancements();
+      initSyntaxHighlighting();
+      initTableOfContents();
+      initAlertCallouts();
+      initReadingTime();
+      initArticleAudioReader();
+      initMermaidDiagrams();
+      enrichArticleImagesAlt();
+    } else {
+      initHomepageCatalog();
+    }
+  }, 120);
+}
+
+// ---------------------------------------------------------------------------
+// Module 13: Homepage Auto-Filtered Catalog & Numbered Pagination Suite
+// ---------------------------------------------------------------------------
+
+interface CatalogPost {
+  id: string;
+  title: string;
+  url: string;
+  published: string;
+  dateStr: string;
+  year: string;
+  month: string;
+  categories: string[];
+  excerpt: string;
+  thumbnail?: string;
+}
+
+export function initHomepageCatalog(): void {
+  const filterBar = document.getElementById('posts-filter-bar');
+  if (!filterBar) return;
+
+  const searchInput = document.getElementById('catalog-search') as HTMLInputElement | null;
+  const yearSelect = document.getElementById('catalog-year') as HTMLSelectElement | null;
+  const monthSelect = document.getElementById('catalog-month') as HTMLSelectElement | null;
+  const categorySelect = document.getElementById('catalog-category') as HTMLSelectElement | null;
+  const postsContainer = document.querySelector<HTMLElement>('.blog-posts, #page_body .blog-posts, .main-content .blog-posts');
+
+  if (!postsContainer) return;
+
+  let allPosts: CatalogPost[] = [];
+  let filteredPosts: CatalogPost[] = [];
+  let currentPage = 1;
+  const getPageSize = () => 5;
+
+  let isLoaded = false;
+  let isLoading = false;
+
+  async function loadFeedAndFilter(onSuccess?: () => void): Promise<void> {
+    if (isLoaded) {
+      if (onSuccess) onSuccess();
+      return;
+    }
+    if (isLoading) return;
+    isLoading = true;
+
+    try {
+      const pageSize = 50;
+      let startIndex = 1;
+      let entries: any[] = [];
+
+      const firstRes = await fetch(`/feeds/posts/default?alt=json&start-index=${startIndex}&max-results=${pageSize}`, {
+        headers: { Accept: 'application/json' }
+      });
+
+      if (firstRes.ok) {
+        const firstData = await firstRes.json();
+        const batch = firstData?.feed?.entry || [];
+        entries = entries.concat(batch);
+        const totalResults = Number(firstData?.feed?.openSearch$totalResults?.$t) || entries.length;
+
+        while (entries.length < totalResults) {
+          startIndex += pageSize;
+          const nextRes = await fetch(`/feeds/posts/default?alt=json&start-index=${startIndex}&max-results=${pageSize}`, {
+            headers: { Accept: 'application/json' }
+          });
+          if (!nextRes.ok) break;
+          const nextData = await nextRes.json();
+          const nextBatch = nextData?.feed?.entry || [];
+          if (nextBatch.length === 0) break;
+          entries = entries.concat(nextBatch);
+        }
+      }
+
+      isLoaded = true;
+      isLoading = false;
+      if (entries.length === 0) return;
+
+      allPosts = entries.map((entry: any) => {
+        const id = entry.id?.$t || '';
+        const title = entry.title?.$t || 'Untitled';
+        const url = entry.link?.find((l: any) => l.rel === 'alternate')?.href || '#';
+        const published = entry.published?.$t || '';
+        const dateObj = published ? new Date(published) : new Date();
+        const year = String(dateObj.getFullYear());
+        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const dateStr = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        const categories = (entry.category || []).map((c: any) => c.term).filter(Boolean);
+
+        let contentHtml = entry.content?.$t || entry.summary?.$t || '';
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = contentHtml;
+        tempDiv.querySelectorAll('h1, h2, h3, h4, h5, h6, pre, code, style, script, .table-of-contents, .heading-anchor').forEach((el) => el.remove());
+        const rawExcerpt = (tempDiv.textContent || '').replace(/^#+.*?[#\n]/, '').replace(/\s+/g, ' ').trim();
+        const excerpt = rawExcerpt.length > 180 ? rawExcerpt.slice(0, 177) + '...' : rawExcerpt;
+
+        let thumbnail = entry.media$thumbnail?.url;
+        if (!thumbnail) {
+          const img = tempDiv.querySelector('img');
+          if (img && img.src && !img.src.startsWith('data:')) {
+            thumbnail = img.src;
+          }
+        }
+
+        if (!thumbnail || thumbnail.startsWith('data:')) {
+          thumbnail = getPostThumbnailUrl(url, title);
+        }
+
+        if (thumbnail) {
+          // Upgrade Blogger low-res thumbnail to crisp WebP
+          thumbnail = thumbnail.replace(/\/s72-c\//, '/w384-rw/').replace(/=s72-c/, '=w384-rw');
+        }
+
+        return {
+          id,
+          title,
+          url,
+          published,
+          dateStr,
+          year,
+          month,
+          categories,
+          excerpt,
+          thumbnail
+        };
+      });
+
+      filteredPosts = allPosts;
+
+      if (yearSelect) {
+        const years = Array.from(new Set(allPosts.map((p) => p.year))).sort((a, b) => Number(b) - Number(a));
+        yearSelect.innerHTML = '<option value="all">All years</option>' + years.map((y) => `<option value="${y}">${y}</option>`).join('');
+      }
+
+      if (monthSelect) {
+        const MONTHS = [
+          { val: '01', name: 'January' },
+          { val: '02', name: 'February' },
+          { val: '03', name: 'March' },
+          { val: '04', name: 'April' },
+          { val: '05', name: 'May' },
+          { val: '06', name: 'June' },
+          { val: '07', name: 'July' },
+          { val: '08', name: 'August' },
+          { val: '09', name: 'September' },
+          { val: '10', name: 'October' },
+          { val: '11', name: 'November' },
+          { val: '12', name: 'December' }
+        ];
+        monthSelect.innerHTML = '<option value="all">All months</option>' +
+          MONTHS.map((m) => `<option value="${m.val}">${m.name}</option>`).join('');
+      }
+
+      if (categorySelect) {
+        const allCats = Array.from(new Set(allPosts.flatMap((p) => p.categories))).sort();
+        categorySelect.innerHTML = '<option value="all">All categories</option>' + allCats.map((c) => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+      }
+
+      if (onSuccess) {
+        onSuccess();
+      } else if (allPosts.length > 0) {
+        renderPagination(Math.ceil(allPosts.length / getPageSize()));
+      }
+    } catch {
+      isLoading = false;
+    }
+  }
+
+  function applyFilter(): void {
+    const query = (searchInput?.value || '').toLowerCase().trim();
+    const yearVal = yearSelect?.value || 'all';
+    const monthVal = monthSelect?.value || 'all';
+    const catVal = categorySelect?.value || 'all';
+
+    filteredPosts = allPosts.filter((post) => {
+      if (yearVal !== 'all' && post.year !== yearVal) return false;
+      if (monthVal !== 'all' && post.month !== monthVal) return false;
+      if (catVal !== 'all' && !post.categories.includes(catVal)) return false;
+      if (query) {
+        const matchTitle = post.title.toLowerCase().includes(query);
+        const matchExcerpt = post.excerpt.toLowerCase().includes(query);
+        const matchCat = post.categories.some((c) => c.toLowerCase().includes(query));
+        if (!matchTitle && !matchExcerpt && !matchCat) return false;
+      }
+      return true;
+    });
+
+    currentPage = 1;
+    renderPage();
+  }
+
+  function renderPage(): void {
+    const pageSize = getPageSize();
+    const totalPages = Math.ceil(filteredPosts.length / pageSize) || 1;
+    if (currentPage > totalPages) currentPage = totalPages;
+    if (currentPage < 1) currentPage = 1;
+
+    const startIdx = (currentPage - 1) * pageSize;
+    const pagePosts = filteredPosts.slice(startIdx, startIdx + pageSize);
+
+    const h2Tag = 'h' + '2';
+    const h3Tag = 'h' + '3';
+
+    if (pagePosts.length === 0) {
+      postsContainer!.innerHTML = `
+        <div class="empty-state" style="padding: 40px 20px; text-align: center;">
+          <${h3Tag} class="empty-state-title" style="margin-bottom: 8px;">No articles found</${h3Tag}>
+          <p class="empty-state-desc" style="color: var(--ink-muted, #57606a);">Try clearing your search query or selecting a different year or category.</p>
+        </div>
+      `;
+    } else {
+      postsContainer!.innerHTML = pagePosts
+        .map((p, idx) => {
+          return `
+          <article class="post">
+            <div class="post-card-inner ${p.thumbnail ? 'has-thumbnail' : 'no-thumbnail'}">
+              ${p.thumbnail ? `
+                <a class="post-thumbnail-link" href="${p.url}" tabindex="-1" aria-hidden="true">
+                  <img class="post-thumbnail" src="${p.thumbnail}" alt="${escapeHtml(p.title)}" width="640" height="360" loading="lazy" decoding="async" referrerpolicy="no-referrer" />
+                </a>
+              ` : ''}
+              <div class="post-content-wrap">
+                <${h2Tag} class="post-title">
+                  <a href="${p.url}">${escapeHtml(p.title)}</a>
+                </${h2Tag}>
+                <div class="post-meta-row">
+                  <div class="post-author-mini">
+                    <img class="post-author-mini-avatar" src="https://blogger.googleusercontent.com/img/a/AVvXsEid2pK6sS9Z_2jCm6SFeomZwfHDSq0li0pY6e8i_NNiuJkwHKqMqJ9gLw2qws2Xp42oCc5QGFvDw-PjbWF6CHaF7D-BShybE1d5A4OglhgVfsNPm0dg-1CRHkmrBZnAv8neHaTTb_hEzsaZZMgUP9mnTJqSAvtYtuzbOEKnsE2OJ1viJolqiQU7D532vxQ=s96-rw" alt="Md Redwan Ahmed" width="24" height="24" loading="lazy" />
+                    <span class="post-author-mini-name">Md. Redwan Ahmed</span>
+                  </div>
+                  <span class="post-meta-sep">·</span>
+                  <time class="post-date" datetime="${p.published}">${escapeHtml(p.dateStr)}</time>
+                </div>
+                <div class="post-excerpt">${escapeHtml(p.excerpt)}</div>
+                <div class="post-footer">
+                  <div class="post-labels">
+                    ${p.categories.map((c) => `<span class="post-label">${escapeHtml(c)}</span>`).join('')}
+                  </div>
+                  <div class="jump-link">
+                    <a href="${p.url}">
+                      <span class="jump-link-text">Read article</span>
+                      <span class="jump-link-arrow" aria-hidden="true">→</span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
+        `;
+        })
+        .join('');
+    }
+
+    renderPagination(totalPages);
+  }
+
+  function renderPagination(totalPages: number): void {
+    let paginationEl = document.getElementById('blog-pagination');
+    if (!paginationEl) {
+      paginationEl = document.createElement('nav');
+      paginationEl.id = 'blog-pagination';
+      paginationEl.className = 'pagination post-pagination';
+      paginationEl.setAttribute('aria-label', 'Articles pagination');
+      postsContainer!.parentNode?.insertBefore(paginationEl, postsContainer!.nextSibling);
+    }
+
+    if (totalPages <= 1) {
+      paginationEl.style.display = 'none';
+      return;
+    }
+
+    paginationEl.style.display = 'flex';
+
+    let html = '';
+
+    const prevDisabled = currentPage === 1;
+    html += `<button class="page-nav-btn prev-btn" type="button"${prevDisabled ? ' disabled="disabled"' : ''} aria-label="Previous page">Previous</button>`;
+
+    html += '<div class="numbered-pages">';
+    const maxVisiblePages = 3;
+    let startPage = Math.max(1, currentPage - 1);
+    let endPage = startPage + maxVisiblePages - 1;
+    if (endPage > totalPages) {
+      endPage = totalPages;
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      const isActive = i === currentPage;
+      html += `<button class="page-num-btn${isActive ? ' is-active' : ''}" type="button" data-page="${i}" aria-label="Page ${i}"${isActive ? ' aria-current="page"' : ''}>${i}</button>`;
+    }
+    html += '</div>';
+
+    const nextDisabled = currentPage === totalPages;
+    html += `<button class="page-nav-btn next-btn" type="button"${nextDisabled ? ' disabled="disabled"' : ''} aria-label="Next page">Next</button>`;
+
+    paginationEl.innerHTML = html;
+
+    paginationEl.querySelector('.prev-btn')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (currentPage > 1) {
+        currentPage--;
+        scrollToTop();
+        renderPage();
+      }
+    });
+
+    paginationEl.querySelector('.next-btn')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (currentPage < totalPages) {
+        currentPage++;
+        scrollToTop();
+        renderPage();
+      }
+    });
+
+    paginationEl.querySelectorAll<HTMLButtonElement>('.page-num-btn[data-page]').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const page = Number(btn.getAttribute('data-page'));
+        if (page && page !== currentPage) {
+          currentPage = page;
+          scrollToTop();
+          renderPage();
+        }
+      });
+    });
+  }
+
+  function scrollToTop(): void {
+    const target = filterBar || postsContainer;
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  let debounceTimer: any;
+  searchInput?.addEventListener('focus', () => loadFeedAndFilter());
+  searchInput?.addEventListener('input', () => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      loadFeedAndFilter(applyFilter);
+    }, 150);
+  });
+
+  yearSelect?.addEventListener('focus', () => loadFeedAndFilter());
+  yearSelect?.addEventListener('change', () => loadFeedAndFilter(applyFilter));
+  monthSelect?.addEventListener('focus', () => loadFeedAndFilter());
+  monthSelect?.addEventListener('change', () => loadFeedAndFilter(applyFilter));
+  categorySelect?.addEventListener('focus', () => loadFeedAndFilter());
+  categorySelect?.addEventListener('change', () => loadFeedAndFilter(applyFilter));
+
+  filterBar.addEventListener('pointerenter', () => loadFeedAndFilter(), { once: true });
+
+  window.addEventListener('resize', () => {
+    if (allPosts.length > 0) {
+      renderPage();
+    }
+  });
+
+  // Pre-load feed promptly in background so dropdown filters and numbered pagination are ready
+  if (typeof window !== 'undefined') {
+    setTimeout(() => loadFeedAndFilter(), 0);
+  }
+}
+
+const HTML_ENTITY_MAP: Record<string, string> = {
+  '&amp;': '&',
+  '&lt;': '<',
+  '&gt;': '>',
+  '&quot;': '"',
+  '&#39;': "'",
+  '&#039;': "'",
+  '&#x27;': "'",
+  '&#x2F;': '/',
+  '&#32;': ' ',
+  '&nbsp;': ' ',
+};
+
+/**
+ * Decodes common HTML entities in a single linear pass to prevent double-escaping hazards.
+ */
+export function decodeHtmlEntities(str: string): string {
+  if (!str) return '';
+  return str.replace(/&(?:amp|lt|gt|quot|#39|#039|#x27|#x2F|#32|nbsp);/g, (match) => HTML_ENTITY_MAP[match] ?? match);
+}
+
+/**
+ * Determines the first Mermaid diagram type declared in the code after skipping frontmatter and comments.
+ * Performs a linear line-by-line scan with O(N) complexity to avoid regular expression backtracking (ReDoS).
+ */
+export function getFirstDiagramHeader(code: string): string | null {
+  if (!code) return null;
+  const lines = code.split('\n');
+  let inFrontmatter = false;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (line === undefined) continue;
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    if (trimmed === '---') {
+      inFrontmatter = !inFrontmatter;
+      continue;
+    }
+    if (inFrontmatter) continue;
+    if (trimmed.startsWith('%%')) continue;
+
+    const match = trimmed.match(/^([A-Za-z0-9_-]+)/);
+    if (match && match[1]) {
+      const token = match[1].toLowerCase();
+      if (
+        token === 'flowchart' ||
+        token === 'graph' ||
+        token === 'sequencediagram' ||
+        token.startsWith('classdiagram') ||
+        token.startsWith('statediagram') ||
+        token === 'erdiagram' ||
+        token === 'journey' ||
+        token === 'gantt' ||
+        token === 'pie' ||
+        token === 'quadrantchart' ||
+        token === 'requirementdiagram' ||
+        token === 'gitgraph' ||
+        token.startsWith('c4') ||
+        token === 'mindmap' ||
+        token === 'timeline' ||
+        token === 'zenuml' ||
+        token.startsWith('sankey') ||
+        token.startsWith('xychart') ||
+        token.startsWith('block') ||
+        token.startsWith('packet') ||
+        token === 'kanban' ||
+        token.startsWith('architecture')
+      ) {
+        return token;
+      }
+    }
+    return null;
+  }
+  return null;
+}
+
+/**
+ * Heals duplicate diagram headers (e.g. sequenceDiagram prepended erroneously to flowchart, graph, etc.)
+ * using linear line examination rather than nested multiline regexes.
+ */
+export function healDuplicateSequenceHeader(code: string): string {
+  const lines = code.split('\n');
+  let firstHeaderIdx = -1;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (line === undefined) continue;
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('%%')) continue;
+    if (trimmed.toLowerCase().startsWith('sequencediagram')) {
+      firstHeaderIdx = i;
+    }
+    break;
+  }
+  if (firstHeaderIdx === -1) return code;
+
+  for (let j = firstHeaderIdx + 1; j < lines.length; j++) {
+    const line = lines[j];
+    if (line === undefined) continue;
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('%%')) continue;
+    const match = trimmed.match(/^([A-Za-z0-9_-]+)/);
+    if (match && match[1]) {
+      const token = match[1].toLowerCase();
+      if (
+        token === 'sequencediagram' ||
+        token === 'flowchart' ||
+        token === 'graph' ||
+        token.startsWith('classdiagram') ||
+        token.startsWith('statediagram') ||
+        token === 'erdiagram' ||
+        token === 'journey' ||
+        token === 'gantt' ||
+        token === 'pie' ||
+        token === 'quadrantchart' ||
+        token === 'requirementdiagram' ||
+        token === 'gitgraph' ||
+        token.startsWith('c4') ||
+        token === 'mindmap' ||
+        token === 'timeline' ||
+        token === 'zenuml' ||
+        token.startsWith('sankey') ||
+        token.startsWith('xychart') ||
+        token.startsWith('block') ||
+        token.startsWith('packet') ||
+        token === 'kanban' ||
+        token.startsWith('architecture')
+      ) {
+        lines.splice(firstHeaderIdx, 1);
+        return lines.join('\n');
+      }
+    }
+    break;
+  }
+  return code;
+}
+
+/**
+ * Heals ASCII protocol ladder / handshake diagrams (e.g. |--->, |<---, bare bracket labels, lone pipes)
+ * into a valid, standard Mermaid sequenceDiagram with actors, numbered steps, messages, and notes.
+ */
+export function healAsciiHandshakeDiagram(rawCode: string): string {
+  // Check if this matches an ASCII handshake ladder pattern
+  // Matches lines starting with |--->, |<---, or lone pipes combined with directional arrows
+  const hasLadderArrows =
+    /(?:^\s*\|[-=]+>|^\s*\|<[-=]+|^\s*<[-=]+\||^\s*[-=]+>\|)/m.test(rawCode) ||
+    (/^\s*\|\s*$/m.test(rawCode) && /^\s*(?:[-=]+>|<[-=]+)\s+/m.test(rawCode));
+  if (!hasLadderArrows) return rawCode;
+
+  const lines = rawCode.split('\n');
+  let clientLabel = '';
+  let serverLabel = '';
+  const messageLines: { type: 'out' | 'in' | 'note'; text: string }[] = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const rawLine = lines[i];
+    if (rawLine === undefined) continue;
+    const line = rawLine.trim();
+    if (!line) continue;
+
+    // Skip diagram headers like "graph TD", "flowchart TD"
+    if (/^(?:graph|flowchart)\s+[A-Za-z0-9_-]+/i.test(line)) continue;
+    if (line === '---' || line.startsWith('%%')) continue;
+
+    // Detect bare bracket node at top: e.g. [Attacker Client with Extracted Factory Cert]
+    const bracketMatch = line.match(/^\[([^\]]+)\]$/);
+    if (bracketMatch && bracketMatch[1]) {
+      if (!clientLabel) {
+        clientLabel = bracketMatch[1].trim();
+      } else {
+        // Subsequent bracket nodes are notes / outcome states
+        messageLines.push({ type: 'note', text: bracketMatch[1].trim() });
+      }
+      continue;
+    }
+
+    // Ignore lone pipe lines
+    if (/^\|+$/.test(line)) continue;
+
+    // Check for outgoing arrow: |--->, |--> or --->
+    const outMatch = line.match(/^\|?\s*[-=]+>\s*(.+)$/);
+    if (outMatch && outMatch[1]) {
+      const text = outMatch[1].trim();
+      messageLines.push({ type: 'out', text });
+
+      // Scan for server / target hint in message: e.g. "to Port 541 (FGFM)", "to Server"
+      if (!serverLabel) {
+        const fullMatch = text.match(/\bto\s+([A-Za-z0-9][\w\s\(\)\.\-]+)/i);
+        if (fullMatch && fullMatch[1]) {
+          serverLabel = fullMatch[1].trim();
+        }
+      }
+      continue;
+    }
+
+    // Check for incoming arrow: |<---, |<-- or <---
+    const inMatch = line.match(/^(?:\|?\s*<[-=]+|<[-=]+\|?)\s*(.+)$/);
+    if (inMatch && inMatch[1]) {
+      const text = inMatch[1].trim();
+      messageLines.push({ type: 'in', text });
+      continue;
+    }
+
+    // If it's a non-empty text line without arrows and we have no client yet, use it
+    if (!clientLabel && !line.includes('|')) {
+      clientLabel = line;
+      continue;
+    }
+
+    // Any other text line can be treated as a note if it's descriptive
+    if (!line.startsWith('|')) {
+      messageLines.push({ type: 'note', text: line });
+    }
+  }
+
+  if (messageLines.length === 0) return rawCode;
+
+  const clientName = clientLabel || 'Client';
+  const serverName = serverLabel || 'Server';
+
+  const output: string[] = ['sequenceDiagram', '    autonumber'];
+  output.push(`    actor Client as ${clientName}`);
+  output.push(`    participant Server as ${serverName}`);
+
+  for (const item of messageLines) {
+    const cleanText = item.text.replace(/;/g, '#59;').replace(/"/g, '#34;');
+    if (item.type === 'out') {
+      output.push(`    Client->>Server: ${cleanText}`);
+    } else if (item.type === 'in') {
+      output.push(`    Server-->>Client: ${cleanText}`);
+    } else if (item.type === 'note') {
+      output.push(`    Note over Client,Server: ${cleanText}`);
+    }
+  }
+
+  return output.join('\n');
+}
+
+/**
+ * Heals bare bracket nodes without IDs in flowcharts/graphs and strips stray vertical pipe spacer lines.
+ * e.g. [Start Process] --> [End Process] => node_1["Start Process"] --> node_2["End Process"]
+ */
+export function healBareBracketNodes(code: string): string {
+  const header = getFirstDiagramHeader(code);
+  if (header !== 'flowchart' && header !== 'graph') return code;
+
+  // Strip lone pipe lines in flowcharts
+  code = code.replace(/^\s*\|\s*$/gm, '');
+
+  let counter = 1;
+  const labelToId = new Map<string, string>();
+  const getIdForLabel = (label: string): string => {
+    const trimmed = label.trim();
+    if (!labelToId.has(trimmed)) {
+      labelToId.set(trimmed, `node_${counter++}`);
+    }
+    return labelToId.get(trimmed)!;
+  };
+
+  // Replace bare bracket at line start: e.g. "  [Start Process] -->" -> "  node_1["Start Process"] -->"
+  code = code.replace(/^(\s*)\[([^\]\n\r]+)\]/gm, (_m, indent, label) => {
+    const id = getIdForLabel(label);
+    return `${indent}${id}["${label.trim()}"]`;
+  });
+
+  // Replace bare bracket after arrow: e.g. "--> [End Process]" -> "--> node_2["End Process"]"
+  code = code.replace(/((?:-->|---\s*|==>\s*|-\.->\s*))\s*\[([^\]\n\r]+)\]/g, (_m, arrow, label) => {
+    const id = getIdForLabel(label);
+    return `${arrow} ${id}["${label.trim()}"]`;
+  });
+
+  return code;
+}
+
+/**
+ * Sanitizes Mermaid diagram source code, fixing HTML entity leaks, arrows, unquoted labels,
+ * and duplicate diagram header declarations.
+ */
+export function cleanMermaidSyntax(rawCode: string): string {
+  let code = decodeHtmlEntities(rawCode.trim());
+
+  // Strip stray markdown code fences inside Mermaid blocks (e.g. ```mermaid, ````c, or ```)
+  code = code
+    .replace(/^`{3,}[a-zA-Z0-9_-]*\s*$/gm, '')
+    .replace(/^\s*`{3,}\s*$/gm, '');
+
+  // Fix lingering entity-encoded arrows and quotes
+  code = code
+    .replace(/&lt;--&gt;/g, '<-->')
+    .replace(/&lt;-->/g, '<-->')
+    .replace(/&lt;==&gt;/g, '<==>')
+    .replace(/&lt;==>/g, '<==>')
+    .replace(/--&gt;&gt;/g, '-->>')
+    .replace(/-&gt;&gt;/g, '->>')
+    .replace(/--&gt;/g, '-->')
+    .replace(/-&gt;/g, '->')
+    .replace(/==&gt;/g, '==>')
+    .replace(/=&gt;/g, '=>')
+    .replace(/&lt;(?=[-=\.])/g, '<')
+    .replace(/([-=\.])&gt;/g, '$1>')
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;lt;br\/&amp;gt;/gi, '<br/>')
+    .replace(/&amp;lt;br&amp;gt;/gi, '<br/>')
+    .replace(/&amp;lt;br\/>/gi, '<br/>')
+    .replace(/&amp;lt;br>/gi, '<br/>')
+    .replace(/&lt;br\/&gt;/gi, '<br/>')
+    .replace(/&lt;br&gt;/gi, '<br/>')
+    .replace(/&lt;br\/>/gi, '<br/>')
+    .replace(/&lt;br>/gi, '<br/>');
+
+  // Fix unquoted participant labels containing '&' (e.g., participant Agent as LLM Agent & MCP Client)
+  code = code.replace(
+    /^(participant\s+[\w\-]+\s+as\s+)([^"\n\r]+&[^"\n\r]+)$/gm,
+    (_m, prefix, label) => `${prefix}"${label.trim()}"`
+  );
+
+  // Heal ASCII handshake / ladder protocol diagrams into sequenceDiagram
+  code = healAsciiHandshakeDiagram(code);
+
+  // Heal duplicate diagram headers (e.g. sequenceDiagram prepended erroneously to flowchart, graph, or duplicate sequenceDiagram)
+  code = healDuplicateSequenceHeader(code);
+
+  // Deduplicate consecutive identical diagram headers (e.g. sequenceDiagram\nsequenceDiagram)
+  code = code.replace(/^(sequenceDiagram\s*\n)+sequenceDiagram/gim, 'sequenceDiagram');
+
+  // If diagram contains markdown headings (## Heading) from an unclosed fence swallow,
+  // slice before the heading so preceding diagram code renders cleanly instead of crashing Mermaid parser
+  const headingIdx = code.search(/\n\s*##\s+/);
+  if (headingIdx !== -1) {
+    code = code.slice(0, headingIdx).trim();
+  }
+
+  // Heal bare bracket nodes and lone pipes in flowcharts/graphs
+  code = healBareBracketNodes(code);
+
+  // Heal unquoted subgraph titles containing special characters or parentheses:
+  // e.g. subgraph TelemetrySubsystem [Appliance Operating System (Root)] -> ["Appliance Operating System (Root)"]
+  code = code.replace(
+    /^(\s*subgraph\s+[\w\-]+\s*\[)([^"\n\r\]]+)(\])/gm,
+    (_m, prefix, label, suffix) => `${prefix}"${label.trim()}"${suffix}`
+  );
+  // e.g. subgraph Appliance Operating System (Root) -> subgraph "Appliance Operating System (Root)"
+  code = code.replace(
+    /^(\s*subgraph\s+)([^"\[\n\r]*[\(\)\{\}][^"\n\r]*)$/gm,
+    (_m, prefix, title) => `${prefix}"${title.trim()}"`
+  );
+
+  // Heal unquoted flowchart node shapes containing parentheses, brackets, or nested tokens:
+  // e.g. NodeId[Text (with parens)] -> NodeId["Text (with parens)"]
+  code = code.replace(
+    /\b([\w\-]+)\s*\[([^"\[\]\n\r]*[\(\)][^"\[\]\n\r]*)\]/g,
+    (_m, id, label) => `${id}["${label.trim()}"]`
+  );
+  // e.g. NodeId{Decision (with parens)} -> NodeId{"Decision (with parens)"}
+  code = code.replace(
+    /\b([\w\-]+)\s*\{([^"\{\}\n\r]*[\(\)][^"\{\}\n\r]*)\}/g,
+    (_m, id, label) => `${id}{"${label.trim()}"}`
+  );
+  // e.g. NodeId(Process [with brackets]) -> NodeId("Process [with brackets]")
+  code = code.replace(
+    /\b([\w\-]+)\s*\(([^"\(\)\n\r]*[\[\]][^"\(\)\n\r]*)\)/g,
+    (_m, id, label) => `${id}("${label.trim()}")`
+  );
+
+  // In sequence diagrams, replace literal semicolons in notes and message labels with Mermaid's escape code #59;
+  // Because Mermaid's sequence diagram lexer treats ';' as a statement terminator even inside double quotes!
+  const isSequence = getFirstDiagramHeader(code) === 'sequencediagram';
+  if (isSequence) {
+    code = code
+      .split('\n')
+      .map((line) => {
+        const trimmed = line.trim();
+        if (/^Note\s+/i.test(trimmed)) {
+          const colonIdx = line.indexOf(':');
+          if (colonIdx !== -1) {
+            const prefix = line.slice(0, colonIdx + 1);
+            const text = line.slice(colonIdx + 1).replace(/;/g, '#59;');
+            return prefix + text;
+          }
+        }
+        const arrowMatch = line.match(/^(\s*[\w\-]+(?:->>|-->>|->|-->|--x|->x|---\)|-\))[\w\-]+\s*:\s*)(.*)$/);
+        if (arrowMatch && arrowMatch[1] && arrowMatch[2]) {
+          return arrowMatch[1] + arrowMatch[2].replace(/;/g, '#59;');
+        }
+        return line;
+      })
+      .join('\n');
+  }
+
+  return code;
+}
+
+/**
+ * Dynamically loads and renders Mermaid.js sequence and flow diagrams if present in article.
+ * Supports theme toggling by caching raw diagram source code.
+ */
+export function initMermaidDiagrams(targetTheme?: 'dark' | 'default'): void {
+  const wraps = document.querySelectorAll<HTMLElement>('.mermaid-diagram-wrap');
+  const standaloneMermaids = document.querySelectorAll<HTMLElement>('.post-body pre.mermaid');
+  if (wraps.length === 0 && standaloneMermaids.length === 0) return;
+
+  const currentTheme = targetTheme || (document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default');
+  const isDark = currentTheme === 'dark';
+
+  async function renderMermaid(mermaidApi: any): Promise<void> {
+    mermaidApi.initialize({
+      startOnLoad: false,
+      theme: currentTheme,
+      themeVariables: isDark ? {
+        darkMode: true,
+        background: '#161B22',
+        primaryColor: '#2563EB',
+        primaryTextColor: '#F8FAFC',
+        lineColor: '#58A6FF'
+      } : {
+        darkMode: false,
+        background: '#FFFFFF',
+        primaryColor: '#F6F8FA',
+        primaryTextColor: '#1F2328',
+        primaryBorderColor: '#D0D7DE',
+        lineColor: '#57606A'
+      },
+      securityLevel: 'loose'
+    });
+
+    const getDiagramSvg = (wrap: HTMLElement): SVGElement | null => {
+      const allSvgs = Array.from(wrap.querySelectorAll<SVGElement>('svg'));
+      return (
+        allSvgs.find(
+          (s) =>
+            !s.closest('.mermaid-modern-toolbar') &&
+            !s.closest('.mermaid-fallback-card') &&
+            s.getAttribute('aria-roledescription') !== 'error' &&
+            s.id !== 'dmermaid-error' &&
+            !s.classList.contains('error-icon')
+        ) || null
+      );
+    };
+
+    function renderFallbackCard(wrap: HTMLElement, code: string): void {
+      wrap.classList.add('is-fallback');
+      const card = document.createElement('div');
+      card.className = 'mermaid-fallback-card';
+
+      const header = document.createElement('div');
+      header.className = 'mermaid-fallback-header';
+
+      const titleDiv = document.createElement('div');
+      titleDiv.className = 'mermaid-fallback-title';
+      titleDiv.innerHTML = `
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="3" y1="9" x2="21" y2="9"></line>
+          <line x1="9" y1="21" x2="9" y2="9"></line>
+        </svg>
+        <span>Architecture Diagram</span>
+        <span class="mermaid-fallback-badge">Source View</span>
+      `;
+
+      const copyBtn = document.createElement('button');
+      copyBtn.type = 'button';
+      copyBtn.className = 'fallback-copy-btn';
+      copyBtn.setAttribute('aria-label', 'Copy diagram source');
+      copyBtn.innerHTML = `
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+        </svg>
+        <span>Copy Source</span>
+      `;
+
+      copyBtn.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(code);
+          const span = copyBtn.querySelector('span');
+          if (span) {
+            const originalText = span.textContent;
+            span.textContent = 'Copied!';
+            copyBtn.classList.add('is-copied');
+            setTimeout(() => {
+              span.textContent = originalText;
+              copyBtn.classList.remove('is-copied');
+            }, 2000);
+          }
+        } catch {
+          // Clipboard fallback or permissions ignored
+        }
+      });
+
+      header.appendChild(titleDiv);
+      header.appendChild(copyBtn);
+
+      const pre = document.createElement('pre');
+      pre.className = 'mermaid-fallback-code';
+      const codeElem = document.createElement('code');
+      codeElem.textContent = code;
+      pre.appendChild(codeElem);
+
+      card.appendChild(header);
+      card.appendChild(pre);
+
+      wrap.replaceChildren(card);
+    }
+
+    wraps.forEach((wrap, index) => {
+      const preElem = wrap.querySelector('.mermaid');
+      const preText = preElem?.textContent?.trim() || '';
+      const datasetText = wrap.dataset['mermaidCode']?.trim() || '';
+      let code = preText.length >= datasetText.length ? preText : datasetText;
+      if (!code) return;
+
+      const cleanCode = cleanMermaidSyntax(code);
+      wrap.dataset['mermaidCode'] = cleanCode;
+
+      // Cleanly prepare wrap structure with an inner scrolling stage:
+      // Outer wrap is the viewport with pinned toolbar.
+      // Inner stage handles the 2D pan and overflow.
+      const pre = document.createElement('pre');
+      pre.className = 'mermaid';
+      pre.id = `mermaid-wrap-${index}`;
+      pre.textContent = cleanCode;
+
+      const stage = document.createElement('div');
+      stage.className = 'mermaid-stage';
+      stage.appendChild(pre);
+
+      wrap.replaceChildren(stage);
+    });
+
+    standaloneMermaids.forEach((pre) => {
+      if (pre.closest('.mermaid-diagram-wrap')) return;
+      const cleanCode = cleanMermaidSyntax(pre.textContent || '');
+      pre.textContent = cleanCode;
+    });
+
+    // Render each diagram individually with isolated async error handling
+    const allNodes = Array.from(document.querySelectorAll<HTMLElement>('.mermaid-diagram-wrap .mermaid, .post-body pre.mermaid'));
+    for (const node of allNodes) {
+      const wrap = node.closest<HTMLElement>('.mermaid-diagram-wrap');
+      const rawCode = wrap?.dataset['mermaidCode'] || node.textContent || '';
+      try {
+        await mermaidApi.run({
+          nodes: [node],
+          suppressErrors: true
+        });
+        if (wrap) {
+          const svg = getDiagramSvg(wrap);
+          if (!svg) {
+            renderFallbackCard(wrap, rawCode);
+          }
+        }
+      } catch (e) {
+        console.warn('Mermaid rendering notice:', e);
+        if (wrap) {
+          renderFallbackCard(wrap, rawCode);
+        } else {
+          node.classList.add('mermaid-error-fallback');
+        }
+      }
+    }
+
+    wraps.forEach((wrap, index) => {
+      if (wrap.classList.contains('is-fallback') || wrap.querySelector('.mermaid-modern-toolbar')) return;
+
+      const diagramSvg = getDiagramSvg(wrap);
+      if (!diagramSvg) return;
+
+      const stage = wrap.querySelector<HTMLElement>('.mermaid-stage');
+      if (!stage) return;
+
+      let zoomScale = 1.0;
+
+      const toolbar = document.createElement('div');
+      toolbar.className = 'mermaid-modern-toolbar';
+      toolbar.innerHTML = `
+        <button type="button" class="mm-btn mm-btn-out" aria-label="Zoom out" title="Zoom out" disabled>
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        </button>
+        <button type="button" class="mm-level" aria-label="Reset zoom" title="Reset zoom (100%)">100%</button>
+        <button type="button" class="mm-btn mm-btn-in" aria-label="Zoom in" title="Zoom in">
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        </button>
+        <span class="mm-sep" aria-hidden="true"></span>
+        <button type="button" class="mm-btn mm-btn-dl" aria-label="Download diagram as SVG" title="Download SVG">
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+        </button>
+      `;
+
+      const levelBtn = toolbar.querySelector<HTMLButtonElement>('.mm-level');
+      const zoomInBtn = toolbar.querySelector<HTMLButtonElement>('.mm-btn-in');
+      const zoomOutBtn = toolbar.querySelector<HTMLButtonElement>('.mm-btn-out');
+      const dlBtn = toolbar.querySelector<HTMLButtonElement>('.mm-btn-dl');
+
+      // Extract viewBox aspect ratio and base width
+      const getSvgMetrics = () => {
+        const currentSvg = getDiagramSvg(wrap);
+        if (!currentSvg) return { aspect: 0.6, baseWidth: 800 };
+        const viewBox = currentSvg.getAttribute('viewBox') || '';
+        const parts = viewBox.split(/[\s,]+/).map(Number);
+        let vbW = 0, vbH = 0;
+        if (parts.length === 4 && parts.every((n) => !isNaN(n))) {
+          vbW = parts[2]!;
+          vbH = parts[3]!;
+        }
+        const aspect = (vbW > 0 && vbH > 0) ? vbH / vbW : (currentSvg.clientHeight / currentSvg.clientWidth || 0.6);
+        const baseWidth = Math.min(Math.max(wrap.clientWidth - 56, 320), vbW > 0 ? vbW : 800);
+        return { aspect, baseWidth };
+      };
+
+      const updateZoom = (newScale: number) => {
+        zoomScale = Math.min(2.5, Math.max(1.0, Math.round(newScale * 100) / 100));
+        const currentSvg = getDiagramSvg(wrap);
+        if (currentSvg) {
+          if (zoomScale === 1.0) {
+            currentSvg.style.width = '';
+            currentSvg.style.height = '';
+            currentSvg.style.maxWidth = '';
+            currentSvg.style.transform = '';
+            currentSvg.style.transformOrigin = '';
+            currentSvg.style.margin = '';
+            stage.classList.remove('is-zoomed');
+            stage.style.touchAction = '';
+            stage.scrollLeft = 0;
+            stage.scrollTop = 0;
+          } else {
+            const { aspect, baseWidth } = getSvgMetrics();
+            const targetW = Math.round(baseWidth * zoomScale);
+            const targetH = Math.round(targetW * aspect);
+
+            currentSvg.style.maxWidth = 'none';
+            currentSvg.style.width = `${targetW}px`;
+            currentSvg.style.height = `${targetH}px`;
+            currentSvg.style.transform = '';
+            currentSvg.style.transformOrigin = '';
+            currentSvg.style.margin = '0 auto';
+
+            stage.classList.add('is-zoomed');
+            stage.style.touchAction = 'none';
+
+            // Center scroll on zoom change so focal point stays in view
+            setTimeout(() => {
+              stage.scrollLeft = Math.max(0, (stage.scrollWidth - stage.clientWidth) / 2);
+              stage.scrollTop = Math.max(0, (stage.scrollHeight - stage.clientHeight) / 2);
+            }, 10);
+          }
+        }
+        if (levelBtn) {
+          levelBtn.textContent = `${Math.round(zoomScale * 100)}%`;
+        }
+        if (zoomOutBtn) {
+          zoomOutBtn.disabled = (zoomScale <= 1.0);
+        }
+        if (zoomInBtn) {
+          zoomInBtn.disabled = (zoomScale >= 2.5);
+        }
+      };
+
+      // 2D Touch & Mouse Drag-to-Pan on stage
+      let isPointerDown = false;
+      let startX = 0;
+      let startY = 0;
+      let startScrollLeft = 0;
+      let startScrollTop = 0;
+
+      stage.addEventListener('pointerdown', (e: PointerEvent) => {
+        if (e.button !== 0 && e.pointerType === 'mouse') return;
+        if ((e.target as HTMLElement).closest('.mermaid-modern-toolbar')) return;
+        if (stage.scrollWidth <= stage.clientWidth && stage.scrollHeight <= stage.clientHeight) return;
+
+        isPointerDown = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        startScrollLeft = stage.scrollLeft;
+        startScrollTop = stage.scrollTop;
+
+        stage.setPointerCapture(e.pointerId);
+        stage.classList.add('is-dragging');
+      });
+
+      stage.addEventListener('pointermove', (e: PointerEvent) => {
+        if (!isPointerDown) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        stage.scrollLeft = startScrollLeft - dx;
+        stage.scrollTop = startScrollTop - dy;
+      });
+
+      const endDrag = (e: PointerEvent) => {
+        if (!isPointerDown) return;
+        isPointerDown = false;
+        stage.classList.remove('is-dragging');
+        try {
+          stage.releasePointerCapture(e.pointerId);
+        } catch {}
+      };
+
+      stage.addEventListener('pointerup', endDrag);
+      stage.addEventListener('pointercancel', endDrag);
+
+      if (zoomInBtn) {
+        zoomInBtn.addEventListener('click', () => updateZoom(zoomScale + 0.25));
+      }
+
+      if (zoomOutBtn) {
+        zoomOutBtn.addEventListener('click', () => updateZoom(zoomScale - 0.25));
+      }
+
+      if (levelBtn) {
+        levelBtn.addEventListener('click', () => updateZoom(1.0));
+      }
+
+      if (dlBtn) {
+        dlBtn.addEventListener('click', () => {
+          const currentSvg = getDiagramSvg(wrap);
+          if (!currentSvg) return;
+
+          const svgClone = currentSvg.cloneNode(true) as SVGElement;
+          const viewBox = svgClone.getAttribute('viewBox') || '';
+          const parts = viewBox.split(/[\s,]+/).map(Number);
+          let minX = 0, minY = 0, vbWidth = 1200, vbHeight = 800;
+          if (parts.length === 4 && parts.every((n) => !isNaN(n))) {
+            minX = parts[0]!;
+            minY = parts[1]!;
+            vbWidth = parts[2]!;
+            vbHeight = parts[3]!;
+          }
+
+          svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+          svgClone.setAttribute('width', String(vbWidth));
+          svgClone.setAttribute('height', String(vbHeight));
+
+          // Clean inline scale transform and dimensions so downloaded SVG is clean and scalable
+          svgClone.style.transform = '';
+          svgClone.style.transformOrigin = '';
+          svgClone.style.margin = '';
+          svgClone.style.maxWidth = '';
+          svgClone.style.width = String(vbWidth);
+          svgClone.style.height = String(vbHeight);
+
+          // Add clean background rect so SVG renders cleanly in standalone viewer
+          const isDarkNow = document.documentElement.getAttribute('data-theme') === 'dark' || document.body.classList.contains('dark-theme');
+          const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+          bg.setAttribute('x', String(minX));
+          bg.setAttribute('y', String(minY));
+          bg.setAttribute('width', String(vbWidth));
+          bg.setAttribute('height', String(vbHeight));
+          bg.setAttribute('fill', isDarkNow ? '#161b22' : '#ffffff');
+          svgClone.insertBefore(bg, svgClone.firstChild);
+
+          const svgData = new XMLSerializer().serializeToString(svgClone);
+          const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `architecture-diagram-${index + 1}.svg`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          setTimeout(() => URL.revokeObjectURL(url), 200);
+        });
+      }
+
+      // Prepend toolbar to wrap (outside stage so it stays pinned at top right)
+      wrap.insertBefore(toolbar, wrap.firstChild);
+    });
+  }
+
+  const win = window as any;
+  if (win.mermaid) {
+    renderMermaid(win.mermaid).catch((e) => console.warn('[Mermaid] Top-level render notice:', e));
+  } else {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js';
+    script.async = true;
+    script.onload = () => {
+      if (win.mermaid) {
+        renderMermaid(win.mermaid).catch((e) => console.warn('[Mermaid] Top-level render notice:', e));
+      }
+    };
+    document.head.appendChild(script);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Module 14: Article Hero Image CDN Resolver & Broken Image Fallback
+// ---------------------------------------------------------------------------
+
+export function initPostHeroImage(): void {
+  const pagePath = window.location.pathname.toLowerCase();
+  const pageTitle = (document.title || '').toLowerCase();
+  const cdnSrc = getPostThumbnailUrl(pagePath, pageTitle);
+
+  // Target strictly the article's lead hero image inside .post-body, NEVER the author avatar in .post-header!
+  let heroImg = document.querySelector<HTMLImageElement>(
+    '.post-body .post-hero-image, .post-body .post-hero-wrap img, .post-body img[alt="Article Hero"]'
+  );
+
+  // Global settings for single blog preview: If no hero image exists in post-body, and we have a valid thumbnail, auto-inject hero wrap
+  if (!heroImg && cdnSrc) {
+    const postBody = document.querySelector<HTMLElement>('.post-body');
+    if (postBody) {
+      const wrap = document.createElement('div');
+      wrap.className = 'post-hero-wrap';
+      const img = document.createElement('img');
+      img.className = 'post-hero-image';
+      img.src = cdnSrc;
+      const postTitle = document.querySelector('.post-title')?.textContent?.trim() || 'Article Hero';
+      img.alt = postTitle;
+      img.setAttribute('loading', 'eager');
+      img.setAttribute('fetchpriority', 'high');
+      img.setAttribute('referrerpolicy', 'no-referrer');
+      img.width = 1200;
+      img.height = 675;
+      wrap.appendChild(img);
+      postBody.insertBefore(wrap, postBody.firstChild);
+      heroImg = img;
+    }
+  }
+
+  if (!heroImg) return;
+  if (
+    heroImg.classList.contains('post-author-mini-avatar') ||
+    heroImg.classList.contains('author-avatar') ||
+    Boolean(heroImg.closest('.post-header')) ||
+    Boolean(heroImg.closest('.post-meta-row')) ||
+    Boolean(heroImg.closest('.post-author-bio'))
+  ) {
+    return;
+  }
+
+  const currentSrc = (heroImg.getAttribute('src') || '').trim();
+
+  function isGoogleUserContent(urlStr: string): boolean {
+    try {
+      const parsed = new URL(urlStr, window.location.href);
+      return parsed.hostname === 'googleusercontent.com' || parsed.hostname.endsWith('.googleusercontent.com');
+    } catch {
+      return false;
+    }
+  }
+
+  // Only replace blocked Google Drive links, data URIs, or empty sources with reliable open CDN
+  const isBrokenSrc = !currentSrc || isGoogleUserContent(currentSrc) || currentSrc.startsWith('data:') || currentSrc.length > 500;
+  if (isBrokenSrc && cdnSrc) {
+    heroImg.src = cdnSrc;
+  }
+
+  heroImg.setAttribute('referrerpolicy', 'no-referrer');
+  heroImg.setAttribute('loading', 'eager');
+  heroImg.setAttribute('fetchpriority', 'high');
+
+  if (!heroImg.getAttribute('alt')) {
+    const postTitle = document.querySelector('.post-title')?.textContent?.trim();
+    if (postTitle) heroImg.alt = postTitle;
+  }
+
+  // Defensive fallback: If image fails to load, try cdnSrc or hide broken container
+  heroImg.addEventListener('error', () => {
+    if (cdnSrc && heroImg.src !== cdnSrc) {
+      heroImg.src = cdnSrc;
+    } else {
+      const wrap = heroImg.closest('.post-hero-wrap') as HTMLElement | null;
+      if (wrap) wrap.style.display = 'none';
+    }
+  });
+}
+
+/**
+ * Auto-enriches images in the post body with descriptive alt attributes
+ * derived from figcaption, title, previous heading, or article title.
+ */
+export function enrichArticleImagesAlt(): void {
+  if (typeof document === 'undefined') return;
+  const postBody = document.querySelector<HTMLElement>('.post-body');
+  if (!postBody) return;
+
+  const articleTitle = document.querySelector('.post-title')?.textContent?.trim() || document.title || 'Article';
+  const images = postBody.querySelectorAll<HTMLImageElement>('img');
+  let figIndex = 1;
+
+  images.forEach((img) => {
+    if (
+      img.classList.contains('author-avatar') ||
+      img.classList.contains('post-author-mini-avatar') ||
+      Boolean(img.closest('.post-header')) ||
+      Boolean(img.closest('.post-meta-row')) ||
+      Boolean(img.closest('.post-author-bio'))
+    ) {
+      return;
+    }
+    const currentAlt = (img.getAttribute('alt') || '').trim();
+    if (currentAlt.length > 0) return;
+
+    const fig = img.closest('figure');
+    const figCaption = fig?.querySelector('figcaption')?.textContent?.trim();
+    if (figCaption) {
+      img.alt = figCaption;
+      return;
+    }
+
+    const titleAttr = (img.getAttribute('title') || '').trim();
+    if (titleAttr) {
+      img.alt = titleAttr;
+      return;
+    }
+
+    let prev = img.parentElement;
+    let headingText = '';
+    while (prev && prev !== postBody) {
+      const heading = prev.previousElementSibling?.matches('h2, h3, h4')
+        ? prev.previousElementSibling
+        : prev.previousElementSibling?.querySelector('h2, h3, h4');
+      if (heading?.textContent?.trim()) {
+        headingText = heading.textContent.trim();
+        break;
+      }
+      prev = prev.parentElement;
+    }
+
+    if (headingText) {
+      img.alt = `${headingText} - Figure ${figIndex++}`;
+    } else {
+      img.alt = `${articleTitle} - Figure ${figIndex++}`;
+    }
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Module 15: Post Publication Date & Time Localization
+// ---------------------------------------------------------------------------
+
+/**
+ * Localizes publication dates and times according to the reader's local timezone.
+ * On single post views: converts <time.post-date> to display both date and exact time
+ * e.g., "September 5, 2026 at 10:00 PM".
+ * On multi-item cards and sidebars: keeps date-only format, but localized to eliminate UTC day-rollover.
+ */
+export function initDateTimeLocalization(): void {
+  if (typeof document === 'undefined') return;
+
+  const isPost =
+    document.body?.classList.contains('is-post') ||
+    Boolean(document.querySelector('article.post h1.post-title, .is-post'));
+
+  if (isPost) {
+    const singlePostTimes = document.querySelectorAll<HTMLTimeElement>(
+      'article.post header.post-header time.post-date, .post-header time.post-date, .post-meta-row time.post-date'
+    );
+    singlePostTimes.forEach((timeEl) => {
+      const isoStr = timeEl.getAttribute('datetime');
+      if (isoStr) {
+        const d = new Date(isoStr);
+        if (!isNaN(d.getTime())) {
+          const datePart = d.toLocaleDateString(undefined, {
+            month: 'long',
+            day: 'numeric',
+            year: 'numeric'
+          });
+          const timePart = d.toLocaleTimeString(undefined, {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+          });
+          timeEl.textContent = `${datePart} at ${timePart}`;
+        }
+      }
+    });
+  }
+
+  // Multi-item card and sidebar dates: format in reader's local timezone (date-only)
+  const cardTimes = document.querySelectorAll<HTMLTimeElement>(
+    '.post-card-inner time.post-date, .sidebar-recent-date'
+  );
+  cardTimes.forEach((el) => {
+    const isoStr = el.getAttribute('datetime');
+    if (isoStr) {
+      const d = new Date(isoStr);
+      if (!isNaN(d.getTime())) {
+        el.textContent = d.toLocaleDateString(undefined, {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric'
+        });
+      }
+    }
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Module 16: Threaded Comments Interactive Enhancement & Avatar Resolution
+// ---------------------------------------------------------------------------
+
+export function initCommentInteractions(): void {
+  if (typeof document === 'undefined') return;
+
+  const commentsSection = document.getElementById('comments');
+  if (!commentsSection) return;
+
+  const FALLBACK_AUTHOR_AVATAR =
+    'https://blogger.googleusercontent.com/img/a/AVvXsEid2pK6sS9Z_2jCm6SFeomZwfHDSq0li0pY6e8i_NNiuJkwHKqMqJ9gLw2qws2Xp42oCc5QGFvDw-PjbWF6CHaF7D-BShybE1d5A4OglhgVfsNPm0dg-1CRHkmrBZnAv8neHaTTb_hEzsaZZMgUP9mnTJqSAvtYtuzbOEKnsE2OJ1viJolqiQU7D532vxQ=s96-rw';
+
+  function sanitizeHttpUrl(rawUrl: string | null | undefined): string | null {
+    if (!rawUrl) return null;
+    const trimmed = rawUrl.trim();
+    if (!/^https?:\/\//i.test(trimmed)) return null;
+    try {
+      const parsed = new URL(trimmed);
+      if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+        return parsed.href;
+      }
+    } catch {
+      return null;
+    }
+    return null;
+  }
+
+  const defaultAuthorAvatar =
+    sanitizeHttpUrl(commentsSection.getAttribute('data-author-avatar')) || FALLBACK_AUTHOR_AVATAR;
+
+  const fcdLogo = 'https://fastcyberdefense.com/icon1.png';
+
+  function isGenericAvatar(src: string): boolean {
+    if (!src) return true;
+    return (
+      src.includes('blogger_logo_round') ||
+      src.includes('b16-rounded') ||
+      src.includes('blank.gif') ||
+      src.includes('anon36') ||
+      src.includes('avatar_blue_m')
+    );
+  }
+
+  function generateInitialAvatar(name: string): string {
+    const cleanName = name.trim() || 'Anonymous';
+    const initial = (cleanName[0] || 'A').toUpperCase();
+    const colors = [
+      '#2563eb', // Blue
+      '#059669', // Emerald
+      '#7c3aed', // Purple
+      '#d97706', // Amber
+      '#4f46e5', // Indigo
+      '#e11d48', // Rose
+      '#0d9488', // Teal
+      '#ea580c', // Orange
+    ];
+    let hash = 0;
+    for (let i = 0; i < cleanName.length; i++) {
+      hash = cleanName.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const color = colors[Math.abs(hash) % colors.length];
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" width="40" height="40"><circle cx="20" cy="20" r="20" fill="${color}"/><text x="20" y="25" text-anchor="middle" fill="#ffffff" font-family="-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif" font-size="16" font-weight="700">${initial}</text></svg>`;
+    return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+  }
+
+  function polishCommentAvatars(): void {
+    const comments = commentsSection ? commentsSection.querySelectorAll<HTMLElement>('.comment') : [];
+    comments.forEach((comment) => {
+      const img = comment.querySelector<HTMLImageElement>('.avatar-image-container img');
+      if (!img) return;
+
+      const nameEl = comment.querySelector<HTMLElement>('.comment-header .user, cite.user');
+      const authorName = nameEl?.textContent?.trim() || 'Anonymous';
+      const lowerName = authorName.toLowerCase();
+
+      // Check if commenter is the blog author (not just viewer holding delete button)
+      const isBlogAuthor =
+        Boolean(comment.querySelector('.blog-author')) ||
+        lowerName === 'md. redwan ahmed' ||
+        lowerName === 'redwan' ||
+        lowerName.includes('redwan ahmed');
+
+      const isFCD = lowerName.includes('fast cyber defense') || lowerName.includes('fcd');
+      const src = img.getAttribute('src') || '';
+
+      if (isFCD) {
+        img.src = fcdLogo;
+        img.alt = 'Fast Cyber Defense';
+      } else if (isBlogAuthor) {
+        if (!comment.querySelector('.comment-author-badge') && nameEl) {
+          const badge = document.createElement('span');
+          badge.className = 'comment-author-badge';
+          badge.textContent = 'Author';
+          nameEl.appendChild(badge);
+        }
+        if (isGenericAvatar(src) || !src) {
+          img.src = defaultAuthorAvatar;
+          img.alt = 'Md. Redwan Ahmed';
+        } else {
+          // Upgrade Blogger/Google avatar resolution
+          const upgraded = sanitizeHttpUrl(src.replace(/\/s\d+(-c)?\//, '/s96-c/'));
+          img.src = upgraded || defaultAuthorAvatar;
+        }
+      } else if (isGenericAvatar(src) || !src) {
+        img.src = generateInitialAvatar(authorName);
+        img.alt = authorName;
+      } else {
+        // Genuine commenter photo (e.g. Google/Blogger profile picture) - upgrade resolution
+        const upgraded = sanitizeHttpUrl(src.replace(/\/s\d+(-c)?\//, '/s96-c/'));
+        img.src = upgraded || generateInitialAvatar(authorName);
+      }
+
+      img.addEventListener(
+        'error',
+        () => {
+          if (isFCD) {
+            img.src = 'https://fastcyberdefense.com/logo.svg';
+          } else if (isBlogAuthor) {
+            img.src = defaultAuthorAvatar;
+          } else {
+            img.src = generateInitialAvatar(authorName);
+          }
+        },
+        { once: true }
+      );
+    });
+  }
+
+  polishCommentAvatars();
+
+  function getCommentEditor(): HTMLIFrameElement | null {
+    return document.getElementById('comment-editor') as HTMLIFrameElement | null;
+  }
+
+  function ensureEditorSrc(iframe: HTMLIFrameElement): string {
+    let src = iframe.getAttribute('src') || '';
+    if (!src || src === 'about:blank') {
+      const srcLink = document.getElementById('comment-editor-src') as HTMLAnchorElement | null;
+      if (srcLink?.href) {
+        src = srcLink.href;
+        iframe.src = src;
+      }
+    }
+    return src;
+  }
+
+  function getCommentForm(): HTMLElement | null {
+    return document.querySelector<HTMLElement>('.comment-form');
+  }
+
+  function setAddCommentButtonsVisible(visible: boolean): void {
+    const displayVal = visible ? '' : 'none';
+    const headerBtn = document.getElementById('header-add-comment-btn');
+    if (headerBtn) headerBtn.style.display = displayVal;
+    const bottomBtn = document.getElementById('bottom-add-comment-btn');
+    if (bottomBtn) bottomBtn.style.display = displayVal;
+    const zeroBtn = document.getElementById('open-comment-form-btn');
+    if (zeroBtn) zeroBtn.style.display = visible ? 'inline-flex' : 'none';
+  }
+
+  function closeEditor(): void {
+    const iframe = getCommentEditor();
+    if (iframe) {
+      iframe.style.display = 'none';
+    }
+
+    // Clean up reply cancel buttons
+    document.querySelectorAll<HTMLElement>('.comment-cancel-reply-btn').forEach((btn) => btn.remove());
+
+    const form = getCommentForm();
+    if (form) {
+      form.classList.remove('is-active');
+      if (iframe && iframe.parentElement !== form) {
+        form.appendChild(iframe);
+      }
+    }
+
+    setAddCommentButtonsVisible(true);
+  }
+
+  function openTopEditor(): void {
+    const iframe = getCommentEditor();
+    const form = getCommentForm();
+    if (!iframe || !form) return;
+
+    // Remove any active reply cancel buttons
+    document.querySelectorAll<HTMLElement>('.comment-cancel-reply-btn').forEach((btn) => btn.remove());
+
+    form.classList.add('is-active');
+    if (iframe.parentElement !== form) {
+      form.appendChild(iframe);
+    }
+
+    const src = ensureEditorSrc(iframe);
+    const [baseUrl, hash] = src.split('#');
+    const cleanUrl = (baseUrl || '').replace(/&parentID=[^&#]*/g, '') + (hash ? `#${hash}` : '');
+    if (iframe.src !== cleanUrl) {
+      iframe.src = cleanUrl;
+    }
+
+    iframe.style.display = 'block';
+
+    // Add Cancel button in header if not present
+    const msgHeader = document.getElementById('comment-post-message');
+    if (msgHeader && !msgHeader.querySelector('.comment-cancel-btn')) {
+      const cancelBtn = document.createElement('button');
+      cancelBtn.type = 'button';
+      cancelBtn.className = 'comment-cancel-btn';
+      cancelBtn.textContent = '✕ Cancel';
+      cancelBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        closeEditor();
+      });
+      msgHeader.appendChild(cancelBtn);
+    }
+
+    // Add browser note for Edge/Brave if not present
+    if (!form.querySelector('.comment-signin-hint')) {
+      const hint = document.createElement('p');
+      hint.className = 'comment-signin-hint';
+      hint.innerHTML = '<span class="hint-icon">ℹ</span> Note: If signing in on Edge or Brave, allow popups & third-party cookies for Blogger.';
+      form.insertBefore(hint, iframe);
+    }
+
+    setAddCommentButtonsVisible(false);
+
+    form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function moveEditorTo(targetContainer: HTMLElement, parentId: string): void {
+    const iframe = getCommentEditor();
+    if (!iframe) return;
+
+    // Deactivate bottom form to avoid empty ghost cards
+    const form = getCommentForm();
+    if (form) {
+      form.classList.remove('is-active');
+    }
+
+    // Clean up previous reply cancel buttons
+    document.querySelectorAll<HTMLElement>('.comment-cancel-reply-btn').forEach((btn) => btn.remove());
+
+    const src = ensureEditorSrc(iframe);
+    const [baseUrl, hash] = src.split('#');
+    let updatedUrl = (baseUrl || '').replace(/&parentID=[^&#]*/g, '');
+    updatedUrl += `&parentID=${encodeURIComponent(parentId)}`;
+    if (hash) {
+      updatedUrl += `#${hash}`;
+    }
+
+    if (iframe.src !== updatedUrl) {
+      iframe.src = updatedUrl;
+    }
+
+    iframe.style.display = 'block';
+    targetContainer.style.display = 'block';
+
+    // Add Cancel Reply button
+    const cancelReplyBtn = document.createElement('button');
+    cancelReplyBtn.type = 'button';
+    cancelReplyBtn.className = 'comment-cancel-reply-btn';
+    cancelReplyBtn.textContent = '✕ Cancel reply';
+    cancelReplyBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      closeEditor();
+    });
+
+    targetContainer.appendChild(cancelReplyBtn);
+    targetContainer.appendChild(iframe);
+
+    setAddCommentButtonsVisible(false);
+
+    targetContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  // Setup bottom Add Comment bar and polish reply folding buttons
+  function setupCommentsUI(): void {
+    const holder = document.getElementById('comment-holder');
+    if (!holder) return;
+
+    const hasComments = holder.querySelectorAll('.comment').length > 0;
+
+    // 1. Bottom Add Comment bar if comments exist
+    let bottomBar = holder.querySelector<HTMLElement>('.comments-bottom-bar');
+    if (hasComments && !bottomBar) {
+      bottomBar = document.createElement('div');
+      bottomBar.className = 'comments-bottom-bar';
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'comment-trigger-btn';
+      btn.id = 'bottom-add-comment-btn';
+      btn.innerHTML = '<span class="btn-icon">+</span> Add Comment';
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        openTopEditor();
+      });
+      bottomBar.appendChild(btn);
+      holder.appendChild(bottomBar);
+    } else if (!hasComments && bottomBar) {
+      bottomBar.remove();
+    }
+
+    // 2. Refine thread toggles: "Hide N Replies" / "Show N Replies"
+    holder.querySelectorAll<HTMLElement>('.thread-toggle').forEach((toggle) => {
+      const thread = toggle.closest('.comment-thread');
+      const count = thread ? thread.querySelectorAll('ol.thread-chrome li.comment').length : 1;
+      const label = count === 1 ? '1 Reply' : `${count} Replies`;
+      const countLink = toggle.querySelector<HTMLElement>('.thread-count a, .thread-count');
+      if (countLink) {
+        const updateText = () => {
+          const isExpanded = toggle.classList.contains('thread-expanded');
+          countLink.textContent = isExpanded ? `Hide ${label}` : `Show ${label}`;
+        };
+        updateText();
+        if (!toggle.dataset.bound) {
+          toggle.dataset.bound = 'true';
+          toggle.addEventListener('click', () => setTimeout(updateText, 60));
+        }
+      }
+    });
+  }
+
+  // Setup zero-state trigger button if post has no comments yet
+  function setupZeroStateTrigger(): void {
+    const holder = document.getElementById('comment-holder');
+    const form = getCommentForm();
+    if (!form) return;
+
+    const hasComments = holder ? holder.querySelectorAll('.comment').length > 0 : false;
+    const existingZero = document.querySelector('.comment-zero-state');
+
+    if (!hasComments && !existingZero) {
+      const zeroContainer = document.createElement('div');
+      zeroContainer.className = 'comment-zero-state';
+      zeroContainer.innerHTML = `
+        <p class="comment-zero-message">No comments yet. Share your thoughts or questions!</p>
+        <button type="button" class="comment-trigger-btn" id="open-comment-form-btn">
+          <span class="btn-icon">+</span> Post a Comment
+        </button>
+      `;
+      form.parentElement?.insertBefore(zeroContainer, form);
+      zeroContainer.querySelector('#open-comment-form-btn')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        openTopEditor();
+      });
+    } else if (hasComments && existingZero) {
+      existingZero.remove();
+    }
+  }
+
+  setupZeroStateTrigger();
+  setupCommentsUI();
+
+  // Initial visibility: only open if user explicitly navigated to comment anchor
+  const currentHash = window.location.hash;
+  const currentSearch = window.location.search;
+  if (
+    currentHash === '#comment-form' ||
+    currentHash === '#comments' ||
+    currentSearch.includes('showComment=')
+  ) {
+    openTopEditor();
+  } else {
+    // Keep iframe hidden by default for clean reading experience
+    const iframe = getCommentEditor();
+    if (iframe) {
+      iframe.style.display = 'none';
+    }
+    const form = getCommentForm();
+    if (form) {
+      form.classList.remove('is-active');
+    }
+  }
+
+  // Click delegation for Reply and Add Comment
+  commentsSection.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    if (!target) return;
+
+    // 1. Reply button
+    const replyBtn = target.closest<HTMLElement>('.comment-reply[data-comment-id], a.comment-reply');
+    if (replyBtn) {
+      const commentId = replyBtn.getAttribute('data-comment-id');
+      if (commentId) {
+        e.preventDefault();
+        const replyBox = document.getElementById(`c${commentId}-ce`);
+        if (replyBox) {
+          moveEditorTo(replyBox, commentId);
+        }
+        return;
+      }
+    }
+
+    // 2. Add Comment buttons (header, bottom, zero-state, or links)
+    const addCommentBtn = target.closest<HTMLElement>(
+      '#header-add-comment-btn, #bottom-add-comment-btn, #open-comment-form-btn, #top-continue a, #top-continue .comment-reply, .add-comment-link, #add-comment, a[href*="#comment-form"]'
+    );
+    if (addCommentBtn) {
+      e.preventDefault();
+      openTopEditor();
+      return;
+    }
+  });
+
+  // Watch for dynamic comment additions
+  const holder = document.getElementById('comment-holder');
+  if (holder && typeof MutationObserver !== 'undefined') {
+    const observer = new MutationObserver(() => {
+      polishCommentAvatars();
+      setupZeroStateTrigger();
+      setupCommentsUI();
+    });
+    observer.observe(holder, { childList: true, subtree: true });
+  }
+}
+
+if (typeof document !== 'undefined') {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+}
+

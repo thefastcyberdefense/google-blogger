@@ -1,0 +1,1061 @@
+// ---------------------------------------------------------------------------
+// Flagship Cybersecurity Dark Theme Mode
+// Loaded last in main.scss to guarantee cascade precedence over component styles
+// ---------------------------------------------------------------------------
+
+@use 'tokens' as *;
+
+html[data-theme='dark'] {
+  color-scheme: dark;
+  background-color: oklch(13.627% 0.0364 259.201);
+  color: oklch(98.415% 0.0034 247.858);
+
+  body {
+    background-color: oklch(13.627% 0.0364 259.201);
+    color: oklch(98.415% 0.0034 247.858);
+  }
+
+  .header-outer {
+    background: oklch(13.627% 0.0364 259.201 / 0.85);
+    border-bottom-color: oklch(27.950% 0.0368 260.031);
+  }
+
+  .site-title,
+  .site-title a,
+  .post-title,
+  .post-title a,
+  .post-author-mini-name,
+  .post-author-name,
+  .author-name,
+  .author-bio-name,
+  .drawer-nav-link,
+  .drawer-title,
+  .search-modal-title,
+  .empty-state-title,
+  .toc-link,
+  .hero-title,
+  .cta-title,
+  .footer-heading,
+  .hero-btn-tertiary {
+    color: oklch(98.415% 0.0034 247.858);
+  }
+
+  .status-pill {
+    background: oklch(32% 0.13 140 / 0.25);
+    border-color: oklch(85% 0.16 142 / 0.4);
+    color: oklch(85% 0.16 142);
+  }
+
+  .status-label {
+    color: oklch(85% 0.16 142);
+  }
+
+  .status-beacon {
+    background-color: oklch(85% 0.16 142);
+    box-shadow: 0 0 8px oklch(85% 0.16 142);
+  }
+
+  .footer-status,
+  .footer-status span {
+    color: oklch(85% 0.16 142);
+  }
+
+  .newer-link,
+  .older-link,
+  .blog-pager-newer-link,
+  .blog-pager-older-link {
+    color: oklch(98.415% 0.0034 247.858);
+    background-color: oklch(22.749% 0.0288 266.273);
+    border-color: oklch(27.950% 0.0368 260.031);
+
+    &:hover {
+      background-color: oklch(27.950% 0.0368 260.031);
+      border-color: oklch(75% 0.15 259.735 / 0.5);
+      color: oklch(75% 0.15 259.735);
+    }
+  }
+
+  .site-tagline,
+  .post-date,
+  .post-meta-row,
+  .post-meta-sep,
+  .post-excerpt,
+  .post-summary,
+  .post-snippet,
+  .empty-state-desc,
+  .empty-state-text,
+  .toc-title,
+  .hero-standfirst,
+  .cta-desc,
+  .footer-container,
+  .footer-container a,
+  .comments-title {
+    color: oklch(80% 0.015 255) !important;
+  }
+
+
+  .post-card,
+  .cta-container .cta-box,
+  .author-bio-card,
+  .post-nav-item,
+  .post-hero-wrap,
+  .table-of-contents {
+    background-color: oklch(22.749% 0.0288 266.273);
+    border-color: oklch(27.950% 0.0368 260.031);
+    box-shadow: none;
+  }
+
+  .post-body blockquote,
+  blockquote {
+    background-color: oklch(22.749% 0.0288 266.273) !important;
+    border-left-color: oklch(62.308% 0.1880 259.815) !important;
+    color: oklch(98.415% 0.0034 247.858) !important;
+
+    strong {
+      color: oklch(98.415% 0.0034 247.858) !important;
+    }
+  }
+
+  .lead {
+    color: oklch(98.415% 0.0034 247.858) !important;
+  }
+
+  .post-thumbnail-link {
+    background-color: oklch(18% 0.025 260) !important;
+  }
+
+  .mobile-drawer,
+  .search-modal-container {
+    background-color: oklch(16% 0.025 260 / 0.96) !important;
+    border-color: oklch(27.950% 0.0368 260.031) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 16px 36px oklch(0% 0 0 / 0.5);
+  }
+
+  .sidebar-card {
+    background-color: oklch(22.749% 0.0288 266.273);
+    border-color: oklch(27.950% 0.0368 260.031);
+    box-shadow: none;
+
+    &:hover {
+      border-color: oklch(75% 0.15 259.735 / 0.4);
+      box-shadow: none;
+    }
+  }
+
+  .sidebar-card-title,
+  .drawer-section-title,
+  .drawer-title {
+    color: oklch(98.415% 0.0034 247.858);
+  }
+
+  .sidebar-recent-title,
+  .sidebar-recent-link {
+    color: oklch(98.415% 0.0034 247.858);
+
+    &:hover {
+      color: oklch(75% 0.15 259.735) !important;
+    }
+  }
+
+  .sidebar-recent-item:hover .sidebar-recent-title {
+    color: oklch(75% 0.15 259.735);
+  }
+
+  .sidebar-recent-date,
+  .sidebar-recent-meta,
+  .drawer-subtitle,
+  .sidebar-tagline {
+    color: oklch(80% 0.015 255);
+  }
+
+  .sidebar-recent-tag {
+    color: oklch(80% 0.14 260) !important;
+    background-color: oklch(22% 0.04 260) !important;
+    border-color: oklch(35% 0.06 260) !important;
+  }
+
+  .sidebar-search-input,
+  .drawer-search-input {
+    background-color: oklch(16% 0.025 260) !important;
+    border-color: oklch(27.950% 0.0368 260.031) !important;
+    color: oklch(98.415% 0.0034 247.858) !important;
+
+    &::placeholder {
+      color: oklch(65% 0.015 255) !important;
+    }
+
+    &:focus {
+      border-color: oklch(75% 0.15 259.735) !important;
+      box-shadow: 0 0 0 2px oklch(75% 0.15 259.735 / 0.3) !important;
+    }
+  }
+
+  .sidebar-search-results,
+  .drawer-search-results {
+    background-color: oklch(18% 0.025 260) !important;
+    border-color: oklch(27.950% 0.0368 260.031) !important;
+    box-shadow: 0 16px 36px oklch(0% 0 0 / 0.6) !important;
+  }
+
+  .drawer-nav-link,
+  .drawer-social-btn,
+  .drawer-close,
+  .share-btn {
+    background-color: oklch(22.749% 0.0288 266.273) !important;
+    border-color: oklch(27.950% 0.0368 260.031) !important;
+    color: oklch(98.415% 0.0034 247.858) !important;
+
+    &:hover {
+      background-color: oklch(27.950% 0.0368 260.031) !important;
+      border-color: oklch(75% 0.15 259.735 / 0.5) !important;
+      color: oklch(75% 0.15 259.735) !important;
+    }
+  }
+
+  .drawer-recent-card {
+    background-color: oklch(22.749% 0.0288 266.273) !important;
+    border-color: oklch(27.950% 0.0368 260.031) !important;
+
+    .sidebar-card-header {
+      border-bottom-color: oklch(27.950% 0.0368 260.031) !important;
+    }
+
+    .sidebar-recent-item {
+      border-bottom-color: oklch(27.950% 0.0368 260.031) !important;
+    }
+
+    .sidebar-recent-title {
+      color: oklch(98.415% 0.0034 247.858) !important;
+
+      &:hover {
+        color: oklch(75% 0.15 259.735) !important;
+      }
+    }
+  }
+
+  .search-result-item:hover,
+  .search-result-item.is-active {
+    background-color: oklch(24% 0.03 260) !important;
+  }
+
+  .search-result-title {
+    color: oklch(98.415% 0.0034 247.858) !important;
+  }
+
+  .search-result-meta,
+  .search-result-date {
+    color: oklch(75% 0.015 255) !important;
+  }
+
+  .sidebar-cta-tag {
+    color: oklch(75% 0.15 259.735);
+  }
+
+  .sidebar-name,
+  .sidebar-cta-title,
+  .sidebar-status-label {
+    color: oklch(98.415% 0.0034 247.858);
+  }
+
+  .sidebar-bio,
+  .sidebar-cta-desc,
+  .sidebar-status-text {
+    color: oklch(80% 0.015 255);
+  }
+
+  .sidebar-avatar {
+    border-color: oklch(27.950% 0.0368 260.031);
+  }
+
+  .sidebar-btn-secondary,
+  .sidebar-cta-btn {
+    background-color: oklch(22.749% 0.0288 266.273);
+    border-color: oklch(27.950% 0.0368 260.031);
+    color: oklch(98.415% 0.0034 247.858);
+
+    &:hover {
+      background-color: oklch(27.950% 0.0368 260.031);
+      border-color: oklch(75% 0.15 259.735 / 0.5);
+      color: oklch(75% 0.15 259.735);
+    }
+  }
+
+  .hero-btn.hero-btn-primary,
+  .sidebar-btn-primary,
+  .cta-btn-primary,
+  .cta-button,
+  .cta-btn {
+    background-color: oklch(50% 0.22 260) !important;
+    color: #ffffff !important;
+
+    &:hover {
+      background-color: oklch(45% 0.22 260) !important;
+      box-shadow: 0 4px 16px oklch(50% 0.22 260 / 0.4);
+      color: #ffffff !important;
+    }
+  }
+
+  .post-card:hover,
+  .cta-container .cta-box:hover,
+  .author-bio-card:hover,
+  .post-nav-item:hover {
+    border-color: oklch(75% 0.15 259.735 / 0.4);
+    box-shadow: none;
+  }
+
+  .post,
+  .post-row {
+    background-color: oklch(22.749% 0.0288 266.273);
+    border-color: oklch(27.950% 0.0368 260.031);
+    box-shadow: 0 2px 8px oklch(0% 0 0 / 0.25);
+
+    &:hover {
+      border-color: oklch(75% 0.15 259.735 / 0.4);
+      box-shadow: none;
+    }
+  }
+
+  .nav-container,
+  .footer-container,
+  .pagination,
+  .blog-pager,
+  hr {
+    border-color: oklch(27.950% 0.0368 260.031);
+  }
+
+  .site-nav .nav-list {
+    background-color: oklch(16% 0.018 260);
+    border-color: oklch(27.950% 0.0368 260.031);
+  }
+
+  .topics-container {
+    background: oklch(17% 0.018 260);
+    border-color: oklch(27.950% 0.0368 260.031);
+  }
+
+  .site-nav .nav-link {
+    color: oklch(86% 0.008 260);
+
+    &:hover {
+      color: oklch(75% 0.15 259.735);
+      background-color: oklch(27.950% 0.0368 260.031);
+      border-color: oklch(75% 0.15 259.735 / 0.4);
+    }
+  }
+
+  .topic-pill {
+    background-color: oklch(20% 0.028 260) !important;
+    border-color: oklch(30% 0.035 260) !important;
+    color: oklch(88% 0.02 260) !important;
+
+    &.is-active {
+      background-color: oklch(26% 0.06 260) !important;
+      border-color: oklch(75% 0.15 259.735) !important;
+      color: oklch(75% 0.15 259.735) !important;
+      font-weight: 600;
+    }
+
+    &:hover {
+      background-color: oklch(26% 0.06 260) !important;
+      border-color: oklch(75% 0.15 259.735 / 0.6) !important;
+      color: oklch(75% 0.15 259.735) !important;
+    }
+  }
+
+  .post-label,
+  .label-link {
+    background-color: oklch(22% 0.04 260) !important;
+    border-color: oklch(35% 0.06 260) !important;
+    color: oklch(80% 0.14 260) !important;
+    min-height: unset !important;
+    height: auto !important;
+    padding: 2px 8px !important;
+    border-radius: 4px !important;
+
+    &:hover {
+      background-color: oklch(28% 0.08 260) !important;
+      border-color: oklch(75% 0.15 259.735) !important;
+      color: oklch(90% 0.15 260) !important;
+    }
+  }
+
+  .code-block-header {
+    background: oklch(15% 0.018 260);
+    border-bottom-color: oklch(27.950% 0.0368 260.031);
+  }
+
+  .post-body > pre {
+    background: oklch(13.627% 0.0364 259.201);
+    color: oklch(98.415% 0.0034 247.858);
+  }
+
+  code {
+    background: oklch(22% 0.025 260);
+    color: oklch(75% 0.15 259.735);
+  }
+
+  pre code {
+    background: transparent;
+    color: inherit;
+  }
+
+
+  .orcid-badge {
+    background: oklch(20% 0.028 260) !important;
+    border-color: oklch(30% 0.035 260) !important;
+    color: oklch(88% 0.01 260) !important;
+
+    &:hover {
+      background: oklch(24% 0.04 135) !important;
+      border-color: rgba(166, 206, 57, 0.6) !important;
+      color: #A6CE39 !important;
+    }
+  }
+
+  .footer-links-list a:hover,
+  .footer-back-to-top:hover,
+  .hero-btn-tertiary:hover {
+    color: oklch(75% 0.15 259.735);
+  }
+
+  .hero-btn-secondary,
+  .hero-btn-tertiary,
+  .cta-btn-secondary {
+    background-color: oklch(22.749% 0.0288 266.273) !important;
+    border-color: oklch(27.950% 0.0368 260.031) !important;
+    color: oklch(98.415% 0.0034 247.858) !important;
+
+    &:hover {
+      background-color: oklch(27.950% 0.0368 260.031) !important;
+      border-color: oklch(75% 0.15 259.735 / 0.5) !important;
+      color: oklch(75% 0.15 259.735) !important;
+    }
+  }
+
+  .topics-container {
+    background-color: oklch(18% 0.025 260) !important;
+    border-color: oklch(27.950% 0.0368 260.031) !important;
+  }
+
+  .cta-cyber-card {
+    background-color: oklch(22.749% 0.0288 266.273);
+    border-color: oklch(27.950% 0.0368 260.031);
+  }
+
+  .drawer-toggle,
+  .search-toggle,
+  .theme-toggle {
+    color: oklch(98.415% 0.0034 247.858);
+
+    &:hover {
+      background-color: oklch(27.950% 0.0368 260.031);
+      color: oklch(75% 0.15 259.735);
+    }
+  }
+
+  .header-profile-badge {
+    background-color: oklch(22.749% 0.0288 266.273);
+    border-color: oklch(27.950% 0.0368 260.031);
+    color: oklch(98.415% 0.0034 247.858);
+
+    &:hover {
+      border-color: oklch(75% 0.15 259.735);
+      background-color: oklch(27.950% 0.0368 260.031);
+      color: oklch(75% 0.15 259.735);
+    }
+  }
+
+  .header-brand:hover .site-title,
+  .header-brand:hover .site-tagline {
+    color: oklch(75% 0.15 259.735);
+  }
+
+  .hero-portrait-img {
+    border-color: oklch(27.950% 0.0368 260.031);
+
+    &:hover {
+      border-color: oklch(75% 0.15 259.735);
+      box-shadow: 0 8px 32px oklch(0% 0 0 / 0.5);
+    }
+  }
+
+  .cta-tag {
+    color: oklch(75% 0.15 259.735);
+  }
+
+  .cta-cyber-img {
+    border-color: oklch(27.950% 0.0368 260.031);
+
+    &:hover {
+      border-color: oklch(75% 0.15 259.735);
+    }
+  }
+
+  .cta-container .cta-box {
+    background-color: oklch(22.749% 0.0288 266.273);
+    border-color: oklch(27.950% 0.0368 260.031);
+    border-top-color: oklch(75% 0.15 259.735);
+
+    .cta-desc,
+    p {
+      color: oklch(80% 0.015 255);
+    }
+
+    .cta-title {
+      color: oklch(98.415% 0.0034 247.858);
+    }
+
+    .cta-btn-secondary {
+      background-color: transparent;
+      border-color: oklch(50% 0.22 260 / 0.4);
+      color: oklch(75% 0.15 259.735) !important;
+
+      &:hover {
+        background-color: oklch(22% 0.035 260);
+        border-color: oklch(75% 0.15 259.735);
+      }
+    }
+  }
+
+  .jump-link a {
+    color: oklch(75% 0.15 259.735);
+
+    &:hover {
+      color: oklch(80% 0.15 259.735);
+    }
+  }
+
+  .author-link-pill {
+    background-color: oklch(22% 0.025 260);
+    border-color: oklch(27.950% 0.0368 260.031);
+    color: oklch(75% 0.15 259.735);
+
+    &:hover {
+      background-color: oklch(26% 0.045 250);
+      border-color: oklch(75% 0.15 259.735 / 0.6);
+      color: oklch(80% 0.15 259.735);
+    }
+  }
+
+  .post-author-bio,
+  .author-bio-card {
+    background-color: oklch(22.749% 0.0288 266.273);
+    border-color: oklch(27.950% 0.0368 260.031);
+  }
+
+  .author-avatar-fallback {
+    background-color: oklch(27.950% 0.0368 260.031);
+    border-color: oklch(75% 0.15 259.735);
+
+    .author-initials {
+      color: oklch(75% 0.15 259.735);
+    }
+  }
+
+  .author-name,
+  .author-name a {
+    color: oklch(98.415% 0.0034 247.858);
+
+    &:hover {
+      color: oklch(75% 0.15 259.735);
+    }
+  }
+
+  .author-description {
+    color: oklch(80% 0.015 255);
+  }
+
+  .cta-box a,
+  .cta-desc a,
+  .footer a,
+  .footer-copyright a {
+    color: oklch(75% 0.15 259.735);
+  }
+
+  .comment-form,
+  #comments .comment,
+  .comments-list .comment,
+  .comment-thread .comment {
+    background-color: oklch(22.749% 0.0288 266.273) !important;
+    border-color: oklch(27.950% 0.0368 260.031) !important;
+  }
+
+  .comment-form {
+    h4#comment-post-message {
+      color: oklch(98.415% 0.0034 247.858);
+    }
+
+    iframe#comment-editor,
+    iframe.blogger-iframe-colorize {
+      border-color: oklch(27.950% 0.0368 260.031);
+      color-scheme: dark;
+      background: transparent !important;
+    }
+  }
+
+  .comment-body {
+    color: oklch(98.415% 0.0034 247.858);
+  }
+
+  .comments-title,
+  .comment-form h4#comment-post-message,
+  .comment-author,
+  .comment-author a {
+    color: oklch(98.415% 0.0034 247.858);
+  }
+
+  .comment-footer,
+  .comment-footer a,
+  .comment-meta,
+  .comment-tombstone,
+  .post-share-bar .share-label,
+  .author-label,
+  .post-nav-label,
+  .post-nav-direction {
+    color: oklch(80% 0.015 255);
+  }
+
+  .post-nav-item {
+    background-color: oklch(22.749% 0.0288 266.273);
+    border-color: oklch(27.950% 0.0368 260.031);
+
+    &:hover {
+      border-color: oklch(75% 0.15 259.735 / 0.5);
+    }
+  }
+
+  .post-nav-title {
+    color: oklch(98.415% 0.0034 247.858);
+  }
+
+  .listen-btn,
+  .listen-speed-btn {
+    background-color: oklch(22.749% 0.0288 266.273);
+    border-color: oklch(27.950% 0.0368 260.031);
+    color: oklch(98.415% 0.0034 247.858);
+
+    &:hover {
+      border-color: oklch(75% 0.15 259.735 / 0.5);
+      color: oklch(75% 0.15 259.735);
+    }
+  }
+
+  .table-of-contents {
+    background-color: oklch(18% 0.025 266) !important;
+    border-color: oklch(27.950% 0.0368 260.031) !important;
+    box-shadow: 0 4px 20px oklch(0% 0 0 / 0.25) !important;
+
+    &::before {
+      background: linear-gradient(90deg, oklch(75% 0.15 259.735), oklch(50% 0.12 250 / 0.2)) !important;
+    }
+
+    .toc-header {
+      border-bottom-color: oklch(27.950% 0.0368 260.031) !important;
+    }
+
+    .toc-title {
+      color: oklch(75% 0.015 255) !important;
+
+      .toc-icon {
+        color: oklch(75% 0.15 259.735) !important;
+      }
+    }
+
+    .toc-badge {
+      background: oklch(75% 0.15 259.735 / 0.15) !important;
+      color: oklch(75% 0.15 259.735) !important;
+    }
+
+    .toc-toggle {
+      border-color: oklch(30% 0.03 260) !important;
+      color: oklch(75% 0.015 255) !important;
+
+      &:hover {
+        background: oklch(75% 0.15 259.735 / 0.15) !important;
+        border-color: oklch(75% 0.15 259.735) !important;
+        color: oklch(75% 0.15 259.735) !important;
+      }
+    }
+
+    .toc-link {
+      color: oklch(85% 0.012 255) !important;
+
+      .toc-num {
+        color: oklch(60% 0.015 255) !important;
+      }
+
+      &:hover {
+        color: oklch(98% 0.003 247) !important;
+        background: oklch(75% 0.15 259.735 / 0.12) !important;
+        border-left-color: oklch(75% 0.15 259.735) !important;
+
+        .toc-num {
+          color: oklch(75% 0.15 259.735) !important;
+        }
+      }
+
+      &.is-active {
+        color: oklch(98% 0.003 247) !important;
+        background: oklch(75% 0.15 259.735 / 0.15) !important;
+        border-left-color: oklch(75% 0.15 259.735) !important;
+
+        .toc-num {
+          color: oklch(75% 0.15 259.735) !important;
+        }
+      }
+    }
+  }
+
+  .heading-anchor {
+    color: oklch(75% 0.015 255) !important;
+
+    &:hover {
+      color: oklch(75% 0.15 259.735) !important;
+    }
+  }
+
+  .code-block-wrap {
+    background-color: oklch(16% 0.028 266) !important;
+    border-color: oklch(27.950% 0.0368 260.031) !important;
+
+    .code-block-header {
+      background: oklch(14% 0.028 266) !important;
+      border-bottom-color: oklch(27.950% 0.0368 260.031) !important;
+      color: oklch(80% 0.015 255) !important;
+    }
+
+    .code-copy-btn {
+      background: oklch(22% 0.028 266 / 0.85) !important;
+      border-color: oklch(30% 0.03 260) !important;
+      color: oklch(75% 0.01 255) !important;
+
+      &:hover {
+        background: oklch(26% 0.03 260) !important;
+        color: #ffffff !important;
+        border-color: oklch(75% 0.15 259.735) !important;
+      }
+    }
+
+    pre {
+      margin: 0 !important;
+      background: transparent !important;
+      border: none !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+    }
+  }
+
+  pre {
+    background-color: oklch(16% 0.028 266) !important;
+    border-color: oklch(27.950% 0.0368 260.031) !important;
+    color: oklch(98.415% 0.0034 247.858) !important;
+  }
+
+  code {
+    background-color: oklch(25% 0.03 260 / 0.7) !important;
+    color: oklch(98.415% 0.0034 247.858) !important;
+  }
+
+  .post-body pre code,
+  pre code {
+    background: transparent !important;
+    color: inherit !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+
+  .code-copy-btn {
+    background: oklch(22% 0.028 266 / 0.85) !important;
+    border-color: oklch(30% 0.03 260) !important;
+    color: oklch(75% 0.01 255) !important;
+
+    &:hover {
+      background: oklch(26% 0.03 260) !important;
+      color: #ffffff !important;
+    }
+  }
+
+  // Prism Syntax Highlighting Tokens (Dark Mode)
+  .token.comment,
+  .token.prolog,
+  .token.doctype,
+  .token.cdata {
+    color: #8b949e !important;
+    font-style: italic !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    display: inline !important;
+  }
+
+  .token.punctuation {
+    color: #c9d1d9 !important;
+  }
+
+  .token.property,
+  .token.tag,
+  .token.boolean,
+  .token.number,
+  .token.constant,
+  .token.symbol,
+  .token.deleted {
+    color: #79c0ff !important;
+  }
+
+  .token.selector,
+  .token.attr-name,
+  .token.string,
+  .token.char,
+  .token.builtin,
+  .token.inserted {
+    color: #a5d6ff !important;
+  }
+
+  .token.operator,
+  .token.entity,
+  .token.url {
+    color: #d2a8ff !important;
+  }
+
+  .token.atrule,
+  .token.attr-value,
+  .token.keyword {
+    color: #ff7b72 !important;
+    font-weight: 600 !important;
+  }
+
+  .token.function,
+  .token.class-name {
+    color: #d2a8ff !important;
+    font-weight: 600 !important;
+  }
+
+  .token.regex,
+  .token.important,
+  .token.variable {
+    color: #ffa657 !important;
+  }
+
+  .mermaid-diagram-wrap {
+    background: oklch(16% 0.028 266) !important;
+    border-color: oklch(27.950% 0.0368 260.031) !important;
+
+    .mermaid-stage {
+      scrollbar-color: oklch(35% 0.02 260) transparent;
+
+      &::-webkit-scrollbar-thumb {
+        background: oklch(35% 0.02 260);
+
+        &:hover {
+          background: oklch(45% 0.03 260);
+        }
+      }
+    }
+
+    .mermaid-modern-toolbar {
+      background: transparent !important;
+      border-color: oklch(35% 0.02 260 / 0.6) !important;
+      box-shadow: none !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+
+      &:hover {
+        background: oklch(18% 0.025 260 / 0.85) !important;
+        backdrop-filter: blur(8px) !important;
+        -webkit-backdrop-filter: blur(8px) !important;
+        box-shadow: 0 4px 12px oklch(0% 0 0 / 0.35) !important;
+      }
+
+      .mm-btn {
+        color: oklch(75% 0.015 255) !important;
+
+        &:hover:not(:disabled) {
+          background: oklch(75% 0.15 259.735 / 0.15) !important;
+          color: oklch(75% 0.15 259.735) !important;
+        }
+
+        &:disabled {
+          opacity: 0.25 !important;
+        }
+      }
+
+      .mm-level {
+        color: oklch(75% 0.015 255) !important;
+
+        &:hover {
+          color: oklch(75% 0.15 259.735) !important;
+        }
+      }
+
+      .mm-sep {
+        background: oklch(28% 0.035 260) !important;
+      }
+    }
+
+    pre.mermaid {
+      color: oklch(98.415% 0.0034 247.858) !important;
+    }
+
+    &.is-fallback {
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+    }
+
+    .mermaid-fallback-card {
+      background: oklch(18% 0.025 260) !important;
+      border-color: oklch(27.950% 0.0368 260.031) !important;
+
+      .mermaid-fallback-header {
+        background: oklch(15% 0.025 260) !important;
+        border-bottom-color: oklch(27.950% 0.0368 260.031) !important;
+      }
+
+      .mermaid-fallback-title {
+        color: oklch(98.415% 0.0034 247.858) !important;
+
+        .mermaid-fallback-badge {
+          background: oklch(25% 0.03 260) !important;
+          color: oklch(80% 0.015 255) !important;
+        }
+      }
+
+      .fallback-copy-btn {
+        background: oklch(20% 0.028 266) !important;
+        border-color: oklch(32% 0.03 260) !important;
+        color: oklch(80% 0.015 255) !important;
+
+        &:hover {
+          background: oklch(25% 0.04 260) !important;
+          color: oklch(75% 0.15 259.735) !important;
+          border-color: oklch(75% 0.15 259.735) !important;
+        }
+
+        &.is-copied {
+          color: oklch(70% 0.2 145) !important;
+          border-color: oklch(70% 0.2 145) !important;
+        }
+      }
+
+      pre.mermaid-fallback-code {
+        color: oklch(92% 0.01 255) !important;
+      }
+    }
+  }
+
+  .table-container {
+    border-color: oklch(27.950% 0.0368 260.031) !important;
+
+    thead {
+      background: oklch(20% 0.028 266) !important;
+      border-bottom-color: oklch(27.950% 0.0368 260.031) !important;
+    }
+
+    th {
+      background: oklch(20% 0.028 266) !important;
+      color: oklch(98.415% 0.0034 247.858) !important;
+      border-bottom: 2px solid oklch(27.950% 0.0368 260.031) !important;
+    }
+
+    td {
+      border-bottom-color: oklch(27.950% 0.0368 260.031) !important;
+      color: oklch(85% 0.015 255) !important;
+    }
+
+    tr:nth-child(even) td {
+      background: oklch(18% 0.02 266) !important;
+    }
+  }
+
+  .posts-filter-bar {
+    background-color: oklch(18% 0.025 266) !important;
+    border-color: oklch(27.950% 0.0368 260.031) !important;
+    box-shadow: 0 4px 16px oklch(0% 0 0 / 0.2) !important;
+
+    .filter-label {
+      color: oklch(98.415% 0.0034 247.858) !important;
+    }
+
+    .filter-input {
+      background-color: oklch(14% 0.02 266) !important;
+      border-color: oklch(27.950% 0.0368 260.031) !important;
+      color: oklch(98.415% 0.0034 247.858) !important;
+
+      &::placeholder {
+        color: oklch(65% 0.015 255) !important;
+      }
+
+      &:focus {
+        border-color: oklch(68% 0.19 250) !important;
+        box-shadow: 0 0 0 3px oklch(68% 0.19 250 / 0.2) !important;
+      }
+    }
+
+    .filter-select-wrap::after {
+      border-top-color: oklch(75% 0.015 255) !important;
+    }
+
+    .filter-select {
+      background-color: oklch(14% 0.02 266) !important;
+      border-color: oklch(27.950% 0.0368 260.031) !important;
+      color: oklch(98.415% 0.0034 247.858) !important;
+
+      &:focus {
+        border-color: oklch(68% 0.19 250) !important;
+        box-shadow: 0 0 0 3px oklch(68% 0.19 250 / 0.2) !important;
+      }
+
+      option {
+        background-color: #161b22;
+        color: #f0f6fc;
+      }
+    }
+  }
+
+  .pagination {
+    border-top-color: oklch(27.950% 0.0368 260.031) !important;
+
+    .page-nav-btn {
+      border-color: oklch(62% 0.19 250) !important;
+      color: oklch(75% 0.15 250) !important;
+
+      &:hover:not(:disabled):not(.is-disabled) {
+        background: oklch(62% 0.19 250) !important;
+        color: #ffffff !important;
+      }
+
+      &:disabled,
+      &.is-disabled {
+        border-color: oklch(30% 0.02 260) !important;
+        color: oklch(50% 0.02 260) !important;
+      }
+    }
+
+    .page-num-btn {
+      border-color: oklch(62% 0.19 250) !important;
+      color: oklch(75% 0.15 250) !important;
+
+      &:hover:not(.is-active):not(.page-ellipsis) {
+        background: oklch(62% 0.19 250 / 0.15) !important;
+        color: #ffffff !important;
+      }
+
+      &.is-active {
+        background: oklch(62% 0.19 250) !important;
+        border-color: oklch(62% 0.19 250) !important;
+        color: #ffffff !important;
+        box-shadow: 0 2px 10px oklch(62% 0.19 250 / 0.4) !important;
+      }
+
+      &.page-ellipsis {
+        color: oklch(60% 0.015 255) !important;
+      }
+    }
+  }
+}

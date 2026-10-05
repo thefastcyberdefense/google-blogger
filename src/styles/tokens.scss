@@ -1,24 +1,107 @@
-:root {
-  color-scheme: light;
-  --background:#f8fbfe; --surface:#ffffff; --elevated:#edf6fb; --border:#bccbdc; --muted-surface:#edf3f8;
-  --primary:#175f9e; --brand:#3d8fe1; --secondary:#c8e8f4; --text:#202e48; --muted-text:#53627b;
-  --danger:#a92135; --warning:#805400; --success:#176538; --information:#175f9e; --code:#eef3f9; --focus:#1259a0;
-  --ink:#0f1c33; --ink-edge:#0f1c33; --ink-line:rgba(139,201,250,.32); --on-ink:#eaf2fb; --on-ink-muted:#b3c4da; --on-ink-accent:#8bc9fa;
-  --cta-bg:#0f1c33; --cta-fg:#ffffff;
-  --soft-border:#d8e2ee; --mark:#1a2a48; --shadow:0 22px 48px -30px rgba(15,28,51,.45); --radius-card:.875rem;
-  --sans:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-  --mono:"Fira Code",ui-monospace,SFMono-Regular,Consolas,monospace;
-}
-@mixin dark {
-  color-scheme:dark;
-  --background:#0e1527; --surface:#172139; --elevated:#1d2e48; --border:#425575; --muted-surface:#1d2a42;
-  --primary:#8bc9fa; --secondary:#24486b; --text:#e4edf7; --muted-text:#b4c1d4;
-  --danger:#ff9cad; --warning:#efca81; --success:#8cdfb0; --information:#8bc9fa; --code:#111b2e; --focus:#a6d8ff;
-  --ink:#0a1120; --ink-edge:#425575; --cta-bg:#8bc9fa; --cta-fg:#0e1527;
-  --soft-border:#2d3d5a; --mark:#2b4a7a; --shadow:0 22px 48px -30px rgba(0,0,0,.7);
-}
-@media(prefers-color-scheme:dark){:root:not([data-theme='light']){@include dark;}}
-:root[data-theme='dark']{@include dark;}
-@supports(color:oklch(0.5 0.1 250)){
-  :root {--brand:oklch(0.6386 0.1467 251.2451);}
-}
+// ---------------------------------------------------------------------------
+// Design Tokens — docs/PROJECT-PLAN.md §2.2 (colour), §2.3 (type), §2.4 (spacing)
+// ---------------------------------------------------------------------------
+
+// Shared Redwan brand palette, derived from redwan.work and Fast Cyber Defense.
+// Light mode follows redwan.work; dark mode uses the shared blue/slate family.
+$page: oklch(100% 0 0);                  // #FFFFFF
+$surface: oklch(98.415% 0.0034 247.858); // #F8FAFC
+$ink: oklch(14.479% 0 0);                // #0A0A0A
+$ink-muted: oklch(54.863% 0 0);          // #717171
+$rule: oklch(92.876% 0.0126 255.508);    // #E2E8F0
+$accent: oklch(54.615% 0.2152 262.881);  // #2563EB
+$accent-wash: oklch(97.048% 0.0142 254.604); // #EFF6FF
+
+$dark-page: oklch(13.627% 0.0364 259.201);       // #020817
+$dark-surface: oklch(22.749% 0.0288 266.273);    // #161C2A
+$dark-ink: oklch(98.415% 0.0034 247.858);        // #F8FAFC
+$dark-muted: oklch(65.613% 0.0019 247.851);      // #909192
+$dark-rule: oklch(27.950% 0.0368 260.031);       // #1E293B
+$dark-accent: oklch(62.308% 0.1880 259.815);     // #3B82F6
+$dark-highlight: oklch(69.234% 0.1502 259.735);  // #629BF8
+
+
+
+// Typography font stacks (Zero external dependencies, system UI stack)
+$font-serif: georgia, 'Iowan Old Style', 'Palatino Linotype', palatino, serif;
+$font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+$font-mono: ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', consolas, monospace;
+
+// Typography Scale (1.333 ratio) — row value locked by contract test
+$font-size-h1: clamp(2.0rem, 1.4rem + 2.6vw, 3.15rem);
+$font-size-h2: 1.777rem;
+$font-size-h3: 1.333rem;
+$font-size-body: 1.0625rem;
+$font-size-row: 1.15rem;
+$font-size-meta: 0.8125rem;
+
+$line-height-body: 1.75;
+
+$font-weight-h1: 700;
+$font-weight-h2: 650;
+$font-weight-h3: 650;
+$font-weight-body: 400;
+$font-weight-row: 600;
+$font-weight-meta: 500;
+
+// Spacing Rhythm (Base 4px, deliberately uneven)
+$space-1: 4px;
+$space-2: 8px;
+$space-3: 12px;
+$space-4: 16px;
+$space-5: 24px;
+$space-6: 32px;
+$space-7: 48px;
+$space-8: 72px;
+$space-9: 112px;
+
+// Layout & Measure
+$measure: 68ch;
+$breakpoint-mobile: 640px;
+$breakpoint-desktop: 1024px;
+$container-max: 1280px;
+
+// Extended Motion System Tokens (GPU-composited & WCAG 2.2 Compliant)
+$motion-fast: 120ms;
+$motion-base: 180ms;
+$motion-moderate: 240ms;
+$motion-slow: 320ms;
+$motion-duration: $motion-base;
+
+// Easing Curves
+$ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+$ease-in-out-cubic: cubic-bezier(0.65, 0, 0.35, 1);
+$ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+$motion-ease: $ease-out-quart;
+
+// Elevation Shadows — Deliberate flat design system matching redwan.work
+// $shadow-sm through $shadow-lg are deliberately flattened (none) to enforce clean borders over shadow blur
+$shadow-sm: none;
+$shadow-md: none;
+$shadow-lg: none;
+$shadow-xl: 0 16px 36px oklch(14.479% 0 0 / 0.16), 0 8px 16px oklch(14.479% 0 0 / 0.08);
+
+// Accent-Tinted Shadows (for active/hover interactive focus)
+$shadow-accent-sm: none;
+$shadow-accent-md: none;
+
+// Glassmorphism & Translucency Tokens
+$glass-bg: oklch(100% 0 0 / 0.88);
+$glass-bg-drawer: oklch(100% 0 0 / 0.94);
+$glass-bg-modal: oklch(100% 0 0 / 0.97);
+$glass-blur: blur(12px);
+$glass-border: 1px solid oklch(92.876% 0.0126 255.508 / 0.8);
+
+// Transform Constants
+$card-hover-lift: translateY(-1px);
+$card-hover-scale: scale(1.005);
+$thumb-hover-scale: scale(1.04);
+$pill-active-scale: scale(0.96);
+
+// Z-Index Layering Ramp
+$z-progress: 1000;
+$z-drawer-backdrop: 890;
+$z-drawer: 900;
+$z-modal-backdrop: 940;
+$z-modal: 950;
+$z-toast: 1100;

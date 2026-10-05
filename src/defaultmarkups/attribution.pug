@@ -1,7 +1,6 @@
-//- Adapted from Ledger v1.7.0 (a3da05a8a70243c6ffc239b0e96e88260ed7b536); see LICENSE.
-//- FCD redesign: a compact text credit with no platform logo, wherever the gadget is saved.
 b:defaultmarkup(type='Attribution')
   b:includable(id='main' var='this')
-    p.fcd-attribution
-      a(expr:href='data:bloggerUrl' rel='nofollow')
-        b:message(name='messages.poweredByBlogger')/
+    div.footer-attribution
+      span.blogger
+        a(expr:href='data:bloggerUrl' rel='nofollow')
+          b:message(name='messages.poweredByBlogger')/

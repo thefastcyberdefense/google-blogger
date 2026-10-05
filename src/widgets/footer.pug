@@ -1,13 +1,55 @@
-//- L4-footer: the shared footer, with the native Attribution and Report Abuse gadgets in its base row.
-+fcdFooter(false)
-  b:section(id='footer-gadgets' class='footer-gadgets' name='Footer gadgets' showaddelement='false')
-    //- US-016 (first native upload 2026-10-04): super.main rendered Blogger's built-in credit with its
-    //- logo, so the theme renders the text-only credit here, as Ledger v1.7.0 does.
-    b:widget(id='Attribution1' type='Attribution' title='' version='2' locked='true')
-      b:includable(id='main' var='this')
-        p.fcd-attribution
+b:section(class='footer' id='footer' name='Footer' showaddelement='yes')
+  b:widget(id='HTML3' locked='false' title='Footer' type='HTML' version='2' visible='true')
+    b:includable(id='main')
+      b:if(cond='data:content')
+        div.footer-content
+          b:eval(expr='data:content')/
+      b:if(cond='not data:content')
+        div.footer-grid
+          //- Column 1: Brand / Description
+          div.footer-col.footer-col-brand
+            h3.footer-heading
+              b:eval(expr='data:blog.title')/
+            p.footer-desc
+              b:eval(expr='data:blog.description ?: "Cybersecurity research, vulnerability analysis, and security engineering publications."')/
+          //- Column 2: Publications & Policies
+          div.footer-col.footer-col-nav
+            h3.footer-heading Publications &amp; Policies
+            ul.footer-links-list
+              li
+                a(expr:href='data:blog.homepageUrl path "search"') All Publications
+              li
+                a(expr:href='data:blog.homepageUrl path "p/privacy.html"') Privacy Policy
+              li
+                a(expr:href='data:blog.homepageUrl path "p/terms.html"') Terms of Service
+              li
+                a(expr:href='data:blog.homepageUrl path "feeds/posts/default"') RSS Feed
+          //- Column 3: Ecosystem & Social
+          div.footer-col.footer-col-connect
+            h3.footer-heading Main Site &amp; Social
+            ul.footer-links-list
+              li
+                a(href='https://redwan.work/' target='_blank' rel='noopener noreferrer') Main Portfolio (redwan.work)
+              li
+                a(href='https://orcid.org/0009-0001-9419-4760' target='_blank' rel='noopener noreferrer') ORCID (0009-0001-9419-4760)
+              li
+                a(href='https://github.com/redwan-cse' target='_blank' rel='noopener noreferrer') GitHub (@redwan-cse)
+              li
+                a(href='https://linkedin.com/in/redwancse' target='_blank' rel='noopener noreferrer') LinkedIn (/in/redwancse)
+        div.footer-bottom
+          div.footer-bottom-left
+            p.footer-copyright
+              | © 2026 
+              b:eval(expr='data:blog.title')/
+              |  · Cybersecurity Research &amp; Notes
+          div.footer-bottom-right
+            a.footer-back-to-top(href='#content' aria-label='Back to top') Back to top ↑
+
+  b:widget(id='Attribution1' locked='true' title='' type='Attribution' version='2' visible='true')
+    b:widget-settings
+      b:widget-setting(name='copyright')
+    b:includable(id='main' var='this')
+      div.footer-attribution
+        span.blogger
           a(expr:href='data:bloggerUrl' rel='nofollow')
             b:message(name='messages.poweredByBlogger')/
-    b:widget(id='ReportAbuse1' type='ReportAbuse' title='' version='2' locked='false')
-      b:includable(id='main' var='this')
-        b:include(name='super.main')/

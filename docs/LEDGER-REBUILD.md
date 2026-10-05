@@ -8,19 +8,21 @@ ledger-port.yml workflow (bot commits do not trigger CI).
 
 | Story | State | Evidence |
 | --- | --- | --- |
-| US-L1 native engine checks | green | tests/fcd/native-contract.test.ts 5/5 on 9a321ae |
+| US-L1 native engine checks | green | tests/fcd/native-contract.test.ts 5/5 |
 | US-L2 verbatim Ledger import | done | 065a95f blob SHAs match upstream |
-| US-L3 FCD identity | red, fixing | run 37330269405: redwan x4, orcid x6, AVvXsEid2pK6sS9Z x2, blog id x1 remain |
-| US-L4 FCD palette | red, fixing | dark.scss mapped in 5b2a7d6; light leftovers (#2563eb, rgb 59,130,246, oklch .985) pending |
-| US-L5 hardening | red tests added | tests/fcd/hardening.test.ts (cache restore, feed URLs, catalog cap 10, Mermaid strict) |
-| US-L6 cleanup and records | pending | remove port/, ledger-port.yml, staging-check.yml, excerpt step |
+| US-L3 FCD identity | fix applied (6ede33c) | run 37333013292 located the last hits: comment avatars, blog-author match, follow/RSS links, ORCID styles |
+| US-L4 FCD palette | fix applied (6ede33c) | dark.scss map (5b2a7d6); article/layout/threaded-comments leftovers |
+| US-L5 hardening | fix applied (6ede33c) | red in run 37333013292: cache restore, feed URLs in recent/search/catalog, 1718 catalog pages, Mermaid loose |
+| US-L6 cleanup and records | pending | remove port/, ledger-port.yml, staging-check.yml, excerpt step; CHANGELOG, AGENTS.md, PR body |
 
-## Next action
+## US-L5 changes (main.ts, via port edits)
 
-Read the verify annotations for this commit: brand failures now list the
-source lines (path:line) of each leftover, and the TEMPORARY excerpt step
-publishes the main.ts tail (Module 16). Fix through port/ledger.json edits,
-then implement US-L5 in main.ts via port edits until all tests are green.
+- safeFeedUrl: feed URLs are used only when they resolve to http(s).
+- fetchFeed: same-origin JSON feed requests abort after 8 s.
+- Recent Posts: never reads cached HTML; renders DOM nodes from text.
+- Live search and catalog: links, thumbnails and dates escaped and validated.
+- Catalog: at most 10 pages of 50 posts, started once per page.
+- Mermaid: securityLevel 'strict'.
 
 Action blue for small text is #166fbe (AA on white, card and wash); the
 example #2378c8 fails AA on the card (4.25) and wash (4.00).

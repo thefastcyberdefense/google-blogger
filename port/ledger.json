@@ -60,6 +60,25 @@
   {"path": "src/scripts/main.ts", "find": "color: var(--ink-muted, #57606a);", "replace": "color: var(--ink-muted, #606d8e);", "count": "any"},
   {"path": "src/widgets/blog-post.pug", "find": "expr:alt='data:post.author.name ?: \"Md. Redwan Ahmed\"'", "replace": "expr:alt='data:post.author.name ?: data:blog.title'", "count": "all"},
   {"path": "src/widgets/blog-post.pug", "find": "div.author-avatar.author-avatar-fallback(role='img' aria-label='Md Redwan Ahmed')", "replace": "div.author-avatar.author-avatar-fallback(role='img' expr:aria-label='data:post.author.name ?: data:blog.title')", "count": "all"},
-  {"path": "src/widgets/blog-post.pug", "find": "span.author-initials RA", "replace": "span.author-initials FCD", "count": "all"}
+  {"path": "src/widgets/blog-post.pug", "find": "span.author-initials RA", "replace": "span.author-initials FCD", "count": "all"},
+  {"paths": ["src/styles/dark.scss"], "find": "oklch(75% 0.15 259.735", "replace": "oklch(68% 0.12 251.2451", "count": "any"},
+  {"paths": ["src/styles/dark.scss"], "find": "oklch(80% 0.15 259.735", "replace": "oklch(74% 0.1 251.2451", "count": "any"},
+  {"paths": ["src/styles/dark.scss"], "find": "oklch(75% 0.15 250)", "replace": "oklch(68% 0.12 251.2451)", "count": "any"},
+  {"paths": ["src/styles/dark.scss"], "find": "oklch(50% 0.22 260", "replace": "oklch(53.5% 0.1467 251.2451", "count": "any"},
+  {"paths": ["src/styles/dark.scss"], "find": "oklch(45% 0.22 260", "replace": "oklch(50% 0.1467 251.2451", "count": "any"},
+  {"paths": ["src/styles/dark.scss"], "find": "oklch(62% 0.19 250", "replace": "oklch(53.5% 0.1467 251.2451", "count": "any"},
+  {"paths": ["src/styles/dark.scss"], "find": "oklch(68% 0.19 250", "replace": "oklch(63.86% 0.1467 251.2451", "count": "any"},
+  {"paths": ["src/styles/dark.scss"], "find": "oklch(80% 0.14 260)", "replace": "oklch(80% 0.08 251.2451)", "count": "any"},
+  {"paths": ["src/styles/dark.scss"], "find": "oklch(90% 0.15 260)", "replace": "oklch(90% 0.05 251.2451)", "count": "any"},
+  {"paths": ["src/styles/dark.scss"], "find": "oklch(80% 0.015 255)", "replace": "oklch(71.37% 0.0192 261.3246)", "count": "any"},
+  {"paths": ["src/styles/dark.scss"], "find": "oklch(75% 0.015 255)", "replace": "oklch(71.37% 0.0192 261.3246)", "count": "any"},
+  {"paths": ["src/styles/dark.scss"], "find": "oklch(75% 0.01 255)", "replace": "oklch(71.37% 0.0192 261.3246)", "count": "any"},
+  {"paths": ["src/styles/dark.scss"], "find": "oklch(65% 0.015 255)", "replace": "oklch(71.37% 0.0192 261.3246)", "count": "any"},
+  {"paths": ["src/styles/dark.scss"], "find": "oklch(60% 0.015 255)", "replace": "oklch(71.37% 0.0192 261.3246)", "count": "any"},
+  {"paths": ["src/styles/dark.scss"], "find": "oklch(98% 0.003 247)", "replace": "oklch(97.43% 0.0101 228.8865)", "count": "any"},
+  {"paths": ["src/styles/dark.scss"], "find": "oklch(22% 0.028 266 / 0.85)", "replace": "oklch(24.41% 0.0456 268.3692 / 0.85)", "count": "any"},
+  {"paths": ["src/styles/dark.scss"], "find": "oklch(28% 0.035 260)", "replace": "oklch(33.51% 0.0331 260.912)", "count": "any"},
+  {"paths": ["src/styles/dark.scss"], "find": "background-color: #161b22;\n        color: #f0f6fc;", "replace": "background-color: #171f36;\n        color: #e2e8f0;", "count": "any"},
+  {"path": "src/styles/dark.scss", "regex": true, "find": "\\n  \\.orcid-badge \\{.*?\\n  \\}\\n", "replace": "\n", "count": 1}
  ]
 }

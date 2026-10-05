@@ -5,13 +5,33 @@
 // masthead, and the colours of fastcyberdefense.com (src/app/globals.css).
 // Text-bearing blue on light surfaces uses the AA-safe deeper action blue;
 // #3d8fe1 stays exact for surfaces, large text and the dark theme. These checks
-// read the CI-built XML.
-import { readFileSync } from 'node:fs';
+// read the CI-built XML; failures also name the source lines that carry a hit.
+import { readdirSync, readFileSync } from 'node:fs';
+import { join, relative } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
-const xml = readFileSync(new URL('../../dist/theme.xml', import.meta.url), 'utf8');
+const ROOT = fileURLToPath(new URL('../../', import.meta.url));
+const xml = readFileSync(join(ROOT, 'dist/theme.xml'), 'utf8');
 const visible = xml.replace(/<!--[\s\S]*?-->/g, '');
 const skin = xml.match(/<b:skin\b[^>]*>\s*<!\[CDATA\[([\s\S]*?)\]\]>\s*<\/b:skin>/)?.[1] ?? '';
+
+function sourceFiles(dir: string): string[] {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((d) => {
+    const p = join(dir, d.name);
+    if (d.isDirectory()) return sourceFiles(p);
+    return /\.(pug|scss|ts)$/.test(d.name) ? [p] : [];
+  });
+}
+
+const SOURCES = sourceFiles(join(ROOT, 'src')).map((p) => ({ path: relative(ROOT, p), lines: readFileSync(p, 'utf8').split('\n') }));
+
+// Source lines (path:line: text) that satisfy a predicate, for failure messages.
+function where(test: (line: string) => boolean): string {
+  const hits: string[] = [];
+  for (const f of SOURCES) f.lines.forEach((line, i) => { if (test(line)) hits.push(`${f.path}:${i + 1}: ${line.trim().slice(0, 160)}`); });
+  return hits.length ? hits.join(' | ') : 'no source line matched';
+}
 
 type Rgb = [number, number, number];
 
@@ -39,7 +59,7 @@ function fromHex(hex: string): Rgb {
   return [0, 2, 4].map((i) => Number.parseInt(full.slice(i, i + 2), 16)) as Rgb;
 }
 
-// Every colour literal in the theme (skin CSS, inline SVG and script), with its source text.
+// Every colour literal in the text (skin CSS, inline SVG and script), with its source text.
 function colours(text: string): Array<{ literal: string; rgb: Rgb }> {
   const found: Array<{ literal: string; rgb: Rgb }> = [];
   for (const m of text.matchAll(/oklch\(\s*([\d.]+)(%?)\s+([\d.]+)\s+([\d.]+)(?:deg)?\s*(?:\/\s*[\d.]+%?\s*)?\)/gi)) {
@@ -63,8 +83,9 @@ function tally(values: string[]): string[] {
   return [...counts].map(([v, n]) => `${v} x${n}`);
 }
 
-// Ledger's personal palette (tokens.scss plus its hover literal). White is shared
-// and #e2e8f0 is Ledger's rule but FCD's dark foreground, so neither is listed.
+// Ledger's personal palette: tokens.scss, its hover literal and the dark-mode
+// blues and greys hard-coded in dark.scss. White is shared and #e2e8f0 is
+// Ledger's rule but FCD's dark foreground, so neither is listed.
 const LEDGER: Record<string, Rgb> = {
   'surface #f8fafc': fromHex('#f8fafc'),
   'ink #0a0a0a': fromHex('#0a0a0a'),
@@ -77,8 +98,14 @@ const LEDGER: Record<string, Rgb> = {
   'dark-rule #1e293b': fromHex('#1e293b'),
   'dark-accent #3b82f6': fromHex('#3b82f6'),
   'dark-highlight #629bf8': fromHex('#629bf8'),
-  'hover oklch(48% 0.205 263)': fromOklch(0.48, 0.205, 263)
+  'hover oklch(48% 0.205 263)': fromOklch(0.48, 0.205, 263),
+  'dark link oklch(75% 0.15 259.735)': fromOklch(0.75, 0.15, 259.735),
+  'dark button oklch(50% 0.22 260)': fromOklch(0.5, 0.22, 260),
+  'dark pager oklch(62% 0.19 250)': fromOklch(0.62, 0.19, 250),
+  'dark muted oklch(80% 0.015 255)': fromOklch(0.8, 0.015, 255)
 };
+
+const isLedger = (rgb: Rgb): boolean => Object.values(LEDGER).some((l) => near(rgb, l));
 
 // fastcyberdefense.com tokens, plus the AA-safe text values derived from them.
 const FCD: Record<string, string> = {
@@ -97,11 +124,13 @@ const FCD: Record<string, string> = {
   'dark highlight': '#5d9ce0'
 };
 
+const IDENTITY = [/redwan/gi, /orcid/gi, /0009-0001-9419-4760/g, /cal\.com/gi, /blog-assets/gi, /AVvXsEid2pK6sS9Z/g, /5972841034338492159/g, /Cyber Security Professional/gi, /Founder &(?:amp;)? CEO/gi, /G-KCCCSPMFVS/g, /ydgpwp2tn0/g, /googletagmanager/gi, /clarity\.ms/gi];
+
 describe('FCD identity', () => {
   it('carries no personal identity or upstream analytics', () => {
-    const terms = [/redwan/gi, /orcid/gi, /0009-0001-9419-4760/g, /cal\.com/gi, /blog-assets/gi, /AVvXsEid2pK6sS9Z/g, /5972841034338492159/g, /Cyber Security Professional/gi, /Founder &(?:amp;)? CEO/gi, /G-KCCCSPMFVS/g, /ydgpwp2tn0/g, /googletagmanager/gi, /clarity\.ms/gi];
-    const leaks = terms.flatMap((re) => tally([...visible.matchAll(re)].map((m) => m[0])));
-    expect(leaks, 'personal identity or tracker strings in the theme').toEqual([]);
+    const leaks = IDENTITY.flatMap((re) => tally([...visible.matchAll(re)].map((m) => m[0])));
+    const lines = leaks.length ? where((line) => IDENTITY.some((re) => new RegExp(re.source, re.flags.replace('g', '')).test(line))) : '';
+    expect(leaks, `personal identity or tracker strings in the theme; source: ${lines}`).toEqual([]);
   });
 
   it('brands the masthead with the FCD mark and the blog title, and links the company site', () => {
@@ -116,8 +145,9 @@ describe('FCD identity', () => {
 
 describe('FCD palette', () => {
   it('uses none of the upstream personal palette', () => {
-    const hits = colours(visible).filter((c) => Object.values(LEDGER).some((l) => near(c.rgb, l)));
-    expect(tally(hits.map((c) => c.literal)), 'upstream palette literals').toEqual([]);
+    const hits = colours(visible).filter((c) => isLedger(c.rgb));
+    const lines = hits.length ? where((line) => colours(line).some((c) => isLedger(c.rgb))) : '';
+    expect(tally(hits.map((c) => c.literal)), `upstream palette literals; source: ${lines}`).toEqual([]);
   });
 
   it('uses the fastcyberdefense.com tokens and the AA-safe text blues', () => {

@@ -8,6 +8,7 @@ port never overwrites. Workflows (.github) are never touched.
 """
 import json
 import pathlib
+import re
 import shutil
 import subprocess
 import sys
@@ -72,17 +73,26 @@ for r in imported:
 
 edited = set()
 for number, edit in enumerate(MANIFEST.get('edits', []), 1):
-    r = edit['path']
-    if r not in imported:
-        fail('edit %d targets a non-imported path %s' % (number, r))
-    target = ROOT / r
-    text = target.read_text(encoding='utf-8')
+    # count: an exact integer (default 1), "all" (at least one) or "any" (zero or more).
+    # regex edits use Python re with DOTALL; the replacement is literal text.
     expected = edit.get('count', 1)
-    found = text.count(edit['find'])
-    if found != expected:
-        fail('edit %d (%s) matched %d times, expected %d: %r' % (number, r, found, expected, edit['find'][:80]))
-    target.write_text(text.replace(edit['find'], edit['replace']), encoding='utf-8')
-    edited.add(r)
+    for r in edit.get('paths') or [edit['path']]:
+        if r not in imported:
+            fail('edit %d targets a non-imported path %s' % (number, r))
+        target = ROOT / r
+        text = target.read_text(encoding='utf-8')
+        if edit.get('regex'):
+            pattern = re.compile(edit['find'], re.S)
+            found = len(pattern.findall(text))
+            result = pattern.sub(lambda _m: edit['replace'], text)
+        else:
+            found = text.count(edit['find'])
+            result = text.replace(edit['find'], edit['replace'])
+        if not (found >= 1 if expected == 'all' else True if expected == 'any' else found == expected):
+            fail('edit %d (%s) matched %d times, expected %s: %r' % (number, r, found, expected, edit['find'][:80]))
+        if result != text:
+            target.write_text(result, encoding='utf-8')
+            edited.add(r)
 
 for r in sorted(owned):
     if not (ROOT / r).is_file():

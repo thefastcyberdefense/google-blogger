@@ -1,10 +1,11 @@
 // US-L3/L4: FCD identity and the main site's palette on the Ledger engine.
-// Ledger v1.7.0 ships its author's personal identity and his blue/slate
-// palette. FCD keeps Ledger's engine and layout but must read as Fast Cyber
-// Defense: no personal links or portraits, the FCD mark in the masthead, and
-// the colours of fastcyberdefense.com (src/app/globals.css). Text-bearing blue
-// on light surfaces uses the AA-safe deeper action blue; #3d8fe1 stays exact
-// for surfaces, large text and the dark theme. These checks read the CI-built XML.
+// Ledger v1.7.0 ships its author's personal identity, his analytics IDs and his
+// blue/slate palette. FCD keeps Ledger's engine and layout but must read as Fast
+// Cyber Defense: no personal links, portraits or trackers, the FCD mark in the
+// masthead, and the colours of fastcyberdefense.com (src/app/globals.css).
+// Text-bearing blue on light surfaces uses the AA-safe deeper action blue;
+// #3d8fe1 stays exact for surfaces, large text and the dark theme. These checks
+// read the CI-built XML.
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
@@ -97,10 +98,10 @@ const FCD: Record<string, string> = {
 };
 
 describe('FCD identity', () => {
-  it('carries no personal identity from the upstream theme', () => {
-    const terms = [/redwan/gi, /orcid/gi, /0009-0001-9419-4760/g, /cal\.com/gi, /blog-assets/gi, /AVvXsEid2pK6sS9Z/g, /5972841034338492159/g, /Cyber Security Professional/gi, /Founder &(?:amp;)? CEO/gi];
+  it('carries no personal identity or upstream analytics', () => {
+    const terms = [/redwan/gi, /orcid/gi, /0009-0001-9419-4760/g, /cal\.com/gi, /blog-assets/gi, /AVvXsEid2pK6sS9Z/g, /5972841034338492159/g, /Cyber Security Professional/gi, /Founder &(?:amp;)? CEO/gi, /G-KCCCSPMFVS/g, /ydgpwp2tn0/g, /googletagmanager/gi, /clarity\.ms/gi];
     const leaks = terms.flatMap((re) => tally([...visible.matchAll(re)].map((m) => m[0])));
-    expect(leaks, 'personal identity strings in the theme').toEqual([]);
+    expect(leaks, 'personal identity or tracker strings in the theme').toEqual([]);
   });
 
   it('brands the masthead with the FCD mark and the blog title, and links the company site', () => {

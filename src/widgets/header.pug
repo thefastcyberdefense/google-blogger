@@ -10,7 +10,10 @@ b:section(class='header' id='header' name='Header' showaddelement='false')
       b:widget-setting(name='displayWidth') 0
     b:includable(id='main' var='this')
       a.header-brand(expr:href='data:blog.homepageUrl')
-        img.header-avatar(alt='Md Redwan Ahmed' height='40' loading='eager' src='https://blogger.googleusercontent.com/img/a/AVvXsEid2pK6sS9Z_2jCm6SFeomZwfHDSq0li0pY6e8i_NNiuJkwHKqMqJ9gLw2qws2Xp42oCc5QGFvDw-PjbWF6CHaF7D-BShybE1d5A4OglhgVfsNPm0dg-1CRHkmrBZnAv8neHaTTb_hEzsaZZMgUP9mnTJqSAvtYtuzbOEKnsE2OJ1viJolqiQU7D532vxQ=s80-rw' width='40')/
+        //- FCD mark: inline shield, no external image.
+        svg.header-avatar.fcd-mark(aria-hidden='true' focusable='false' height='40' viewBox='0 0 40 40' width='40')
+          path(d='M20 3 34 8v11c0 9-6 15.5-14 18C12 34.5 6 28 6 19V8z' fill='#3d8fe1')/
+          path(d='m14 20 4 4 8-9' fill='none' stroke='#ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3')/
         div.header-brand-text
           b:include(cond='data:imagePlacement in {"REPLACE", "BEFORE_DESCRIPTION"}' name='image')/
           b:include(cond='data:imagePlacement not in {"REPLACE", "BEFORE_DESCRIPTION"}' name='title')/
@@ -26,13 +29,15 @@ b:section(class='header' id='header' name='Header' showaddelement='false')
             path(d='M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z')
       b:include(cond='data:imagePlacement == "BEHIND"' name='behindImageStyle')/
     b:includable(id='title')
-      //- Stable two-line brand lockup matching Fast Cyber Defense.
+      //- The blog title from Settings, h1 on lists and p on single items.
       b:if(cond='not data:view.isSingleItem')
-        h1.site-title Md Redwan Ahmed
+        h1.site-title
+          b:eval(expr='data:title')/
       b:if(cond='data:view.isSingleItem')
-        p.site-title Md Redwan Ahmed
+        p.site-title
+          b:eval(expr='data:title')/
     b:includable(id='description')
-      p.site-tagline Cyber Security Professional
+      p.site-tagline Quick to Act, Strong to Protect.
     b:includable(id='image')
       b:include(name='super.image')/
       b:include(cond='data:this.imagePlacement == "REPLACE"' name='title')/

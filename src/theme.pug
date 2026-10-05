@@ -5,16 +5,9 @@ html&attributes(rootAttributes)
     meta(content=build name='theme-build')/
     meta(name='color-scheme' content='dark light')/
     link(rel='alternate' type='application/rss+xml' expr:title='data:blog.title.escaped' expr:href='data:blog.canonicalHomepageUrl path "feeds/posts/default"')/
-    link(rel='me' href='https://redwan.work')/
-    link(rel='me' href='https://orcid.org/0009-0001-9419-4760')/
     title
       | <data:view.title.escaped/>
     b:include(data='blog' name='all-head-content')/
-    link(rel='icon' href='https://blogger.googleusercontent.com/img/a/AVvXsEid2pK6sS9Z_2jCm6SFeomZwfHDSq0li0pY6e8i_NNiuJkwHKqMqJ9gLw2qws2Xp42oCc5QGFvDw-PjbWF6CHaF7D-BShybE1d5A4OglhgVfsNPm0dg-1CRHkmrBZnAv8neHaTTb_hEzsaZZMgUP9mnTJqSAvtYtuzbOEKnsE2OJ1viJolqiQU7D532vxQ=s192-c')/
-    link(rel='icon' type='image/jpeg' href='https://blogger.googleusercontent.com/img/a/AVvXsEid2pK6sS9Z_2jCm6SFeomZwfHDSq0li0pY6e8i_NNiuJkwHKqMqJ9gLw2qws2Xp42oCc5QGFvDw-PjbWF6CHaF7D-BShybE1d5A4OglhgVfsNPm0dg-1CRHkmrBZnAv8neHaTTb_hEzsaZZMgUP9mnTJqSAvtYtuzbOEKnsE2OJ1viJolqiQU7D532vxQ=s192-c')/
-    link(rel='shortcut icon' type='image/jpeg' href='https://blogger.googleusercontent.com/img/a/AVvXsEid2pK6sS9Z_2jCm6SFeomZwfHDSq0li0pY6e8i_NNiuJkwHKqMqJ9gLw2qws2Xp42oCc5QGFvDw-PjbWF6CHaF7D-BShybE1d5A4OglhgVfsNPm0dg-1CRHkmrBZnAv8neHaTTb_hEzsaZZMgUP9mnTJqSAvtYtuzbOEKnsE2OJ1viJolqiQU7D532vxQ=s192-c')/
-    link(rel='apple-touch-icon' href='https://blogger.googleusercontent.com/img/a/AVvXsEid2pK6sS9Z_2jCm6SFeomZwfHDSq0li0pY6e8i_NNiuJkwHKqMqJ9gLw2qws2Xp42oCc5QGFvDw-PjbWF6CHaF7D-BShybE1d5A4OglhgVfsNPm0dg-1CRHkmrBZnAv8neHaTTb_hEzsaZZMgUP9mnTJqSAvtYtuzbOEKnsE2OJ1viJolqiQU7D532vxQ=s192-c')/
-    meta(name='thumbnail' content='https://blogger.googleusercontent.com/img/a/AVvXsEid2pK6sS9Z_2jCm6SFeomZwfHDSq0li0pY6e8i_NNiuJkwHKqMqJ9gLw2qws2Xp42oCc5QGFvDw-PjbWF6CHaF7D-BShybE1d5A4OglhgVfsNPm0dg-1CRHkmrBZnAv8neHaTTb_hEzsaZZMgUP9mnTJqSAvtYtuzbOEKnsE2OJ1viJolqiQU7D532vxQ=s192-c')/
     b:skin(version=templateVersion).
       <![CDATA[
       !{css}
@@ -100,25 +93,23 @@ html&attributes(rootAttributes)
                 div.sidebar-search-results.search-results-dropdown(aria-live='polite' style='display:none;')
           div.sidebar-card.sidebar-profile-card
             div.sidebar-profile-header
-              img.sidebar-avatar(alt='Md Redwan Ahmed' height='48' loading='lazy' src='https://blogger.googleusercontent.com/img/a/AVvXsEid2pK6sS9Z_2jCm6SFeomZwfHDSq0li0pY6e8i_NNiuJkwHKqMqJ9gLw2qws2Xp42oCc5QGFvDw-PjbWF6CHaF7D-BShybE1d5A4OglhgVfsNPm0dg-1CRHkmrBZnAv8neHaTTb_hEzsaZZMgUP9mnTJqSAvtYtuzbOEKnsE2OJ1viJolqiQU7D532vxQ=s96-rw' width='48')/
+              svg.sidebar-avatar.fcd-mark(aria-hidden='true' focusable='false' height='48' viewBox='0 0 40 40' width='48')
+                path(d='M20 3 34 8v11c0 9-6 15.5-14 18C12 34.5 6 28 6 19V8z' fill='#3d8fe1')/
+                path(d='m14 20 4 4 8-9' fill='none' stroke='#ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3')/
               div.sidebar-profile-info
                 h3.sidebar-name
-                  b:eval(expr='"Md Redwan Ahmed"')/
+                  b:eval(expr='data:blog.title')/
                 span.sidebar-tagline
-                  b:eval(expr='"Cyber Security Professional"')/
+                  b:eval(expr='"Quick to Act, Strong to Protect."')/
             div.sidebar-actions
-              a.sidebar-btn.sidebar-btn-primary(href='https://www.blogger.com/followers/follow/5972841034338492159' target='_blank' rel='noopener noreferrer' aria-label='Follow on Google Blogger' title='Follow on Google Blogger')
+              a.sidebar-btn.sidebar-btn-primary(href='https://fastcyberdefense.com/' target='_blank' rel='noopener noreferrer')
                 svg.sidebar-btn-icon(aria-hidden='true' height='16' viewBox='0 0 24 24' width='16')
-                  path(d='M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z' fill='currentColor')
-                span Follow on Google
-              a.sidebar-btn.sidebar-btn-secondary(href='https://blogs.redwan.work/feeds/posts/default' target='_blank' rel='noopener noreferrer' aria-label='Subscribe via RSS feed' title='Subscribe via RSS feed')
+                  path(d='M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z' fill='currentColor')
+                span Visit Fast Cyber Defense
+              a.sidebar-btn.sidebar-btn-secondary(expr:href='data:blog.canonicalHomepageUrl path "feeds/posts/default"' aria-label='Subscribe via RSS feed' title='Subscribe via RSS feed')
                 svg.sidebar-btn-icon(aria-hidden='true' height='16' viewBox='0 0 24 24' width='16')
                   path(d='M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19 7.38 20 6.18 20C5 20 4 19 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93V10.1z' fill='currentColor')
                 span RSS Feed
-              a.sidebar-btn.sidebar-btn-secondary(href='https://cal.com/redwancse' target='_blank' rel='noopener noreferrer')
-                span Book Consultation →
-              a.sidebar-btn.sidebar-btn-secondary(href='https://redwan.work/' target='_blank' rel='noopener noreferrer')
-                span View Portfolio
           div.sidebar-card.sidebar-recent-card
             div.sidebar-card-header
               h3.sidebar-card-title Recent Publications
@@ -139,8 +130,6 @@ html&attributes(rootAttributes)
                           b:if(cond='data:post.date')
                             time.sidebar-recent-date(expr:datetime='data:post.date.iso8601')
                               b:eval(expr='data:post.date')/
-            script.
-              (function(){try{var c=localStorage.getItem('ledger_recent_posts_v1');if(c){var el=document.currentScript.previousElementSibling;if(el)el.innerHTML=c;}}catch(e){}})();
     div.cta-container
       include widgets/cta.pug
     footer.footer-container(role='contentinfo')
@@ -149,10 +138,13 @@ html&attributes(rootAttributes)
     nav#mobile-drawer.mobile-drawer(aria-hidden='true' aria-label='Mobile Navigation' inert='true')
       div.drawer-header
         div.drawer-brand
-          img.drawer-avatar(alt='Md Redwan Ahmed' height='38' loading='lazy' src='https://blogger.googleusercontent.com/img/a/AVvXsEid2pK6sS9Z_2jCm6SFeomZwfHDSq0li0pY6e8i_NNiuJkwHKqMqJ9gLw2qws2Xp42oCc5QGFvDw-PjbWF6CHaF7D-BShybE1d5A4OglhgVfsNPm0dg-1CRHkmrBZnAv8neHaTTb_hEzsaZZMgUP9mnTJqSAvtYtuzbOEKnsE2OJ1viJolqiQU7D532vxQ=s76-rw' width='38')/
+          svg.drawer-avatar.fcd-mark(aria-hidden='true' focusable='false' height='38' viewBox='0 0 40 40' width='38')
+            path(d='M20 3 34 8v11c0 9-6 15.5-14 18C12 34.5 6 28 6 19V8z' fill='#3d8fe1')/
+            path(d='m14 20 4 4 8-9' fill='none' stroke='#ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3')/
           div.drawer-brand-text
-            div.drawer-title Md Redwan Ahmed
-            div.drawer-subtitle Cyber Security Professional
+            div.drawer-title
+              b:eval(expr='data:blog.title')/
+            div.drawer-subtitle Quick to Act, Strong to Protect.
         button.drawer-close(aria-label='Close navigation' type='button')
           svg(aria-hidden='true' height='20' viewBox='0 0 24 24' width='20')
             path(d='M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z')
@@ -171,21 +163,9 @@ html&attributes(rootAttributes)
               span.drawer-nav-icon 📄
               span.drawer-nav-text All Publications
           li.drawer-nav-item
-            a.drawer-nav-link(href='https://www.blogger.com/followers/follow/5972841034338492159' target='_blank' rel='noopener noreferrer')
-              span.drawer-nav-icon 🔔
-              span.drawer-nav-text Follow on Google
-          li.drawer-nav-item
-            a.drawer-nav-link(href='https://blogs.redwan.work/feeds/posts/default' target='_blank' rel='noopener noreferrer')
+            a.drawer-nav-link(expr:href='data:blog.canonicalHomepageUrl path "feeds/posts/default"')
               span.drawer-nav-icon 📡
               span.drawer-nav-text RSS Feed
-          li.drawer-nav-item
-            a.drawer-nav-link(href='https://redwan.work/' target='_blank' rel='noopener noreferrer')
-              span.drawer-nav-icon 🌐
-              span.drawer-nav-text Main Portfolio (redwan.work)
-          li.drawer-nav-item
-            a.drawer-nav-link(href='https://cal.com/redwancse' target='_blank' rel='noopener noreferrer')
-              span.drawer-nav-icon 📅
-              span.drawer-nav-text Book Consultation
           li.drawer-nav-item
             a.drawer-nav-link(href='https://fastcyberdefense.com/' target='_blank' rel='noopener noreferrer')
               span.drawer-nav-icon 🛡️
@@ -210,17 +190,6 @@ html&attributes(rootAttributes)
                       b:if(cond='data:post.date')
                         time.sidebar-recent-date(expr:datetime='data:post.date.iso8601')
                           b:eval(expr='data:post.date')/
-        script.
-          (function(){try{var c=localStorage.getItem('ledger_recent_posts_v1');if(c){var el=document.currentScript.previousElementSibling;if(el)el.innerHTML=c;}}catch(e){}})();
-      div.drawer-section.drawer-social-section
-        div.drawer-section-title Connect
-        div.drawer-social-grid
-          a.drawer-social-btn(href='https://orcid.org/0009-0001-9419-4760' target='_blank' rel='noopener noreferrer' aria-label='ORCID')
-            span ORCID
-          a.drawer-social-btn(href='https://github.com/redwan-cse' target='_blank' rel='noopener noreferrer' aria-label='GitHub')
-            span GitHub
-          a.drawer-social-btn(href='https://linkedin.com/in/redwancse' target='_blank' rel='noopener noreferrer' aria-label='LinkedIn')
-            span LinkedIn
     div#toast-container.toast-container(aria-live='polite')
     if script
       script.

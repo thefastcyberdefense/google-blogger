@@ -1,7 +1,24 @@
 {
- "upstream": {"repo": "redwan-cse/ledger-blogger-theme", "tag": "v1.7.0", "commit": "a3da05a8a70243c6ffc239b0e96e88260ed7b536"},
- "import": ["src", "tools/generate.ts", "tools/contract-check.ts"],
- "fcdOwned": [],
+ "upstream": {
+  "repo": "redwan-cse/ledger-blogger-theme",
+  "tag": "v1.7.0",
+  "commit": "a3da05a8a70243c6ffc239b0e96e88260ed7b536"
+ },
+ "import": [
+  "src",
+  "tools/generate.ts",
+  "tools/contract-check.ts"
+ ],
+ "fcdOwned": [
+  "src/theme.pug",
+  "src/partials/head-meta.pug",
+  "src/styles/tokens.scss",
+  "src/widgets/cta.pug",
+  "src/widgets/footer.pug",
+  "src/widgets/header.pug",
+  "src/widgets/intro.pug",
+  "src/widgets/linklist.pug"
+ ],
  "remove": [
   "dist/theme.xml",
   "fixtures",
@@ -17,5 +34,32 @@
   "tools/staging-check.ts",
   "tools/validate-xml.py"
  ],
- "edits": []
+ "edits": [
+  {"paths": ["src/styles/article.scss", "src/styles/base.scss", "src/styles/index.scss", "src/styles/layout.scss", "src/styles/main.scss", "src/styles/states.scss", "src/styles/threaded-comments.scss", "src/styles/dark.scss"], "find": "oklch(14.479% 0 0", "replace": "oklch(29.54% 0.0649 265.7059", "count": "any"},
+  {"paths": ["src/styles/article.scss", "src/styles/base.scss", "src/styles/index.scss", "src/styles/layout.scss", "src/styles/main.scss", "src/styles/states.scss", "src/styles/threaded-comments.scss", "src/styles/dark.scss"], "find": "oklch(54.863% 0 0", "replace": "oklch(53.75% 0.0546 268.3959", "count": "any"},
+  {"paths": ["src/styles/article.scss", "src/styles/base.scss", "src/styles/index.scss", "src/styles/layout.scss", "src/styles/main.scss", "src/styles/states.scss", "src/styles/threaded-comments.scss", "src/styles/dark.scss"], "find": "oklch(54.615% 0.2152 262.881", "replace": "oklch(53.5% 0.1467 251.2451", "count": "any"},
+  {"paths": ["src/styles/article.scss", "src/styles/base.scss", "src/styles/index.scss", "src/styles/layout.scss", "src/styles/main.scss", "src/styles/states.scss", "src/styles/threaded-comments.scss", "src/styles/dark.scss"], "find": "oklch(97.048% 0.0142 254.604", "replace": "oklch(95.23% 0.0192 230.6952", "count": "any"},
+  {"paths": ["src/styles/article.scss", "src/styles/base.scss", "src/styles/index.scss", "src/styles/layout.scss", "src/styles/main.scss", "src/styles/states.scss", "src/styles/threaded-comments.scss", "src/styles/dark.scss"], "find": "oklch(48% 0.205 263", "replace": "oklch(50% 0.1467 251.2451", "count": "any"},
+  {"paths": ["src/styles/article.scss", "src/styles/base.scss", "src/styles/index.scss", "src/styles/layout.scss", "src/styles/main.scss", "src/styles/states.scss", "src/styles/threaded-comments.scss", "src/styles/dark.scss"], "find": "oklch(13.627% 0.0364 259.201", "replace": "oklch(19.71% 0.0414 269.7076", "count": "any"},
+  {"paths": ["src/styles/article.scss", "src/styles/base.scss", "src/styles/index.scss", "src/styles/layout.scss", "src/styles/main.scss", "src/styles/states.scss", "src/styles/threaded-comments.scss", "src/styles/dark.scss"], "find": "oklch(22.749% 0.0288 266.273", "replace": "oklch(24.41% 0.0456 268.3692", "count": "any"},
+  {"paths": ["src/styles/article.scss", "src/styles/base.scss", "src/styles/index.scss", "src/styles/layout.scss", "src/styles/main.scss", "src/styles/states.scss", "src/styles/threaded-comments.scss", "src/styles/dark.scss"], "find": "oklch(65.613% 0.0019 247.851", "replace": "oklch(71.37% 0.0192 261.3246", "count": "any"},
+  {"paths": ["src/styles/article.scss", "src/styles/base.scss", "src/styles/index.scss", "src/styles/layout.scss", "src/styles/main.scss", "src/styles/states.scss", "src/styles/threaded-comments.scss", "src/styles/dark.scss"], "find": "oklch(27.950% 0.0368 260.031", "replace": "oklch(33.51% 0.0331 260.912", "count": "any"},
+  {"paths": ["src/styles/article.scss", "src/styles/base.scss", "src/styles/index.scss", "src/styles/layout.scss", "src/styles/main.scss", "src/styles/states.scss", "src/styles/threaded-comments.scss", "src/styles/dark.scss"], "find": "oklch(62.308% 0.1880 259.815", "replace": "oklch(63.86% 0.1467 251.2451", "count": "any"},
+  {"paths": ["src/styles/article.scss", "src/styles/base.scss", "src/styles/index.scss", "src/styles/layout.scss", "src/styles/main.scss", "src/styles/states.scss", "src/styles/threaded-comments.scss", "src/styles/dark.scss"], "find": "oklch(69.234% 0.1502 259.735", "replace": "oklch(68% 0.12 251.2451", "count": "any"},
+  {"paths": ["src/styles/article.scss", "src/styles/base.scss", "src/styles/index.scss", "src/styles/layout.scss", "src/styles/main.scss", "src/styles/states.scss", "src/styles/threaded-comments.scss"], "find": "oklch(98.415% 0.0034 247.858", "replace": "oklch(97.43% 0.0101 228.8865", "count": "any"},
+  {"paths": ["src/styles/dark.scss"], "find": "oklch(98.415% 0.0034 247.858", "replace": "oklch(92.88% 0.0126 255.5078", "count": "any"},
+  {"paths": ["src/styles/article.scss", "src/styles/base.scss", "src/styles/index.scss", "src/styles/layout.scss", "src/styles/main.scss", "src/styles/states.scss", "src/styles/threaded-comments.scss"], "find": "oklch(92.876% 0.0126 255.508", "replace": "oklch(91.55% 0.0178 240.0081", "count": "any"},
+  {"path": "src/scripts/main.ts", "regex": true, "find": "export function getPostThumbnailUrl\\(url: string, title: string\\): string \\{.*?\\n\\}\\n", "replace": "export function getPostThumbnailUrl(_url: string, _title: string): string {\n  // FCD: posts carry their own images; there is no external thumbnail CDN.\n  return '';\n}\n"},
+  {"path": "src/scripts/main.ts", "regex": true, "find": "  function initAvatarFallbacks\\(\\): void \\{.*?\\n  \\}\\n", "replace": "  function initAvatarFallbacks(): void {\n    // FCD: no shared portrait fallback; a broken avatar image is hidden.\n    document.querySelectorAll<HTMLImageElement>('.post-author-mini-avatar, .sidebar-avatar, .drawer-avatar, .header-avatar, .author-avatar').forEach((img) => {\n      img.addEventListener('error', () => {\n        img.style.visibility = 'hidden';\n      }, { once: true });\n    });\n  }\n"},
+  {"path": "src/scripts/main.ts", "find": "  thumbnail?: string;\n}\n\nexport function initHomepageCatalog", "replace": "  thumbnail?: string;\n  author: string;\n}\n\nexport function initHomepageCatalog"},
+  {"path": "src/scripts/main.ts", "find": "          excerpt,\n          thumbnail\n        };", "replace": "          excerpt,\n          thumbnail,\n          author: entry.author?.[0]?.name?.$t || ''\n        };"},
+  {"path": "src/scripts/main.ts", "regex": true, "find": "<img class=\"post-author-mini-avatar\" src=\"[^\"]*\" alt=\"Md Redwan Ahmed\"[^>]*/>\\s*<span class=\"post-author-mini-name\">Md\\. Redwan Ahmed</span>", "replace": "<span class=\"post-author-mini-name\">${escapeHtml(p.author)}</span>"},
+  {"path": "src/scripts/main.ts", "find": "        background: '#161B22',\n        primaryColor: '#2563EB',\n        primaryTextColor: '#F8FAFC',\n        lineColor: '#58A6FF'", "replace": "        background: '#171f36',\n        primaryColor: '#166fbe',\n        primaryTextColor: '#e2e8f0',\n        lineColor: '#5d9ce0'"},
+  {"path": "src/scripts/main.ts", "find": "        background: '#FFFFFF',\n        primaryColor: '#F6F8FA',\n        primaryTextColor: '#1F2328',\n        primaryBorderColor: '#D0D7DE',\n        lineColor: '#57606A'", "replace": "        background: '#ffffff',\n        primaryColor: '#f0f8fc',\n        primaryTextColor: '#1d2b4d',\n        primaryBorderColor: '#d9e5ee',\n        lineColor: '#606d8e'"},
+  {"path": "src/scripts/main.ts", "find": "bg.setAttribute('fill', isDarkNow ? '#161b22' : '#ffffff');", "replace": "bg.setAttribute('fill', isDarkNow ? '#171f36' : '#ffffff');"},
+  {"path": "src/scripts/main.ts", "find": "color: var(--ink-muted, #57606a);", "replace": "color: var(--ink-muted, #606d8e);", "count": "any"},
+  {"path": "src/widgets/blog-post.pug", "find": "expr:alt='data:post.author.name ?: \"Md. Redwan Ahmed\"'", "replace": "expr:alt='data:post.author.name ?: data:blog.title'", "count": "all"},
+  {"path": "src/widgets/blog-post.pug", "find": "div.author-avatar.author-avatar-fallback(role='img' aria-label='Md Redwan Ahmed')", "replace": "div.author-avatar.author-avatar-fallback(role='img' expr:aria-label='data:post.author.name ?: data:blog.title')", "count": "all"},
+  {"path": "src/widgets/blog-post.pug", "find": "span.author-initials RA", "replace": "span.author-initials FCD", "count": "all"}
+ ]
 }

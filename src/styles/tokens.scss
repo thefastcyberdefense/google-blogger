@@ -1,33 +1,35 @@
 // ---------------------------------------------------------------------------
-// Design Tokens — docs/PROJECT-PLAN.md §2.2 (colour), §2.3 (type), §2.4 (spacing)
+// Design Tokens: Fast Cyber Defense palette on the Ledger v1.7.0 token set
 // ---------------------------------------------------------------------------
 
-// Shared Redwan brand palette, derived from redwan.work and Fast Cyber Defense.
-// Light mode follows redwan.work; dark mode uses the shared blue/slate family.
-$page: oklch(100% 0 0);                  // #FFFFFF
-$surface: oklch(98.415% 0.0034 247.858); // #F8FAFC
-$ink: oklch(14.479% 0 0);                // #0A0A0A
-$ink-muted: oklch(54.863% 0 0);          // #717171
-$rule: oklch(92.876% 0.0126 255.508);    // #E2E8F0
-$accent: oklch(54.615% 0.2152 262.881);  // #2563EB
-$accent-wash: oklch(97.048% 0.0142 254.604); // #EFF6FF
+// Source: fastcyberdefense.com src/app/globals.css. Values the main site uses
+// for text but that fall below WCAG AA are deepened along the same hue and
+// chroma: $accent (action blue) and $ink-muted. #3d8fe1 stays exact for the
+// dark theme, surfaces and large text.
+$page: oklch(100% 0 0);                          // #ffffff  background
+$surface: oklch(97.43% 0.0101 228.8865);         // #f0f8fc  card
+$ink: oklch(29.54% 0.0649 265.7059);             // #1d2b4d  foreground (12.98:1 on card)
+$ink-muted: oklch(53.75% 0.0546 268.3959);       // #606d8e  AA muted (5.15 white, 4.79 card, 4.50 wash)
+$rule: oklch(91.55% 0.0178 240.0081);            // #d9e5ee  border
+$accent: oklch(53.5% 0.1467 251.2451);           // #166fbe  AA action blue (5.18 white, 4.82 card, 4.53 wash)
+$accent-wash: oklch(95.23% 0.0192 230.6952);     // #e3f2fa  accent
 
-$dark-page: oklch(13.627% 0.0364 259.201);       // #020817
-$dark-surface: oklch(22.749% 0.0288 266.273);    // #161C2A
-$dark-ink: oklch(98.415% 0.0034 247.858);        // #F8FAFC
-$dark-muted: oklch(65.613% 0.0019 247.851);      // #909192
-$dark-rule: oklch(27.950% 0.0368 260.031);       // #1E293B
-$dark-accent: oklch(62.308% 0.1880 259.815);     // #3B82F6
-$dark-highlight: oklch(69.234% 0.1502 259.735);  // #629BF8
+$dark-page: oklch(19.71% 0.0414 269.7076);       // #0e1428  dark background
+$dark-surface: oklch(24.41% 0.0456 268.3692);    // #171f36  dark card
+$dark-ink: oklch(92.88% 0.0126 255.5078);        // #e2e8f0  dark foreground (13.25:1 on dark card)
+$dark-muted: oklch(71.37% 0.0192 261.3246);      // #9ca3af  dark muted (6.43:1 on dark card)
+$dark-rule: oklch(33.51% 0.0331 260.912);        // #2d3748  dark border
+$dark-accent: oklch(63.86% 0.1467 251.2451);     // #3d8fe1  primary (5.41 dark bg, 4.83 dark card)
+$dark-highlight: oklch(68% 0.12 251.2451);       // #5d9ce0  dark highlight (6.35 dark bg, 5.68 dark card)
 
 
 
-// Typography font stacks (Zero external dependencies, system UI stack)
+// Typography font stacks: Inter and Fira Code as on the main site, system fallbacks
 $font-serif: georgia, 'Iowan Old Style', 'Palatino Linotype', palatino, serif;
-$font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-$font-mono: ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', consolas, monospace;
+$font-sans: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+$font-mono: 'Fira Code', ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', consolas, monospace;
 
-// Typography Scale (1.333 ratio) — row value locked by contract test
+// Typography Scale (1.333 ratio): row value locked by contract test
 $font-size-h1: clamp(2.0rem, 1.4rem + 2.6vw, 3.15rem);
 $font-size-h2: 1.777rem;
 $font-size-h3: 1.333rem;
@@ -74,12 +76,12 @@ $ease-in-out-cubic: cubic-bezier(0.65, 0, 0.35, 1);
 $ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 $motion-ease: $ease-out-quart;
 
-// Elevation Shadows — Deliberate flat design system matching redwan.work
-// $shadow-sm through $shadow-lg are deliberately flattened (none) to enforce clean borders over shadow blur
+// Elevation Shadows: flat cards with borders, as in Ledger; the one raised
+// shadow is tinted with the FCD navy instead of neutral black.
 $shadow-sm: none;
 $shadow-md: none;
 $shadow-lg: none;
-$shadow-xl: 0 16px 36px oklch(14.479% 0 0 / 0.16), 0 8px 16px oklch(14.479% 0 0 / 0.08);
+$shadow-xl: 0 16px 36px oklch(29.54% 0.0649 265.7059 / 0.16), 0 8px 16px oklch(29.54% 0.0649 265.7059 / 0.08);
 
 // Accent-Tinted Shadows (for active/hover interactive focus)
 $shadow-accent-sm: none;
@@ -90,7 +92,7 @@ $glass-bg: oklch(100% 0 0 / 0.88);
 $glass-bg-drawer: oklch(100% 0 0 / 0.94);
 $glass-bg-modal: oklch(100% 0 0 / 0.97);
 $glass-blur: blur(12px);
-$glass-border: 1px solid oklch(92.876% 0.0126 255.508 / 0.8);
+$glass-border: 1px solid oklch(91.55% 0.0178 240.0081 / 0.8);
 
 // Transform Constants
 $card-hover-lift: translateY(-1px);

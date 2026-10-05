@@ -6,14 +6,18 @@ b:if(cond='not (data:view.isSearch or data:view.isArchive or (data:view.isMultip
 
 //- Resource hints for critical above-the-fold assets
 link(rel='preconnect' href='https://blogger.googleusercontent.com' crossorigin='anonymous')/
-b:if(cond='data:view.isHomepage and not data:newerPageUrl')
-  link(rel='preload' as='image' href='https://blogger.googleusercontent.com/img/a/AVvXsEid2pK6sS9Z_2jCm6SFeomZwfHDSq0li0pY6e8i_NNiuJkwHKqMqJ9gLw2qws2Xp42oCc5QGFvDw-PjbWF6CHaF7D-BShybE1d5A4OglhgVfsNPm0dg-1CRHkmrBZnAv8neHaTTb_hEzsaZZMgUP9mnTJqSAvtYtuzbOEKnsE2OJ1viJolqiQU7D532vxQ=s260-rw' imagesrcset='https://blogger.googleusercontent.com/img/a/AVvXsEid2pK6sS9Z_2jCm6SFeomZwfHDSq0li0pY6e8i_NNiuJkwHKqMqJ9gLw2qws2Xp42oCc5QGFvDw-PjbWF6CHaF7D-BShybE1d5A4OglhgVfsNPm0dg-1CRHkmrBZnAv8neHaTTb_hEzsaZZMgUP9mnTJqSAvtYtuzbOEKnsE2OJ1viJolqiQU7D532vxQ=s160-rw 160w, https://blogger.googleusercontent.com/img/a/AVvXsEid2pK6sS9Z_2jCm6SFeomZwfHDSq0li0pY6e8i_NNiuJkwHKqMqJ9gLw2qws2Xp42oCc5QGFvDw-PjbWF6CHaF7D-BShybE1d5A4OglhgVfsNPm0dg-1CRHkmrBZnAv8neHaTTb_hEzsaZZMgUP9mnTJqSAvtYtuzbOEKnsE2OJ1viJolqiQU7D532vxQ=s260-rw 260w' imagesizes='(max-width: 767px) 160px, 240px')/
 b:if(cond='data:view.isHomepage and not data:newerPageUrl and data:widgets.Blog.first.posts.first.featuredImage')
   b:with(value='resizeImage(data:widgets.Blog.first.posts.first.featuredImage, 640, "16:9")' var='heroThumb')
     b:with(value='resizeImage(data:widgets.Blog.first.posts.first.featuredImage, 384, "16:9")' var='heroThumbSm')
       link(rel='preload' as='image' expr:href='data:heroThumb' expr:imagesrcset='data:heroThumbSm + " 384w, " + data:heroThumb + " 640w"' imagesizes='(max-width: 768px) 348px, 280px' fetchpriority='high')/
 b:if(cond='data:view.isPost and data:view.featuredImage')
   link(rel='preload' as='image' expr:href='data:view.featuredImage' fetchpriority='high')/
+
+//- FCD typography: Inter for text and Fira Code for code, as on fastcyberdefense.com.
+//- System stacks in tokens.scss remain the fallback if the font host is unreachable.
+link(rel='preconnect' href='https://fonts.googleapis.com')/
+link(rel='preconnect' href='https://fonts.gstatic.com' crossorigin='anonymous')/
+link(rel='stylesheet' href='https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap')/
 
 //- OpenGraph Semantic Types (Base og:url, og:title, og:description, og:image provided by all-head-content)
 meta(property='og:site_name' expr:content='data:blog.title.escaped')/
@@ -23,8 +27,6 @@ b:if(cond='not data:view.isPost')
   meta(property='og:type' content='website')/
 
 //- Twitter Card Metadata
-meta(name='twitter:site' content='@redwancse')/
-meta(name='twitter:creator' content='@redwancse')/
 b:if(cond='data:view.featuredImage')
   meta(name='twitter:card' content='summary_large_image')/
   meta(name='twitter:image' expr:content='data:view.featuredImage')/
@@ -85,13 +87,7 @@ b:if(cond='data:view.isPost')
         </b:if>
         , "author": {
           "@type": "Person",
-          "name": "<data:post.author.name.jsonEscaped/>",
-          "sameAs": [
-            "https://orcid.org/0009-0001-9419-4760",
-            "https://redwan.work",
-            "https://github.com/redwan-cse",
-            "https://linkedin.com/in/redwancse"
-          ]
+          "name": "<data:post.author.name.jsonEscaped/>"
           <b:if cond='data:post.author.profileUrl'>
           , "url": "<data:post.author.profileUrl.jsonEscaped/>"
           </b:if>
@@ -101,7 +97,8 @@ b:if(cond='data:view.isPost')
         },
         "publisher": {
           "@type": "Organization",
-          "name": "<data:blog.title.jsonEscaped/>"
+          "name": "<data:blog.title.jsonEscaped/>",
+          "url": "https://fastcyberdefense.com/"
         }
       }
     script(type='application/ld+json').
@@ -124,24 +121,4 @@ b:if(cond='data:view.isPost')
         ]
       }
 
-//- Google tag (gtag.js)
-script.
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-KCCCSPMFVS');
-  (function(){
-    var s = document.createElement('script');
-    s.async = true;
-    s.src = 'https://www.googletagmanager.com/gtag/js?id=G-KCCCSPMFVS';
-    var h = document.getElementsByTagName('head')[0] || document.documentElement;
-    h.appendChild(s);
-  })();
-
-//- Microsoft Clarity Analytics
-script.
-  (function(c,l,a,r,i,t,y){
-      c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-      t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i+"?ref=bwt";
-      y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-  })(window, document, "clarity", "script", "ydgpwp2tn0");
+//- No analytics or trackers: the upstream gtag and Clarity IDs are not FCD's.

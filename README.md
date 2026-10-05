@@ -1,44 +1,31 @@
 # Fast Cyber Defense Blog
 
-Unreleased Blogger Layouts V3 / Widget Version 2 theme. Foundation, technical content, editorial presentation and content discovery are merged without deployment. PR C is the isolated metadata/cross-browser acceptance phase. L1, in draft PR #14 and unmerged, adds the native shell and the design v1 Layout gadgets.
+Unreleased Blogger Layouts V3 / Widget Version 2 theme for the Fast Cyber Defense blog. Draft PR #15 rebuilds it on the Ledger v1.7.0 engine and layout (pinned upstream commit a3da05a8a70243c6ffc239b0e96e88260ed7b536), rebranded to FCD: the fastcyberdefense.com palette, Inter and Fira Code, and the FCD mark in place of the upstream personal identity. Draft PR #14 (the earlier FCD shell) is superseded and stays unmerged.
 
 ## Build and size policy
 
-Node 24.20.0, npm 11+, genuine locked dependencies. Pug/SCSS/bundled TypeScript compile one dist/theme.xml. No React, backend or database. All automated project execution is in GitHub Actions; npm ci, npm run build and npm run preview are pipeline/fixture entry points. Never hand-edit generated XML.
+Node 24 LTS, npm 11+, genuine locked dependencies. Pug, SCSS and TypeScript compile one dist/theme.xml, built only in GitHub Actions and shipped as the run's theme artifact; the XML is no longer checked in. Only total generated XML is capped at 500,000 bytes. Never hand-edit generated XML.
 
-**Owner policy, 10 September 2026: only total raw generated XML is capped at 500,000 bytes (500 KB). There are no fixed raw bundled JavaScript, compiled CSS or per-phase growth limits.** Raw/gzip component sizes remain informational for performance review. This supersedes historical PR A/B growth budgets without changing their historical evidence. Security, accessibility, input limits and dependency audits still apply.
+CI runs typecheck, build, the FCD unit checks (tests/fcd), Ledger's V3 contract rules and npm audit. port/apply.py and the temporary ledger-port workflow import pinned upstream files byte-exact and apply FCD edits; both are removed before review.
 
-Normal CI is read-only with pinned actions and no deployment credentials. Tests, native XML contracts, metadata validation, audit and generated-output consistency remain mandatory. A historical source stamp is the sole normalized difference between checked-in XML and fresh output.
+## Layout zones
 
-## Layout regions (L1, unmerged)
+All seven layout zones are standard b:section elements, editable in Blogger Layout:
 
-After upload, the owner edits four regions in Blogger's Layout page; until then a fresh install shows the design v1 defaults.
-
-- **Navigation** (Link List): the masthead links. FCD's own search stays in the masthead and is not a gadget.
-- **Intro** (HTML/JavaScript): the first home page's standfirst inside the ink intro band. The theme owns the headline; keep this copy heading-free.
-- **Call to Action** (HTML/JavaScript): the band above the footer on every view; one heading, a line and a link.
-- **Footer** (HTML/JavaScript): the tagline and blurb beside the theme's footer links; a sentence or two, no heading.
-
-Profile sits in the sidebar, and Attribution and Report Abuse sit in the footer's base row. See docs/DESIGN-SYSTEM.md for what the theme owns, and docs/DEPLOYMENT.md for the native checkpoint before any upload.
-
-## Retained features
-
-Native-order homepage lead/secondary/standard cards, responsive lead-image priority, author-controlled existing in-body cover convention, loaded-card filtering and clear/reset. Enter searches the full publication through native Blogger, not a partial feed index.
-
-Prism 1.30.0 explicit technical grammars; optional Mermaid 11.17.2 exact-pinned jsDelivr ESM with strict config, source fallback and bounded controls. Third-party Mermaid bytes are outside XML. UI timeout cannot interrupt synchronous parsing or abort ESM. No SVG export.
-
-Bounded shared feed request: up to50 recent candidates for posts/up to8 elsewhere, max500000 accepted decoded bytes and8 seconds per attempt. One automatic attempt plus one shared explicit retry, no persistent cache/pagination/JSONP/proxy. Up to3 related articles, up to5 Recent Posts; current article excluded. Native links remain available on private/disabled/redirected/truncated feed failures. These request caps are safety limits, not CSS/JS size caps.
-
-## PR C acceptance
-
-Conditional author/publication-date metadata omits absent native values rather than inventing them. all-head-content remains the canonical/base metadata owner. A bounded parsed-output validator checks title/canonical/social metadata and article JSON-LD consistency for eight configured view types. Tests use synthetic rendered-output expectations, not a Blogger expression interpreter. Optional author/date/image fields are not invented or falsely described as mandatory Google properties.
-
-All22 existing Chromium viewport/theme projects are retained. Representative Firefox and WebKit tests cover390/1280 pixels, light/dark, normal/fallback/keyboard/print/no-JS and actual-library behavior. Engine tests are not proof of every Safari/iOS device or human screen-reader conformance. Per-test screenshots, traces, axe results/incomplete checks, request logs and synthetic timing observations are attached to Actions. Timing observations are not real-user LCP/INP/CLS.
-
-Read docs/PHASE-2B-PR-C.md and the current draft PR for exact-head outcomes; planned checks, partial green stages and artifact transfers are not final acceptance.
+| Zone | `id` | Widget | Purpose |
+|---|---|---|---|
+| Masthead | `header` | `Header` | FCD mark, blog title and description. Locked. |
+| Nav | `navlinks` | `LinkList` | Menu links |
+| Intro | `intro` | `HTML` | Home hero; empty shows the FCD default |
+| Topics | `topics` | `Label` | Topic pills from real labels |
+| Posts | `page_body` | `Blog` | The render path. Locked. |
+| CTA | `cta` | `HTML` | Closing call to action |
+| Footer | `footer` | `HTML` | Footer columns and links |
 
 ## Staging and release
 
-Actual Blogger import/save is still required. Configure the read-only staging workflow only after owner-confirmed import with real eight-view URLs and exact build stamp. Scripts/resources are blocked during parsed HTML inspections; native interactions and human checks are separate. No automated upload, deployment, article publication, DNS change, branch deletion or indexing-policy change is authorized by PR C.
+The first upload goes to a throwaway test Blogger blog, compared against the Ledger reference, before production. No automated upload, deployment, publication or DNS change is authorized. Source merge readiness, native platform acceptance and production release remain distinct.
 
-Source merge readiness, native platform acceptance and production release remain distinct. No credentials in theme or chat. The three workflow adaptations FCD Superpowers, Ralph and GSD remain in use, with specialist review as relevant.
+## License
+
+The Ledger engine is used by its owner under the PolyForm Noncommercial License 1.0.0 (see LICENSE).

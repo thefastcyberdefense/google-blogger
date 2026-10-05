@@ -213,7 +213,26 @@ export function initMobileDrawer(): MobileDrawerController | null {
 // ---------------------------------------------------------------------------
 
 function escapeHtml(str: string): string {
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+// FCD: a feed-derived URL is used only when it resolves to http(s); anything
+// else (javascript:, data:, malformed) becomes '' and the caller drops it.
+function safeFeedUrl(raw: unknown): string {
+  if (typeof raw !== 'string' || !raw.trim()) return '';
+  try {
+    const parsed = new URL(raw.trim(), window.location.href);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:' ? parsed.href : '';
+  } catch {
+    return '';
+  }
+}
+
+// FCD: every feed request is same-origin, JSON and aborted after a timeout.
+function fetchFeed(url: string, timeoutMs = 8000): Promise<Response> {
+  const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  const timer = setTimeout(() => controller?.abort(), timeoutMs);
+  return fetch(url, { headers: { Accept: 'application/json' }, signal: controller ? controller.signal : null }).finally(() => clearTimeout(timer));
 }
 
 function extractPlainText(html: string): string {
@@ -285,8 +304,8 @@ export function initLiveSearch(): void {
               : '';
             const label = entry.category?.[0]?.term || '';
             const snippet = entry.summary?.$t ? extractPlainText(entry.summary.$t).slice(0, 90) + '…' : '';
-            return { title, url: link, date, label, snippet };
-          });
+            return { title, url: safeFeedUrl(link), date, label, snippet };
+          }).filter((item: { url: string }) => item.url);
 
           renderResults();
         } catch {
@@ -310,7 +329,7 @@ export function initLiveSearch(): void {
             .map(
               (item, idx) => `
             <li class="search-result-item ${idx === activeIndex ? 'is-active' : ''}" role="option" aria-selected="${idx === activeIndex}">
-              <a class="search-result-link" href="${item.url}">
+              <a class="search-result-link" href="${escapeHtml(item.url)}">
                 <span class="search-result-title">${escapeHtml(item.title)}</span>
                 <div class="search-result-meta">
                   ${item.label ? `<span class="search-result-tag">${escapeHtml(item.label)}</span>` : ''}
@@ -387,59 +406,60 @@ export function initSidebarRecentPosts(): void {
   const recentLists = document.querySelectorAll<HTMLElement>('.sidebar-recent-list');
   if (recentLists.length === 0) return;
 
-  // 1. Instant Cache Hydration (0ms delay from localStorage)
+  // FCD: no cached HTML. Ledger restored this list from localStorage with
+  // innerHTML; the server-rendered posts stay until the feed refresh below
+  // replaces them with DOM nodes built from text and validated URLs.
   try {
-    const cachedHtml = localStorage.getItem('ledger_recent_posts_v1');
-    if (cachedHtml) {
-      recentLists.forEach((list) => {
-        const items = list.querySelectorAll('.sidebar-recent-item');
-        if (items.length < 4 || Array.from(items).some((item) => !item.querySelector('.sidebar-recent-tag'))) {
-          list.innerHTML = cachedHtml;
-        }
-      });
-    }
+    localStorage.removeItem('ledger_recent_posts_v1');
   } catch {}
 
-  // 2. Fresh Background Fetch & Cache Update
-  fetch('/feeds/posts/summary?alt=json&max-results=6', { headers: { Accept: 'application/json' } })
+  fetchFeed('/feeds/posts/summary?alt=json&max-results=6')
     .then((res) => (res.ok ? res.json() : null))
     .then((data) => {
-      const entries = data?.feed?.entry || [];
-      if (entries.length === 0) return;
-
-      const items = entries.slice(0, 4);
-
-      const html = items
-        .map((entry: any) => {
-          const title = entry.title?.$t || 'Untitled';
-          const link = entry.link?.find((l: any) => l.rel === 'alternate')?.href || '#';
-          const date = entry.published?.$t
-            ? new Date(entry.published.$t).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-            : '';
-          const label = entry.category?.[0]?.term || '';
-
-          return `
-          <article class="sidebar-recent-item">
-            <a class="sidebar-recent-link" href="${link}">
-              <span class="sidebar-recent-title">${escapeHtml(title)}</span>
-              <div class="sidebar-recent-meta">
-                ${label ? `<span class="sidebar-recent-tag">${escapeHtml(label)}</span>` : ''}
-                ${date ? `<time class="sidebar-recent-date">${escapeHtml(date)}</time>` : ''}
-              </div>
-            </a>
-          </article>
-        `;
-        })
-        .join('');
-
-      try {
-        localStorage.setItem('ledger_recent_posts_v1', html);
-      } catch {}
+      const entries: any[] = Array.isArray(data?.feed?.entry) ? data.feed.entry : [];
+      const items = entries
+        .map((entry: any) => ({
+          title: String(entry?.title?.$t || 'Untitled'),
+          url: safeFeedUrl(Array.isArray(entry?.link) ? entry.link.find((l: any) => l?.rel === 'alternate')?.href : ''),
+          published: String(entry?.published?.$t || ''),
+          label: String(entry?.category?.[0]?.term || '')
+        }))
+        .filter((item) => item.url)
+        .slice(0, 4);
+      if (items.length === 0) return;
 
       recentLists.forEach((list) => {
-        if (list.innerHTML !== html) {
-          list.innerHTML = html;
+        const fragment = document.createDocumentFragment();
+        for (const item of items) {
+          const article = document.createElement('article');
+          article.className = 'sidebar-recent-item';
+          const link = document.createElement('a');
+          link.className = 'sidebar-recent-link';
+          link.href = item.url;
+          const title = document.createElement('span');
+          title.className = 'sidebar-recent-title';
+          title.textContent = item.title;
+          const meta = document.createElement('div');
+          meta.className = 'sidebar-recent-meta';
+          if (item.label) {
+            const tag = document.createElement('span');
+            tag.className = 'sidebar-recent-tag';
+            tag.textContent = item.label;
+            meta.appendChild(tag);
+          }
+          const date = item.published ? new Date(item.published) : null;
+          if (date && !isNaN(date.getTime())) {
+            const time = document.createElement('time');
+            time.className = 'sidebar-recent-date';
+            time.dateTime = date.toISOString();
+            time.textContent = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            meta.appendChild(time);
+          }
+          link.append(title, meta);
+          article.appendChild(link);
+          fragment.appendChild(article);
         }
+        list.replaceChildren(fragment);
       });
     })
     .catch(() => {});
@@ -1418,9 +1438,13 @@ interface CatalogPost {
   author: string;
 }
 
+// FCD: one catalog per page, so a second init cannot start a second feed walk.
+let catalogStarted = false;
+
 export function initHomepageCatalog(): void {
   const filterBar = document.getElementById('posts-filter-bar');
-  if (!filterBar) return;
+  if (!filterBar || catalogStarted) return;
+  catalogStarted = true;
 
   const searchInput = document.getElementById('catalog-search') as HTMLInputElement | null;
   const yearSelect = document.getElementById('catalog-year') as HTMLSelectElement | null;
@@ -1447,13 +1471,13 @@ export function initHomepageCatalog(): void {
     isLoading = true;
 
     try {
+      // FCD: bounded walk, at most CATALOG_MAX_PAGES pages of 50 posts.
       const pageSize = 50;
+      const CATALOG_MAX_PAGES = 10;
       let startIndex = 1;
       let entries: any[] = [];
 
-      const firstRes = await fetch(`/feeds/posts/default?alt=json&start-index=${startIndex}&max-results=${pageSize}`, {
-        headers: { Accept: 'application/json' }
-      });
+      const firstRes = await fetchFeed(`/feeds/posts/default?alt=json&start-index=${startIndex}&max-results=${pageSize}`);
 
       if (firstRes.ok) {
         const firstData = await firstRes.json();
@@ -1461,11 +1485,11 @@ export function initHomepageCatalog(): void {
         entries = entries.concat(batch);
         const totalResults = Number(firstData?.feed?.openSearch$totalResults?.$t) || entries.length;
 
-        while (entries.length < totalResults) {
+        let pagesFetched = 1;
+        while (entries.length < totalResults && pagesFetched < CATALOG_MAX_PAGES) {
+          pagesFetched++;
           startIndex += pageSize;
-          const nextRes = await fetch(`/feeds/posts/default?alt=json&start-index=${startIndex}&max-results=${pageSize}`, {
-            headers: { Accept: 'application/json' }
-          });
+          const nextRes = await fetchFeed(`/feeds/posts/default?alt=json&start-index=${startIndex}&max-results=${pageSize}`);
           if (!nextRes.ok) break;
           const nextData = await nextRes.json();
           const nextBatch = nextData?.feed?.entry || [];
@@ -1481,7 +1505,7 @@ export function initHomepageCatalog(): void {
       allPosts = entries.map((entry: any) => {
         const id = entry.id?.$t || '';
         const title = entry.title?.$t || 'Untitled';
-        const url = entry.link?.find((l: any) => l.rel === 'alternate')?.href || '#';
+        const url = safeFeedUrl(entry.link?.find((l: any) => l.rel === 'alternate')?.href);
         const published = entry.published?.$t || '';
         const dateObj = published ? new Date(published) : new Date();
         const year = String(dateObj.getFullYear());
@@ -1513,6 +1537,8 @@ export function initHomepageCatalog(): void {
           thumbnail = thumbnail.replace(/\/s72-c\//, '/w384-rw/').replace(/=s72-c/, '=w384-rw');
         }
 
+        thumbnail = safeFeedUrl(thumbnail) || undefined;
+
         return {
           id,
           title,
@@ -1528,6 +1554,7 @@ export function initHomepageCatalog(): void {
         };
       });
 
+      allPosts = allPosts.filter((p) => p.url);
       filteredPosts = allPosts;
 
       if (yearSelect) {
@@ -1618,20 +1645,20 @@ export function initHomepageCatalog(): void {
           <article class="post">
             <div class="post-card-inner ${p.thumbnail ? 'has-thumbnail' : 'no-thumbnail'}">
               ${p.thumbnail ? `
-                <a class="post-thumbnail-link" href="${p.url}" tabindex="-1" aria-hidden="true">
-                  <img class="post-thumbnail" src="${p.thumbnail}" alt="${escapeHtml(p.title)}" width="640" height="360" loading="lazy" decoding="async" referrerpolicy="no-referrer" />
+                <a class="post-thumbnail-link" href="${escapeHtml(p.url)}" tabindex="-1" aria-hidden="true">
+                  <img class="post-thumbnail" src="${escapeHtml(p.thumbnail)}" alt="${escapeHtml(p.title)}" width="640" height="360" loading="lazy" decoding="async" referrerpolicy="no-referrer" />
                 </a>
               ` : ''}
               <div class="post-content-wrap">
                 <${h2Tag} class="post-title">
-                  <a href="${p.url}">${escapeHtml(p.title)}</a>
+                  <a href="${escapeHtml(p.url)}">${escapeHtml(p.title)}</a>
                 </${h2Tag}>
                 <div class="post-meta-row">
                   <div class="post-author-mini">
                     <span class="post-author-mini-name">${escapeHtml(p.author)}</span>
                   </div>
                   <span class="post-meta-sep">·</span>
-                  <time class="post-date" datetime="${p.published}">${escapeHtml(p.dateStr)}</time>
+                  <time class="post-date" datetime="${escapeHtml(p.published)}">${escapeHtml(p.dateStr)}</time>
                 </div>
                 <div class="post-excerpt">${escapeHtml(p.excerpt)}</div>
                 <div class="post-footer">
@@ -1639,7 +1666,7 @@ export function initHomepageCatalog(): void {
                     ${p.categories.map((c) => `<span class="post-label">${escapeHtml(c)}</span>`).join('')}
                   </div>
                   <div class="jump-link">
-                    <a href="${p.url}">
+                    <a href="${escapeHtml(p.url)}">
                       <span class="jump-link-text">Read article</span>
                       <span class="jump-link-arrow" aria-hidden="true">→</span>
                     </a>
@@ -2187,7 +2214,7 @@ export function initMermaidDiagrams(targetTheme?: 'dark' | 'default'): void {
         primaryBorderColor: '#d9e5ee',
         lineColor: '#606d8e'
       },
-      securityLevel: 'loose'
+      securityLevel: 'strict'
     });
 
     const getDiagramSvg = (wrap: HTMLElement): SVGElement | null => {
@@ -2764,7 +2791,8 @@ export function initCommentInteractions(): void {
   if (!commentsSection) return;
 
   const FALLBACK_AUTHOR_AVATAR =
-    'https://blogger.googleusercontent.com/img/a/AVvXsEid2pK6sS9Z_2jCm6SFeomZwfHDSq0li0pY6e8i_NNiuJkwHKqMqJ9gLw2qws2Xp42oCc5QGFvDw-PjbWF6CHaF7D-BShybE1d5A4OglhgVfsNPm0dg-1CRHkmrBZnAv8neHaTTb_hEzsaZZMgUP9mnTJqSAvtYtuzbOEKnsE2OJ1viJolqiQU7D532vxQ=s96-rw';
+    'data:image/svg+xml;utf8,' +
+    encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><path d="M20 3 34 8v11c0 9-6 15.5-14 18C12 34.5 6 28 6 19V8z" fill="#3d8fe1"/><path d="m14 20 4 4 8-9" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>');
 
   function sanitizeHttpUrl(rawUrl: string | null | undefined): string | null {
     if (!rawUrl) return null;
@@ -2784,7 +2812,7 @@ export function initCommentInteractions(): void {
   const defaultAuthorAvatar =
     sanitizeHttpUrl(commentsSection.getAttribute('data-author-avatar')) || FALLBACK_AUTHOR_AVATAR;
 
-  const fcdLogo = 'https://fastcyberdefense.com/icon1.png';
+  const fcdLogo = FALLBACK_AUTHOR_AVATAR;
 
   function isGenericAvatar(src: string): boolean {
     if (!src) return true;
@@ -2801,7 +2829,7 @@ export function initCommentInteractions(): void {
     const cleanName = name.trim() || 'Anonymous';
     const initial = (cleanName[0] || 'A').toUpperCase();
     const colors = [
-      '#2563eb', // Blue
+      '#166fbe', // FCD action blue
       '#059669', // Emerald
       '#7c3aed', // Purple
       '#d97706', // Amber
@@ -2831,10 +2859,7 @@ export function initCommentInteractions(): void {
 
       // Check if commenter is the blog author (not just viewer holding delete button)
       const isBlogAuthor =
-        Boolean(comment.querySelector('.blog-author')) ||
-        lowerName === 'md. redwan ahmed' ||
-        lowerName === 'redwan' ||
-        lowerName.includes('redwan ahmed');
+        Boolean(comment.querySelector('.blog-author'));
 
       const isFCD = lowerName.includes('fast cyber defense') || lowerName.includes('fcd');
       const src = img.getAttribute('src') || '';
@@ -2851,7 +2876,7 @@ export function initCommentInteractions(): void {
         }
         if (isGenericAvatar(src) || !src) {
           img.src = defaultAuthorAvatar;
-          img.alt = 'Md. Redwan Ahmed';
+          img.alt = authorName;
         } else {
           // Upgrade Blogger/Google avatar resolution
           const upgraded = sanitizeHttpUrl(src.replace(/\/s\d+(-c)?\//, '/s96-c/'));
@@ -2870,7 +2895,7 @@ export function initCommentInteractions(): void {
         'error',
         () => {
           if (isFCD) {
-            img.src = 'https://fastcyberdefense.com/logo.svg';
+            img.src = fcdLogo;
           } else if (isBlogAuthor) {
             img.src = defaultAuthorAvatar;
           } else {

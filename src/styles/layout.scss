@@ -1012,36 +1012,6 @@ html[data-theme='dark'] .theme-icon-moon {
   }
 
 
-  .orcid-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-family: $font-mono;
-    font-size: 0.72rem;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    color: $ink;
-    text-decoration: none;
-    background: $surface;
-    border: 1px solid $rule;
-    padding: 3px 10px;
-    border-radius: 9999px;
-    box-shadow: $shadow-sm;
-    transition: color $motion-fast $ease-out-quart, border-color $motion-fast $ease-out-quart, background-color $motion-fast $ease-out-quart, transform $motion-fast $ease-out-quart;
-
-    svg.orcid-icon {
-      width: 14px;
-      height: 14px;
-      flex-shrink: 0;
-    }
-
-    &:hover {
-      color: #A6CE39;
-      border-color: rgba(166, 206, 57, 0.5);
-      background: oklch(98% 0.02 135);
-      transform: translateY(-1px);
-    }
-  }
 
   .hero-title {
     font-family: $font-sans;
@@ -1378,7 +1348,7 @@ html[data-theme='dark'] .theme-icon-moon {
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.05em;
-  color: #2563eb;
+  color: #166fbe;
   margin-bottom: $space-2;
 }
 
@@ -1414,7 +1384,7 @@ html[data-theme='dark'] .theme-icon-moon {
   justify-content: center;
   min-height: 44px;
   padding: 0 $space-5;
-  background: #2563eb;
+  background: #166fbe;
   color: #ffffff !important;
   font-family: $font-sans;
   font-size: 0.875rem;
@@ -1450,8 +1420,8 @@ html[data-theme='dark'] .theme-icon-moon {
   transition: transform $motion-fast $ease-out-quart, border-color $motion-fast $ease-out-quart, color $motion-fast $ease-out-quart;
 
   &:hover {
-    border-color: #2563eb;
-    color: #2563eb !important;
+    border-color: #166fbe;
+    color: #166fbe !important;
     transform: translateY(-1px);
   }
 }

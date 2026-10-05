@@ -253,14 +253,18 @@ async function main() {
       reports.set(filename, value);
       fs.copyFileSync(path.join(evidence, filename), path.join(destination, filename), fs.constants.COPYFILE_EXCL);
     }
-    for (const [label, expected] of Object.entries({ bootstrap: 0, unit: 0, render: 0, 'check-boundary': 0, 'check-zero': 0, 'check-exit': 37, 'check-signal': 129, 'check-timeout': 124, 'check-cleanup': 0 })) {
+    // Application runs this workflow requires inside the boundary; the
+    // historical default is the unit and render pair.
+    const runs = (process.env.FCD_REQUIRED_RUNS ?? 'unit render').split(/\s+/).filter(Boolean);
+    assert.ok(runs.length > 0 && runs.every(r => /^[a-z][a-z0-9-]{0,40}$/.test(r) && r !== 'bootstrap' && !r.startsWith('check-')), 'invalid required application runs');
+    for (const [label, expected] of Object.entries({ bootstrap: 0, ...Object.fromEntries(runs.map(r => [r, 0])), 'check-boundary': 0, 'check-zero': 0, 'check-exit': 37, 'check-signal': 129, 'check-timeout': 124, 'check-cleanup': 0 })) {
       assert.equal(reports.get(`${label}.json`)?.exitCode, expected, `${label} evidence missing or unexpected`);
     }
     const setup = reports.get('check-setup.json')?.exitCode;
     assert.ok(Number.isInteger(setup) && setup > 0, 'missing failed-setup evidence');
     assert.deepEqual(reports.get('bootstrap-checks.json')?.records.map(r => r.name), bootstrapNames, 'incomplete bootstrap evidence');
     assert.deepEqual(reports.get('boundary-checks.json')?.records.map(r => r.name), boundaryNames, 'incomplete boundary evidence');
-    for (const label of ['check-boundary', 'unit', 'render']) {
+    for (const label of ['check-boundary', ...runs]) {
       const value = reports.get(`${label}-guard.json`);
       assert.equal(value?.noNewPrivileges, true, 'missing application guard evidence');
       assert.ok(Number.isInteger(value.uid) && value.uid > 0);

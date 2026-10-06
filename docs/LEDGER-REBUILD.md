@@ -15,7 +15,7 @@ ledger-port.yml workflow (bot commits do not trigger CI).
 | US-L5 hardening | green in run 37340398543 | tests/fcd/hardening.test.ts 7/7 (red first in run 37333013292) |
 | Ledger V3 contract | green in run 37340398543 | PASS: 39 V3 contract rules verified |
 | First test-blog upload | done 2026-10-05 | build 1118f66, owner screenshots light and dark, home and post |
-| US-L7 test-blog polish | red first in run 37349111173 (7 of 9 new cases failing as predicted); run 37351665554 after e50bded and f7494c4: 25 of 26 pass, 5 dark-mode rules left, fixed in the next commit, awaiting CI | tests/fcd/polish.test.ts over tests/fcd/blogger-static.ts |
+| US-L7 test-blog polish | red first in run 37349111173 (7 of 9 new cases failing as predicted); run 37403970847 after c624d0b: unit 26/26 and contract 39/39; npm audit then blocked on new advisories, lockfile patched in 13c7de2, awaiting CI | tests/fcd/polish.test.ts over tests/fcd/blogger-static.ts |
 | US-L6 cleanup and records | pending | remove port/, ledger-port.yml, staging-check.yml, excerpt step; CHANGELOG, AGENTS.md, PR body |
 
 ## US-L5 changes (main.ts, via port edits)
@@ -51,3 +51,12 @@ and src/styles/tokens.scss:
 Owner action after each upload: in Layout, delete gadgets that are not part
 of the theme (here Blog Search, Blog Archive, Report Abuse, Profile). The
 Profile gadget lists personal author profiles and must not stay.
+
+## Dependency audit (2026-10-06)
+
+npm audit (moderate gate) failed on GHSA-68fv-2mgg-jv7q, source-map-js <1.2.2
+(high, transitive build tooling). source-map-js 1.2.2 and dompurify 3.4.16
+(two low DOMPurify advisories, via mermaid) were applied inside the existing
+ranges through port/lockfile.json. Still open, below the gate: katex <0.18.2
+(low, GHSA-238p-pmpm-9mq7) via mermaid 11; the only offered fix is a mermaid
+downgrade to 10.8.0, which is not taken.

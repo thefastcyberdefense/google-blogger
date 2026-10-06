@@ -10,6 +10,8 @@
 //   5. Articles were set in Georgia; fastcyberdefense.com sets text in Inter.
 //   6. Some rules (sidebar card headings, post meta, share bar, footer) stayed
 //      near-white on the dark page.
+// The owner chose the site's exact colours on 2026-10-06 (tests/fcd/site-exact.ts),
+// so the call-to-action secondary label is the primary #3d8fe1, as on the site.
 // Each case lays out the built skin over a static expansion of dist/theme.xml
 // (tests/fcd/blogger-static.ts) in Chromium, with every request blocked.
 import { readFileSync } from 'node:fs';
@@ -18,6 +20,7 @@ import { fileURLToPath } from 'node:url';
 import { chromium, type Browser, type Page } from 'playwright';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { parseXml, renderTheme, type Orphan, type View } from './blogger-static.ts';
+import { SITE_EXACT, siteExact } from './site-exact.ts';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const xml = readFileSync(join(ROOT, 'dist/theme.xml'), 'utf8');
@@ -405,7 +408,8 @@ describe('Test-blog upload, 2026-10-05: palette and type', () => {
     const detail = `${describeButton('home', secondary)} || primary ${describeButton('home', primary)}`;
     expect(secondary.fillContrast, `secondary is filled: ${detail}`).toBeLessThan(1.15);
     expect(secondary.borderWidth >= 1 && secondary.borderStyle !== 'none' && secondary.borderContrast >= 1.3, `secondary has no visible outline: ${detail}`).toBe(true);
-    expect(secondary.contrast, `secondary label below AA: ${detail}`).toBeGreaterThanOrEqual(4.5);
+    const primaryInk = SITE_EXACT.fill.every((v, i) => Math.abs(v - (secondary.ink[i] ?? 0)) <= 2);
+    expect(primaryInk && siteExact(secondary.ink, secondary.surface, secondary.contrast), `secondary label is not the site primary #3d8fe1 (owner, ${SITE_EXACT.decided}): ${detail}`).toBe(true);
   }, 30_000);
 
   it('sets text in Inter like fastcyberdefense.com, never in a serif face', async () => {

@@ -2,8 +2,9 @@
 // which fastcyberdefense.com is built on, is the whole palette of the blog. Every
 // colour the built theme draws (skin, script and markup) is one of its tokens in
 // either theme at any alpha, black for overlays only, the logo's own gradient,
-// or one of the AA text values the owner approved for small text on light
-// surfaces (action blue #166fbe and its hover, muted text #606d8e). Shadows are
+// or the darker hover of the primary (tweakcn has no hover token). The owner
+// chose the exact tweakcn colours on 2026-10-06, so the AA text values approved
+// with the rebuild (#166fbe, #606d8e) are no longer allowed. Shadows are
 // the tweakcn shadows, tinted with the primary #3d8fe1. Each source file has its
 // own case, so a failure lists that file's off-palette literals and lines.
 // Content semantics keep their own hues: Prism syntax tokens (.token) and the
@@ -124,17 +125,14 @@ const TWEAKCN: Record<string, Rgb> = {
   'dark chart-5': fromOklch(0.551, 0.0234, 264.3637)
 };
 
-// The AA text values the owner approved with the rebuild: small text on light
-// surfaces takes the primary and the muted foreground deepened along their hue.
-const AA: Record<string, Rgb> = {
-  'action blue': fromOklch(0.535, 0.1467, 251.2451),
-  'action blue hover': fromOklch(0.5, 0.1467, 251.2451),
-  'muted text': fromOklch(0.5375, 0.0546, 268.3959)
+// Hover and pressed state of the primary: the same hue and chroma, darker.
+const HOVER: Record<string, Rgb> = {
+  'primary hover': fromOklch(0.5, 0.1467, 251.2451)
 };
 
 // fastcyberdefense.com icon0.svg gradient stops (the logo artwork itself).
 const LOGO = ['#2d4e8e', '#325695', '#5082b8', '#66a2d2', '#73b6e2', '#78bde8', '#85c8e8', '#94d5e9', '#9adaea'].map((h) => fromHex(h).rgb);
-const PALETTE: Rgb[] = [...Object.values(TWEAKCN), ...Object.values(AA)];
+const PALETTE: Rgb[] = [...Object.values(TWEAKCN), ...Object.values(HOVER)];
 
 function allowed(c: Colour, prop: string, context: string): boolean {
   if (c.alpha === 0) return true;

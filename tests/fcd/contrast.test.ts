@@ -5,13 +5,17 @@
 // counts; text of disabled controls is exempt (WCAG 1.4.3, inactive
 // components). Hover states of the theme's controls are measured too, with
 // transitions off. Each case lists its failures with the rule that sets the
-// colour.
+// colour. The owner chose the site's exact colours on 2026-10-06
+// (tests/fcd/site-exact.ts): small text in #3d8fe1 or #6e7b9d and white on
+// #3d8fe1 are accepted at the site's own ratios, and the light theme must use
+// them.
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium, type Browser, type Page } from 'playwright';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { parseXml, renderTheme, type View } from './blogger-static.ts';
+import { SITE_EXACT_JS } from './site-exact.ts';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const xml = readFileSync(join(ROOT, 'dist/theme.xml'), 'utf8');
@@ -20,6 +24,7 @@ const tree = parseXml(xml);
 
 const HELPERS = String.raw`
 (() => {
+  ${SITE_EXACT_JS}
   const canvas = document.createElement('canvas');
   canvas.width = 1;
   canvas.height = 1;
@@ -107,6 +112,7 @@ const HELPERS = String.raw`
     failures: () => {
       const seen = new Map();
       let checked = 0;
+      let exact = 0;
       for (const el of Array.from(document.body.querySelectorAll('*'))) {
         if (el.closest('svg, script, style, noscript, template')) continue;
         const own = ownText(el);
@@ -119,12 +125,13 @@ const HELPERS = String.raw`
         const s = sample(el);
         checked++;
         if (s.r >= s.need) continue;
+        if (siteExact(s.color, s.f.base, s.r)) { exact++; continue; }
         const key = name(el) + hex(s.ink) + hex(s.f.base);
         if (seen.has(key)) { seen.get(key).n++; continue; }
         const text = (own || (el.options && el.selectedIndex >= 0 ? el.options[el.selectedIndex].text : '')).slice(0, 22);
         seen.set(key, { n: 1, line: name(el) + ' "' + text + '" ' + hex(s.ink) + ' on ' + hex(s.f.base) + (s.f.image ? ' (image)' : '') + ' ' + s.r + '<' + s.need + ' [' + winner(el, cs.color) + ']' });
       }
-      return { checked, lines: Array.from(seen.values()).map((v) => v.line + (v.n > 1 ? ' x' + v.n : '')) };
+      return { checked, exact, lines: Array.from(seen.values()).map((v) => v.line + (v.n > 1 ? ' x' + v.n : '')) };
     },
     // Marks the first visible, active control of each selector that carries text.
     mark: (selectors) => selectors.map((sel, i) => {
@@ -137,14 +144,15 @@ const HELPERS = String.raw`
       const t = root ? textEl(root) : null;
       if (!root || !t) return null;
       const s = sample(t);
-      return { el: name(t), text: ownText(t).slice(0, 22), ink: hex(s.ink), surface: hex(s.f.base), ratio: s.r, need: s.need, hovered: root.matches(':hover'), rule: s.r < s.need ? winner(t, s.cs.color) : '' };
+      const ok = s.r >= s.need || siteExact(s.color, s.f.base, s.r);
+      return { el: name(t), text: ownText(t).slice(0, 22), ink: hex(s.ink), surface: hex(s.f.base), ratio: s.r, need: s.need, ok, hovered: root.matches(':hover'), rule: ok ? '' : winner(t, s.cs.color) };
     }
   };
 })();
 `;
 
 type Theme = 'light' | 'dark';
-interface Measured { el: string; text: string; ink: string; surface: string; ratio: number; need: number; hovered: boolean; rule: string }
+interface Measured { el: string; text: string; ink: string; surface: string; ratio: number; need: number; ok: boolean; hovered: boolean; rule: string }
 
 const NO_MOTION = '*, *::before, *::after { transition: none !important; animation: none !important; }';
 // Controls with a hover state on the home and post views.
@@ -169,16 +177,17 @@ async function open(view: View, theme: Theme): Promise<Page> {
   return page;
 }
 
-describe('tweakcn palette: AA text contrast', () => {
+describe('tweakcn palette: AA text contrast, site-exact pairs accepted', () => {
   for (const view of ['home', 'post'] as const) {
     for (const theme of ['light', 'dark'] as const) {
       it(`keeps ${view} text at AA in the ${theme} theme`, async () => {
         const page = await open(view, theme);
         const pageLum = (await page.evaluate('window.__aa.page()')) as number;
-        const { checked, lines } = (await page.evaluate('window.__aa.failures()')) as { checked: number; lines: string[] };
+        const { checked, exact, lines } = (await page.evaluate('window.__aa.failures()')) as { checked: number; exact: number; lines: string[] };
         await page.close();
         expect(theme === 'dark' ? pageLum < 0.05 : pageLum > 0.9, `${theme} theme not applied (page luminance ${pageLum})`).toBe(true);
         expect(checked, 'text elements measured').toBeGreaterThan(40);
+        if (theme === 'light') expect(exact, 'small text in the site-exact #3d8fe1 or #6e7b9d (owner, 2026-10-06)').toBeGreaterThan(0);
         const shown = lines.slice(0, 22);
         expect(lines.length, `${lines.length} below AA of ${checked}: ${shown.join(' | ')}${lines.length > 22 ? ` | +${lines.length - 22} more` : ''}`).toBe(0);
       }, 60_000);
@@ -199,7 +208,7 @@ describe('tweakcn palette: AA text contrast', () => {
           const r = (await page.evaluate(`window.__aa.measure(${m.i})`)) as Measured | null;
           if (!r || !r.hovered) continue;
           measured++;
-          if (r.ratio < r.need) problems.push(`${view} ${m.sel} ${r.el} "${r.text}" ${r.ink} on ${r.surface} ${r.ratio}<${r.need} [${r.rule}]`);
+          if (!r.ok) problems.push(`${view} ${m.sel} ${r.el} "${r.text}" ${r.ink} on ${r.surface} ${r.ratio}<${r.need} [${r.rule}]`);
         }
         await page.close();
       }

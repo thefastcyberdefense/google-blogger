@@ -4,8 +4,9 @@
 // Cyber Defense: no personal links, portraits or trackers, the FCD mark in the
 // masthead, and the colours of fastcyberdefense.com: the owner's tweakcn theme
 // (tweakcn.com/themes/cmj93i381000k04jt333e4ko2, US-L9).
-// Text-bearing blue on light surfaces uses the AA-safe deeper action blue;
-// #3d8fe1 stays exact for surfaces, large text and the dark theme. These checks
+// Since 2026-10-06 the owner's choice is the exact tweakcn colours everywhere,
+// small text included (tests/fcd/site-exact.ts): the AA text values of the
+// rebuild (#166fbe, #606d8e) are gone. These checks
 // read the CI-built XML; failures also name the source lines that carry a hit.
 import { readdirSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
@@ -108,15 +109,14 @@ const LEDGER: Record<string, Rgb> = {
 
 const isLedger = (rgb: Rgb): boolean => Object.values(LEDGER).some((l) => near(rgb, l));
 
-// tweakcn tokens, plus the AA-safe text values derived from them.
+// tweakcn tokens, exact.
 const FCD: Record<string, string> = {
   'primary': '#3d8fe1',
   'foreground': '#1d2b4d',
   'card': '#f0f8fc',
   'accent': '#e3f2fa',
   'border': '#d9e5ee',
-  'action blue (AA text on white, card, wash)': '#166fbe',
-  'muted text (AA on white, card, wash)': '#606d8e',
+  'muted foreground': '#6e7b9d',
   'dark background': '#0e1428',
   'dark card': '#171f36',
   'dark foreground': '#e2e8f0',
@@ -153,10 +153,18 @@ describe('FCD palette', () => {
     expect(tally(hits.map((c) => c.literal)), `upstream palette literals; source: ${lines}`).toEqual([]);
   });
 
-  it('uses the fastcyberdefense.com tokens and the AA-safe text blues', () => {
+  it('uses the fastcyberdefense.com tokens', () => {
     const all = colours(visible);
     const missing = Object.entries(FCD).filter(([, hex]) => !all.some((c) => near(c.rgb, fromHex(hex)))).map(([name, hex]) => `${name} ${hex}`);
     expect(missing).toEqual([]);
+  });
+
+  it('draws small text in the exact site colours, not the AA values of the rebuild (owner, 2026-10-06)', () => {
+    const RETIRED = ['#166fbe', '#606d8e'].map(fromHex);
+    const isRetired = (rgb: Rgb): boolean => RETIRED.some((r) => near(rgb, r));
+    const hits = colours(visible).filter((c) => isRetired(c.rgb));
+    const lines = hits.length ? where((line) => colours(line).some((c) => isRetired(c.rgb))) : '';
+    expect(tally(hits.map((c) => c.literal)), `retired AA text values; source: ${lines}`).toEqual([]);
   });
 
   it('sets Inter for text and Fira Code for code, as on the main site', () => {

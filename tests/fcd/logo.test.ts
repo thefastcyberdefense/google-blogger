@@ -7,14 +7,17 @@
 // The logo is a disc with cut-out letters, so a mark has no ring or fill of its
 // own and the letters show the surface below, as on the main site; an author
 // without a photo gets the logo too. The same screenshots showed white "Post a
-// Comment" labels on the lighter brand blue in dark mode (3.4:1): small text on
-// blue takes the deeper AA action blue in both themes.
+// Comment" labels on the lighter brand blue in dark mode (3.4:1). After the
+// US-L9 palette build the owner chose the site's exact colours (2026-10-06,
+// tests/fcd/site-exact.ts): comment actions are white on the primary #3d8fe1
+// in both themes, as on fastcyberdefense.com, and darken on hover.
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium, type Browser, type Page } from 'playwright';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { parseXml, renderTheme, type View } from './blogger-static.ts';
+import { SITE_EXACT, siteExact } from './site-exact.ts';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const xml = readFileSync(join(ROOT, 'dist/theme.xml'), 'utf8');
@@ -272,7 +275,7 @@ describe('FCD logo and comment actions on the page', () => {
     expect(problems, `logo marks: ${problems.join(' || ')}`).toEqual([]);
   }, 60_000);
 
-  it('sets comment actions in the AA action blue in both themes, on hover too', async () => {
+  it('sets comment actions white on the site primary in both themes, readable on hover too', async () => {
     const problems: string[] = [];
     for (const theme of ['light', 'dark'] as const) {
       const page = await open('post', theme);
@@ -284,12 +287,14 @@ describe('FCD logo and comment actions on the page', () => {
       const states: Array<[string, Control[]]> = [['rest', rest], ['hover', hover]];
       for (const [state, list] of states) {
         for (const c of list) {
+          const at = `${theme} ${state} ${c.el}: text ${rgb(c.ink)} on ${rgb(c.surface)} at ${c.contrast}:1 [${(c.rules ?? []).join(' | ')}]`;
           if (!c.found) problems.push(`${theme} ${state} ${c.sel}: not rendered`);
-          else if ((c.contrast ?? 0) < 4.5) problems.push(`${theme} ${state} ${c.el}: text ${rgb(c.ink)} on ${rgb(c.surface)} at ${c.contrast}:1 [${(c.rules ?? []).join(' | ')}]`);
+          else if (state === 'rest' && !siteExact(c.ink ?? [], c.surface ?? [], c.contrast ?? 0)) problems.push(`not white on the primary #3d8fe1 (owner, ${SITE_EXACT.decided}): ${at}`);
+          else if (state === 'hover' && (c.contrast ?? 0) < 4.5 && !siteExact(c.ink ?? [], c.surface ?? [], c.contrast ?? 0)) problems.push(`${theme} ${state} ${c.el}: text ${rgb(c.ink)} on ${rgb(c.surface)} at ${c.contrast}:1 [${(c.rules ?? []).join(' | ')}]`);
         }
       }
     }
-    expect(problems, `comment actions below AA: ${problems.join(' || ')}`).toEqual([]);
+    expect(problems, `comment actions: ${problems.join(' || ')}`).toEqual([]);
   }, 60_000);
 
   it('shows the logo for an author without a photo', async () => {

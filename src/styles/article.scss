@@ -23,7 +23,7 @@
     width: 0%;
     background: linear-gradient(90deg, $accent, oklch(63.86% 0.1467 251.2451));
     transition: width 50ms linear;
-    box-shadow: 0 0 10px oklch(53.5% 0.1467 251.2451 / 0.35);
+    box-shadow: 0 0 10px oklch(63.86% 0.1467 251.2451 / 0.35);
   }
 }
 
@@ -231,8 +231,8 @@
       }
 
       &.copied {
-        color: oklch(53.5% 0.1467 251.2451);
-        border-color: oklch(53.5% 0.1467 251.2451);
+        color: oklch(63.86% 0.1467 251.2451);
+        border-color: oklch(63.86% 0.1467 251.2451);
       }
     }
 
@@ -313,8 +313,8 @@
     }
 
     &.copied {
-      color: oklch(53.5% 0.1467 251.2451);
-      border-color: oklch(53.5% 0.1467 251.2451);
+      color: oklch(63.86% 0.1467 251.2451);
+      border-color: oklch(63.86% 0.1467 251.2451);
     }
   }
 
@@ -457,7 +457,7 @@
       transition: all 0.2s ease;
 
       &:hover {
-        background: oklch(99% 0.002 255 / 0.85);
+        background: oklch(97.43% 0.0101 228.8865 / 0.85);
         backdrop-filter: blur(8px);
         -webkit-backdrop-filter: blur(8px);
         border-color: oklch(83.19% 0.0256 246.2533);
@@ -549,7 +549,7 @@
         align-items: center;
         justify-content: space-between;
         padding: $space-2 $space-4;
-        background: oklch(96% 0.005 255);
+        background: oklch(95.23% 0.0192 230.6952);
         border-bottom: 1px solid oklch(91.55% 0.0178 240.0081);
       }
 
@@ -598,8 +598,8 @@
         }
 
         &.is-copied {
-          color: oklch(53.5% 0.1467 251.2451);
-          border-color: oklch(53.5% 0.1467 251.2451);
+          color: oklch(63.86% 0.1467 251.2451);
+          border-color: oklch(63.86% 0.1467 251.2451);
         }
       }
 
@@ -662,7 +662,7 @@
     }
 
     tr:nth-child(even) td {
-      background: oklch(99% 0.002 255);
+      background: oklch(97.43% 0.0101 228.8865);
     }
   }
 
@@ -957,7 +957,7 @@
     &:hover {
       color: $accent;
       background-color: $accent-wash;
-      border-color: oklch(53.5% 0.1467 251.2451 / 0.25);
+      border-color: oklch(63.86% 0.1467 251.2451 / 0.25);
       transform: translateY(-2px);
       box-shadow: $shadow-accent-sm;
     }
@@ -1656,11 +1656,11 @@
   }
 
   &.alert-callout-note {
-    border-left-color: oklch(53.5% 0.1467 251.2451);
-    background: oklch(53.5% 0.1467 251.2451 / 0.06);
+    border-left-color: oklch(63.86% 0.1467 251.2451);
+    background: oklch(63.86% 0.1467 251.2451 / 0.06);
 
     .alert-callout-title {
-      color: oklch(53.5% 0.1467 251.2451);
+      color: oklch(63.86% 0.1467 251.2451);
     }
   }
 

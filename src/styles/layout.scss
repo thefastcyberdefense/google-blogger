@@ -238,7 +238,7 @@
     &:hover {
       color: $accent;
       background-color: $accent-wash;
-      border-color: oklch(53.5% 0.1467 251.2451 / 0.2);
+      border-color: oklch(63.86% 0.1467 251.2451 / 0.2);
     }
   }
 }
@@ -432,7 +432,7 @@ html[data-theme='dark'] .theme-icon-moon {
 
       &:focus {
         border-color: $accent;
-        box-shadow: 0 0 0 2px oklch(53.5% 0.1467 251.2451 / 0.25);
+        box-shadow: 0 0 0 2px oklch(63.86% 0.1467 251.2451 / 0.25);
       }
     }
 
@@ -481,7 +481,7 @@ html[data-theme='dark'] .theme-icon-moon {
     &:hover {
       background-color: $accent-wash;
       color: $accent;
-      border-color: oklch(53.5% 0.1467 251.2451 / 0.35);
+      border-color: oklch(63.86% 0.1467 251.2451 / 0.35);
       transform: translateX(2px);
     }
   }
@@ -533,13 +533,13 @@ html[data-theme='dark'] .theme-icon-moon {
       display: inline-flex;
       align-items: center;
       padding: 1px $space-2;
-      background: oklch(53.5% 0.1467 251.2451 / 0.1);
-      border: 1px solid oklch(53.5% 0.1467 251.2451 / 0.3);
+      background: oklch(63.86% 0.1467 251.2451 / 0.1);
+      border: 1px solid oklch(63.86% 0.1467 251.2451 / 0.3);
       border-radius: 999px;
       font-family: $font-mono;
       font-size: 0.6875rem;
       font-weight: 600;
-      color: oklch(53.5% 0.1467 251.2451);
+      color: oklch(63.86% 0.1467 251.2451);
       white-space: nowrap;
 
       html[data-theme='dark'] & {
@@ -635,7 +635,7 @@ html[data-theme='dark'] .theme-icon-moon {
     .sidebar-recent-tag {
       color: $accent;
       background: $accent-wash;
-      border: 1px solid oklch(53.5% 0.1467 251.2451 / 0.2);
+      border: 1px solid oklch(63.86% 0.1467 251.2451 / 0.2);
       padding: 1.5px 6px;
       border-radius: 4px;
       font-weight: 600;
@@ -685,7 +685,7 @@ html[data-theme='dark'] .theme-icon-moon {
     &:hover {
       background: $accent-wash;
       color: $accent;
-      border-color: oklch(53.5% 0.1467 251.2451 / 0.3);
+      border-color: oklch(63.86% 0.1467 251.2451 / 0.3);
     }
   }
 }
@@ -730,7 +730,7 @@ html[data-theme='dark'] .theme-icon-moon {
 
     &:focus {
       border-color: $accent;
-      box-shadow: 0 0 0 2px oklch(53.5% 0.1467 251.2451 / 0.2);
+      box-shadow: 0 0 0 2px oklch(63.86% 0.1467 251.2451 / 0.2);
     }
   }
 
@@ -827,7 +827,7 @@ html[data-theme='dark'] .theme-icon-moon {
   .search-result-tag {
     color: $accent;
     background: $accent-wash;
-    border: 1px solid oklch(53.5% 0.1467 251.2451 / 0.2);
+    border: 1px solid oklch(63.86% 0.1467 251.2451 / 0.2);
     padding: 1px 6px;
     border-radius: 4px;
     font-weight: 600;
@@ -975,14 +975,14 @@ html[data-theme='dark'] .theme-icon-moon {
     align-items: center;
     gap: $space-2;
     padding: $space-1 $space-3;
-    background: oklch(53.5% 0.1467 251.2451 / 0.08);
-    border: 1px solid oklch(53.5% 0.1467 251.2451 / 0.25);
+    background: oklch(63.86% 0.1467 251.2451 / 0.08);
+    border: 1px solid oklch(63.86% 0.1467 251.2451 / 0.25);
     border-radius: 999px;
     font-family: $font-mono;
     font-size: 0.75rem;
     font-weight: 600;
     letter-spacing: 0.05em;
-    color: oklch(53.5% 0.1467 251.2451);
+    color: oklch(63.86% 0.1467 251.2451);
     white-space: nowrap;
 
     html[data-theme='dark'] & {
@@ -1000,8 +1000,8 @@ html[data-theme='dark'] .theme-icon-moon {
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background-color: oklch(53.5% 0.1467 251.2451);
-    box-shadow: 0 0 8px oklch(53.5% 0.1467 251.2451);
+    background-color: oklch(63.86% 0.1467 251.2451);
+    box-shadow: 0 0 8px oklch(63.86% 0.1467 251.2451);
     animation: beaconPulse 2s infinite ease-in-out;
     flex-shrink: 0;
 
@@ -1176,13 +1176,13 @@ html[data-theme='dark'] .theme-icon-moon {
     &:hover {
       color: $accent;
       background-color: $accent-wash;
-      border-color: oklch(53.5% 0.1467 251.2451 / 0.2);
+      border-color: oklch(63.86% 0.1467 251.2451 / 0.2);
     }
 
     &.is-active {
       color: $accent;
       background-color: $accent-wash;
-      border-color: oklch(53.5% 0.1467 251.2451 / 0.25);
+      border-color: oklch(63.86% 0.1467 251.2451 / 0.25);
       font-weight: 700;
     }
 
@@ -1211,7 +1211,7 @@ html[data-theme='dark'] .theme-icon-moon {
     &:hover .label-count,
     &.is-active .topic-count,
     &.is-active .label-count {
-      background: oklch(53.5% 0.1467 251.2451 / 0.12);
+      background: oklch(63.86% 0.1467 251.2451 / 0.12);
       color: $accent;
     }
   }
@@ -1333,7 +1333,7 @@ html[data-theme='dark'] .theme-icon-moon {
   }
 
   &:hover {
-    border-color: oklch(53.5% 0.1467 251.2451 / 0.3);
+    border-color: oklch(63.86% 0.1467 251.2451 / 0.3);
     box-shadow: $shadow-lg;
   }
 }
@@ -1348,7 +1348,7 @@ html[data-theme='dark'] .theme-icon-moon {
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.05em;
-  color: #166fbe;
+  color: #3d8fe1;
   margin-bottom: $space-2;
 }
 
@@ -1384,7 +1384,7 @@ html[data-theme='dark'] .theme-icon-moon {
   justify-content: center;
   min-height: 44px;
   padding: 0 $space-5;
-  background: #166fbe;
+  background: #3d8fe1;
   color: #ffffff !important;
   font-family: $font-sans;
   font-size: 0.875rem;
@@ -1420,8 +1420,8 @@ html[data-theme='dark'] .theme-icon-moon {
   transition: transform $motion-fast $ease-out-quart, border-color $motion-fast $ease-out-quart, color $motion-fast $ease-out-quart;
 
   &:hover {
-    border-color: #166fbe;
-    color: #166fbe !important;
+    border-color: #3d8fe1;
+    color: #3d8fe1 !important;
     transform: translateY(-1px);
   }
 }
@@ -1536,7 +1536,7 @@ html[data-theme='dark'] .theme-icon-moon {
     &.cta-btn-secondary {
       background: $page;
       color: $accent;
-      border: 1px solid oklch(53.5% 0.1467 251.2451 / 0.25);
+      border: 1px solid oklch(63.86% 0.1467 251.2451 / 0.25);
 
       &:hover {
         color: oklch(50% 0.1467 251.2451);
@@ -2089,7 +2089,7 @@ html[data-theme='dark'] .theme-icon-moon {
 
   &:active {
     transform: $pill-active-scale;
-    box-shadow: 0 1px 2px oklch(53.5% 0.1467 251.2451 / 0.08);
+    box-shadow: 0 1px 2px oklch(63.86% 0.1467 251.2451 / 0.08);
   }
 }
 
@@ -2223,7 +2223,7 @@ pre {
 
   &:hover {
     box-shadow: $shadow-md;
-    border-color: oklch(53.5% 0.1467 251.2451 / 0.3);
+    border-color: oklch(63.86% 0.1467 251.2451 / 0.3);
   }
 }
 
@@ -2301,7 +2301,7 @@ pre {
 
     &:focus {
       border-color: $accent;
-      box-shadow: 0 0 0 2px oklch(53.5% 0.1467 251.2451 / 0.25);
+      box-shadow: 0 0 0 2px oklch(63.86% 0.1467 251.2451 / 0.25);
     }
   }
 
@@ -2395,7 +2395,7 @@ pre {
   .sidebar-recent-tag {
     color: $accent;
     background: $accent-wash;
-    border: 1px solid oklch(53.5% 0.1467 251.2451 / 0.2);
+    border: 1px solid oklch(63.86% 0.1467 251.2451 / 0.2);
     padding: 1.5px 6px;
     border-radius: 4px;
     font-weight: 600;
@@ -2462,9 +2462,9 @@ pre {
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: oklch(53.5% 0.1467 251.2451);
+    color: oklch(63.86% 0.1467 251.2451);
     background: oklch(95.23% 0.0192 230.6952);
-    border: 1px solid oklch(53.5% 0.1467 251.2451 / 0.3);
+    border: 1px solid oklch(63.86% 0.1467 251.2451 / 0.3);
     padding: 1px 6px;
     border-radius: 8px;
     width: fit-content;
@@ -2575,7 +2575,7 @@ pre {
     padding: $space-1 $space-3;
     background: $page;
     color: $accent;
-    border: 1px solid oklch(53.5% 0.1467 251.2451 / 0.35);
+    border: 1px solid oklch(63.86% 0.1467 251.2451 / 0.35);
     border-radius: 8px;
     font-family: $font-sans;
     font-size: 0.8125rem;

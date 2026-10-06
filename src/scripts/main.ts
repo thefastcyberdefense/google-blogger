@@ -1635,7 +1635,7 @@ export function initHomepageCatalog(): void {
       postsContainer!.innerHTML = `
         <div class="empty-state" style="padding: 40px 20px; text-align: center;">
           <${h3Tag} class="empty-state-title" style="margin-bottom: 8px;">No articles found</${h3Tag}>
-          <p class="empty-state-desc" style="color: var(--ink-muted, #606d8e);">Try clearing your search query or selecting a different year or category.</p>
+          <p class="empty-state-desc" style="color: var(--ink-muted, #6e7b9d);">Try clearing your search query or selecting a different year or category.</p>
         </div>
       `;
     } else {
@@ -2203,7 +2203,7 @@ export function initMermaidDiagrams(targetTheme?: 'dark' | 'default'): void {
       themeVariables: isDark ? {
         darkMode: true,
         background: '#171f36',
-        primaryColor: '#166fbe',
+        primaryColor: '#3d8fe1',
         primaryTextColor: '#e2e8f0',
         lineColor: '#3d8fe1'
       } : {
@@ -2212,7 +2212,7 @@ export function initMermaidDiagrams(targetTheme?: 'dark' | 'default'): void {
         primaryColor: '#f0f8fc',
         primaryTextColor: '#1d2b4d',
         primaryBorderColor: '#d9e5ee',
-        lineColor: '#606d8e'
+        lineColor: '#6e7b9d'
       },
       securityLevel: 'strict'
     });
@@ -2830,10 +2830,10 @@ export function initCommentInteractions(): void {
     const cleanName = name.trim() || 'Anonymous';
     const initial = (cleanName[0] || 'A').toUpperCase();
     const colors = [
-      '#166fbe', // FCD action blue
+      '#3d8fe1', // FCD primary
       '#1d2b4d', // FCD foreground navy
       '#2a4a6d', // FCD dark secondary
-      '#606d8e', // FCD muted text (AA)
+      '#6e7b9d', // FCD muted foreground
       '#6b7280', // FCD dark chart-5
     ];
     let hash = 0;

@@ -71,10 +71,16 @@ html[data-theme='dark'] {
   .post-share-bar,
   .post-nav,
   .post-navigation,
-  .comments,
   .post-author-bio img.author-avatar,
   .author-bio-card img.author-avatar,
   #comments .avatar-image-container img {
     border-color: $dark-rule;
+  }
+
+  // The comments divider kept its light colour against the rule above, so
+  // Ledger declares it with more weight; match it with an important dark rule.
+  .comments,
+  #comments.comments {
+    border-color: $dark-rule !important;
   }
 }

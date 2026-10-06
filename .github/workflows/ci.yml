@@ -120,7 +120,26 @@ jobs:
         env:
           FCD_REQUIRED_RUNS: unit contract
         run: bash tools/run-isolated-tests.sh finalize
-      - run: npm audit --audit-level=moderate
+      # Audit gate with evidence: totals and each finding become annotations,
+      # so a new advisory names its package and fix in the check run.
+      - name: Run npm audit (moderate and above)
+        run: |
+          set +e
+          npm audit --audit-level=moderate --json > audit.json
+          status=$?
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          const escape = (value) => String(value).replaceAll('%', '%25').replaceAll('\r', '%0D').replaceAll('\n', '%0A');
+          let report = {};
+          try { report = JSON.parse(fs.readFileSync('audit.json', 'utf8')); } catch {}
+          console.log('::notice title=Audit totals::' + JSON.stringify(report.metadata?.vulnerabilities ?? {}));
+          for (const v of Object.values(report.vulnerabilities ?? {}).slice(0, 10)) {
+            const via = (v.via ?? []).map((x) => (typeof x === 'string' ? x : `${x.title} ${x.url} range ${x.range}`)).join('; ');
+            const fix = typeof v.fixAvailable === 'object' ? `${v.fixAvailable.name}@${v.fixAvailable.version}${v.fixAvailable.isSemVerMajor ? ' (major)' : ''}` : String(v.fixAvailable);
+            console.log('::error title=Audit ' + v.severity + '::' + escape(`${v.name} ${v.range} direct=${v.isDirect} via ${via} | nodes ${(v.nodes ?? []).slice(0, 3).join(', ')} | fix ${fix}`).slice(0, 4000));
+          }
+          JS
+          exit "$status"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: ${{ always() }}
         with:

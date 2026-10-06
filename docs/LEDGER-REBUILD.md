@@ -19,7 +19,8 @@ ledger-port.yml workflow (bot commits do not trigger CI).
 | Second test-blog upload | done 2026-10-06 | build 0afa13c, owner screenshots light and dark, home and post show the US-L7 fixes |
 | US-L8 company logo, AA comment actions | green in run 37413332586 at 528f22d (red first in run 37411818592 at a899434) | tests/fcd/logo.test.ts with tests/fcd/icon0.svg; unit 33/33, contract 39/39 |
 | Third test-blog upload | done 2026-10-06 | build 528f22d; the owner then asked for the fastcyberdefense.com tweakcn palette |
-| US-L9 tweakcn palette | red first in run 37419852682 at 6eece6f (12 cases failing as predicted); fix 1183c0b and 1d5f9e0 plus port bot 7aa068c; awaiting CI on this commit | tests/fcd/palette.test.ts (every colour per source file), tests/fcd/contrast.test.ts (AA text and hover, both themes) |
+| US-L9 tweakcn palette | red first in run 37419852682 at 6eece6f; fix 1183c0b, 1d5f9e0, port bot 7aa068c; 51/53 in run 37424526223 at 9f45a73 (4 Ledger greys left) | tests/fcd/palette.test.ts (every colour per source file), tests/fcd/contrast.test.ts (text and hover, both themes) |
+| US-L9b exact site colours (owner, 2026-10-06) | red first in run 37484501694 at 1efd37c; fix c25cce2 plus port bot 8a95cbd; awaiting CI on this commit | tests/fcd/site-exact.ts records the decision; brand, palette, contrast, logo and polish tests follow it |
 | US-L6 cleanup and records | pending | remove port/, ledger-port.yml, staging-check.yml, excerpt step; CHANGELOG, AGENTS.md, PR body |
 
 ## US-L5 changes (main.ts, via port edits)
@@ -31,8 +32,9 @@ ledger-port.yml workflow (bot commits do not trigger CI).
 - Catalog: at most 10 pages of 50 posts, started once per page.
 - Mermaid: securityLevel 'strict'.
 
-Action blue for small text is #166fbe (AA on white, card and wash); the
-example #2378c8 fails AA on the card (4.25) and wash (4.00).
+The rebuild first set small blue text in #166fbe (AA on white, card and
+wash). Superseded on 2026-10-06 by the owner's choice of the exact site
+colours (US-L9b).
 
 ## US-L7 changes (test-blog upload, 2026-10-05)
 
@@ -46,7 +48,7 @@ and src/styles/tokens.scss:
   the theme's own widget on the live blog; Layout still lists relocated
   gadgets so the owner can delete them.
 - The FCD mark keeps its square size in flex rows.
-- Light call-to-action secondary is an outline (#166fbe label, 4.82:1).
+- Light call-to-action secondary is an outline with a primary label.
 - Dark mode: sidebar and author RSS buttons sit on the dark surface; rules
   that kept the light border colour use the dark rule #2d3748.
 - Text uses Inter throughout: $font-serif carries the Inter stack, as
@@ -72,8 +74,8 @@ byte for byte (thefastcyberdefense/fastcyberdefense src/app/icon0.svg, blob
 - An author without a photo shows the logo (data URI in fcd.scss) instead
   of initials; the script fallback avatar (blog-author comments) is the logo
   through the port manifest.
-- Dark comment actions and the author badge use the AA action blue #166fbe:
-  white labels were 3.4:1 on #3d8fe1 and the hover was 4.4:1.
+- Comment actions and the author badge are filled with $accent; since
+  US-L9b that is the primary #3d8fe1 with white labels, as on the main site.
 
 ## US-L9 changes (tweakcn palette, 2026-10-06)
 
@@ -86,21 +88,32 @@ colours in its component styles and script.
   #3d8fe1. The elevation tokens read the tweakcn shadows (primary tint, 0.10
   light, 0.20 dark) from custom properties that fcd.scss sets per theme.
 - port/ledger.json maps the rest: dark surfaces, borders and greys to
-  background, card, border and chart-5; Ledger's greens (status pill,
-  badges, copy states) and the pagination blue to the primary and the action
-  blue; reds to destructive; black shadows to the primary tint; Mermaid's dark
-  line to the primary; commenter initials avatars to five tweakcn colours
-  (white on each at 4.83:1 or more).
+  background, card, border, accent and chart-5; Ledger's greens (status pill,
+  badges, copy states) and the pagination blue to the primary; reds to
+  destructive; black shadows to the primary tint; Mermaid's lines to the
+  primary and the muted foreground; commenter initials avatars to five
+  tweakcn colours.
 - fcd.scss: the hero status pill is the tweakcn secondary badge; hovers use
   the accent surface with the foreground (dark 7.41:1, light labels 10.6:1);
   the meta separator, dark links, the dark call-to-action tag and the dark
-  footer copy meet AA.
+  footer copy use the tweakcn muted and primary tokens.
 - Kept on purpose: Prism syntax colours and the alert callouts (content
-  semantics with no palette equivalent), and the AA text values approved
-  with the rebuild: #166fbe and its hover for small blue text on light
-  surfaces, #606d8e for muted text. The site's own #3d8fe1 and #6e7b9d are
-  3.38:1 and 4.21:1 on white.
+  semantics with no palette equivalent).
 - Not applied, as they are not colour: radius 0.5rem and Playfair Display.
+
+## US-L9b: exact site colours (owner decision, 2026-10-06)
+
+Asked whether to keep the AA text values of the rebuild or use the site's
+exact colours, the owner chose exact. $accent is the primary #3d8fe1 and
+$ink-muted the muted foreground #6e7b9d; #166fbe and #606d8e are gone from
+the theme. The only colour outside the tweakcn export is the hover of the
+primary, oklch(50% 0.1467 251.2451), as tweakcn has no hover token.
+
+Accepted below WCAG AA, exactly as on fastcyberdefense.com: small text in
+#3d8fe1 (3.38:1 on white, 3.14:1 on the card, 2.95:1 on the accent wash),
+muted text in #6e7b9d (4.21:1 on white, 3.92:1 on the card), and white
+labels on #3d8fe1 (3.38:1). tests/fcd/site-exact.ts accepts only those
+pairs, down to 2.9:1; every other text, the dark theme included, keeps AA.
 
 ## Dependency audit (2026-10-06)
 

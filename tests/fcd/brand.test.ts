@@ -2,7 +2,8 @@
 // Ledger v1.7.0 ships its author's personal identity, his analytics IDs and his
 // blue/slate palette. FCD keeps Ledger's engine and layout but must read as Fast
 // Cyber Defense: no personal links, portraits or trackers, the FCD mark in the
-// masthead, and the colours of fastcyberdefense.com (src/app/globals.css).
+// masthead, and the colours of fastcyberdefense.com: the owner's tweakcn theme
+// (tweakcn.com/themes/cmj93i381000k04jt333e4ko2, US-L9).
 // Text-bearing blue on light surfaces uses the AA-safe deeper action blue;
 // #3d8fe1 stays exact for surfaces, large text and the dark theme. These checks
 // read the CI-built XML; failures also name the source lines that carry a hit.
@@ -107,7 +108,7 @@ const LEDGER: Record<string, Rgb> = {
 
 const isLedger = (rgb: Rgb): boolean => Object.values(LEDGER).some((l) => near(rgb, l));
 
-// fastcyberdefense.com tokens, plus the AA-safe text values derived from them.
+// tweakcn tokens, plus the AA-safe text values derived from them.
 const FCD: Record<string, string> = {
   'primary': '#3d8fe1',
   'foreground': '#1d2b4d',
@@ -121,7 +122,9 @@ const FCD: Record<string, string> = {
   'dark foreground': '#e2e8f0',
   'dark muted': '#9ca3af',
   'dark border': '#2d3748',
-  'dark highlight': '#5d9ce0'
+  'secondary': '#a1d7f0',
+  'dark secondary and accent': '#2a4a6d',
+  'destructive': '#ef4444'
 };
 
 const IDENTITY = [/redwan/gi, /orcid/gi, /0009-0001-9419-4760/g, /cal\.com/gi, /blog-assets/gi, /AVvXsEid2pK6sS9Z/g, /5972841034338492159/g, /Cyber Security Professional/gi, /Founder &(?:amp;)? CEO/gi, /G-KCCCSPMFVS/g, /ydgpwp2tn0/g, /googletagmanager/gi, /clarity\.ms/gi];

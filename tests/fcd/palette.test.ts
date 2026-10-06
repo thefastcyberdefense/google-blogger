@@ -6,6 +6,9 @@
 // surfaces (action blue #166fbe and its hover, muted text #606d8e). Shadows are
 // the tweakcn shadows, tinted with the primary #3d8fe1. Each source file has its
 // own case, so a failure lists that file's off-palette literals and lines.
+// Content semantics keep their own hues: Prism syntax tokens (.token) and the
+// GitHub-style alert callouts carry meaning (keyword, string; tip, warning,
+// caution) the palette has no colours for.
 import { readdirSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -71,13 +74,15 @@ const NAMED: Record<string, Rgb> = {
 
 // Every colour literal in a CSS value or a line of script. URL-encoded data URIs
 // (%23 for #) are decoded first, so SVG icons inside the skin are read too.
+// Character references are not colours: &#039; or #039 between | in a regex
+// alternation of entity names (the script's HTML decoder) are skipped.
 function colours(text: string, named = false): Colour[] {
   const t = text.replace(/%23/gi, '#');
   const out: Colour[] = [];
   for (const m of t.matchAll(/oklch\(\s*([\d.]+)(%?)\s+([\d.]+)\s+([\d.]+)(?:deg)?\s*(?:\/\s*([\d.]+)(%?)\s*)?\)/gi)) {
     out.push({ literal: m[0], rgb: fromOklch(Number(m[1]) / (m[2] ? 100 : 1), Number(m[3]), Number(m[4])), alpha: alphaOf(m[5], m[6]) });
   }
-  for (const m of t.matchAll(/(?<![&\w])#([0-9a-f]{8}|[0-9a-f]{6}|[0-9a-f]{4}|[0-9a-f]{3})(?![0-9a-z_-])/gi)) {
+  for (const m of t.matchAll(/(?<![&\w|])#([0-9a-f]{8}|[0-9a-f]{6}|[0-9a-f]{4}|[0-9a-f]{3})(?![0-9a-z_|-])/gi)) {
     out.push({ literal: m[0], ...fromHex(m[0]) });
   }
   for (const m of t.matchAll(/rgba?\(\s*(\d{1,3})[\s,]+(\d{1,3})[\s,]+(\d{1,3})\s*(?:[,/]\s*([\d.]+)(%?)\s*)?\)/gi)) {
@@ -233,7 +238,8 @@ const COLOUR_PROP = /^(color|background(-color)?|border(-(top|right|bottom|left|
 
 interface Hit extends Colour { prop: string; dark: boolean; where: string }
 
-const SKIN_HITS: Hit[] = DECLS.flatMap((d) =>
+const CONTENT = /\.token\b|alert-callout/;
+const SKIN_HITS: Hit[] = DECLS.filter((d) => !CONTENT.test(d.selector)).flatMap((d) =>
   colours(d.value, COLOUR_PROP.test(d.prop))
     .filter((c) => !allowed(c, d.prop, d.value))
     .map((c) => ({ ...c, prop: d.prop, dark: isDark(d), where: d.selector }))
@@ -279,7 +285,11 @@ function origin(hit: Hit, ext: string): Origin {
     }
     const first = found[0];
     if (first) {
-      const at = found.slice(0, 3).map((f) => `${f.file.split('/').pop()}:${f.lines.slice(0, 4).join(',')}${f.lines.length > 4 ? '+' : ''}`).join(' ');
+      // Other files may write the colour another way; name their literal too.
+      const at = found
+        .slice(0, 3)
+        .map((f) => `${f.file.split('/').pop()}:${f.lines.slice(0, 4).join(',')}${f.lines.length > 4 ? '+' : ''}${f.literal === first.literal ? '' : '=' + f.literal}`)
+        .join(' ');
       return { file: first.file, literal: first.literal, at };
     }
   }
@@ -309,8 +319,8 @@ function entries(hits: Hit[], ext: string): Entry[] {
 }
 
 function report(list: Entry[]): string {
-  const shown = list.slice(0, 24).map((e) => e.text);
-  return `${list.length} off-palette colours: ${shown.join(' | ')}${list.length > 24 ? ` | +${list.length - 24} more` : ''}`;
+  const shown = list.slice(0, 20).map((e) => e.text);
+  return `${list.length} off-palette colours: ${shown.join(' | ')}${list.length > 20 ? ` | +${list.length - 20} more` : ''}`;
 }
 
 const STYLE_ENTRIES = entries(SKIN_HITS, '.scss');

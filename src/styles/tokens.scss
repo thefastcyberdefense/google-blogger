@@ -4,20 +4,20 @@
 
 // Source: the owner's tweakcn theme, tweakcn.com/themes/cmj93i381000k04jt333e4ko2,
 // the palette of fastcyberdefense.com (US-L9). Every colour the theme draws is
-// one of these tokens. Two text values fall below WCAG AA on the light
-// surfaces and are deepened along the same hue and chroma: $accent (action
-// blue for small text and filled buttons) and $ink-muted. #3d8fe1 stays exact
-// for surfaces, borders, large text, shadows and the dark theme.
+// one of these tokens, exact. The owner chose the site's exact colours over
+// the deeper AA text values of the rebuild on 2026-10-06: small text in
+// $accent (3.38:1 on white) and $ink-muted (4.21:1) sits below WCAG AA, as on
+// fastcyberdefense.com (tests/fcd/site-exact.ts).
 $page: oklch(100% 0 0);                          // #ffffff  background
 $surface: oklch(97.43% 0.0101 228.8865);         // #f0f8fc  card, muted
 $ink: oklch(29.54% 0.0649 265.7059);             // #1d2b4d  foreground (12.98:1 on card)
-$ink-muted: oklch(53.75% 0.0546 268.3959);       // #606d8e  AA muted (5.15 white, 4.79 card, 4.50 wash)
+$ink-muted: oklch(58.51% 0.0546 268.3959);       // #6e7b9d  muted foreground (4.21 white, 3.92 card)
 $rule: oklch(91.55% 0.0178 240.0081);            // #d9e5ee  border
-$accent: oklch(53.5% 0.1467 251.2451);           // #166fbe  AA action blue (5.18 white, 4.82 card, 4.53 wash)
+$accent: oklch(63.86% 0.1467 251.2451);          // #3d8fe1  primary (3.38 white and white on it, 3.14 card)
 $accent-wash: oklch(95.23% 0.0192 230.6952);     // #e3f2fa  accent, input
 $fcd-primary: oklch(63.86% 0.1467 251.2451);     // #3d8fe1  primary, ring, shadow colour
 $fcd-secondary: oklch(85.03% 0.0656 228.1545);   // #a1d7f0  secondary (foreground on it 8.97:1)
-$fcd-muted-site: oklch(58.51% 0.0546 268.3959);  // #6e7b9d  tweakcn muted foreground (disabled text only)
+$fcd-muted-site: $ink-muted;                     // #6e7b9d  tweakcn muted foreground
 $fcd-destructive: oklch(63.68% 0.2078 25.3313);  // #ef4444  destructive
 $fcd-chart-5: oklch(83.19% 0.0256 246.2533);     // #bbcad8  chart-5 (hover borders, scrollbars)
 

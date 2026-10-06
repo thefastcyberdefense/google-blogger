@@ -32,10 +32,10 @@ body:not(#layout) {
 
 // 3. Light call-to-action secondary. Ledger paints every link in the box as the
 // filled primary; FCD's second action is an outline, as it already is in dark
-// mode. #166fbe on the card is 4.82:1.
+// mode, in the primary as on the main site (3.14:1 on the card).
 html:not([data-theme='dark']) .cta-container .cta-box .cta-btn.cta-btn-secondary {
   background: transparent;
-  border: 1px solid oklch(53.5% 0.1467 251.2451 / 0.45);
+  border: 1px solid oklch(63.86% 0.1467 251.2451 / 0.45);
   color: $accent !important;
 
   &:hover,
@@ -120,9 +120,9 @@ $fcd-logo-uri: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' vie
   }
 }
 
-// 6. White labels on blue take the AA action blue. Ledger filled the dark
-// comment actions with the lighter brand blue (3.4:1 with white) and hovered
-// to a violet blue (4.4:1).
+// 6. Comment actions are white on the primary in both themes, as on the main
+// site (the owner's choice, 2026-10-06; 3.38:1). Ledger hovered to a violet
+// blue; the hover darkens the primary instead.
 html[data-theme='dark'] #comments {
   #add-comment,
   .add-comment-link,

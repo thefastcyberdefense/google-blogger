@@ -10,10 +10,8 @@ b:section(class='header' id='header' name='Header' showaddelement='false')
       b:widget-setting(name='displayWidth') 0
     b:includable(id='main' var='this')
       a.header-brand(expr:href='data:blog.homepageUrl')
-        //- FCD mark: inline shield, no external image.
-        svg.header-avatar.fcd-mark(aria-hidden='true' focusable='false' height='40' viewBox='0 0 40 40' width='40')
-          path(d='M20 3 34 8v11c0 9-6 15.5-14 18C12 34.5 6 28 6 19V8z' fill='#3d8fe1')/
-          path(d='m14 20 4 4 8-9' fill='none' stroke='#ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3')/
+        //- FCD logo (partials/fcd-logo.pug, included by theme.pug): inline, no request.
+        +fcdLogo('header-avatar fcd-mark', 40, 'fcd-logo-header')
         div.header-brand-text
           b:include(cond='data:imagePlacement in {"REPLACE", "BEFORE_DESCRIPTION"}' name='image')/
           b:include(cond='data:imagePlacement not in {"REPLACE", "BEFORE_DESCRIPTION"}' name='title')/

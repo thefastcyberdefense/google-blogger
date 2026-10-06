@@ -21,7 +21,5 @@ b:section(class='intro' id='intro' name='Intro' showaddelement='false')
               a.hero-btn.hero-btn-secondary(expr:href='data:blog.canonicalHomepageUrl path "search"')
                 span Browse all articles
           div.hero-photo-col
-            //- FCD mark in place of a portrait; decorative, the title carries the meaning.
-            svg.hero-portrait-img.fcd-mark(aria-hidden='true' focusable='false' height='260' viewBox='0 0 40 40' width='260')
-              path(d='M20 3 34 8v11c0 9-6 15.5-14 18C12 34.5 6 28 6 19V8z' fill='#3d8fe1')/
-              path(d='m14 20 4 4 8-9' fill='none' stroke='#ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3')/
+            //- FCD logo in place of a portrait; decorative, the title carries the meaning.
+            +fcdLogo('hero-portrait-img fcd-mark', 260, 'fcd-logo-hero')

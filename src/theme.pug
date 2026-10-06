@@ -59,6 +59,8 @@ html&attributes(rootAttributes)
       include defaultmarkups/attribution.pug
     include partials/head-meta.pug
   body
+    //- +fcdLogo for the masthead, hero, sidebar and drawer marks.
+    include partials/fcd-logo.pug
     b:class(cond='data:view.isHomepage and not data:newerPageUrl' name='is-home-lead')/
     b:class(cond='data:view.isPost' name='is-post')/
     b:class(cond='data:view.isPage' name='is-page')/
@@ -93,9 +95,7 @@ html&attributes(rootAttributes)
                 div.sidebar-search-results.search-results-dropdown(aria-live='polite' style='display:none;')
           div.sidebar-card.sidebar-profile-card
             div.sidebar-profile-header
-              svg.sidebar-avatar.fcd-mark(aria-hidden='true' focusable='false' height='48' viewBox='0 0 40 40' width='48')
-                path(d='M20 3 34 8v11c0 9-6 15.5-14 18C12 34.5 6 28 6 19V8z' fill='#3d8fe1')/
-                path(d='m14 20 4 4 8-9' fill='none' stroke='#ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3')/
+              +fcdLogo('sidebar-avatar fcd-mark', 48, 'fcd-logo-sidebar')
               div.sidebar-profile-info
                 h3.sidebar-name
                   b:eval(expr='data:blog.title')/
@@ -138,9 +138,7 @@ html&attributes(rootAttributes)
     nav#mobile-drawer.mobile-drawer(aria-hidden='true' aria-label='Mobile Navigation' inert='true')
       div.drawer-header
         div.drawer-brand
-          svg.drawer-avatar.fcd-mark(aria-hidden='true' focusable='false' height='38' viewBox='0 0 40 40' width='38')
-            path(d='M20 3 34 8v11c0 9-6 15.5-14 18C12 34.5 6 28 6 19V8z' fill='#3d8fe1')/
-            path(d='m14 20 4 4 8-9' fill='none' stroke='#ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3')/
+          +fcdLogo('drawer-avatar fcd-mark', 38, 'fcd-logo-drawer')
           div.drawer-brand-text
             div.drawer-title
               b:eval(expr='data:blog.title')/

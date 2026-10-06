@@ -15,7 +15,9 @@ ledger-port.yml workflow (bot commits do not trigger CI).
 | US-L5 hardening | green in run 37340398543 | tests/fcd/hardening.test.ts 7/7 (red first in run 37333013292) |
 | Ledger V3 contract | green in run 37340398543 | PASS: 39 V3 contract rules verified |
 | First test-blog upload | done 2026-10-05 | build 1118f66, owner screenshots light and dark, home and post |
-| US-L7 test-blog polish | red first in run 37349111173 (7 of 9 new cases failing as predicted); run 37403970847 after c624d0b: unit 26/26 and contract 39/39; npm audit then blocked on new advisories, lockfile patched in 13c7de2, awaiting CI | tests/fcd/polish.test.ts over tests/fcd/blogger-static.ts |
+| US-L7 test-blog polish | green in run 37405702093 at 0afa13c (red first in run 37349111173) | tests/fcd/polish.test.ts over tests/fcd/blogger-static.ts; unit 26/26, contract 39/39, audit below the moderate gate |
+| Second test-blog upload | done 2026-10-06 | build 0afa13c, owner screenshots light and dark, home and post show the US-L7 fixes |
+| US-L8 company logo, AA comment actions | red first in run 37411818592 at a899434 (6 new cases failing as predicted); fix afe37d4 plus port bot 9933df2; awaiting CI on this commit | tests/fcd/logo.test.ts with tests/fcd/icon0.svg |
 | US-L6 cleanup and records | pending | remove port/, ledger-port.yml, staging-check.yml, excerpt step; CHANGELOG, AGENTS.md, PR body |
 
 ## US-L5 changes (main.ts, via port edits)
@@ -51,6 +53,25 @@ and src/styles/tokens.scss:
 Owner action after each upload: in Layout, delete gadgets that are not part
 of the theme (here Blog Search, Blog Archive, Report Abuse, Profile). The
 Profile gadget lists personal author profiles and must not stay.
+
+## US-L8 changes (second upload, 2026-10-06)
+
+The owner asked for the company logo, https://fastcyberdefense.com/icon0.svg,
+in place of the shield drawn for the rebuild. tests/fcd/icon0.svg is that file
+byte for byte (thefastcyberdefense/fastcyberdefense src/app/icon0.svg, blob
+7c54b9e).
+
+- src/partials/fcd-logo.pug (FCD-owned) inlines the logo as the fcdLogo
+  mixin with one gradient id per use: masthead, hero, sidebar profile and
+  drawer. The blog makes no logo request.
+- The marks drop Ledger's portrait ring and white fill, so the cut-out
+  letters show the surface below, as on the main site; the hero keeps its
+  ring with the logo set 16px inside.
+- An author without a photo shows the logo (data URI in fcd.scss) instead
+  of initials; the script fallback avatar (blog-author comments) is the logo
+  through the port manifest.
+- Dark comment actions and the author badge use the AA action blue #166fbe:
+  white labels were 3.4:1 on #3d8fe1 and the hover was 4.4:1.
 
 ## Dependency audit (2026-10-06)
 

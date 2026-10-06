@@ -17,7 +17,9 @@ ledger-port.yml workflow (bot commits do not trigger CI).
 | First test-blog upload | done 2026-10-05 | build 1118f66, owner screenshots light and dark, home and post |
 | US-L7 test-blog polish | green in run 37405702093 at 0afa13c (red first in run 37349111173) | tests/fcd/polish.test.ts over tests/fcd/blogger-static.ts; unit 26/26, contract 39/39, audit below the moderate gate |
 | Second test-blog upload | done 2026-10-06 | build 0afa13c, owner screenshots light and dark, home and post show the US-L7 fixes |
-| US-L8 company logo, AA comment actions | red first in run 37411818592 at a899434 (6 new cases failing as predicted); fix afe37d4 plus port bot 9933df2; awaiting CI on this commit | tests/fcd/logo.test.ts with tests/fcd/icon0.svg |
+| US-L8 company logo, AA comment actions | green in run 37413332586 at 528f22d (red first in run 37411818592 at a899434) | tests/fcd/logo.test.ts with tests/fcd/icon0.svg; unit 33/33, contract 39/39 |
+| Third test-blog upload | done 2026-10-06 | build 528f22d; the owner then asked for the fastcyberdefense.com tweakcn palette |
+| US-L9 tweakcn palette | red first in run 37419852682 at 6eece6f (12 cases failing as predicted); fix 1183c0b and 1d5f9e0 plus port bot 7aa068c; awaiting CI on this commit | tests/fcd/palette.test.ts (every colour per source file), tests/fcd/contrast.test.ts (AA text and hover, both themes) |
 | US-L6 cleanup and records | pending | remove port/, ledger-port.yml, staging-check.yml, excerpt step; CHANGELOG, AGENTS.md, PR body |
 
 ## US-L5 changes (main.ts, via port edits)
@@ -72,6 +74,33 @@ byte for byte (thefastcyberdefense/fastcyberdefense src/app/icon0.svg, blob
   through the port manifest.
 - Dark comment actions and the author badge use the AA action blue #166fbe:
   white labels were 3.4:1 on #3d8fe1 and the hover was 4.4:1.
+
+## US-L9 changes (tweakcn palette, 2026-10-06)
+
+The owner's tweakcn theme (tweakcn.com/themes/cmj93i381000k04jt333e4ko2) is
+the palette of fastcyberdefense.com and is now the whole palette of the blog.
+Most core tokens were already in tokens.scss; what remained were Ledger's own
+colours in its component styles and script.
+
+- tokens.scss names every tweakcn token. The dark highlight is the primary
+  #3d8fe1. The elevation tokens read the tweakcn shadows (primary tint, 0.10
+  light, 0.20 dark) from custom properties that fcd.scss sets per theme.
+- port/ledger.json maps the rest: dark surfaces, borders and greys to
+  background, card, border and chart-5; Ledger's greens (status pill,
+  badges, copy states) and the pagination blue to the primary and the action
+  blue; reds to destructive; black shadows to the primary tint; Mermaid's dark
+  line to the primary; commenter initials avatars to five tweakcn colours
+  (white on each at 4.83:1 or more).
+- fcd.scss: the hero status pill is the tweakcn secondary badge; hovers use
+  the accent surface with the foreground (dark 7.41:1, light labels 10.6:1);
+  the meta separator, dark links, the dark call-to-action tag and the dark
+  footer copy meet AA.
+- Kept on purpose: Prism syntax colours and the alert callouts (content
+  semantics with no palette equivalent), and the AA text values approved
+  with the rebuild: #166fbe and its hover for small blue text on light
+  surfaces, #606d8e for muted text. The site's own #3d8fe1 and #6e7b9d are
+  3.38:1 and 4.21:1 on white.
+- Not applied, as they are not colour: radius 0.5rem and Playfair Display.
 
 ## Dependency audit (2026-10-06)
 

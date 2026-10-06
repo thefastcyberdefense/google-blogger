@@ -257,3 +257,15 @@ html[data-theme='dark'] {
     color: $dark-muted;
   }
 }
+
+// 11. Light label hover follows tweakcn the same way: Ledger deepens the label
+// to a 15% action-blue tint and keeps the blue text (3.96:1 on the tint); the
+// text takes the foreground (10.6:1).
+html:not([data-theme='dark']) {
+  .post-label:hover,
+  .label-link:hover,
+  .post-labels .label-link:hover,
+  .post-labels .post-label:hover {
+    color: $ink;
+  }
+}

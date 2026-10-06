@@ -57,9 +57,9 @@ html[data-theme='dark'] {
 
     &:hover,
     &:focus-visible {
-      background-color: $dark-rule;
-      border-color: oklch(68% 0.12 251.2451 / 0.5);
-      color: $dark-highlight;
+      background-color: $fcd-dark-secondary;
+      border-color: oklch(63.86% 0.1467 251.2451 / 0.5);
+      color: $dark-ink;
     }
   }
 
@@ -137,5 +137,123 @@ html[data-theme='dark'] #comments {
 
   .comment-author-badge {
     background: $accent;
+  }
+}
+
+// 7. The owner's tweakcn theme (US-L9): its shadows, tinted with the primary,
+// for every Ledger elevation token (tokens.scss reads these properties).
+:root {
+  --fcd-shadow-sm: 0px 4px 10px 0px hsl(210 73.2143% 56.0784% / 0.1), 0px 1px 2px -1px hsl(210 73.2143% 56.0784% / 0.1);
+  --fcd-shadow-md: 0px 4px 10px 0px hsl(210 73.2143% 56.0784% / 0.1), 0px 2px 4px -1px hsl(210 73.2143% 56.0784% / 0.1);
+  --fcd-shadow-lg: 0px 4px 10px 0px hsl(210 73.2143% 56.0784% / 0.1), 0px 4px 6px -1px hsl(210 73.2143% 56.0784% / 0.1);
+  --fcd-shadow-xl: 0px 4px 10px 0px hsl(210 73.2143% 56.0784% / 0.1), 0px 8px 10px -1px hsl(210 73.2143% 56.0784% / 0.1);
+}
+
+html[data-theme='dark'] {
+  --fcd-shadow-sm: 0px 6px 12px 0px hsl(210 73.2143% 56.0784% / 0.2), 0px 1px 2px -1px hsl(210 73.2143% 56.0784% / 0.2);
+  --fcd-shadow-md: 0px 6px 12px 0px hsl(210 73.2143% 56.0784% / 0.2), 0px 2px 4px -1px hsl(210 73.2143% 56.0784% / 0.2);
+  --fcd-shadow-lg: 0px 6px 12px 0px hsl(210 73.2143% 56.0784% / 0.2), 0px 4px 6px -1px hsl(210 73.2143% 56.0784% / 0.2);
+  --fcd-shadow-xl: 0px 6px 12px 0px hsl(210 73.2143% 56.0784% / 0.2), 0px 8px 10px -1px hsl(210 73.2143% 56.0784% / 0.2);
+}
+
+// 8. The hero status pill is the tweakcn secondary badge (it was Ledger's
+// green "online" pill): secondary fill, foreground text, primary beacon.
+.hero-banner .status-pill {
+  background: $fcd-secondary !important;
+  border-color: transparent !important;
+  color: $ink !important;
+
+  .status-label {
+    color: $ink !important;
+  }
+}
+
+html[data-theme='dark'] .hero-banner .status-pill {
+  background: $fcd-dark-secondary !important;
+  color: $dark-ink !important;
+
+  .status-label {
+    color: $dark-ink !important;
+  }
+}
+
+.hero-banner .status-pill .status-beacon {
+  background-color: $fcd-primary !important;
+}
+
+// 9. Dark hover follows tweakcn: the accent surface with the accent
+// foreground. Ledger lit the label in the highlight blue on the border grey
+// (3.6:1 once the highlight is the primary); on the accent it is 7.41:1.
+html[data-theme='dark'] {
+  .newer-link:hover,
+  .older-link:hover,
+  .blog-pager-newer-link:hover,
+  .blog-pager-older-link:hover,
+  .drawer-nav-link:hover,
+  .drawer-social-btn:hover,
+  .drawer-close:hover,
+  .share-btn:hover,
+  .sidebar-btn-secondary:hover,
+  .sidebar-cta-btn:hover,
+  .site-nav .nav-link:hover,
+  .hero-btn-secondary:hover,
+  .hero-btn-tertiary:hover,
+  .cta-btn-secondary:hover,
+  .cta-container .cta-box .cta-btn-secondary:hover,
+  .drawer-toggle:hover,
+  .search-toggle:hover,
+  .theme-toggle:hover,
+  .header-profile-badge:hover,
+  .topic-pill:hover,
+  .topic-pill.is-active,
+  .post-label:hover,
+  .label-link:hover,
+  .author-link-pill:hover,
+  .mermaid-diagram-wrap .mermaid-fallback-card .fallback-copy-btn:hover,
+  .mermaid-diagram-wrap .mermaid-modern-toolbar .mm-btn:hover:not(:disabled),
+  .table-of-contents .toc-toggle:hover,
+  #comments .comment-actions a:hover,
+  #comments .comment-reply a:hover,
+  #comments .continue a:hover,
+  #comments .loadmore a:hover,
+  #comments .thread-toggle:hover {
+    background-color: $fcd-dark-secondary !important;
+    color: $dark-ink !important;
+  }
+
+  // Labels on a primary tint keep the foreground (the primary on its own
+  // tint is about 4:1).
+  .table-of-contents .toc-badge,
+  .table-of-contents .toc-link:hover .toc-num,
+  .table-of-contents .toc-link.is-active .toc-num {
+    color: $dark-ink !important;
+  }
+}
+
+// 10. Text the AA audit (tests/fcd/contrast.test.ts) measured below 4.5:1.
+// The meta separator was faded with opacity; dark links without a dark rule
+// of their own kept the light action blue (3.2:1), as did the call-to-action
+// tag; the footer copy kept the light muted grey.
+.post-meta-sep {
+  opacity: 1 !important;
+  color: $ink-muted !important;
+}
+
+html[data-theme='dark'] {
+  .post-meta-sep {
+    color: $dark-muted !important;
+  }
+
+  :where(a:not(.skip-link)) {
+    color: $dark-accent;
+  }
+
+  .cta-container .cta-box .cta-tag {
+    color: $dark-accent;
+  }
+
+  .footer-container .footer-desc,
+  .footer-container .footer-copyright {
+    color: $dark-muted;
   }
 }

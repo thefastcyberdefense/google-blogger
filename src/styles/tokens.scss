@@ -2,25 +2,35 @@
 // Design Tokens: Fast Cyber Defense palette on the Ledger v1.7.0 token set
 // ---------------------------------------------------------------------------
 
-// Source: fastcyberdefense.com src/app/globals.css. Values the main site uses
-// for text but that fall below WCAG AA are deepened along the same hue and
-// chroma: $accent (action blue) and $ink-muted. #3d8fe1 stays exact for the
-// dark theme, surfaces and large text.
+// Source: the owner's tweakcn theme, tweakcn.com/themes/cmj93i381000k04jt333e4ko2,
+// the palette of fastcyberdefense.com (US-L9). Every colour the theme draws is
+// one of these tokens. Two text values fall below WCAG AA on the light
+// surfaces and are deepened along the same hue and chroma: $accent (action
+// blue for small text and filled buttons) and $ink-muted. #3d8fe1 stays exact
+// for surfaces, borders, large text, shadows and the dark theme.
 $page: oklch(100% 0 0);                          // #ffffff  background
-$surface: oklch(97.43% 0.0101 228.8865);         // #f0f8fc  card
+$surface: oklch(97.43% 0.0101 228.8865);         // #f0f8fc  card, muted
 $ink: oklch(29.54% 0.0649 265.7059);             // #1d2b4d  foreground (12.98:1 on card)
 $ink-muted: oklch(53.75% 0.0546 268.3959);       // #606d8e  AA muted (5.15 white, 4.79 card, 4.50 wash)
 $rule: oklch(91.55% 0.0178 240.0081);            // #d9e5ee  border
 $accent: oklch(53.5% 0.1467 251.2451);           // #166fbe  AA action blue (5.18 white, 4.82 card, 4.53 wash)
-$accent-wash: oklch(95.23% 0.0192 230.6952);     // #e3f2fa  accent
+$accent-wash: oklch(95.23% 0.0192 230.6952);     // #e3f2fa  accent, input
+$fcd-primary: oklch(63.86% 0.1467 251.2451);     // #3d8fe1  primary, ring, shadow colour
+$fcd-secondary: oklch(85.03% 0.0656 228.1545);   // #a1d7f0  secondary (foreground on it 8.97:1)
+$fcd-muted-site: oklch(58.51% 0.0546 268.3959);  // #6e7b9d  tweakcn muted foreground (disabled text only)
+$fcd-destructive: oklch(63.68% 0.2078 25.3313);  // #ef4444  destructive
+$fcd-chart-5: oklch(83.19% 0.0256 246.2533);     // #bbcad8  chart-5 (hover borders, scrollbars)
 
 $dark-page: oklch(19.71% 0.0414 269.7076);       // #0e1428  dark background
 $dark-surface: oklch(24.41% 0.0456 268.3692);    // #171f36  dark card
 $dark-ink: oklch(92.88% 0.0126 255.5078);        // #e2e8f0  dark foreground (13.25:1 on dark card)
 $dark-muted: oklch(71.37% 0.0192 261.3246);      // #9ca3af  dark muted (6.43:1 on dark card)
 $dark-rule: oklch(33.51% 0.0331 260.912);        // #2d3748  dark border
-$dark-accent: oklch(63.86% 0.1467 251.2451);     // #3d8fe1  primary (5.41 dark bg, 4.83 dark card)
-$dark-highlight: oklch(68% 0.12 251.2451);       // #5d9ce0  dark highlight (6.35 dark bg, 5.68 dark card)
+$dark-accent: $fcd-primary;                      // #3d8fe1  primary (5.41 dark bg, 4.83 dark card)
+$dark-highlight: $fcd-primary;                   // Ledger's dark highlight is the primary
+$fcd-dark-secondary: oklch(40.15% 0.0706 251.9121); // #2a4a6d  dark secondary and accent: hover surface (foreground 7.41:1)
+$fcd-dark-sidebar: oklch(29.54% 0.0649 265.7059);   // #1d2b4d  dark sidebar
+$fcd-dark-chart-5: oklch(55.1% 0.0234 264.3637);    // #6b7280  dark chart-5
 
 
 
@@ -79,16 +89,16 @@ $ease-in-out-cubic: cubic-bezier(0.65, 0, 0.35, 1);
 $ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 $motion-ease: $ease-out-quart;
 
-// Elevation Shadows: flat cards with borders, as in Ledger; the one raised
-// shadow is tinted with the FCD navy instead of neutral black.
-$shadow-sm: none;
-$shadow-md: none;
-$shadow-lg: none;
-$shadow-xl: 0 16px 36px oklch(29.54% 0.0649 265.7059 / 0.16), 0 8px 16px oklch(29.54% 0.0649 265.7059 / 0.08);
+// Elevation: the tweakcn shadows, tinted with the primary #3d8fe1 (0.10 in the
+// light theme, 0.20 in the dark). fcd.scss sets the custom properties per theme.
+$shadow-sm: var(--fcd-shadow-sm);
+$shadow-md: var(--fcd-shadow-md);
+$shadow-lg: var(--fcd-shadow-lg);
+$shadow-xl: var(--fcd-shadow-xl);
 
 // Accent-Tinted Shadows (for active/hover interactive focus)
-$shadow-accent-sm: none;
-$shadow-accent-md: none;
+$shadow-accent-sm: var(--fcd-shadow-sm);
+$shadow-accent-md: var(--fcd-shadow-md);
 
 // Glassmorphism & Translucency Tokens
 $glass-bg: oklch(100% 0 0 / 0.88);

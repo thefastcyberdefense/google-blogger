@@ -2,7 +2,10 @@
 // WCAG AA contrast against the surface it sits on (4.5:1, large text 3:1), in
 // both themes, on the home and post views of the static Blogger expansion
 // (tests/fcd/blogger-static.ts). Opacity on the element and its ancestors
-// counts. Each case lists its failures with the rule that sets the colour.
+// counts; text of disabled controls is exempt (WCAG 1.4.3, inactive
+// components). Hover states of the theme's controls are measured too, with
+// transitions off. Each case lists its failures with the rule that sets the
+// colour.
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -79,6 +82,26 @@ const HELPERS = String.raw`
     return (last || 'inherited').slice(0, 72);
   };
   const hex = (c) => '#' + c.slice(0, 3).map((v) => v.toString(16).padStart(2, '0')).join('');
+  const INACTIVE = ':disabled, [aria-disabled="true"], .is-disabled';
+  const ownText = (el) => Array.from(el.childNodes).filter((n) => n.nodeType === 3).map((n) => n.textContent.trim()).join(' ').trim();
+  const textEl = (root) => {
+    if (ownText(root)) return root;
+    for (const el of Array.from(root.querySelectorAll('*'))) if (!el.closest('svg') && ownText(el) && shown(el)) return el;
+    return null;
+  };
+  // Text colour over the composed surface, with opacity, and the AA target.
+  const sample = (el) => {
+    const cs = getComputedStyle(el);
+    const color = rgba(cs.color);
+    let o = 1;
+    for (let n = el; n; n = n.parentElement) { const v = parseFloat(getComputedStyle(n).opacity); o *= Number.isNaN(v) ? 1 : v; }
+    const f = face(el);
+    const ink = over([color[0], color[1], color[2], color[3] * o], f.base);
+    const size = parseFloat(cs.fontSize) || 16;
+    const weight = parseInt(cs.fontWeight, 10) || 400;
+    const need = size >= 24 || (size >= 18.66 && weight >= 700) ? 3 : 4.5;
+    return { cs, color, ink, f, need, r: ratio(ink, f.base) };
+  };
   window.__aa = {
     page: () => lum(face(document.body).base),
     failures: () => {
@@ -86,36 +109,47 @@ const HELPERS = String.raw`
       let checked = 0;
       for (const el of Array.from(document.body.querySelectorAll('*'))) {
         if (el.closest('svg, script, style, noscript, template')) continue;
-        const own = Array.from(el.childNodes).filter((n) => n.nodeType === 3).map((n) => n.textContent.trim()).join(' ').trim();
+        const own = ownText(el);
         const select = el.tagName === 'SELECT';
         if (!own && !select) continue;
-        if (!shown(el)) continue;
+        if (!shown(el) || el.closest(INACTIVE)) continue;
         const cs = getComputedStyle(el);
         if (cs.webkitBackgroundClip === 'text' || cs.backgroundClip === 'text') continue;
-        const color = rgba(cs.color);
-        if (color[3] === 0) continue;
-        let o = 1;
-        for (let n = el; n; n = n.parentElement) { const v = parseFloat(getComputedStyle(n).opacity); o *= Number.isNaN(v) ? 1 : v; }
-        const f = face(el);
-        const ink = over([color[0], color[1], color[2], color[3] * o], f.base);
-        const size = parseFloat(cs.fontSize) || 16;
-        const weight = parseInt(cs.fontWeight, 10) || 400;
-        const need = size >= 24 || (size >= 18.66 && weight >= 700) ? 3 : 4.5;
-        const r = ratio(ink, f.base);
+        if (rgba(cs.color)[3] === 0) continue;
+        const s = sample(el);
         checked++;
-        if (r >= need) continue;
-        const key = name(el) + hex(ink) + hex(f.base);
+        if (s.r >= s.need) continue;
+        const key = name(el) + hex(s.ink) + hex(s.f.base);
         if (seen.has(key)) { seen.get(key).n++; continue; }
         const text = (own || (el.options && el.selectedIndex >= 0 ? el.options[el.selectedIndex].text : '')).slice(0, 22);
-        seen.set(key, { n: 1, line: name(el) + ' "' + text + '" ' + hex(ink) + ' on ' + hex(f.base) + (f.image ? ' (image)' : '') + ' ' + r + '<' + need + ' [' + winner(el, cs.color) + ']' });
+        seen.set(key, { n: 1, line: name(el) + ' "' + text + '" ' + hex(s.ink) + ' on ' + hex(s.f.base) + (s.f.image ? ' (image)' : '') + ' ' + s.r + '<' + s.need + ' [' + winner(el, cs.color) + ']' });
       }
       return { checked, lines: Array.from(seen.values()).map((v) => v.line + (v.n > 1 ? ' x' + v.n : '')) };
+    },
+    // Marks the first visible, active control of each selector that carries text.
+    mark: (selectors) => selectors.map((sel, i) => {
+      const el = Array.from(document.querySelectorAll(sel)).find((x) => shown(x) && !x.closest(INACTIVE + ', .mobile-drawer') && textEl(x));
+      if (el) el.setAttribute('data-aa-hover', String(i));
+      return { sel, i, found: !!el };
+    }),
+    measure: (i) => {
+      const root = document.querySelector('[data-aa-hover="' + i + '"]');
+      const t = root ? textEl(root) : null;
+      if (!root || !t) return null;
+      const s = sample(t);
+      return { el: name(t), text: ownText(t).slice(0, 22), ink: hex(s.ink), surface: hex(s.f.base), ratio: s.r, need: s.need, hovered: root.matches(':hover'), rule: s.r < s.need ? winner(t, s.cs.color) : '' };
     }
   };
 })();
 `;
 
 type Theme = 'light' | 'dark';
+interface Measured { el: string; text: string; ink: string; surface: string; ratio: number; need: number; hovered: boolean; rule: string }
+
+const NO_MOTION = '*, *::before, *::after { transition: none !important; animation: none !important; }';
+// Controls with a hover state on the home and post views.
+const HOVER = ['.hero-btn-primary', '.hero-btn-secondary', '.cta-btn-primary', '.cta-btn-secondary', '.sidebar-btn-primary', '.sidebar-btn-secondary', '.sidebar-recent-link', '.site-nav .nav-link', '.topic-pill', '.post-label', '.label-link', '.share-btn', '.author-follow-btn', '.listen-btn', '.newer-link', '.older-link', '.author-link-pill', '.footer-links-list a', '.post-title a', '.jump-link a'];
+
 let browser: Browser;
 
 beforeAll(async () => {
@@ -149,5 +183,28 @@ describe('tweakcn palette: AA text contrast', () => {
         expect(lines.length, `${lines.length} below AA of ${checked}: ${shown.join(' | ')}${lines.length > 22 ? ` | +${lines.length - 22} more` : ''}`).toBe(0);
       }, 60_000);
     }
+  }
+
+  for (const theme of ['light', 'dark'] as const) {
+    it(`keeps hover text at AA in the ${theme} theme`, async () => {
+      const problems: string[] = [];
+      let measured = 0;
+      for (const view of ['home', 'post'] as const) {
+        const page = await open(view, theme);
+        await page.addStyleTag({ content: NO_MOTION });
+        const marks = (await page.evaluate(`window.__aa.mark(${JSON.stringify(HOVER)})`)) as Array<{ sel: string; i: number; found: boolean }>;
+        for (const m of marks) {
+          if (!m.found) continue;
+          await page.hover(`[data-aa-hover="${m.i}"]`, { force: true, timeout: 3000 }).catch(() => undefined);
+          const r = (await page.evaluate(`window.__aa.measure(${m.i})`)) as Measured | null;
+          if (!r || !r.hovered) continue;
+          measured++;
+          if (r.ratio < r.need) problems.push(`${view} ${m.sel} ${r.el} "${r.text}" ${r.ink} on ${r.surface} ${r.ratio}<${r.need} [${r.rule}]`);
+        }
+        await page.close();
+      }
+      expect(measured, 'hovered controls measured').toBeGreaterThan(8);
+      expect(problems.length, `${problems.length} hover states below AA: ${problems.join(' | ')}`).toBe(0);
+    }, 90_000);
   }
 });

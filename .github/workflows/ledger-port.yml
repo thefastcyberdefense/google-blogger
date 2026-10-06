@@ -37,6 +37,21 @@ jobs:
         run: |
           mv .ledger-upstream "$RUNNER_TEMP/ledger-upstream"
           python3 port/apply.py "$RUNNER_TEMP/ledger-upstream"
+      - uses: actions/setup-node@94196ee1d15439c1b6651cd87ef14e88ec435966
+        if: ${{ hashFiles('port/lockfile.json') != '' }}
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      # Reviewed security updates inside the existing semver ranges: only the
+      # packages named in port/lockfile.json move, and only package-lock.json
+      # changes (no install scripts run).
+      - name: Apply reviewed lockfile updates
+        if: ${{ hashFiles('port/lockfile.json') != '' }}
+        run: |
+          mapfile -t pkgs < <(node -e "const l = JSON.parse(require('fs').readFileSync('port/lockfile.json', 'utf8')); for (const p of l.update) { if (!/^(@[a-z0-9._-]+\/)?[a-z0-9._-]+$/.test(p)) throw new Error('bad package name ' + p); console.log(p); }")
+          npm update "${pkgs[@]}" --package-lock-only --ignore-scripts --no-audit --no-fund
+          git checkout -- package.json
+          for p in "${pkgs[@]}"; do node -e "const l = require('./package-lock.json'); for (const [k, v] of Object.entries(l.packages)) if (k.endsWith('node_modules/' + process.argv[1])) console.log(k, v.version)" "$p"; done
       - name: Commit and fast-forward the branch
         run: |
           git config user.name 'github-actions[bot]'
@@ -45,5 +60,5 @@ jobs:
           git reset -q -- .github
           if git diff --cached --quiet; then echo 'Nothing to port'; exit 0; fi
           git diff --cached --stat
-          git commit -q -m "port(ledger): rebuild Ledger v1.7.0 paths for ${GITHUB_SHA}" -m "Upstream redwan-cse/ledger-blogger-theme@a3da05a8a70243c6ffc239b0e96e88260ed7b536 plus the edits in port/ledger.json. Written by run ${GITHUB_RUN_ID}, attempt ${GITHUB_RUN_ATTEMPT}."
+          git commit -q -m "port(ledger): rebuild Ledger v1.7.0 paths for ${GITHUB_SHA}" -m "Upstream redwan-cse/ledger-blogger-theme@a3da05a8a70243c6ffc239b0e96e88260ed7b536 plus the edits in port/ledger.json and the lockfile updates in port/lockfile.json. Written by run ${GITHUB_RUN_ID}, attempt ${GITHUB_RUN_ATTEMPT}."
           git push origin HEAD:refs/heads/feat/fcd-ledger-rebuild

@@ -1,0 +1,4 @@
+{
+ "reason": "npm audit 2026-10-06: GHSA-68fv-2mgg-jv7q (source-map-js <1.2.2, high, transitive) and GHSA-p98j-92pf-mc4p / GHSA-6688-9rhm-gjv2 (dompurify <=3.4.15, low, via mermaid); both fixed inside the existing ranges",
+ "update": ["source-map-js", "dompurify"]
+}

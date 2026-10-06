@@ -198,7 +198,7 @@
       align-items: center;
       justify-content: space-between;
       padding: 8px 14px;
-      background: oklch(96% 0.006 255);
+      background: oklch(95.23% 0.0192 230.6952);
       border-bottom: 1px solid oklch(91.55% 0.0178 240.0081);
       font-family: $font-mono;
       font-size: 0.75rem;
@@ -216,7 +216,7 @@
       font-weight: 600;
       color: $ink-muted;
       background: #ffffff;
-      border: 1px solid oklch(90% 0.01 255);
+      border: 1px solid oklch(91.55% 0.0178 240.0081);
       border-radius: 6px;
       cursor: pointer;
       display: inline-flex;
@@ -231,8 +231,8 @@
       }
 
       &.copied {
-        color: oklch(60% 0.18 140);
-        border-color: oklch(60% 0.18 140);
+        color: oklch(53.5% 0.1467 251.2451);
+        border-color: oklch(53.5% 0.1467 251.2451);
       }
     }
 
@@ -267,7 +267,7 @@
 
   code {
     font-family: $font-mono;
-    background-color: oklch(94% 0.005 255 / 0.6);
+    background-color: oklch(95.23% 0.0192 230.6952 / 0.6);
     padding: 0.2em 0.4em;
     border-radius: 6px;
     font-size: 0.85em;
@@ -297,7 +297,7 @@
     font-weight: 600;
     color: $ink-muted;
     background: oklch(100% 0 0 / 0.9);
-    border: 1px solid oklch(90% 0.01 255);
+    border: 1px solid oklch(91.55% 0.0178 240.0081);
     border-radius: 6px;
     cursor: pointer;
     display: inline-flex;
@@ -313,8 +313,8 @@
     }
 
     &.copied {
-      color: oklch(60% 0.18 140);
-      border-color: oklch(60% 0.18 140);
+      color: oklch(53.5% 0.1467 251.2451);
+      border-color: oklch(53.5% 0.1467 251.2451);
     }
   }
 
@@ -401,7 +401,7 @@
       text-align: center;
       -webkit-overflow-scrolling: touch;
       scrollbar-width: thin;
-      scrollbar-color: oklch(80% 0.01 255) transparent;
+      scrollbar-color: oklch(83.19% 0.0256 246.2533) transparent;
 
       &::-webkit-scrollbar {
         width: 6px;
@@ -413,11 +413,11 @@
       }
 
       &::-webkit-scrollbar-thumb {
-        background: oklch(80% 0.01 255);
+        background: oklch(83.19% 0.0256 246.2533);
         border-radius: 3px;
 
         &:hover {
-          background: oklch(70% 0.02 255);
+          background: oklch(58.51% 0.0546 268.3959);
         }
       }
 
@@ -450,7 +450,7 @@
       padding: 3px 6px;
       border-radius: 9999px;
       background: transparent;
-      border: 1px solid oklch(85% 0.01 255 / 0.6);
+      border: 1px solid oklch(83.19% 0.0256 246.2533 / 0.6);
       box-shadow: none;
       backdrop-filter: none;
       -webkit-backdrop-filter: none;
@@ -460,8 +460,8 @@
         background: oklch(99% 0.002 255 / 0.85);
         backdrop-filter: blur(8px);
         -webkit-backdrop-filter: blur(8px);
-        border-color: oklch(80% 0.01 255);
-        box-shadow: 0 2px 8px oklch(0% 0 0 / 0.06);
+        border-color: oklch(83.19% 0.0256 246.2533);
+        box-shadow: 0 2px 8px oklch(63.86% 0.1467 251.2451 / 0.1);
       }
 
       .mm-btn {
@@ -514,7 +514,7 @@
         display: inline-block;
         width: 1px;
         height: 12px;
-        background: oklch(85% 0.01 255);
+        background: oklch(83.19% 0.0256 246.2533);
         margin: 0 2px;
       }
     }
@@ -538,7 +538,7 @@
 
     .mermaid-fallback-card {
       background: oklch(97.43% 0.0101 228.8865);
-      border: 1px solid oklch(88% 0.012 255);
+      border: 1px solid oklch(91.55% 0.0178 240.0081);
       border-radius: 8px;
       overflow: hidden;
       margin: 0;
@@ -550,7 +550,7 @@
         justify-content: space-between;
         padding: $space-2 $space-4;
         background: oklch(96% 0.005 255);
-        border-bottom: 1px solid oklch(88% 0.012 255);
+        border-bottom: 1px solid oklch(91.55% 0.0178 240.0081);
       }
 
       .mermaid-fallback-title {
@@ -572,7 +572,7 @@
           font-weight: 500;
           padding: 1px 6px;
           border-radius: 4px;
-          background: oklch(90% 0.01 255);
+          background: oklch(91.55% 0.0178 240.0081);
           color: $ink-muted;
         }
       }
@@ -583,7 +583,7 @@
         gap: 4px;
         padding: 4px 8px;
         border-radius: 4px;
-        border: 1px solid oklch(85% 0.01 255);
+        border: 1px solid oklch(83.19% 0.0256 246.2533);
         background: #ffffff;
         color: $ink-muted;
         font-size: 0.75rem;
@@ -598,8 +598,8 @@
         }
 
         &.is-copied {
-          color: oklch(45% 0.18 145);
-          border-color: oklch(45% 0.18 145);
+          color: oklch(53.5% 0.1467 251.2451);
+          border-color: oklch(53.5% 0.1467 251.2451);
         }
       }
 
@@ -964,7 +964,7 @@
 
     &:active {
       transform: translateY(1px) scale(0.96);
-      box-shadow: 0 1px 2px oklch(20% 0.010 240 / 0.15);
+      box-shadow: 0 1px 2px oklch(29.54% 0.0649 265.7059 / 0.15);
     }
   }
 
@@ -998,7 +998,7 @@
   &:hover {
     transform: $card-hover-lift;
     box-shadow: $shadow-md;
-    border-color: oklch(85% 0.018 255.508);
+    border-color: oklch(83.19% 0.0256 246.2533);
   }
 
   .author-avatar-wrap {
@@ -1159,7 +1159,7 @@
     &:hover {
       transform: $card-hover-lift;
       box-shadow: $shadow-md;
-      border-color: oklch(85% 0.018 255.508);
+      border-color: oklch(83.19% 0.0256 246.2533);
     }
   }
 

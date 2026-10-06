@@ -114,9 +114,9 @@
   }
 
   .item-control.blog-admin a:hover {
-    background: oklch(95% 0.04 25 / 0.15);
-    border-color: oklch(60% 0.22 25);
-    color: oklch(60% 0.22 25);
+    background: oklch(63.68% 0.2078 25.3313 / 0.1);
+    border-color: oklch(63.68% 0.2078 25.3313);
+    color: $ink;
   }
 
   .comments-header-row {
@@ -290,9 +290,9 @@
     transition: all $motion-fast ease;
 
     &:hover {
-      background: oklch(95% 0.04 25 / 0.15);
-      border-color: oklch(60% 0.22 25);
-      color: oklch(60% 0.22 25);
+      background: oklch(63.68% 0.2078 25.3313 / 0.1);
+      border-color: oklch(63.68% 0.2078 25.3313);
+      color: $ink;
     }
   }
 
@@ -358,41 +358,41 @@ html[data-theme='dark'] #comments {
     border-color: $dark-rule !important;
   }
   p.comment-content, .comment-body { color: $dark-ink !important; }
-  .user, cite.user, cite.user a { color: oklch(92% .01 260); }
-  .datetime, .comment-timestamp, .datetime a, .comment-timestamp a { color: oklch(72% .012 260); }
+  .user, cite.user, cite.user a { color: oklch(92.88% 0.0126 255.5078); }
+  .datetime, .comment-timestamp, .datetime a, .comment-timestamp a { color: oklch(71.37% 0.0192 261.3246); }
   .comment-actions a,
   .comment-reply a,
   .continue a,
   .loadmore a {
     background: rgba(255, 255, 255, 0.05);
     border-color: rgba(255, 255, 255, 0.12);
-    color: oklch(92% .01 260);
+    color: oklch(92.88% 0.0126 255.5078);
     &:hover {
       background: oklch(63.86% 0.1467 251.2451 / 0.15);
       border-color: oklch(63.86% 0.1467 251.2451);
-      color: oklch(68% 0.12 251.2451);
+      color: oklch(63.86% 0.1467 251.2451);
     }
   }
 
   .item-control.blog-admin a {
     background: rgba(255, 255, 255, 0.05);
     border-color: rgba(255, 255, 255, 0.12);
-    color: oklch(92% .01 260);
+    color: oklch(92.88% 0.0126 255.5078);
     &:hover {
-      background: rgba(248, 81, 73, 0.15);
-      border-color: #f85149;
-      color: #ff7b72;
+      background: oklch(63.68% 0.2078 25.3313 / 0.15);
+      border-color: oklch(63.68% 0.2078 25.3313);
+      color: oklch(92.88% 0.0126 255.5078);
     }
   }
 
   .thread-toggle {
-    color: oklch(72% .012 260);
+    color: oklch(71.37% 0.0192 261.3246);
     &:hover {
       background: rgba(61, 143, 225, 0.1);
       color: $dark-accent;
     }
   }
-  .comment-replies, .comment-replybox-single { border-left-color: oklch(28% .018 260); }
+  .comment-replies, .comment-replybox-single { border-left-color: oklch(33.51% 0.0331 260.912); }
 
   .comment-author-badge {
     background: $dark-accent;
@@ -403,7 +403,7 @@ html[data-theme='dark'] #comments {
     background: $dark-surface;
     border-color: $dark-rule;
     #comment-post-message { color: $dark-ink; }
-    .comment-zero-message { color: oklch(72% 0.012 260); }
+    .comment-zero-message { color: oklch(71.37% 0.0192 261.3246); }
   }
 
   iframe#comment-editor {
@@ -414,22 +414,22 @@ html[data-theme='dark'] #comments {
   .comment-cancel-btn, .comment-cancel-reply-btn {
     background: rgba(255, 255, 255, 0.05);
     border-color: rgba(255, 255, 255, 0.12);
-    color: oklch(72% 0.012 260);
+    color: oklch(71.37% 0.0192 261.3246);
     &:hover {
-      background: rgba(248, 81, 73, 0.15);
-      border-color: #f85149;
-      color: #ff7b72;
+      background: oklch(63.68% 0.2078 25.3313 / 0.15);
+      border-color: oklch(63.68% 0.2078 25.3313);
+      color: oklch(92.88% 0.0126 255.5078);
     }
   }
 
-  .comment-signin-hint { color: oklch(65% 0.01 260); }
+  .comment-signin-hint { color: oklch(71.37% 0.0192 261.3246); }
 
   #add-comment,
   .add-comment-link,
   #threaded-comment-form a,
   .comment-trigger-btn {
     background: $dark-accent;
-    &:hover { background: oklch(58% 0.21 260); }
+    &:hover { background: oklch(50% 0.1467 251.2451); }
   }
 }
 

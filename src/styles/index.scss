@@ -79,9 +79,9 @@
   border-radius: 10px;
   overflow: hidden;
   margin: 0;
-  background: #0d1117;
+  background: oklch(29.54% 0.0649 265.7059);
   border: 1px solid $rule;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px oklch(63.86% 0.1467 251.2451 / 0.1);
 
   @media (max-width: 768px) {
     max-width: 100%;

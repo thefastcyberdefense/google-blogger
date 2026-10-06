@@ -41,23 +41,23 @@ html[data-theme='dark'] {
   }
 
   .status-pill {
-    background: oklch(32% 0.13 140 / 0.25);
-    border-color: oklch(85% 0.16 142 / 0.4);
-    color: oklch(85% 0.16 142);
+    background: oklch(40.15% 0.0706 251.9121 / 0.25);
+    border-color: oklch(63.86% 0.1467 251.2451 / 0.4);
+    color: oklch(63.86% 0.1467 251.2451);
   }
 
   .status-label {
-    color: oklch(85% 0.16 142);
+    color: oklch(63.86% 0.1467 251.2451);
   }
 
   .status-beacon {
-    background-color: oklch(85% 0.16 142);
-    box-shadow: 0 0 8px oklch(85% 0.16 142);
+    background-color: oklch(63.86% 0.1467 251.2451);
+    box-shadow: 0 0 8px oklch(63.86% 0.1467 251.2451);
   }
 
   .footer-status,
   .footer-status span {
-    color: oklch(85% 0.16 142);
+    color: oklch(63.86% 0.1467 251.2451);
   }
 
   .newer-link,
@@ -70,8 +70,8 @@ html[data-theme='dark'] {
 
     &:hover {
       background-color: oklch(33.51% 0.0331 260.912);
-      border-color: oklch(68% 0.12 251.2451 / 0.5);
-      color: oklch(68% 0.12 251.2451);
+      border-color: oklch(63.86% 0.1467 251.2451 / 0.5);
+      color: oklch(63.86% 0.1467 251.2451);
     }
   }
 
@@ -121,16 +121,16 @@ html[data-theme='dark'] {
   }
 
   .post-thumbnail-link {
-    background-color: oklch(18% 0.025 260) !important;
+    background-color: oklch(19.71% 0.0414 269.7076) !important;
   }
 
   .mobile-drawer,
   .search-modal-container {
-    background-color: oklch(16% 0.025 260 / 0.96) !important;
+    background-color: oklch(19.71% 0.0414 269.7076 / 0.96) !important;
     border-color: oklch(33.51% 0.0331 260.912) !important;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    box-shadow: 0 16px 36px oklch(0% 0 0 / 0.5);
+    box-shadow: 0 16px 36px oklch(63.86% 0.1467 251.2451 / 0.5);
   }
 
   .sidebar-card {
@@ -139,7 +139,7 @@ html[data-theme='dark'] {
     box-shadow: none;
 
     &:hover {
-      border-color: oklch(68% 0.12 251.2451 / 0.4);
+      border-color: oklch(63.86% 0.1467 251.2451 / 0.4);
       box-shadow: none;
     }
   }
@@ -155,12 +155,12 @@ html[data-theme='dark'] {
     color: oklch(92.88% 0.0126 255.5078);
 
     &:hover {
-      color: oklch(68% 0.12 251.2451) !important;
+      color: oklch(63.86% 0.1467 251.2451) !important;
     }
   }
 
   .sidebar-recent-item:hover .sidebar-recent-title {
-    color: oklch(68% 0.12 251.2451);
+    color: oklch(63.86% 0.1467 251.2451);
   }
 
   .sidebar-recent-date,
@@ -171,14 +171,14 @@ html[data-theme='dark'] {
   }
 
   .sidebar-recent-tag {
-    color: oklch(80% 0.08 251.2451) !important;
-    background-color: oklch(22% 0.04 260) !important;
-    border-color: oklch(35% 0.06 260) !important;
+    color: oklch(85.03% 0.0656 228.1545) !important;
+    background-color: oklch(40.15% 0.0706 251.9121) !important;
+    border-color: oklch(40.15% 0.0706 251.9121) !important;
   }
 
   .sidebar-search-input,
   .drawer-search-input {
-    background-color: oklch(16% 0.025 260) !important;
+    background-color: oklch(19.71% 0.0414 269.7076) !important;
     border-color: oklch(33.51% 0.0331 260.912) !important;
     color: oklch(92.88% 0.0126 255.5078) !important;
 
@@ -187,16 +187,16 @@ html[data-theme='dark'] {
     }
 
     &:focus {
-      border-color: oklch(68% 0.12 251.2451) !important;
-      box-shadow: 0 0 0 2px oklch(68% 0.12 251.2451 / 0.3) !important;
+      border-color: oklch(63.86% 0.1467 251.2451) !important;
+      box-shadow: 0 0 0 2px oklch(63.86% 0.1467 251.2451 / 0.3) !important;
     }
   }
 
   .sidebar-search-results,
   .drawer-search-results {
-    background-color: oklch(18% 0.025 260) !important;
+    background-color: oklch(19.71% 0.0414 269.7076) !important;
     border-color: oklch(33.51% 0.0331 260.912) !important;
-    box-shadow: 0 16px 36px oklch(0% 0 0 / 0.6) !important;
+    box-shadow: 0 16px 36px oklch(63.86% 0.1467 251.2451 / 0.5) !important;
   }
 
   .drawer-nav-link,
@@ -209,8 +209,8 @@ html[data-theme='dark'] {
 
     &:hover {
       background-color: oklch(33.51% 0.0331 260.912) !important;
-      border-color: oklch(68% 0.12 251.2451 / 0.5) !important;
-      color: oklch(68% 0.12 251.2451) !important;
+      border-color: oklch(63.86% 0.1467 251.2451 / 0.5) !important;
+      color: oklch(63.86% 0.1467 251.2451) !important;
     }
   }
 
@@ -230,14 +230,14 @@ html[data-theme='dark'] {
       color: oklch(92.88% 0.0126 255.5078) !important;
 
       &:hover {
-        color: oklch(68% 0.12 251.2451) !important;
+        color: oklch(63.86% 0.1467 251.2451) !important;
       }
     }
   }
 
   .search-result-item:hover,
   .search-result-item.is-active {
-    background-color: oklch(24% 0.03 260) !important;
+    background-color: oklch(24.41% 0.0456 268.3692) !important;
   }
 
   .search-result-title {
@@ -250,7 +250,7 @@ html[data-theme='dark'] {
   }
 
   .sidebar-cta-tag {
-    color: oklch(68% 0.12 251.2451);
+    color: oklch(63.86% 0.1467 251.2451);
   }
 
   .sidebar-name,
@@ -277,8 +277,8 @@ html[data-theme='dark'] {
 
     &:hover {
       background-color: oklch(33.51% 0.0331 260.912);
-      border-color: oklch(68% 0.12 251.2451 / 0.5);
-      color: oklch(68% 0.12 251.2451);
+      border-color: oklch(63.86% 0.1467 251.2451 / 0.5);
+      color: oklch(63.86% 0.1467 251.2451);
     }
   }
 
@@ -301,7 +301,7 @@ html[data-theme='dark'] {
   .cta-container .cta-box:hover,
   .author-bio-card:hover,
   .post-nav-item:hover {
-    border-color: oklch(68% 0.12 251.2451 / 0.4);
+    border-color: oklch(63.86% 0.1467 251.2451 / 0.4);
     box-shadow: none;
   }
 
@@ -309,10 +309,10 @@ html[data-theme='dark'] {
   .post-row {
     background-color: oklch(24.41% 0.0456 268.3692);
     border-color: oklch(33.51% 0.0331 260.912);
-    box-shadow: 0 2px 8px oklch(0% 0 0 / 0.25);
+    box-shadow: 0 2px 8px oklch(63.86% 0.1467 251.2451 / 0.2);
 
     &:hover {
-      border-color: oklch(68% 0.12 251.2451 / 0.4);
+      border-color: oklch(63.86% 0.1467 251.2451 / 0.4);
       box-shadow: none;
     }
   }
@@ -326,63 +326,63 @@ html[data-theme='dark'] {
   }
 
   .site-nav .nav-list {
-    background-color: oklch(16% 0.018 260);
+    background-color: oklch(19.71% 0.0414 269.7076);
     border-color: oklch(33.51% 0.0331 260.912);
   }
 
   .topics-container {
-    background: oklch(17% 0.018 260);
+    background: oklch(24.41% 0.0456 268.3692);
     border-color: oklch(33.51% 0.0331 260.912);
   }
 
   .site-nav .nav-link {
-    color: oklch(86% 0.008 260);
+    color: oklch(92.88% 0.0126 255.5078);
 
     &:hover {
-      color: oklch(68% 0.12 251.2451);
+      color: oklch(63.86% 0.1467 251.2451);
       background-color: oklch(33.51% 0.0331 260.912);
-      border-color: oklch(68% 0.12 251.2451 / 0.4);
+      border-color: oklch(63.86% 0.1467 251.2451 / 0.4);
     }
   }
 
   .topic-pill {
-    background-color: oklch(20% 0.028 260) !important;
-    border-color: oklch(30% 0.035 260) !important;
-    color: oklch(88% 0.02 260) !important;
+    background-color: oklch(24.41% 0.0456 268.3692) !important;
+    border-color: oklch(33.51% 0.0331 260.912) !important;
+    color: oklch(92.88% 0.0126 255.5078) !important;
 
     &.is-active {
-      background-color: oklch(26% 0.06 260) !important;
-      border-color: oklch(68% 0.12 251.2451) !important;
-      color: oklch(68% 0.12 251.2451) !important;
+      background-color: oklch(40.15% 0.0706 251.9121) !important;
+      border-color: oklch(63.86% 0.1467 251.2451) !important;
+      color: oklch(63.86% 0.1467 251.2451) !important;
       font-weight: 600;
     }
 
     &:hover {
-      background-color: oklch(26% 0.06 260) !important;
-      border-color: oklch(68% 0.12 251.2451 / 0.6) !important;
-      color: oklch(68% 0.12 251.2451) !important;
+      background-color: oklch(40.15% 0.0706 251.9121) !important;
+      border-color: oklch(63.86% 0.1467 251.2451 / 0.6) !important;
+      color: oklch(63.86% 0.1467 251.2451) !important;
     }
   }
 
   .post-label,
   .label-link {
-    background-color: oklch(22% 0.04 260) !important;
-    border-color: oklch(35% 0.06 260) !important;
-    color: oklch(80% 0.08 251.2451) !important;
+    background-color: oklch(40.15% 0.0706 251.9121) !important;
+    border-color: oklch(40.15% 0.0706 251.9121) !important;
+    color: oklch(85.03% 0.0656 228.1545) !important;
     min-height: unset !important;
     height: auto !important;
     padding: 2px 8px !important;
     border-radius: 4px !important;
 
     &:hover {
-      background-color: oklch(28% 0.08 260) !important;
-      border-color: oklch(68% 0.12 251.2451) !important;
-      color: oklch(90% 0.05 251.2451) !important;
+      background-color: oklch(29.54% 0.0649 265.7059) !important;
+      border-color: oklch(63.86% 0.1467 251.2451) !important;
+      color: oklch(92.88% 0.0126 255.5078) !important;
     }
   }
 
   .code-block-header {
-    background: oklch(15% 0.018 260);
+    background: oklch(24.41% 0.0456 268.3692);
     border-bottom-color: oklch(33.51% 0.0331 260.912);
   }
 
@@ -392,8 +392,8 @@ html[data-theme='dark'] {
   }
 
   code {
-    background: oklch(22% 0.025 260);
-    color: oklch(68% 0.12 251.2451);
+    background: oklch(24.41% 0.0456 268.3692);
+    color: oklch(63.86% 0.1467 251.2451);
   }
 
   pre code {
@@ -406,7 +406,7 @@ html[data-theme='dark'] {
   .footer-links-list a:hover,
   .footer-back-to-top:hover,
   .hero-btn-tertiary:hover {
-    color: oklch(68% 0.12 251.2451);
+    color: oklch(63.86% 0.1467 251.2451);
   }
 
   .hero-btn-secondary,
@@ -418,13 +418,13 @@ html[data-theme='dark'] {
 
     &:hover {
       background-color: oklch(33.51% 0.0331 260.912) !important;
-      border-color: oklch(68% 0.12 251.2451 / 0.5) !important;
-      color: oklch(68% 0.12 251.2451) !important;
+      border-color: oklch(63.86% 0.1467 251.2451 / 0.5) !important;
+      color: oklch(63.86% 0.1467 251.2451) !important;
     }
   }
 
   .topics-container {
-    background-color: oklch(18% 0.025 260) !important;
+    background-color: oklch(24.41% 0.0456 268.3692) !important;
     border-color: oklch(33.51% 0.0331 260.912) !important;
   }
 
@@ -440,7 +440,7 @@ html[data-theme='dark'] {
 
     &:hover {
       background-color: oklch(33.51% 0.0331 260.912);
-      color: oklch(68% 0.12 251.2451);
+      color: oklch(63.86% 0.1467 251.2451);
     }
   }
 
@@ -450,42 +450,42 @@ html[data-theme='dark'] {
     color: oklch(92.88% 0.0126 255.5078);
 
     &:hover {
-      border-color: oklch(68% 0.12 251.2451);
+      border-color: oklch(63.86% 0.1467 251.2451);
       background-color: oklch(33.51% 0.0331 260.912);
-      color: oklch(68% 0.12 251.2451);
+      color: oklch(63.86% 0.1467 251.2451);
     }
   }
 
   .header-brand:hover .site-title,
   .header-brand:hover .site-tagline {
-    color: oklch(68% 0.12 251.2451);
+    color: oklch(63.86% 0.1467 251.2451);
   }
 
   .hero-portrait-img {
     border-color: oklch(33.51% 0.0331 260.912);
 
     &:hover {
-      border-color: oklch(68% 0.12 251.2451);
-      box-shadow: 0 8px 32px oklch(0% 0 0 / 0.5);
+      border-color: oklch(63.86% 0.1467 251.2451);
+      box-shadow: 0 8px 32px oklch(63.86% 0.1467 251.2451 / 0.5);
     }
   }
 
   .cta-tag {
-    color: oklch(68% 0.12 251.2451);
+    color: oklch(63.86% 0.1467 251.2451);
   }
 
   .cta-cyber-img {
     border-color: oklch(33.51% 0.0331 260.912);
 
     &:hover {
-      border-color: oklch(68% 0.12 251.2451);
+      border-color: oklch(63.86% 0.1467 251.2451);
     }
   }
 
   .cta-container .cta-box {
     background-color: oklch(24.41% 0.0456 268.3692);
     border-color: oklch(33.51% 0.0331 260.912);
-    border-top-color: oklch(68% 0.12 251.2451);
+    border-top-color: oklch(63.86% 0.1467 251.2451);
 
     .cta-desc,
     p {
@@ -499,32 +499,32 @@ html[data-theme='dark'] {
     .cta-btn-secondary {
       background-color: transparent;
       border-color: oklch(53.5% 0.1467 251.2451 / 0.4);
-      color: oklch(68% 0.12 251.2451) !important;
+      color: oklch(63.86% 0.1467 251.2451) !important;
 
       &:hover {
-        background-color: oklch(22% 0.035 260);
-        border-color: oklch(68% 0.12 251.2451);
+        background-color: oklch(40.15% 0.0706 251.9121);
+        border-color: oklch(63.86% 0.1467 251.2451);
       }
     }
   }
 
   .jump-link a {
-    color: oklch(68% 0.12 251.2451);
+    color: oklch(63.86% 0.1467 251.2451);
 
     &:hover {
-      color: oklch(74% 0.1 251.2451);
+      color: oklch(85.03% 0.0656 228.1545);
     }
   }
 
   .author-link-pill {
-    background-color: oklch(22% 0.025 260);
+    background-color: oklch(24.41% 0.0456 268.3692);
     border-color: oklch(33.51% 0.0331 260.912);
-    color: oklch(68% 0.12 251.2451);
+    color: oklch(63.86% 0.1467 251.2451);
 
     &:hover {
-      background-color: oklch(26% 0.045 250);
-      border-color: oklch(68% 0.12 251.2451 / 0.6);
-      color: oklch(74% 0.1 251.2451);
+      background-color: oklch(40.15% 0.0706 251.9121);
+      border-color: oklch(63.86% 0.1467 251.2451 / 0.6);
+      color: oklch(85.03% 0.0656 228.1545);
     }
   }
 
@@ -536,10 +536,10 @@ html[data-theme='dark'] {
 
   .author-avatar-fallback {
     background-color: oklch(33.51% 0.0331 260.912);
-    border-color: oklch(68% 0.12 251.2451);
+    border-color: oklch(63.86% 0.1467 251.2451);
 
     .author-initials {
-      color: oklch(68% 0.12 251.2451);
+      color: oklch(63.86% 0.1467 251.2451);
     }
   }
 
@@ -548,7 +548,7 @@ html[data-theme='dark'] {
     color: oklch(92.88% 0.0126 255.5078);
 
     &:hover {
-      color: oklch(68% 0.12 251.2451);
+      color: oklch(63.86% 0.1467 251.2451);
     }
   }
 
@@ -560,7 +560,7 @@ html[data-theme='dark'] {
   .cta-desc a,
   .footer a,
   .footer-copyright a {
-    color: oklch(68% 0.12 251.2451);
+    color: oklch(63.86% 0.1467 251.2451);
   }
 
   .comment-form,
@@ -611,7 +611,7 @@ html[data-theme='dark'] {
     border-color: oklch(33.51% 0.0331 260.912);
 
     &:hover {
-      border-color: oklch(68% 0.12 251.2451 / 0.5);
+      border-color: oklch(63.86% 0.1467 251.2451 / 0.5);
     }
   }
 
@@ -626,18 +626,18 @@ html[data-theme='dark'] {
     color: oklch(92.88% 0.0126 255.5078);
 
     &:hover {
-      border-color: oklch(68% 0.12 251.2451 / 0.5);
-      color: oklch(68% 0.12 251.2451);
+      border-color: oklch(63.86% 0.1467 251.2451 / 0.5);
+      color: oklch(63.86% 0.1467 251.2451);
     }
   }
 
   .table-of-contents {
-    background-color: oklch(18% 0.025 266) !important;
+    background-color: oklch(19.71% 0.0414 269.7076) !important;
     border-color: oklch(33.51% 0.0331 260.912) !important;
-    box-shadow: 0 4px 20px oklch(0% 0 0 / 0.25) !important;
+    box-shadow: 0 4px 20px oklch(63.86% 0.1467 251.2451 / 0.2) !important;
 
     &::before {
-      background: linear-gradient(90deg, oklch(68% 0.12 251.2451), oklch(50% 0.12 250 / 0.2)) !important;
+      background: linear-gradient(90deg, oklch(63.86% 0.1467 251.2451), oklch(63.86% 0.1467 251.2451 / 0.2)) !important;
     }
 
     .toc-header {
@@ -648,28 +648,28 @@ html[data-theme='dark'] {
       color: oklch(71.37% 0.0192 261.3246) !important;
 
       .toc-icon {
-        color: oklch(68% 0.12 251.2451) !important;
+        color: oklch(63.86% 0.1467 251.2451) !important;
       }
     }
 
     .toc-badge {
-      background: oklch(68% 0.12 251.2451 / 0.15) !important;
-      color: oklch(68% 0.12 251.2451) !important;
+      background: oklch(63.86% 0.1467 251.2451 / 0.15) !important;
+      color: oklch(63.86% 0.1467 251.2451) !important;
     }
 
     .toc-toggle {
-      border-color: oklch(30% 0.03 260) !important;
+      border-color: oklch(33.51% 0.0331 260.912) !important;
       color: oklch(71.37% 0.0192 261.3246) !important;
 
       &:hover {
-        background: oklch(68% 0.12 251.2451 / 0.15) !important;
-        border-color: oklch(68% 0.12 251.2451) !important;
-        color: oklch(68% 0.12 251.2451) !important;
+        background: oklch(63.86% 0.1467 251.2451 / 0.15) !important;
+        border-color: oklch(63.86% 0.1467 251.2451) !important;
+        color: oklch(63.86% 0.1467 251.2451) !important;
       }
     }
 
     .toc-link {
-      color: oklch(85% 0.012 255) !important;
+      color: oklch(92.88% 0.0126 255.5078) !important;
 
       .toc-num {
         color: oklch(71.37% 0.0192 261.3246) !important;
@@ -677,21 +677,21 @@ html[data-theme='dark'] {
 
       &:hover {
         color: oklch(97.43% 0.0101 228.8865) !important;
-        background: oklch(68% 0.12 251.2451 / 0.12) !important;
-        border-left-color: oklch(68% 0.12 251.2451) !important;
+        background: oklch(63.86% 0.1467 251.2451 / 0.12) !important;
+        border-left-color: oklch(63.86% 0.1467 251.2451) !important;
 
         .toc-num {
-          color: oklch(68% 0.12 251.2451) !important;
+          color: oklch(63.86% 0.1467 251.2451) !important;
         }
       }
 
       &.is-active {
         color: oklch(97.43% 0.0101 228.8865) !important;
-        background: oklch(68% 0.12 251.2451 / 0.15) !important;
-        border-left-color: oklch(68% 0.12 251.2451) !important;
+        background: oklch(63.86% 0.1467 251.2451 / 0.15) !important;
+        border-left-color: oklch(63.86% 0.1467 251.2451) !important;
 
         .toc-num {
-          color: oklch(68% 0.12 251.2451) !important;
+          color: oklch(63.86% 0.1467 251.2451) !important;
         }
       }
     }
@@ -701,29 +701,29 @@ html[data-theme='dark'] {
     color: oklch(71.37% 0.0192 261.3246) !important;
 
     &:hover {
-      color: oklch(68% 0.12 251.2451) !important;
+      color: oklch(63.86% 0.1467 251.2451) !important;
     }
   }
 
   .code-block-wrap {
-    background-color: oklch(16% 0.028 266) !important;
+    background-color: oklch(19.71% 0.0414 269.7076) !important;
     border-color: oklch(33.51% 0.0331 260.912) !important;
 
     .code-block-header {
-      background: oklch(14% 0.028 266) !important;
+      background: oklch(24.41% 0.0456 268.3692) !important;
       border-bottom-color: oklch(33.51% 0.0331 260.912) !important;
       color: oklch(71.37% 0.0192 261.3246) !important;
     }
 
     .code-copy-btn {
       background: oklch(24.41% 0.0456 268.3692 / 0.85) !important;
-      border-color: oklch(30% 0.03 260) !important;
+      border-color: oklch(33.51% 0.0331 260.912) !important;
       color: oklch(71.37% 0.0192 261.3246) !important;
 
       &:hover {
-        background: oklch(26% 0.03 260) !important;
+        background: oklch(40.15% 0.0706 251.9121) !important;
         color: #ffffff !important;
-        border-color: oklch(68% 0.12 251.2451) !important;
+        border-color: oklch(63.86% 0.1467 251.2451) !important;
       }
     }
 
@@ -737,13 +737,13 @@ html[data-theme='dark'] {
   }
 
   pre {
-    background-color: oklch(16% 0.028 266) !important;
+    background-color: oklch(19.71% 0.0414 269.7076) !important;
     border-color: oklch(33.51% 0.0331 260.912) !important;
     color: oklch(92.88% 0.0126 255.5078) !important;
   }
 
   code {
-    background-color: oklch(25% 0.03 260 / 0.7) !important;
+    background-color: oklch(33.51% 0.0331 260.912 / 0.7) !important;
     color: oklch(92.88% 0.0126 255.5078) !important;
   }
 
@@ -758,11 +758,11 @@ html[data-theme='dark'] {
 
   .code-copy-btn {
     background: oklch(24.41% 0.0456 268.3692 / 0.85) !important;
-    border-color: oklch(30% 0.03 260) !important;
+    border-color: oklch(33.51% 0.0331 260.912) !important;
     color: oklch(71.37% 0.0192 261.3246) !important;
 
     &:hover {
-      background: oklch(26% 0.03 260) !important;
+      background: oklch(40.15% 0.0706 251.9121) !important;
       color: #ffffff !important;
     }
   }
@@ -832,41 +832,41 @@ html[data-theme='dark'] {
   }
 
   .mermaid-diagram-wrap {
-    background: oklch(16% 0.028 266) !important;
+    background: oklch(19.71% 0.0414 269.7076) !important;
     border-color: oklch(33.51% 0.0331 260.912) !important;
 
     .mermaid-stage {
-      scrollbar-color: oklch(35% 0.02 260) transparent;
+      scrollbar-color: oklch(33.51% 0.0331 260.912) transparent;
 
       &::-webkit-scrollbar-thumb {
-        background: oklch(35% 0.02 260);
+        background: oklch(33.51% 0.0331 260.912);
 
         &:hover {
-          background: oklch(45% 0.03 260);
+          background: oklch(55.1% 0.0234 264.3637);
         }
       }
     }
 
     .mermaid-modern-toolbar {
       background: transparent !important;
-      border-color: oklch(35% 0.02 260 / 0.6) !important;
+      border-color: oklch(33.51% 0.0331 260.912 / 0.6) !important;
       box-shadow: none !important;
       backdrop-filter: none !important;
       -webkit-backdrop-filter: none !important;
 
       &:hover {
-        background: oklch(18% 0.025 260 / 0.85) !important;
+        background: oklch(19.71% 0.0414 269.7076 / 0.85) !important;
         backdrop-filter: blur(8px) !important;
         -webkit-backdrop-filter: blur(8px) !important;
-        box-shadow: 0 4px 12px oklch(0% 0 0 / 0.35) !important;
+        box-shadow: 0 4px 12px oklch(63.86% 0.1467 251.2451 / 0.2) !important;
       }
 
       .mm-btn {
         color: oklch(71.37% 0.0192 261.3246) !important;
 
         &:hover:not(:disabled) {
-          background: oklch(68% 0.12 251.2451 / 0.15) !important;
-          color: oklch(68% 0.12 251.2451) !important;
+          background: oklch(63.86% 0.1467 251.2451 / 0.15) !important;
+          color: oklch(63.86% 0.1467 251.2451) !important;
         }
 
         &:disabled {
@@ -878,7 +878,7 @@ html[data-theme='dark'] {
         color: oklch(71.37% 0.0192 261.3246) !important;
 
         &:hover {
-          color: oklch(68% 0.12 251.2451) !important;
+          color: oklch(63.86% 0.1467 251.2451) !important;
         }
       }
 
@@ -898,11 +898,11 @@ html[data-theme='dark'] {
     }
 
     .mermaid-fallback-card {
-      background: oklch(18% 0.025 260) !important;
+      background: oklch(19.71% 0.0414 269.7076) !important;
       border-color: oklch(33.51% 0.0331 260.912) !important;
 
       .mermaid-fallback-header {
-        background: oklch(15% 0.025 260) !important;
+        background: oklch(24.41% 0.0456 268.3692) !important;
         border-bottom-color: oklch(33.51% 0.0331 260.912) !important;
       }
 
@@ -910,30 +910,30 @@ html[data-theme='dark'] {
         color: oklch(92.88% 0.0126 255.5078) !important;
 
         .mermaid-fallback-badge {
-          background: oklch(25% 0.03 260) !important;
+          background: oklch(33.51% 0.0331 260.912) !important;
           color: oklch(71.37% 0.0192 261.3246) !important;
         }
       }
 
       .fallback-copy-btn {
-        background: oklch(20% 0.028 266) !important;
-        border-color: oklch(32% 0.03 260) !important;
+        background: oklch(19.71% 0.0414 269.7076) !important;
+        border-color: oklch(33.51% 0.0331 260.912) !important;
         color: oklch(71.37% 0.0192 261.3246) !important;
 
         &:hover {
-          background: oklch(25% 0.04 260) !important;
-          color: oklch(68% 0.12 251.2451) !important;
-          border-color: oklch(68% 0.12 251.2451) !important;
+          background: oklch(40.15% 0.0706 251.9121) !important;
+          color: oklch(63.86% 0.1467 251.2451) !important;
+          border-color: oklch(63.86% 0.1467 251.2451) !important;
         }
 
         &.is-copied {
-          color: oklch(70% 0.2 145) !important;
-          border-color: oklch(70% 0.2 145) !important;
+          color: oklch(63.86% 0.1467 251.2451) !important;
+          border-color: oklch(63.86% 0.1467 251.2451) !important;
         }
       }
 
       pre.mermaid-fallback-code {
-        color: oklch(92% 0.01 255) !important;
+        color: oklch(92.88% 0.0126 255.5078) !important;
       }
     }
   }
@@ -942,37 +942,37 @@ html[data-theme='dark'] {
     border-color: oklch(33.51% 0.0331 260.912) !important;
 
     thead {
-      background: oklch(20% 0.028 266) !important;
+      background: oklch(19.71% 0.0414 269.7076) !important;
       border-bottom-color: oklch(33.51% 0.0331 260.912) !important;
     }
 
     th {
-      background: oklch(20% 0.028 266) !important;
+      background: oklch(19.71% 0.0414 269.7076) !important;
       color: oklch(92.88% 0.0126 255.5078) !important;
       border-bottom: 2px solid oklch(33.51% 0.0331 260.912) !important;
     }
 
     td {
       border-bottom-color: oklch(33.51% 0.0331 260.912) !important;
-      color: oklch(85% 0.015 255) !important;
+      color: oklch(92.88% 0.0126 255.5078) !important;
     }
 
     tr:nth-child(even) td {
-      background: oklch(18% 0.02 266) !important;
+      background: oklch(19.71% 0.0414 269.7076) !important;
     }
   }
 
   .posts-filter-bar {
-    background-color: oklch(18% 0.025 266) !important;
+    background-color: oklch(24.41% 0.0456 268.3692) !important;
     border-color: oklch(33.51% 0.0331 260.912) !important;
-    box-shadow: 0 4px 16px oklch(0% 0 0 / 0.2) !important;
+    box-shadow: 0 4px 16px oklch(63.86% 0.1467 251.2451 / 0.2) !important;
 
     .filter-label {
       color: oklch(92.88% 0.0126 255.5078) !important;
     }
 
     .filter-input {
-      background-color: oklch(14% 0.02 266) !important;
+      background-color: oklch(19.71% 0.0414 269.7076) !important;
       border-color: oklch(33.51% 0.0331 260.912) !important;
       color: oklch(92.88% 0.0126 255.5078) !important;
 
@@ -991,7 +991,7 @@ html[data-theme='dark'] {
     }
 
     .filter-select {
-      background-color: oklch(14% 0.02 266) !important;
+      background-color: oklch(19.71% 0.0414 269.7076) !important;
       border-color: oklch(33.51% 0.0331 260.912) !important;
       color: oklch(92.88% 0.0126 255.5078) !important;
 
@@ -1012,7 +1012,7 @@ html[data-theme='dark'] {
 
     .page-nav-btn {
       border-color: oklch(53.5% 0.1467 251.2451) !important;
-      color: oklch(68% 0.12 251.2451) !important;
+      color: oklch(63.86% 0.1467 251.2451) !important;
 
       &:hover:not(:disabled):not(.is-disabled) {
         background: oklch(53.5% 0.1467 251.2451) !important;
@@ -1021,14 +1021,14 @@ html[data-theme='dark'] {
 
       &:disabled,
       &.is-disabled {
-        border-color: oklch(30% 0.02 260) !important;
-        color: oklch(50% 0.02 260) !important;
+        border-color: oklch(33.51% 0.0331 260.912) !important;
+        color: oklch(55.1% 0.0234 264.3637) !important;
       }
     }
 
     .page-num-btn {
       border-color: oklch(53.5% 0.1467 251.2451) !important;
-      color: oklch(68% 0.12 251.2451) !important;
+      color: oklch(63.86% 0.1467 251.2451) !important;
 
       &:hover:not(.is-active):not(.page-ellipsis) {
         background: oklch(53.5% 0.1467 251.2451 / 0.15) !important;

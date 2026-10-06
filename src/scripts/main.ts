@@ -2205,7 +2205,7 @@ export function initMermaidDiagrams(targetTheme?: 'dark' | 'default'): void {
         background: '#171f36',
         primaryColor: '#166fbe',
         primaryTextColor: '#e2e8f0',
-        lineColor: '#5d9ce0'
+        lineColor: '#3d8fe1'
       } : {
         darkMode: false,
         background: '#ffffff',
@@ -2831,13 +2831,10 @@ export function initCommentInteractions(): void {
     const initial = (cleanName[0] || 'A').toUpperCase();
     const colors = [
       '#166fbe', // FCD action blue
-      '#059669', // Emerald
-      '#7c3aed', // Purple
-      '#d97706', // Amber
-      '#4f46e5', // Indigo
-      '#e11d48', // Rose
-      '#0d9488', // Teal
-      '#ea580c', // Orange
+      '#1d2b4d', // FCD foreground navy
+      '#2a4a6d', // FCD dark secondary
+      '#606d8e', // FCD muted text (AA)
+      '#6b7280', // FCD dark chart-5
     ];
     let hash = 0;
     for (let i = 0; i < cleanName.length; i++) {

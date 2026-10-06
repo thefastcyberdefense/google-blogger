@@ -533,19 +533,19 @@ html[data-theme='dark'] .theme-icon-moon {
       display: inline-flex;
       align-items: center;
       padding: 1px $space-2;
-      background: oklch(36% 0.14 140 / 0.1);
-      border: 1px solid oklch(36% 0.14 140 / 0.3);
+      background: oklch(53.5% 0.1467 251.2451 / 0.1);
+      border: 1px solid oklch(53.5% 0.1467 251.2451 / 0.3);
       border-radius: 999px;
       font-family: $font-mono;
       font-size: 0.6875rem;
       font-weight: 600;
-      color: oklch(36% 0.14 140);
+      color: oklch(53.5% 0.1467 251.2451);
       white-space: nowrap;
 
       html[data-theme='dark'] & {
-        color: oklch(78% 0.16 145);
-        background: oklch(78% 0.16 145 / 0.12);
-        border-color: oklch(78% 0.16 145 / 0.35);
+        color: oklch(63.86% 0.1467 251.2451);
+        background: oklch(63.86% 0.1467 251.2451 / 0.12);
+        border-color: oklch(63.86% 0.1467 251.2451 / 0.35);
       }
     }
 
@@ -975,20 +975,20 @@ html[data-theme='dark'] .theme-icon-moon {
     align-items: center;
     gap: $space-2;
     padding: $space-1 $space-3;
-    background: oklch(36% 0.14 140 / 0.08);
-    border: 1px solid oklch(36% 0.14 140 / 0.25);
+    background: oklch(53.5% 0.1467 251.2451 / 0.08);
+    border: 1px solid oklch(53.5% 0.1467 251.2451 / 0.25);
     border-radius: 999px;
     font-family: $font-mono;
     font-size: 0.75rem;
     font-weight: 600;
     letter-spacing: 0.05em;
-    color: oklch(36% 0.14 140);
+    color: oklch(53.5% 0.1467 251.2451);
     white-space: nowrap;
 
     html[data-theme='dark'] & {
-      color: oklch(78% 0.16 145);
-      background: oklch(78% 0.16 145 / 0.12);
-      border-color: oklch(78% 0.16 145 / 0.35);
+      color: oklch(63.86% 0.1467 251.2451);
+      background: oklch(63.86% 0.1467 251.2451 / 0.12);
+      border-color: oklch(63.86% 0.1467 251.2451 / 0.35);
     }
   }
 
@@ -1000,14 +1000,14 @@ html[data-theme='dark'] .theme-icon-moon {
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background-color: oklch(36% 0.14 140);
-    box-shadow: 0 0 8px oklch(36% 0.14 140);
+    background-color: oklch(53.5% 0.1467 251.2451);
+    box-shadow: 0 0 8px oklch(53.5% 0.1467 251.2451);
     animation: beaconPulse 2s infinite ease-in-out;
     flex-shrink: 0;
 
     html[data-theme='dark'] & {
-      background-color: oklch(78% 0.16 145);
-      box-shadow: 0 0 8px oklch(78% 0.16 145);
+      background-color: oklch(63.86% 0.1467 251.2451);
+      box-shadow: 0 0 8px oklch(63.86% 0.1467 251.2451);
     }
   }
 
@@ -1124,7 +1124,7 @@ html[data-theme='dark'] .theme-icon-moon {
   padding-bottom: $space-3;
   border-top: 1px solid $rule;
   border-bottom: 1px solid $rule;
-  background: oklch(97.5% 0.006 240);
+  background: oklch(97.43% 0.0101 228.8865);
 
   .topics-list,
   .topics-cloud {
@@ -1202,7 +1202,7 @@ html[data-theme='dark'] .theme-icon-moon {
       height: 16px;
       padding: 0 4px;
       border-radius: 999px;
-      background: oklch(20% 0.010 240 / 0.07);
+      background: oklch(29.54% 0.0649 265.7059 / 0.07);
       color: $ink-muted;
       transition: background-color $motion-fast $ease-out-quart, color $motion-fast $ease-out-quart;
     }
@@ -1395,7 +1395,7 @@ html[data-theme='dark'] .theme-icon-moon {
   transition: transform $motion-fast $ease-out-quart, box-shadow $motion-fast $ease-out-quart, background-color $motion-fast $ease-out-quart;
 
   &:hover {
-    background: #1d4ed8;
+    background: oklch(50% 0.1467 251.2451);
     transform: translateY(-1px);
     box-shadow: $shadow-md;
     color: #ffffff !important;
@@ -1827,7 +1827,7 @@ html[data-theme='dark'] .theme-icon-moon {
   &:hover {
     transform: $card-hover-lift;
     box-shadow: $shadow-lg;
-    border-color: oklch(85% 0.018 255.508);
+    border-color: oklch(83.19% 0.0256 246.2533);
   }
 }
 
@@ -2462,17 +2462,17 @@ pre {
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: oklch(42% 0.15 155);
-    background: oklch(94% 0.03 155);
-    border: 1px solid oklch(42% 0.15 155 / 0.3);
+    color: oklch(53.5% 0.1467 251.2451);
+    background: oklch(95.23% 0.0192 230.6952);
+    border: 1px solid oklch(53.5% 0.1467 251.2451 / 0.3);
     padding: 1px 6px;
     border-radius: 8px;
     width: fit-content;
 
     html[data-theme='dark'] & {
-      color: oklch(80% 0.14 155);
-      background: oklch(80% 0.14 155 / 0.15);
-      border-color: oklch(80% 0.14 155 / 0.35);
+      color: oklch(63.86% 0.1467 251.2451);
+      background: oklch(63.86% 0.1467 251.2451 / 0.15);
+      border-color: oklch(63.86% 0.1467 251.2451 / 0.35);
     }
   }
 

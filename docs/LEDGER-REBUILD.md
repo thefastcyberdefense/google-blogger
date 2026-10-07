@@ -20,7 +20,9 @@ ledger-port.yml workflow (bot commits do not trigger CI).
 | US-L8 company logo, AA comment actions | green in run 37413332586 at 528f22d (red first in run 37411818592 at a899434) | tests/fcd/logo.test.ts with tests/fcd/icon0.svg; unit 33/33, contract 39/39 |
 | Third test-blog upload | done 2026-10-06 | build 528f22d; the owner then asked for the fastcyberdefense.com tweakcn palette |
 | US-L9 tweakcn palette | red first in run 37419852682 at 6eece6f; fix 1183c0b, 1d5f9e0, port bot 7aa068c; 51/53 in run 37424526223 at 9f45a73 (4 Ledger greys left) | tests/fcd/palette.test.ts (every colour per source file), tests/fcd/contrast.test.ts (text and hover, both themes) |
-| US-L9b exact site colours (owner, 2026-10-06) | red first in run 37484501694 at 1efd37c; fix c25cce2 plus port bot 8a95cbd; awaiting CI on this commit | tests/fcd/site-exact.ts records the decision; brand, palette, contrast, logo and polish tests follow it |
+| US-L9b exact site colours (owner, 2026-10-06) | green in run 37485927204 at accb4d9 (red first in run 37484501694 at 1efd37c) | tests/fcd/site-exact.ts records the decision; brand, palette, contrast, logo and polish tests follow it |
+| Fourth test-blog upload | done 2026-10-07 | build accb4d9; home light and dark all tweakcn; post: diagrams broke after a theme switch, light diagrams in Mermaid stock colours, dark callout bars all blue |
+| US-L10 diagrams and callouts | red first in run 37656025228 at 272e026 (3 failing); fix 7cf48ae and 8744bdf; awaiting CI on this commit | tests/fcd/diagrams.test.ts runs the built theme script over the static post view with a Mermaid stand-in |
 | US-L6 cleanup and records | pending | remove port/, ledger-port.yml, staging-check.yml, excerpt step; CHANGELOG, AGENTS.md, PR body |
 
 ## US-L5 changes (main.ts, via port edits)
@@ -114,6 +116,22 @@ Accepted below WCAG AA, exactly as on fastcyberdefense.com: small text in
 muted text in #6e7b9d (4.21:1 on white, 3.92:1 on the card), and white
 labels on #3d8fe1 (3.38:1). tests/fcd/site-exact.ts accepts only those
 pairs, down to 2.9:1; every other text, the dark theme included, keeps AA.
+
+## US-L10: diagrams and callouts (fourth upload, 2026-10-07)
+
+- Redraw: on a theme switch Ledger took the longer of the stored source and
+  the node text; once drawn, the node holds Mermaid's svg, whose style text
+  is longer, so every diagram became a CSS source card. A drawn wrap now
+  redraws from the source kept on the wrap; a standalone pre.mermaid keeps
+  its source in data-fcd-source and drops data-processed.
+- Colours: Mermaid's 'default' and 'dark' themes ignore most theme
+  variables, so both modes now use 'base' with the tweakcn colours (light:
+  accent nodes, primary borders, muted lines; dark: secondary nodes on the
+  dark page, primary borders and lines) and Inter.
+- Callouts: dark.scss gives every blockquote a primary bar. The new
+  FCD-owned src/styles/fcd-callouts.scss restores the five bars in dark mode
+  on 10% tints, with titles at 6.5:1 or more; light titles are deepened to
+  AA on their tints, and the note title stays the primary (site-exact).
 
 ## Dependency audit (2026-10-06)
 

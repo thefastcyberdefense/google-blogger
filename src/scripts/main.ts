@@ -2199,20 +2199,51 @@ export function initMermaidDiagrams(targetTheme?: 'dark' | 'default'): void {
   async function renderMermaid(mermaidApi: any): Promise<void> {
     mermaidApi.initialize({
       startOnLoad: false,
-      theme: currentTheme,
+      // FCD: only Mermaid's 'base' theme takes themeVariables; 'default' and
+      // 'dark' kept their stock lavender and yellow (US-L10).
+      theme: 'base',
       themeVariables: isDark ? {
         darkMode: true,
-        background: '#171f36',
-        primaryColor: '#3d8fe1',
+        background: '#0e1428',
+        fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        primaryColor: '#2a4a6d',
+        mainBkg: '#2a4a6d',
         primaryTextColor: '#e2e8f0',
-        lineColor: '#3d8fe1'
+        textColor: '#e2e8f0',
+        titleColor: '#e2e8f0',
+        noteTextColor: '#e2e8f0',
+        primaryBorderColor: '#3d8fe1',
+        nodeBorder: '#3d8fe1',
+        secondaryColor: '#171f36',
+        tertiaryColor: '#171f36',
+        clusterBkg: '#171f36',
+        noteBkgColor: '#171f36',
+        clusterBorder: '#2d3748',
+        noteBorderColor: '#2d3748',
+        lineColor: '#3d8fe1',
+        actorLineColor: '#3d8fe1',
+        edgeLabelBackground: '#0e1428'
       } : {
         darkMode: false,
         background: '#ffffff',
-        primaryColor: '#f0f8fc',
+        fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        primaryColor: '#e3f2fa',
+        mainBkg: '#e3f2fa',
         primaryTextColor: '#1d2b4d',
-        primaryBorderColor: '#d9e5ee',
-        lineColor: '#6e7b9d'
+        textColor: '#1d2b4d',
+        titleColor: '#1d2b4d',
+        noteTextColor: '#1d2b4d',
+        primaryBorderColor: '#3d8fe1',
+        nodeBorder: '#3d8fe1',
+        secondaryColor: '#f0f8fc',
+        tertiaryColor: '#f0f8fc',
+        clusterBkg: '#f0f8fc',
+        noteBkgColor: '#f0f8fc',
+        clusterBorder: '#d9e5ee',
+        noteBorderColor: '#d9e5ee',
+        lineColor: '#6e7b9d',
+        actorLineColor: '#6e7b9d',
+        edgeLabelBackground: '#ffffff'
       },
       securityLevel: 'strict'
     });
@@ -2300,7 +2331,12 @@ export function initMermaidDiagrams(targetTheme?: 'dark' | 'default'): void {
       const preElem = wrap.querySelector('.mermaid');
       const preText = preElem?.textContent?.trim() || '';
       const datasetText = wrap.dataset['mermaidCode']?.trim() || '';
-      let code = preText.length >= datasetText.length ? preText : datasetText;
+      // FCD: once drawn, the wrap holds Mermaid's svg, whose style text is
+      // longer than any source, so a redraw uses the source kept on the wrap
+      // (US-L10: every diagram became a CSS source card after a theme switch).
+      const drawn = Boolean(wrap.querySelector('svg')) || wrap.classList.contains('is-fallback');
+      let code = drawn && datasetText ? datasetText : preText.length >= datasetText.length ? preText : datasetText;
+      wrap.classList.remove('is-fallback');
       if (!code) return;
 
       const cleanCode = cleanMermaidSyntax(code);
@@ -2323,7 +2359,12 @@ export function initMermaidDiagrams(targetTheme?: 'dark' | 'default'): void {
 
     standaloneMermaids.forEach((pre) => {
       if (pre.closest('.mermaid-diagram-wrap')) return;
-      const cleanCode = cleanMermaidSyntax(pre.textContent || '');
+      // FCD: Mermaid replaces the text with its svg and marks the node
+      // processed; keep the source so a redraw restores both (US-L10).
+      const cleanCode = pre.dataset['fcdSource'] || cleanMermaidSyntax(pre.textContent || '');
+      pre.dataset['fcdSource'] = cleanCode;
+      pre.removeAttribute('data-processed');
+      pre.classList.remove('mermaid-error-fallback');
       pre.textContent = cleanCode;
     });
 
@@ -2793,7 +2834,7 @@ export function initCommentInteractions(): void {
   const FALLBACK_AUTHOR_AVATAR =
     // FCD logo: fastcyberdefense.com icon0.svg (tests/fcd/icon0.svg), inlined.
     'data:image/svg+xml;utf8,' +
-    encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1495.22 1495.22"><defs><linearGradient id="g" x1="747.61" y1="1495.22" x2="747.61" y2="0" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#2d4e8e"/><stop offset=".04" stop-color="#325695"/><stop offset=".27" stop-color="#5082b8"/><stop offset=".47" stop-color="#66a2d2"/><stop offset=".65" stop-color="#73b6e2"/><stop offset=".76" stop-color="#78bde8"/><stop offset=".82" stop-color="#85c8e8"/><stop offset=".92" stop-color="#94d5e9"/><stop offset="1" stop-color="#9adaea"/></linearGradient></defs><path fill="url(#g)" d="M747.61,0C334.71,0,0,334.72,0,747.61s334.71,747.61,747.61,747.61,747.61-334.72,747.61-747.61S1160.5,0,747.61,0ZM529.33,474.45l-126.82,55.49v-83.23l-117.1,51.49,22.02,114.97,221.9-103.05v95.12l-194.5,89.55c43.27,128.04,112.17,245.91,194.5,352.34v188.25c-188.18-186.72-329.75-448.7-371.38-712.54-2.83-17.87-13.16-79.59-7.12-92.02,6.49-13.32,132-74.29,153.9-83.87,72.39-31.67,148.16-54.94,224.6-74.62v202.12ZM927.62,1274.99c-34.11,27.9-66.43,58.05-101.46,84.82-12.38,9.46-70.87,55.04-80.64,54.12-64.7-40.32-121.65-90.94-179.66-139.74l-.82-1009.75c39.04-3.3,77.83-12.82,116.91-15.85,82.91-6.42,165.2,3.37,247.62,15.85l.19,417.39-130.93,58.11c-1.94-1.45,3.96-5.04,3.96-5.9v-348.76c0-1.09-4.07-9.24-6.67-10.06-33.2-2.24-64.49-2.16-97.71-.02l-6.17,14.35-.66,812.39c1.55,27.04,37.71,38.69,54.33,56.91l56.88-45.27c-3.72-107.38,5-217.99,0-324.98,0-.3-9.55-9.41,1.9-5.88,39.65,12.22,84.29,44.87,125.18,57.85l-2.25,334.42ZM965.28,1235.38V438.78l126.82,45.58v362.63c11.43-9.46,18.23-27.56,24.48-40.91,44.59-95.24,78.52-200.93,93.95-305.17-74.33-46.91-162.39-70.37-245.25-99.77v-128.81c89.97,22.81,178.6,52.18,262.42,92.29,17.74,8.49,113.7,57.25,117.29,68.96,4.75,15.52-5.23,69.83-8.32,89.27-42.11,264.44-182.5,525.67-371.39,712.53Z"/></svg>');
+    encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1495.22 1495.22"><defs><linearGradient id="g" x1="747.61" y1="1495.22" x2="747.61" y2="0" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#2d4e8e"/><stop offset=".04" stop-color="#325695"/><stop offset=".27" stop-color="#5082b8"/><stop offset=".47" stop-color="#66a2d2"/><stop offset=".65" stop-color="#73b6e2"/><stop offset=".76" stop-color="#78bde8"/><stop offset=".82" stop-color="#85c8e8"/><stop offset=".92" stop-color="#94d5e9"/><stop offset="1" stop-color="#9adaea"/></linearGradient></defs><path fill="url(#g)" d="M747.61,0C334.71,0,0,334.72,0,747.61s334.71,747.61,747.61,747.61,747.61-334.72,747.61-747.61S1160.5,0,747.61,0ZM529.33,474.45l-126.82,55.49v-83.23l-117.1,51.49,22.02,114.97,221.9-103.05v95.12l-194.5,89.55c43.27,128.04,112.17,245.91,194.5,352.34v188.25c-188.18-186.72-329.75-448.7-371.38-712.54-2.83-17.87-13.16-79.59-7.12-92.02,6.49-13.32,132-74.29,153.9-83.87,72.39-31.67,148.16-54.94,224.6-74.62v202.12ZM927.62,1274.99c-34.11,27.9-66.43,58.05-101.46,84.82-12.38,9.46-70.87,55.04-80.64,54.12-64.7-40.32-121.65-90.94-179.66-139.74l-.82-1009.75c39.04-3.3,77.83-12.82,116.91-15.85,82.91-6.42,165.2,3.37,247.62,15.85l.19,417.39-130.93,58.11c-1.94-1.45,3.96-5.04,3.96-5.9v-348.76c0-1.09-4.07-9.24-6.67-10.06-33.2-2.24-64.49-2.16-97.71-.02l-6.17,14.35-.66,812.39c1.55,27.04,37.71,38.69,54.33,56.91l56.88-45.27c-3.72-107.38,5-217.99,0-324.98,0-.3-9.55-9.41,1.9-5.88,39.65,12.22,84.29,44.87,125.18,57.850l-2.25,334.42ZM965.28,1235.38V438.78l126.82,45.58v362.63c11.43-9.46,18.23-27.56,24.48-40.91,44.59-95.24,78.52-200.93,93.95-305.17-74.33-46.91-162.39-70.37-245.25-99.77v-128.81c89.970,22.81,178.6,52.18,262.42,92.29,17.74,8.49,113.7,57.25,117.29,68.96,4.75,15.52-5.23,69.83-8.32,89.27-42.11,264.44-182.5,525.67-371.39,712.53Z"/></svg>');
 
   function sanitizeHttpUrl(rawUrl: string | null | undefined): string | null {
     if (!rawUrl) return null;

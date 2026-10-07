@@ -12,4 +12,6 @@
 @use 'dark';
 // FCD overrides on the Ledger styles (US-L7), loaded last.
 @use 'fcd';
+// FCD callout colours (US-L10).
+@use 'fcd-callouts';
 

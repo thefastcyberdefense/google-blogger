@@ -2639,7 +2639,7 @@ pre {
   align-items: center;
   justify-content: center;
   padding: 0;
-  box-shadow: 0 4px 14px oklch(14.479% 0 0 / 0.08);
+  box-shadow: 0 4px 14px oklch(63.86% 0.1467 251.2451 / 0.1);
   opacity: 0;
   transform: translateY(12px) scale(0.9);
   pointer-events: none;
@@ -2674,7 +2674,7 @@ pre {
     border-color: $accent;
     color: $accent;
     transform: translateY(-2px) scale(1.02);
-    box-shadow: 0 8px 20px oklch(14.479% 0 0 / 0.12);
+    box-shadow: 0 8px 20px oklch(63.86% 0.1467 251.2451 / 0.16);
   }
 
   &:active {
@@ -2748,7 +2748,7 @@ body.lightbox-open {
   }
 
   &::backdrop {
-    background: oklch(14.479% 0 0 / 0.85);
+    background: oklch(19.71% 0.0414 269.7076 / 0.85);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
   }
@@ -2778,11 +2778,11 @@ body.lightbox-open {
     align-items: center;
     justify-content: space-between;
     padding: $space-2 $space-4;
-    background: oklch(14.479% 0 0 / 0.75);
+    background: oklch(19.71% 0.0414 269.7076 / 0.75);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border-bottom: 1px solid oklch(100% 0 0 / 0.14);
-    color: oklch(98% 0 0);
+    color: oklch(100% 0 0);
     z-index: 10;
   }
 
@@ -2791,7 +2791,7 @@ body.lightbox-open {
     font-size: 0.875rem;
     font-weight: 600;
     letter-spacing: -0.01em;
-    color: oklch(96% 0 0);
+    color: oklch(100% 0 0);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -2820,7 +2820,7 @@ body.lightbox-open {
     border-radius: 50%;
     border: 1px solid oklch(100% 0 0 / 0.18);
     background: oklch(100% 0 0 / 0.1);
-    color: oklch(98% 0 0);
+    color: oklch(100% 0 0);
     cursor: pointer;
     transition: background $motion-fast, border-color $motion-fast, transform $motion-fast;
 
@@ -2837,13 +2837,13 @@ body.lightbox-open {
     }
 
     &.image-lightbox-btn-close {
-      background: oklch(58% 0.22 25 / 0.85);
-      border-color: oklch(58% 0.22 25);
+      background: oklch(63.68% 0.2078 25.3313 / 0.85);
+      border-color: oklch(63.68% 0.2078 25.3313);
       color: #fff;
 
       &:hover {
-        background: oklch(52% 0.24 25);
-        border-color: oklch(52% 0.24 25);
+        background: oklch(63.68% 0.2078 25.3313);
+        border-color: oklch(63.68% 0.2078 25.3313);
       }
     }
   }
@@ -2908,7 +2908,7 @@ body.lightbox-open {
     object-fit: contain;
     display: block;
     border-radius: 8px;
-    box-shadow: 0 20px 48px oklch(0 0 0 / 0.55);
+    box-shadow: 0 20px 48px oklch(19.71% 0.0414 269.7076 / 0.55);
     cursor: zoom-in;
     user-select: none;
     -webkit-user-drag: none;
@@ -2922,11 +2922,11 @@ body.lightbox-open {
     justify-content: center;
     gap: 2px;
     padding: 6px $space-4 8px;
-    background: oklch(14.479% 0 0 / 0.75);
+    background: oklch(19.71% 0.0414 269.7076 / 0.75);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border-top: 1px solid oklch(100% 0 0 / 0.12);
-    color: oklch(90% 0 0);
+    color: oklch(92.88% 0.0126 255.5078);
     z-index: 10;
   }
 
@@ -2934,7 +2934,7 @@ body.lightbox-open {
     font-family: $font-sans;
     font-size: 0.8125rem;
     font-weight: 500;
-    color: oklch(95% 0 0);
+    color: oklch(100% 0 0);
     text-align: center;
     max-width: 80vw;
     white-space: nowrap;
@@ -2945,7 +2945,7 @@ body.lightbox-open {
   .image-lightbox-hint {
     font-family: $font-sans;
     font-size: 0.6875rem;
-    color: oklch(80% 0 0);
+    color: oklch(71.37% 0.0192 261.3246);
     letter-spacing: 0.02em;
     opacity: 0.85;
   }

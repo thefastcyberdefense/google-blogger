@@ -3584,7 +3584,7 @@ export function initImageLightbox(): void {
     try {
       const filename = src.split('/').pop()?.split('?')[0] || 'article-image.png';
       const cleanName = filename.includes('.') ? filename : `${filename}.png`;
-      const res = await fetch(src, { mode: 'cors' });
+      const res = await fetch(src, { mode: 'cors', signal: AbortSignal.timeout(8000) });
       if (!res.ok) throw new Error('Fetch failed');
       const blob = await res.blob();
       const blobUrl = URL.createObjectURL(blob);
@@ -3611,6 +3611,17 @@ export function initImageLightbox(): void {
 
   function openLightbox(rawSrc: string, altText: string, triggerEl?: HTMLElement): void {
     if (!dialog || !img || !rawSrc) return;
+    // FCD: only http(s) images reach the preview, its download and its
+    // fallback link; a link such as javascript:...png is ignored (US-L12c).
+    let safeSrc = '';
+    try {
+      const parsed = new URL(rawSrc, window.location.href);
+      if (parsed.protocol === 'http:' || parsed.protocol === 'https:') safeSrc = parsed.href;
+    } catch {
+      safeSrc = '';
+    }
+    if (!safeSrc) return;
+    rawSrc = safeSrc;
 
     lastFocusedElement = triggerEl || (document.activeElement as HTMLElement);
 

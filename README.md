@@ -6,7 +6,7 @@ Unreleased Blogger Layouts V3 / Widget Version 2 theme for the Fast Cyber Defens
 
 Node 24 LTS, npm 11+, genuine locked dependencies. Pug, SCSS and TypeScript compile one dist/theme.xml, built only in GitHub Actions and shipped as the run's theme artifact; the XML is no longer checked in. Only total generated XML is capped at 500,000 bytes. Never hand-edit generated XML.
 
-CI runs typecheck, build, the FCD unit checks (tests/fcd), Ledger's V3 contract rules and npm audit. port/apply.py and the temporary ledger-port workflow import pinned upstream files byte-exact and apply FCD edits; both are removed before review.
+CI runs typecheck, build, the FCD unit checks (tests/fcd), Ledger's V3 contract rules and npm audit. The Ledger-derived files under src/ were imported byte-exact from the pinned upstream commit and then edited for FCD; the temporary port writer that did this was removed in US-L6, so they are ordinary sources now. docs/LEDGER-REBUILD.md records the stories and evidence.
 
 ## Layout zones
 
@@ -24,7 +24,7 @@ All seven layout zones are standard b:section elements, editable in Blogger Layo
 
 ## Staging and release
 
-The first upload goes to a throwaway test Blogger blog, compared against the Ledger reference, before production. No automated upload, deployment, publication or DNS change is authorized. Source merge readiness, native platform acceptance and production release remain distinct.
+The rebuild was proven on a test Blogger blog first. Since 2026-10-08 the owner runs build d1fd459 of this branch on the production blog; his rendered evidence is pending (docs/DEPLOYMENT.md). Main does not contain that build until PR #15 is approved and merged. No automated upload, deployment, publication or DNS change is authorized. Source merge readiness, native platform acceptance and production release remain distinct.
 
 ## License
 

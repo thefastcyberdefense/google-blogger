@@ -4,6 +4,8 @@ Read docs/PROJECT-PLAN.md before changing architecture. This is Google Blogger L
 
 Use the project-requested workspace GitHub connection. Work on feature branches, never rewrite main. Reuse reviewed Ledger infrastructure without its personal identity, analytics or UI. Keep Pug/SCSS/TypeScript modular and compile one dist/theme.xml.
 
+The theme is built on Ledger v1.7.0 (redwan-cse/ledger-blogger-theme a3da05a8a70243c6ffc239b0e96e88260ed7b536). Since US-L6 the Ledger-derived files under src/ are ordinary FCD sources: edit them directly in reviewed commits; there is no port writer and no bot commit. docs/LEDGER-REBUILD.md is the rebuild record (stories, runs, uploads, open items). FCD-specific styles load last from src/styles/fcd.scss and src/styles/fcd-callouts.scss.
+
 Use FCD Superpowers, Ralph Development Loop and GSD Development Workflow together. Load FCD Accessibility Reviewer for UI work and Code Review for substantive changes. These are approved ClickUp workflow adaptations, not installed CLI plugins or background agents. No independent-review claim for sequential self-review. Sources: https://github.com/obra/superpowers ; https://github.com/snarktank/ralph ; https://github.com/open-gsd/gsd-core .
 
 All automated builds/tests run in GitHub Actions. Demonstrate regressions fail for the correct behavior, then implement and demonstrate green. Inspect exact-commit evidence; canceled/skipped/blocked/stale is not passed. Preserve inherited regression coverage without manufacturing test-first history.

@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased: Ledger v1.7.0 rebuild (draft PR #15)
+
+- Rebuilt FCD Blogger on Ledger v1.7.0 (redwan-cse/ledger-blogger-theme at a3da05a8a70243c6ffc239b0e96e88260ed7b536), the owner's own theme that already runs natively, in place of the L1 shell of draft PR #14 (recorded in the next section, unmerged and superseded). Ledger's Blog1 dispatch, default markups, layout and features are kept; its personal identity, avatars and social links are replaced by Fast Cyber Defense.
+- Identity and palette: the company logo (fastcyberdefense.com icon0.svg, inlined, no request) and the fastcyberdefense.com tweakcn palette at the exact site colours (owner decision 2026-10-06; tests/fcd/site-exact.ts lists the only accepted pairs below AA), with Inter and Fira Code.
+- Hardening (US-L5): feed URLs only when http(s), same-origin feed requests abort after 8 s, Recent Posts never restores cached HTML, live search and catalog output escaped and validated, the catalog bounded to 10 pages of 50 posts, Mermaid securityLevel strict.
+- Native upload fixes (US-L7, US-L8): fixed sections show only the theme's own widget, the FCD mark keeps its size, dark surfaces and rules use the dark tokens, comment actions and the author badge use the primary.
+- Diagrams and callouts (US-L10): diagrams redraw from their kept source after a theme switch, Mermaid uses its base theme with the tweakcn colours in both modes, and the five callout types keep their own bars in dark mode with titles at AA or better.
+- Comment logo (US-L11): only comments Blogger flags as by the blog author get the company logo; a commenter can no longer take it by putting "FCD" or "Fast Cyber Defense" in a display name.
+- Dependencies: source-map-js 1.2.2 and dompurify 3.4.16 inside the existing ranges. katex <0.18.2 (low, via mermaid 11) stays open below the moderate gate, as its only offered fix is a mermaid downgrade.
+- CI: typecheck, a build bound to the exact source commit, the FCD unit checks, Ledger's V3 contract inside the no-egress namespace, npm audit, and a theme XML zip per fully green run; no generated XML is checked in.
+- Cleanup (US-L6): removed the temporary port writer (port/apply.py, port/ledger.json, port/lockfile.json and ledger-port.yml), the temporary port review excerpt in ci.yml, and staging-check.yml, whose staging:check script no longer exists. The Ledger-derived files under src/ are ordinary FCD sources.
+
+The owner uploaded builds 26ca599 and then d1fd459 to the production blog on 2026-10-08. His rendered evidence (theme-build stamp, post views in both themes at 390 and 1280 px, Layout) is pending, and main does not contain the build. No merge is implied.
+
 ## Unreleased: L1 native shell and design v1 Layout gadgets
 
 - Added observed saved-gadget and empty-sidebar regression fixtures (`native-observed`, `native-empty-archive`), the `native-shell` browser suite (T0 to T4 on all 22 Chromium projects), static contracts C1 to C10 with mutation controls, header parity P1, and shipped-CSS layout checks for the gadget homes, navigation, intro, call to action, footer, design tokens and components. Browser cases grew from 1,674 to 1,784 (N2A 928 to 1,038; N1 240 and N0-only 506 unchanged) and unit/contract cases from 450 to 500.

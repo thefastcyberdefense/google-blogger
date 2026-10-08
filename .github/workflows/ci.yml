@@ -27,21 +27,6 @@ jobs:
           node-version-file: .nvmrc
           package-manager-cache: false
       - run: npm ci --ignore-scripts --no-audit --no-fund
-      # TEMPORARY (Ledger port review, removed with port/): publishes the part of
-      # the imported main.ts that the review tooling cannot display, as notices.
-      - name: TEMPORARY port review excerpt
-        if: ${{ always() }}
-        run: |
-          node --input-type=module <<'JS'
-          import fs from 'node:fs';
-          const escape = (value) => String(value).replaceAll('%', '%25').replaceAll('\r', '%0D').replaceAll('\n', '%0A');
-          const src = fs.readFileSync('src/scripts/main.ts', 'utf8');
-          const start = src.indexOf('// Module 16');
-          const tail = start >= 0 ? src.slice(Math.max(0, start - 80)) : '';
-          const size = 4000;
-          console.log('::notice title=Port excerpt::' + JSON.stringify({ file: 'src/scripts/main.ts', from: start, chars: tail.length, parts: Math.ceil(tail.length / size) }));
-          for (let i = 0; i < tail.length && i < size * 9; i += size) console.log('::notice title=main.ts tail ' + (i / size + 1) + '::' + escape(tail.slice(i, i + size)));
-          JS
       - run: npm run typecheck
       # Lean gate (owner decision 2026-10-05, Ledger rebuild): the theme zip
       # built here is the deliverable, so no generated XML is checked in.

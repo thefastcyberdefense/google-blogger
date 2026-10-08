@@ -1,8 +1,11 @@
 # Ledger rebuild handoff (feat/fcd-ledger-rebuild, PR #15)
 
 Upstream: redwan-cse/ledger-blogger-theme v1.7.0 at a3da05a8a70243c6ffc239b0e96e88260ed7b536.
-Port writer: port/apply.py plus port/ledger.json, applied by the TEMPORARY
-ledger-port.yml workflow (bot commits do not trigger CI).
+Until US-L6 a temporary port writer (port/apply.py with port/ledger.json and
+port/lockfile.json, run by ledger-port.yml) imported the upstream files
+byte-exact and applied the FCD edits; references to port edits below are
+that history. Since US-L6 the Ledger-derived files under src/ are ordinary
+sources, edited directly.
 
 ## Story state
 
@@ -26,7 +29,7 @@ ledger-port.yml workflow (bot commits do not trigger CI).
 | Fifth upload, production | done 2026-10-08 by the owner, to blogs.fastcyberdefense.com (the production blog, docs/DEPLOYMENT.md) | build 26ca599, artifact fcd-theme-26ca5994c7eea4785971f4d9b3e7b096aed7f720 (sha256 026a885a2593dd82d8de1147664ab7fafcd4eafa77416c09bc8f07d9b93ae359); owner evidence pending (rendered theme-build stamp, post with diagrams and callouts in both themes, 390 and 1280 px, Layout); rollback triggers as in docs/DEPLOYMENT.md; main does not yet contain this build (PR #15 is a draft) |
 | US-L11 comment logo only on blog-author comments | green in run 37739466219 at d1fd459 (red first in run 37738307296 at 9f0c203: spoofed names "FCD", "Fast Cyber Defense", "Team FCD Support" got the logo); fix c39c2c3; unit 59/59, contract 39/39, audit lows only | tests/fcd/comments.test.ts runs the built theme script over the static post view with five comments; Blogger evidence pending |
 | Sixth upload, production | done 2026-10-08 by the owner, to blogs.fastcyberdefense.com | build d1fd459, artifact fcd-theme-d1fd45998a51589ef7e1dc44e634795a5f34f36b (sha256 8543f054dc80228a4865c18e66bdbe0657bce680ba1df74731ae6fc74723a52b), replaces 26ca599; owner evidence pending (rendered theme-build stamp 0.0.0+d1fd459..., post with diagrams and callouts in both themes, 390 and 1280 px, Layout, one of the owner's own comments); main does not yet contain this build (PR #15 is a draft) |
-| US-L6 cleanup and records | pending | remove port/, ledger-port.yml, staging-check.yml, excerpt step; CHANGELOG, AGENTS.md, PR body |
+| US-L6 cleanup and records | done on this commit, CI pending (approved 2026-10-08) | removed port/, ledger-port.yml, staging-check.yml (its staging:check script no longer exists) and the ci.yml port excerpt step; CHANGELOG, AGENTS.md, README, DEPLOYMENT.md current status and the PR #15 body updated; the theme XML must be unchanged apart from its stamp |
 
 ## US-L5 changes (main.ts, via port edits)
 
@@ -143,6 +146,23 @@ commenter whose display name contained "fcd" or "fast cyber defense", so
 anyone could appear as the company. A port edit to main.ts now requires
 Blogger's own .blog-author flag as well; other commenters keep their photo or
 an initials avatar.
+
+## US-L6: cleanup and records (2026-10-08)
+
+The port writer did its job and is gone: the reviewed result of every edit
+in port/ledger.json is already committed under src/, and the lockfile
+updates of port/lockfile.json are in package-lock.json (npm audit at d1fd459,
+run 37739466219, reports only katex and mermaid via katex; neither
+source-map-js nor dompurify). The ledger-port
+workflow was deleted before the port files, so their removal started no bot
+run. staging-check.yml called npm run staging:check, which the rebuilt
+package.json no longer defines. The ci.yml step that published the tail of
+main.ts as notices served only the port review.
+
+Still open after US-L6: the owner's production evidence for d1fd459
+(docs/DEPLOYMENT.md), the cover image credit on the post (content, not
+theme), deleting relocated gadgets in Layout, and the katex low advisory.
+Merge, ready for review and any further upload need the owner's approval.
 
 ## Dependency audit (2026-10-06)
 

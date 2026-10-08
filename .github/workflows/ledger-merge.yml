@@ -1,0 +1,51 @@
+# TEMPORARY (Ledger v1.8.0 port, owner decision 2026-10-08). Three-way merges
+# the src/ files upstream changed between v1.7.0 and v1.8.0 into the FCD
+# sources (port/merge.py, port/merge.json) and fast-forwards this feature
+# branch. Removed before the port is accepted. It runs only for pushes that
+# change port/merge.json on this exact branch of this repository, never
+# touches .github, and its push does not trigger other workflows.
+name: Ledger v1.8.0 merge (temporary)
+on:
+  push:
+    branches: [feat/fcd-ledger-v1.8.0]
+    paths: ['port/merge.json']
+permissions:
+  contents: read
+concurrency:
+  group: fcd-ledger-merge
+  cancel-in-progress: false
+jobs:
+  merge:
+    if: github.repository == 'thefastcyberdefense/google-blogger' && github.ref == 'refs/heads/feat/fcd-ledger-v1.8.0'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Check out Ledger with history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: redwan-cse/ledger-blogger-theme
+          ref: 6701496399519a2f6a9f2daec723c9216c68f702
+          path: .ledger-upstream
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Three-way merge into the FCD sources
+        run: |
+          mv .ledger-upstream "$RUNNER_TEMP/ledger-upstream"
+          python3 port/merge.py "$RUNNER_TEMP/ledger-upstream"
+      - name: Commit and fast-forward the branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A src port
+          git reset -q -- .github
+          if git diff --cached --quiet; then echo 'Nothing to merge'; exit 0; fi
+          git diff --cached --stat
+          git commit -q -m "port(ledger): merge Ledger v1.8.0 src changes for ${GITHUB_SHA}" -m "Upstream redwan-cse/ledger-blogger-theme a3da05a8 to 6701496, three-way merged into the FCD sources by port/merge.py with port/merge.json. Written by run ${GITHUB_RUN_ID}, attempt ${GITHUB_RUN_ATTEMPT}."
+          git push origin HEAD:refs/heads/feat/fcd-ledger-v1.8.0

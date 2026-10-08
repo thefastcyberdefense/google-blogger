@@ -1,6 +1,18 @@
 # Artifact handoff, native acceptance and release boundaries
 
-## Current L1 status and native-checkpoint procedure (2026-10-03 Asia/Dhaka)
+## Current status: Ledger rebuild on the production blog (2026-10-08 Asia/Dhaka)
+
+This section supersedes the L1 status and procedure below and the present-tense status in every older section; they remain dated history. Main is still `ad5e5d9e3e17089ea39d3c62e065d829dd97f235`, the merge of PR #13. The L1 shell of [draft PR #14](https://github.com/thefastcyberdefense/google-blogger/pull/14) is superseded and stays unmerged. FCD Blogger is rebuilt on Ledger v1.7.0 on `feat/fcd-ledger-rebuild` in [draft PR #15](https://github.com/thefastcyberdefense/google-blogger/pull/15); [LEDGER-REBUILD.md](LEDGER-REBUILD.md) records its stories, runs and uploads.
+
+**Live build.** On 2026-10-08 the owner uploaded build `d1fd459` to https://blogs.fastcyberdefense.com/, the production blog, replacing `26ca599` uploaded earlier that day: artifact `fcd-theme-d1fd45998a51589ef7e1dc44e634795a5f34f36b` from run 37739466219, 329,475 bytes, XML SHA-256 `8543f054dc80228a4865c18e66bdbe0657bce680ba1df74731ae6fc74723a52b`, stamp `0.0.0+d1fd45998a51589ef7e1dc44e634795a5f34f36b`. Main does not contain this build. A green run is source evidence only. Pending owner evidence: save result, the rendered `theme-build` stamp, a post with diagrams, callouts and comments in light and dark after switching themes twice at 390 and 1280 px, the home page and a label or search view, and the Layout editor.
+
+**Artifacts.** Every fully green run uploads `fcd-theme-<sha>`, a zip holding only that run's compiled XML (retained 90 days), and records the XML's own SHA-256 in a run notice and the job summary. Any upload must use the downloaded bytes of an explicitly selected head, verified against that notice, never a regenerated or hand-edited file. The pinned artifact verifier still verifies only historical `9a6f484`. The read-only staging workflow (staging-check.yml) was removed in US-L6 because its `staging:check` script no longer exists; the staging workflow, manifest and fixtures named below are history.
+
+**Boundaries and rollback.** Agents make no automated requests to https://blogs.fastcyberdefense.com/, including read-only fetches; the owner makes every production observation in his own browser and every Blogger action is his. After an upload, delete in Layout the gadgets the theme does not use (the Profile gadget lists personal author profiles and must not stay). Rollback triggers: save failure, stamp mismatch, missing posts or navigation, duplicated gadgets, a second or missing h1, broken diagrams or comments, or lost Attribution. Then restore the previously exported theme and Layout settings, confirm the rendered identity and record the evidence. Content recovery is separate.
+
+---
+
+## Historical L1 status and native-checkpoint procedure (2026-10-03 Asia/Dhaka; superseded 2026-10-08)
 
 This section supersedes the 2026-10-01 L1 status and procedure directly below and the present-tense status in every older section; they remain dated history. Main is still `ad5e5d9e3e17089ea39d3c62e065d829dd97f235`, the merge of PR #13. L1, now including owner-approved design v1 (the Navigation, Intro, Call to Action and Footer gadgets, then design tokens and components), is source-verified through US-015 at `c66cc24` (2026-10-04) on `feat/fcd-l1-native-shell` in [draft PR #14](https://github.com/thefastcyberdefense/google-blogger/pull/14), which is unmerged. Its exact-head evidence lives in the PR and in the current L1 checkpoint of docs/PROJECT-PLAN.md.
 

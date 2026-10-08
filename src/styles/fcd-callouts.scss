@@ -1,0 +1,90 @@
+// ---------------------------------------------------------------------------
+// FCD callout colours (US-L10), loaded after fcd.scss in main.scss.
+// Fourth test-blog upload, 2026-10-07: dark.scss gives every blockquote the
+// card and a primary bar, which also turned the five callouts (note, tip,
+// important, warning, caution) blue in dark mode. Each keeps its light bar on
+// a 10% tint of that colour, with a lighter title for the dark surface (6.5:1
+// or more). Light titles are deepened to AA on their 6% tints; the note title
+// stays the primary, as on the main site (3.16:1, tests/fcd/site-exact.ts).
+// ---------------------------------------------------------------------------
+
+@use 'tokens' as *;
+
+html[data-theme='dark'] .post-body blockquote.alert-callout {
+  &.alert-callout-note {
+    border-left-color: $fcd-primary !important;
+    background-color: oklch(63.86% 0.1467 251.2451 / 0.1) !important;
+  }
+
+  &.alert-callout-tip {
+    border-left-color: oklch(62% 0.18 145) !important;
+    background-color: oklch(62% 0.18 145 / 0.1) !important;
+  }
+
+  &.alert-callout-important {
+    border-left-color: oklch(58% 0.22 300) !important;
+    background-color: oklch(58% 0.22 300 / 0.1) !important;
+  }
+
+  &.alert-callout-warning {
+    border-left-color: oklch(65% 0.18 55) !important;
+    background-color: oklch(65% 0.18 55 / 0.1) !important;
+  }
+
+  &.alert-callout-caution {
+    border-left-color: oklch(55% 0.22 25) !important;
+    background-color: oklch(55% 0.22 25 / 0.1) !important;
+  }
+
+  &.alert-callout-note .alert-callout-title,
+  &.alert-callout-note .alert-callout-title span {
+    color: oklch(78% 0.1 245) !important;
+  }
+
+  &.alert-callout-tip .alert-callout-title,
+  &.alert-callout-tip .alert-callout-title span {
+    color: oklch(78% 0.16 145) !important;
+  }
+
+  &.alert-callout-important .alert-callout-title,
+  &.alert-callout-important .alert-callout-title span {
+    color: oklch(76% 0.13 300) !important;
+  }
+
+  &.alert-callout-warning .alert-callout-title,
+  &.alert-callout-warning .alert-callout-title span {
+    color: oklch(78% 0.14 60) !important;
+  }
+
+  &.alert-callout-caution .alert-callout-title,
+  &.alert-callout-caution .alert-callout-title span {
+    color: oklch(74% 0.14 25) !important;
+  }
+}
+
+html:not([data-theme='dark']) .post-body blockquote.alert-callout {
+  &.alert-callout-note .alert-callout-title,
+  &.alert-callout-note .alert-callout-title span {
+    color: $fcd-primary !important;
+  }
+
+  &.alert-callout-tip .alert-callout-title,
+  &.alert-callout-tip .alert-callout-title span {
+    color: oklch(45% 0.13 145) !important;
+  }
+
+  &.alert-callout-important .alert-callout-title,
+  &.alert-callout-important .alert-callout-title span {
+    color: oklch(48% 0.2 300) !important;
+  }
+
+  &.alert-callout-warning .alert-callout-title,
+  &.alert-callout-warning .alert-callout-title span {
+    color: oklch(50% 0.13 55) !important;
+  }
+
+  &.alert-callout-caution .alert-callout-title,
+  &.alert-callout-caution .alert-callout-title span {
+    color: oklch(48% 0.19 25) !important;
+  }
+}

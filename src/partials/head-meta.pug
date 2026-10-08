@@ -1,20 +1,124 @@
-//- all-head-content owns canonical, base OpenGraph and description. Verify rendered uniqueness on staging.
+//- Robots Directives
+b:if(cond='data:view.isSearch or data:view.isArchive or (data:view.isMultipleItems and data:newerPageUrl)')
+  meta(name='robots' content='noindex, follow')/
+b:if(cond='not (data:view.isSearch or data:view.isArchive or (data:view.isMultipleItems and data:newerPageUrl))')
+  meta(name='robots' content='index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1')/
+
+//- Resource hints for critical above-the-fold assets
+link(rel='preconnect' href='https://blogger.googleusercontent.com' crossorigin='anonymous')/
+b:if(cond='data:view.isHomepage and not data:newerPageUrl and data:widgets.Blog.first.posts.first.featuredImage')
+  b:with(value='resizeImage(data:widgets.Blog.first.posts.first.featuredImage, 640, "16:9")' var='heroThumb')
+    b:with(value='resizeImage(data:widgets.Blog.first.posts.first.featuredImage, 384, "16:9")' var='heroThumbSm')
+      link(rel='preload' as='image' expr:href='data:heroThumb' expr:imagesrcset='data:heroThumbSm + " 384w, " + data:heroThumb + " 640w"' imagesizes='(max-width: 768px) 348px, 280px' fetchpriority='high')/
+b:if(cond='data:view.isPost and data:view.featuredImage')
+  link(rel='preload' as='image' expr:href='data:view.featuredImage' fetchpriority='high')/
+
+//- FCD typography: Inter for text and Fira Code for code, as on fastcyberdefense.com.
+//- System stacks in tokens.scss remain the fallback if the font host is unreachable.
+link(rel='preconnect' href='https://fonts.googleapis.com')/
+link(rel='preconnect' href='https://fonts.gstatic.com' crossorigin='anonymous')/
+link(rel='stylesheet' href='https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap')/
+
+//- OpenGraph Semantic Types (Base og:url, og:title, og:description, og:image provided by all-head-content)
 meta(property='og:site_name' expr:content='data:blog.title.escaped')/
-meta(property='og:type' expr:content='data:view.isPost ? "article" : "website"')/
-meta(name='twitter:card' expr:content='data:view.featuredImage ? "summary_large_image" : "summary"')/
+b:if(cond='data:view.isPost')
+  meta(property='og:type' content='article')/
+b:if(cond='not data:view.isPost')
+  meta(property='og:type' content='website')/
+
+//- Twitter Card Metadata
+b:if(cond='data:view.featuredImage')
+  meta(name='twitter:card' content='summary_large_image')/
+  meta(name='twitter:image' expr:content='data:view.featuredImage')/
+b:if(cond='not data:view.featuredImage and data:blog.postImageThumbnailUrl')
+  meta(name='twitter:card' content='summary_large_image')/
+  meta(name='twitter:image' expr:content='data:blog.postImageThumbnailUrl')/
+b:if(cond='not data:view.featuredImage and not data:blog.postImageThumbnailUrl')
+  meta(name='twitter:card' content='summary')/
 meta(name='twitter:title' expr:content='data:view.title.escaped')/
 b:if(cond='data:view.description')
   meta(name='twitter:description' expr:content='data:view.description.escaped')/
-b:if(cond='data:view.featuredImage')
-  meta(name='twitter:image' expr:content='data:view.featuredImage')/
-b:if(cond='data:view.isHomepage')
+b:if(cond='not data:view.description and data:blog.metaDescription')
+  meta(name='twitter:description' expr:content='data:blog.metaDescription.escaped')/
+b:if(cond='not data:view.description and not data:blog.metaDescription')
+  meta(name='twitter:description' expr:content='data:view.title.escaped')/
+
+//- Schema.org WebSite JSON-LD
+b:if(cond='data:view.isHomepage or data:view.isSearch')
   script(type='application/ld+json').
-    {"@context":"https://schema.org","@type":"WebSite","name":"<data:blog.title.jsonEscaped/>","url":"<data:blog.canonicalHomepageUrl.jsonEscaped/>","publisher":{"@type":"Organization","name":"Fast Cyber Defense","url":"https://fastcyberdefense.com/"}}
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "<data:blog.title.jsonEscaped/>",
+      "url": "<data:blog.canonicalHomepageUrl.jsonEscaped/>",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "<b:eval expr='(data:blog.canonicalHomepageUrl path "search" params {q: "{search_term_string}"}).jsonEscaped'/>"
+        },
+        "query-input": "required name=search_term_string"
+      }
+    }
+
+//- Article OpenGraph & Schema.org BlogPosting JSON-LD on Single Post Views
 b:if(cond='data:view.isPost')
   b:with(value='data:widgets.Blog.first.posts.first' var='post')
-    b:if(cond='data:post.date')
-      meta(property='article:published_time' expr:content='data:post.date.iso8601')/
+    meta(property='article:published_time' expr:content='data:post.date.iso8601')/
+    b:if(cond='data:post.lastUpdated')
+      meta(property='article:modified_time' expr:content='data:post.lastUpdated.iso8601')/
+    meta(property='article:author' expr:content='data:post.author.name')/
     script(type='application/ld+json').
-      {"@context":"https://schema.org","@type":"BlogPosting","headline":"<data:post.title.jsonEscaped/>","mainEntityOfPage":"<data:view.url.canonical.jsonEscaped/>","publisher":{"@type":"Organization","name":"Fast Cyber Defense","url":"https://fastcyberdefense.com/"}<b:if cond='data:post.date'>,"datePublished":"<data:post.date.iso8601.jsonEscaped/>"</b:if><b:if cond='data:post.author.name'>,"author":{"@type":"Person","name":"<data:post.author.name.jsonEscaped/>"}</b:if><b:if cond='data:post.lastUpdated'>,"dateModified":"<data:post.lastUpdated.iso8601.jsonEscaped/>"</b:if><b:if cond='data:view.featuredImage'>,"image":"<data:view.featuredImage.jsonEscaped/>"</b:if>}
+      {
+        "@context": "https://schema.org",
+        "@type": "BlogPosting",
+        "mainEntityOfPage": {
+          "@type": "WebPage",
+          "@id": "<data:view.url.canonical.jsonEscaped/>"
+        },
+        "headline": "<data:view.title.jsonEscaped/>",
+        "description": "<b:eval expr='snippet(data:post.snippets.long ?: (data:view.description ?: data:view.title), {length: 250, links: false, linebreaks: false, ellipsis: true}).jsonEscaped'/>",
+        "datePublished": "<data:post.date.iso8601.jsonEscaped/>"
+        <b:if cond='data:post.lastUpdated'>
+        , "dateModified": "<data:post.lastUpdated.iso8601.jsonEscaped/>"
+        </b:if>
+        <b:if cond='data:view.featuredImage'>
+        , "image": "<data:view.featuredImage.jsonEscaped/>"
+        </b:if>
+        , "author": {
+          "@type": "Person",
+          "name": "<data:post.author.name.jsonEscaped/>"
+          <b:if cond='data:post.author.profileUrl'>
+          , "url": "<data:post.author.profileUrl.jsonEscaped/>"
+          </b:if>
+          <b:if cond='data:post.author.authorPhoto.image'>
+          , "image": "<data:post.author.authorPhoto.image.jsonEscaped/>"
+          </b:if>
+        },
+        "publisher": {
+          "@type": "Organization",
+          "name": "<data:blog.title.jsonEscaped/>",
+          "url": "https://fastcyberdefense.com/"
+        }
+      }
     script(type='application/ld+json').
-      {"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Fast Cyber Defense Blog","item":"<data:blog.canonicalHomepageUrl.jsonEscaped/>"},{"@type":"ListItem","position":2,"name":"<data:post.title.jsonEscaped/>","item":"<data:view.url.canonical.jsonEscaped/>"}]}
+      {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "<data:blog.canonicalHomepageUrl.jsonEscaped/>"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "<data:view.title.jsonEscaped/>",
+            "item": "<data:view.url.canonical.jsonEscaped/>"
+          }
+        ]
+      }
+
+//- No analytics or trackers: the upstream gtag and Clarity IDs are not FCD's.

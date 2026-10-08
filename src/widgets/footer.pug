@@ -1,10 +1,49 @@
-footer.site-footer
-  .container.footer-grid
-    div
-      p.brand-name Fast Cyber Defense
-      p Quick to Act, Strong to Protect.
-    nav(aria-label='Company and publication')
-      a(href='https://fastcyberdefense.com/') Company website
-      a(expr:href='data:blog.homepageUrl path "feeds/posts/default"') Publication feed
-      a(href='#content') Back to content
-  .container.footer-note Security research and practical guidance from Fast Cyber Defense.
+b:section(class='footer' id='footer' name='Footer' showaddelement='yes')
+  b:widget(id='HTML3' locked='false' title='Footer' type='HTML' version='2' visible='true')
+    b:includable(id='main')
+      b:if(cond='data:content')
+        div.footer-content
+          b:eval(expr='data:content')/
+      b:if(cond='not data:content')
+        div.footer-grid
+          //- Column 1: Brand / Description
+          div.footer-col.footer-col-brand
+            h3.footer-heading
+              b:eval(expr='data:blog.title')/
+            p.footer-desc
+              b:eval(expr='data:blog.description ?: "Security research, field notes and practical defense from Fast Cyber Defense."')/
+          //- Column 2: Publications & Policies
+          div.footer-col.footer-col-nav
+            h3.footer-heading Publications &amp; Policies
+            ul.footer-links-list
+              li
+                a(expr:href='data:blog.homepageUrl path "search"') All Publications
+              li
+                a(expr:href='data:blog.homepageUrl path "p/privacy.html"') Privacy Policy
+              li
+                a(expr:href='data:blog.homepageUrl path "p/terms.html"') Terms of Service
+              li
+                a(expr:href='data:blog.homepageUrl path "feeds/posts/default"') RSS Feed
+          //- Column 3: Company
+          div.footer-col.footer-col-connect
+            h3.footer-heading Fast Cyber Defense
+            ul.footer-links-list
+              li
+                a(href='https://fastcyberdefense.com/' target='_blank' rel='noopener noreferrer') fastcyberdefense.com
+        div.footer-bottom
+          div.footer-bottom-left
+            p.footer-copyright
+              | © 2026 
+              b:eval(expr='data:blog.title')/
+              |  · Quick to Act, Strong to Protect.
+          div.footer-bottom-right
+            a.footer-back-to-top(href='#content' aria-label='Back to top') Back to top ↑
+
+  b:widget(id='Attribution1' locked='true' title='' type='Attribution' version='2' visible='true')
+    b:widget-settings
+      b:widget-setting(name='copyright')
+    b:includable(id='main' var='this')
+      div.footer-attribution
+        span.blogger
+          a(expr:href='data:bloggerUrl' rel='nofollow')
+            b:message(name='messages.poweredByBlogger')/

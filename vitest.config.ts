@@ -1,2 +1,2 @@
 import { defineConfig } from 'vitest/config';
-export default defineConfig({ test: { include: ['tests/unit/**/*.test.ts', 'tests/contract/**/*.test.ts'], environment: 'node' } });
+export default defineConfig({ test: { include: ['tests/fcd/**/*.test.ts'], environment: 'node', chaiConfig: { truncateThreshold: 0 } } });

@@ -1,0 +1,271 @@
+// ---------------------------------------------------------------------------
+// FCD overrides on the Ledger v1.7.0 styles (US-L7)
+// Findings from the first test-blog upload, 2026-10-05. Loaded last in
+// main.scss. Each selector mirrors the Ledger rule it corrects, one step more
+// specific, so the cascade stays readable.
+// ---------------------------------------------------------------------------
+
+@use 'tokens' as *;
+
+// 1. Relocated gadgets. On upload Blogger keeps gadgets an earlier theme
+// declared and moves them into the first section, the masthead, where Ledger's
+// display: contents wrappers make each one a header item. These sections take
+// no gadgets of their own (showaddelement false), so anything but the theme's
+// widget stays hidden on the live blog. Layout (body#layout) still lists it so
+// the owner can delete it there.
+body:not(#layout) {
+  #header > .widget:not(#Header1),
+  #navlinks > .widget:not(#LinkList1),
+  #intro > .widget:not(#HTML1),
+  #topics > .widget:not(#Label1),
+  #page_body > .widget:not(#Blog1),
+  #cta > .widget:not(#HTML2) {
+    display: none;
+  }
+}
+
+// 2. The FCD mark is an inline SVG in rows sized for Ledger's portrait; keep it
+// square beside the long blog title instead of letting the row shrink it.
+.fcd-mark {
+  flex-shrink: 0;
+}
+
+// 3. Light call-to-action secondary. Ledger paints every link in the box as the
+// filled primary; FCD's second action is an outline, as it already is in dark
+// mode, in the primary as on the main site (3.14:1 on the card).
+html:not([data-theme='dark']) .cta-container .cta-box .cta-btn.cta-btn-secondary {
+  background: transparent;
+  border: 1px solid oklch(63.86% 0.1467 251.2451 / 0.45);
+  color: $accent !important;
+
+  &:hover,
+  &:focus-visible {
+    background: $accent-wash;
+    border-color: $accent;
+  }
+}
+
+// 4. Dark theme: secondary buttons whose light rules outrank Ledger's dark
+// overrides, and rules that kept the light border colour on the dark page.
+html[data-theme='dark'] {
+  .sidebar-profile-card .sidebar-actions .sidebar-btn.sidebar-btn-secondary,
+  .post-author-bio .author-follow-actions .author-follow-btn.author-follow-rss,
+  .author-bio-card .author-follow-actions .author-follow-btn.author-follow-rss {
+    background-color: $dark-surface;
+    border-color: $dark-rule;
+    color: $dark-ink;
+
+    &:hover,
+    &:focus-visible {
+      background-color: $fcd-dark-secondary;
+      border-color: oklch(63.86% 0.1467 251.2451 / 0.5);
+      color: $dark-ink;
+    }
+  }
+
+  .post-thumbnail-link,
+  .post-author-mini .post-author-mini-avatar,
+  .sidebar-card .sidebar-card-header,
+  .footer-container .footer-bottom,
+  .post .post-header,
+  .post-share-bar,
+  .post-nav,
+  .post-navigation,
+  .post-author-bio img.author-avatar,
+  .author-bio-card img.author-avatar,
+  #comments .avatar-image-container img {
+    border-color: $dark-rule;
+  }
+
+  // The comments divider kept its light colour against the rule above, so
+  // Ledger declares it with more weight; match it with an important dark rule.
+  .comments,
+  #comments.comments {
+    border-color: $dark-rule !important;
+  }
+}
+
+// 5. Second upload, 2026-10-06 (US-L8). The marks are now the company logo
+// (partials/fcd-logo.pug, fastcyberdefense.com icon0.svg): a disc whose letters
+// are cut out. Ledger frames a portrait photo with a ring and a white fill;
+// behind the logo that fill would show through the letters, so the small marks
+// stand bare and the letters show the surface below, as on the main site. The
+// hero keeps its ring, with the logo set inside it.
+.header-avatar.fcd-mark,
+.sidebar-avatar.fcd-mark,
+.drawer-avatar.fcd-mark {
+  padding: 0 !important;
+  border: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+}
+
+.hero-portrait-img.fcd-mark {
+  box-sizing: border-box;
+  padding: 16px;
+  background: none !important;
+}
+
+// An author without a photo gets the logo instead of initials: the same
+// icon0.svg as a data URI, so there is no request.
+$fcd-logo-uri: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1495.22 1495.22'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='747.61' y1='1495.22' x2='747.61' y2='0' gradientUnits='userSpaceOnUse'%3E%3Cstop offset='0' stop-color='%232d4e8e'/%3E%3Cstop offset='.04' stop-color='%23325695'/%3E%3Cstop offset='.27' stop-color='%235082b8'/%3E%3Cstop offset='.47' stop-color='%2366a2d2'/%3E%3Cstop offset='.65' stop-color='%2373b6e2'/%3E%3Cstop offset='.76' stop-color='%2378bde8'/%3E%3Cstop offset='.82' stop-color='%2385c8e8'/%3E%3Cstop offset='.92' stop-color='%2394d5e9'/%3E%3Cstop offset='1' stop-color='%239adaea'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath fill='url(%23g)' d='M747.61,0C334.71,0,0,334.72,0,747.61s334.71,747.61,747.61,747.61,747.61-334.72,747.61-747.61S1160.5,0,747.61,0ZM529.33,474.45l-126.82,55.49v-83.23l-117.1,51.49,22.02,114.97,221.9-103.05v95.12l-194.5,89.55c43.27,128.04,112.17,245.91,194.5,352.34v188.25c-188.18-186.72-329.75-448.7-371.38-712.54-2.83-17.87-13.16-79.59-7.12-92.02,6.49-13.32,132-74.29,153.9-83.87,72.39-31.67,148.16-54.94,224.6-74.62v202.12ZM927.62,1274.99c-34.11,27.9-66.43,58.05-101.46,84.82-12.38,9.46-70.87,55.04-80.64,54.12-64.7-40.32-121.65-90.94-179.66-139.74l-.82-1009.75c39.04-3.3,77.83-12.82,116.91-15.85,82.91-6.42,165.2,3.37,247.62,15.85l.19,417.39-130.93,58.11c-1.94-1.45,3.96-5.04,3.96-5.9v-348.76c0-1.09-4.07-9.24-6.67-10.06-33.2-2.24-64.49-2.16-97.71-.02l-6.17,14.35-.66,812.39c1.55,27.04,37.71,38.69,54.33,56.91l56.88-45.27c-3.72-107.38,5-217.99,0-324.98,0-.3-9.55-9.41,1.9-5.88,39.65,12.22,84.29,44.87,125.18,57.85l-2.25,334.42ZM965.28,1235.38V438.78l126.82,45.58v362.63c11.43-9.46,18.23-27.56,24.48-40.91,44.59-95.24,78.52-200.93,93.95-305.17-74.33-46.91-162.39-70.37-245.25-99.77v-128.81c89.97,22.81,178.6,52.18,262.42,92.29,17.74,8.49,113.7,57.25,117.29,68.96,4.75,15.52-5.23,69.83-8.32,89.27-42.11,264.44-182.5,525.67-371.39,712.53Z'/%3E%3C/svg%3E";
+
+.author-avatar.author-avatar-fallback {
+  background: transparent url($fcd-logo-uri) center / contain no-repeat !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+
+  .author-initials {
+    display: none;
+  }
+}
+
+// 6. Comment actions are white on the primary in both themes, as on the main
+// site (the owner's choice, 2026-10-06; 3.38:1). Ledger hovered to a violet
+// blue; the hover darkens the primary instead.
+html[data-theme='dark'] #comments {
+  #add-comment,
+  .add-comment-link,
+  #threaded-comment-form a,
+  .comment-trigger-btn {
+    background: $accent;
+
+    &:hover {
+      background: oklch(50% 0.1467 251.2451);
+    }
+  }
+
+  .comment-author-badge {
+    background: $accent;
+  }
+}
+
+// 7. The owner's tweakcn theme (US-L9): its shadows, tinted with the primary,
+// for every Ledger elevation token (tokens.scss reads these properties).
+:root {
+  --fcd-shadow-sm: 0px 4px 10px 0px hsl(210 73.2143% 56.0784% / 0.1), 0px 1px 2px -1px hsl(210 73.2143% 56.0784% / 0.1);
+  --fcd-shadow-md: 0px 4px 10px 0px hsl(210 73.2143% 56.0784% / 0.1), 0px 2px 4px -1px hsl(210 73.2143% 56.0784% / 0.1);
+  --fcd-shadow-lg: 0px 4px 10px 0px hsl(210 73.2143% 56.0784% / 0.1), 0px 4px 6px -1px hsl(210 73.2143% 56.0784% / 0.1);
+  --fcd-shadow-xl: 0px 4px 10px 0px hsl(210 73.2143% 56.0784% / 0.1), 0px 8px 10px -1px hsl(210 73.2143% 56.0784% / 0.1);
+}
+
+html[data-theme='dark'] {
+  --fcd-shadow-sm: 0px 6px 12px 0px hsl(210 73.2143% 56.0784% / 0.2), 0px 1px 2px -1px hsl(210 73.2143% 56.0784% / 0.2);
+  --fcd-shadow-md: 0px 6px 12px 0px hsl(210 73.2143% 56.0784% / 0.2), 0px 2px 4px -1px hsl(210 73.2143% 56.0784% / 0.2);
+  --fcd-shadow-lg: 0px 6px 12px 0px hsl(210 73.2143% 56.0784% / 0.2), 0px 4px 6px -1px hsl(210 73.2143% 56.0784% / 0.2);
+  --fcd-shadow-xl: 0px 6px 12px 0px hsl(210 73.2143% 56.0784% / 0.2), 0px 8px 10px -1px hsl(210 73.2143% 56.0784% / 0.2);
+}
+
+// 8. The hero status pill is the tweakcn secondary badge (it was Ledger's
+// green "online" pill): secondary fill, foreground text, primary beacon.
+.hero-banner .status-pill {
+  background: $fcd-secondary !important;
+  border-color: transparent !important;
+  color: $ink !important;
+
+  .status-label {
+    color: $ink !important;
+  }
+}
+
+html[data-theme='dark'] .hero-banner .status-pill {
+  background: $fcd-dark-secondary !important;
+  color: $dark-ink !important;
+
+  .status-label {
+    color: $dark-ink !important;
+  }
+}
+
+.hero-banner .status-pill .status-beacon {
+  background-color: $fcd-primary !important;
+}
+
+// 9. Dark hover follows tweakcn: the accent surface with the accent
+// foreground. Ledger lit the label in the highlight blue on the border grey
+// (3.6:1 once the highlight is the primary); on the accent it is 7.41:1.
+html[data-theme='dark'] {
+  .newer-link:hover,
+  .older-link:hover,
+  .blog-pager-newer-link:hover,
+  .blog-pager-older-link:hover,
+  .drawer-nav-link:hover,
+  .drawer-social-btn:hover,
+  .drawer-close:hover,
+  .share-btn:hover,
+  .sidebar-btn-secondary:hover,
+  .sidebar-cta-btn:hover,
+  .site-nav .nav-link:hover,
+  .hero-btn-secondary:hover,
+  .hero-btn-tertiary:hover,
+  .cta-btn-secondary:hover,
+  .cta-container .cta-box .cta-btn-secondary:hover,
+  .drawer-toggle:hover,
+  .search-toggle:hover,
+  .theme-toggle:hover,
+  .header-profile-badge:hover,
+  .topic-pill:hover,
+  .topic-pill.is-active,
+  .post-label:hover,
+  .label-link:hover,
+  .author-link-pill:hover,
+  .mermaid-diagram-wrap .mermaid-fallback-card .fallback-copy-btn:hover,
+  .mermaid-diagram-wrap .mermaid-modern-toolbar .mm-btn:hover:not(:disabled),
+  .table-of-contents .toc-toggle:hover,
+  #comments .comment-actions a:hover,
+  #comments .comment-reply a:hover,
+  #comments .continue a:hover,
+  #comments .loadmore a:hover,
+  #comments .thread-toggle:hover {
+    background-color: $fcd-dark-secondary !important;
+    color: $dark-ink !important;
+  }
+
+  // Labels on a primary tint keep the foreground (the primary on its own
+  // tint is about 4:1).
+  .table-of-contents .toc-badge,
+  .table-of-contents .toc-link:hover .toc-num,
+  .table-of-contents .toc-link.is-active .toc-num {
+    color: $dark-ink !important;
+  }
+}
+
+// 10. Text the AA audit (tests/fcd/contrast.test.ts) measured below 4.5:1.
+// The meta separator was faded with opacity; dark links without a dark rule
+// of their own kept the light action blue (3.2:1), as did the call-to-action
+// tag; the footer copy kept the light muted grey.
+.post-meta-sep {
+  opacity: 1 !important;
+  color: $ink-muted !important;
+}
+
+html[data-theme='dark'] {
+  .post-meta-sep {
+    color: $dark-muted !important;
+  }
+
+  :where(a:not(.skip-link)) {
+    color: $dark-accent;
+  }
+
+  .cta-container .cta-box .cta-tag {
+    color: $dark-accent;
+  }
+
+  .footer-container .footer-desc,
+  .footer-container .footer-copyright {
+    color: $dark-muted;
+  }
+}
+
+// 11. Light label hover follows tweakcn the same way: Ledger deepens the label
+// to a 15% action-blue tint and keeps the blue text (3.96:1 on the tint); the
+// text takes the foreground (10.6:1).
+html:not([data-theme='dark']) {
+  .post-label:hover,
+  .label-link:hover,
+  .post-labels .label-link:hover,
+  .post-labels .post-label:hover {
+    color: $ink;
+  }
+}

@@ -1,36 +1,86 @@
-import { createRequire } from 'node:module';
 import { execFileSync } from 'node:child_process';
-import { mkdir, writeFile, readFile } from 'node:fs/promises';
+import { createRequire } from 'node:module';
+import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
-import { gzipSync } from 'node:zlib';
 import path from 'node:path';
-import { compile } from 'sass';
-import { build as bundle } from 'esbuild';
-const require=createRequire(import.meta.url);
-export const pug=require('pug') as {renderFile(path:string,options:Record<string,unknown>):string};
-export const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
-export async function assets(){
- const css=compile(path.join(root,'src/styles/main.scss'),{style:'compressed'}).css;
- const grammars=['core','markup','clike','javascript','bash','powershell','python','typescript','sql','json','yaml','docker','http'];
- const prism=(await Promise.all(grammars.map(name=>readFile(require.resolve(`prismjs/components/prism-${name}.min.js`),'utf8')))).join('\n');
- const result=await bundle({entryPoints:[path.join(root,'src/scripts/main.ts')],bundle:true,write:false,minify:true,format:'iife',target:'es2022',legalComments:'inline'});
- const script='globalThis.Prism={manual:true,disableWorkerMessageHandler:true};\n'+prism+'\n'+result.outputFiles[0].text;
- if(css.includes(']]>')||script.includes(']]>'))throw new Error('Unsafe CDATA terminator in compiled assets');
- return {css,script};
+import { compileString } from 'sass';
+import { transform } from 'esbuild';
+
+interface PugRenderer {
+  renderFile(filename: string, options: Record<string, unknown>): string;
 }
-export async function generateTheme(){
- const sha=(process.env.THEME_SHA||execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'})).trim();
- if(!/^[a-f0-9]{40}$/i.test(sha))throw new Error('A full commit SHA is required');
- const compiled=await assets();
- const html=pug.renderFile(path.join(root,'src/theme.pug'),{...compiled,build:`0.1.0+${sha}`,pretty:true,doctype:'html',rootAttributes:{'b:css':'false','b:defaultwidgetversion':'2','b:layoutsVersion':'3','b:responsive':'true','b:templateUrl':'indie.xml','b:templateVersion':'0.0.0','expr:dir':'data:blog.languageDirection','expr:lang':'data:blog.locale',xmlns:'http://www.w3.org/1999/xhtml','xmlns:b':'http://www.google.com/2005/gml/b','xmlns:data':'http://www.google.com/2005/gml/data','xmlns:expr':'http://www.google.com/2005/gml/expr'}});
- const xml=`<?xml version="1.0" encoding="UTF-8"?>\n${html}\n`;const bytes=Buffer.byteLength(xml);
- if(bytes>500000)throw new Error(`Theme exceeds 500000-byte limit: ${bytes}`);
- const measure=(text:string)=>({raw:Buffer.byteLength(text),gzip:gzipSync(text).byteLength});
- // Owner policy: component sizes are informational; only total raw XML is capped.
- const size={source:sha,xml:measure(xml),css:measure(compiled.css),js:measure(compiled.script)};
- await writeFile(path.join(root,'build-size.json'),JSON.stringify(size,null,2));
- await mkdir(path.join(root,'dist'),{recursive:true});await writeFile(path.join(root,'dist/theme.xml'),xml);
- console.log(`Built dist/theme.xml: ${bytes} bytes; CSS ${size.css.raw}; bundled JS ${size.js.raw}; source ${sha}`);
- return xml;
+
+const pug = createRequire(import.meta.url)('pug') as PugRenderer;
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const TEMPLATE_VERSION = '0.0.0';
+
+export interface GenerateThemeOptions {
+  sha: string;
+  write?: boolean;
 }
-if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url))await generateTheme();
+
+export interface GeneratedTheme {
+  build: string;
+  xml: string;
+  bytes: number;
+}
+
+function fullSha(value: string): string {
+  const sha = value.trim();
+  if (!/^[0-9a-f]{40}$/i.test(sha)) throw new Error('Generation requires a full 40-character git SHA.');
+  return sha.toLowerCase();
+}
+
+export async function generateTheme(options: GenerateThemeOptions): Promise<GeneratedTheme> {
+  const sha = fullSha(options.sha);
+  const build = `${TEMPLATE_VERSION}+${sha}`;
+  const [scss, scriptSource] = await Promise.all([
+    readFile(path.join(ROOT, 'src/styles/main.scss'), 'utf8'),
+    readFile(path.join(ROOT, 'src/scripts/main.ts'), 'utf8')
+  ]);
+  const css = compileString(scss, { style: 'compressed', loadPaths: [path.join(ROOT, 'src/styles')] }).css;
+  const script = (await transform(scriptSource, { loader: 'ts', format: 'iife', minify: true, target: 'es2023' })).code.trim();
+  const xml = pug.renderFile(path.join(ROOT, 'src/theme.pug'), {
+    doctype: 'html',
+    pretty: true,
+    build,
+    css,
+    script,
+    templateVersion: TEMPLATE_VERSION,
+    rootAttributes: {
+      'b:css': 'false',
+      'b:defaultwidgetversion': '2',
+      'b:layoutsVersion': '3',
+      'b:responsive': 'true',
+      'b:templateUrl': 'indie.xml',
+      'b:templateVersion': TEMPLATE_VERSION,
+      'expr:dir': 'data:blog.languageDirection',
+      'expr:lang': 'data:blog.locale',
+      'data-theme': 'dark',
+
+
+
+      'xmlns': 'http://www.w3.org/1999/xhtml',
+      'xmlns:b': 'http://www.google.com/2005/gml/b',
+      'xmlns:data': 'http://www.google.com/2005/gml/data',
+      'xmlns:expr': 'http://www.google.com/2005/gml/expr'
+    }
+  });
+  const output = `<?xml version="1.0" encoding="UTF-8" ?>\n${xml.trim()}\n`;
+  const bytes = Buffer.byteLength(output, 'utf8');
+  if (bytes > 500_000) throw new Error(`Generated theme is ${bytes} bytes; budget is 500000.`);
+  if (options.write !== false) {
+    await mkdir(path.join(ROOT, 'dist'), { recursive: true });
+    await writeFile(path.join(ROOT, 'dist/theme.xml'), output, 'utf8');
+  }
+  return { build, xml: output, bytes };
+}
+
+function currentSha(): string {
+  return (process.env.THEME_SHA ?? process.env.GITHUB_SHA ?? execFileSync('git', ['rev-parse', 'HEAD'], { cwd: ROOT, encoding: 'utf8' })).trim();
+}
+
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  const generated = await generateTheme({ sha: currentSha() });
+  console.log(`Generated dist/theme.xml (${generated.bytes} bytes, ${generated.build}).`);
+}

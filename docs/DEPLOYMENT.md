@@ -1,6 +1,63 @@
 # Artifact handoff, native acceptance and release boundaries
 
-## Current status and bootstrap boundary (2026-09-27 Asia/Dhaka)
+## Current status: Ledger rebuild on the production blog (2026-10-08 Asia/Dhaka)
+
+This section supersedes the L1 status and procedure below and the present-tense status in every older section; they remain dated history. Main is still `ad5e5d9e3e17089ea39d3c62e065d829dd97f235`, the merge of PR #13. The L1 shell of [draft PR #14](https://github.com/thefastcyberdefense/google-blogger/pull/14) is superseded and stays unmerged. FCD Blogger is rebuilt on Ledger v1.7.0 on `feat/fcd-ledger-rebuild` in [draft PR #15](https://github.com/thefastcyberdefense/google-blogger/pull/15); [LEDGER-REBUILD.md](LEDGER-REBUILD.md) records its stories, runs and uploads.
+
+**Live build.** On 2026-10-08 the owner uploaded build `d1fd459` to https://blogs.fastcyberdefense.com/, the production blog, replacing `26ca599` uploaded earlier that day: artifact `fcd-theme-d1fd45998a51589ef7e1dc44e634795a5f34f36b` from run 37739466219, 329,475 bytes, XML SHA-256 `8543f054dc80228a4865c18e66bdbe0657bce680ba1df74731ae6fc74723a52b`, stamp `0.0.0+d1fd45998a51589ef7e1dc44e634795a5f34f36b`. Main does not contain this build. A green run is source evidence only. Pending owner evidence: save result, the rendered `theme-build` stamp, a post with diagrams, callouts and comments in light and dark after switching themes twice at 390 and 1280 px, the home page and a label or search view, and the Layout editor.
+
+**Artifacts.** Every fully green run uploads `fcd-theme-<sha>`, a zip holding only that run's compiled XML (retained 90 days), and records the XML's own SHA-256 in a run notice and the job summary. Any upload must use the downloaded bytes of an explicitly selected head, verified against that notice, never a regenerated or hand-edited file. The pinned artifact verifier still verifies only historical `9a6f484`. The read-only staging workflow (staging-check.yml) was removed in US-L6 because its `staging:check` script no longer exists; the staging workflow, manifest and fixtures named below are history.
+
+**Boundaries and rollback.** Agents make no automated requests to https://blogs.fastcyberdefense.com/, including read-only fetches; the owner makes every production observation in his own browser and every Blogger action is his. After an upload, delete in Layout the gadgets the theme does not use (the Profile gadget lists personal author profiles and must not stay). Rollback triggers: save failure, stamp mismatch, missing posts or navigation, duplicated gadgets, a second or missing h1, broken diagrams or comments, or lost Attribution. Then restore the previously exported theme and Layout settings, confirm the rendered identity and record the evidence. Content recovery is separate.
+
+---
+
+## Historical L1 status and native-checkpoint procedure (2026-10-03 Asia/Dhaka; superseded 2026-10-08)
+
+This section supersedes the 2026-10-01 L1 status and procedure directly below and the present-tense status in every older section; they remain dated history. Main is still `ad5e5d9e3e17089ea39d3c62e065d829dd97f235`, the merge of PR #13. L1, now including owner-approved design v1 (the Navigation, Intro, Call to Action and Footer gadgets, then design tokens and components), is source-verified through US-015 at `c66cc24` (2026-10-04) on `feat/fcd-l1-native-shell` in [draft PR #14](https://github.com/thefastcyberdefense/google-blogger/pull/14), which is unmerged. Its exact-head evidence lives in the PR and in the current L1 checkpoint of docs/PROJECT-PLAN.md.
+
+**No verified import candidate exists.** Every fully green run uploads `fcd-theme-<sha>`, a zip holding only that run's compiled XML (retained 90 days), and records the XML's own SHA-256 in a run notice. That artifact is for the owner's inspection and is not a candidate selection. Any upload must use the downloaded bytes of an explicitly selected head, verified against that notice, never a regenerated or hand-edited file. The pinned artifact verifier still verifies only historical `9a6f484` and must not be described as validating L1 artifacts; repinning is separate scope.
+
+### L1 native-checkpoint procedure (a procedure, not an authorization)
+
+Each Blogger step below needs its own explicit owner approval. Agents make no automated requests to https://blogs.fastcyberdefense.com/, including read-only fetches; the owner makes every production observation in his own browser.
+
+1. **Inventory, B1 quick check.** On the public homepage, run a read-only console snippet and share the output: at minimum `Array.from(document.querySelectorAll('.widget')).map(w => ({ id: w.id, type: w.className, section: w.closest('.section')?.id }))`. Alternatively open each gadget's Layout edit dialog without saving and copy its `widgetId=` value. Confirm the saved ids of Blog Search, Attribution, Report Abuse and Profile, and confirm that `LinkList1`, `HTML1`, `HTML2` and `HTML3` are not already used by a saved gadget. If any of those four ids is taken, stop: the theme's declared id must change in source, test-first, before any upload.
+2. **Dispositions, B2.** Confirm the gadget matrix in [DESIGN-SYSTEM.md](DESIGN-SYSTEM.md): Header1, Blog1, Label1 and BlogArchive1 kept; Profile1 in the sidebar; Attribution1 then ReportAbuse1 in the footer; the new Navigation, Intro, Call to Action and Footer gadgets in their own sections; and the saved Blog Search gadget deleted by the owner in Layout, because FCD's own search is the single search.
+3. **Prove on a disposable blog first (recommended R0/R1-early).** Reproduce the broken masthead there with the same four saved gadgets, then upload the selected L1 artifact before considering production.
+4. **Backups.** Export the current theme, back up content separately, and screenshot the Layout page with every section and gadget.
+5. **Upload and prompt observation.** Use Blogger's theme controls, never Settings > Import Content. Record any prompt about gadgets the new theme does not declare and the choice made. Delete a gadget only where its approved disposition says so.
+6. **Layout check.** Confirm that Navigation, Intro, Call to Action and Footer each appear as their own section holding one gadget, next to Header1, the sidebar and the footer gadgets. Open each new gadget without saving and confirm the fresh-install defaults render on the public page. Then enter the owner's content: Navigation links in the owner's order; Intro copy without headings; exactly one heading, a line and a link in the Call to Action; a sentence or two without headings in the Footer.
+7. **Capture.** Save result and UTC time, the rendered `theme-build` stamp, where each kept and new gadget lands, and 390 and 1280 px captures in light and dark of the masthead and drawer, the first home page's intro band, home page 2 (older posts: it must show the plain publication heading and no intro band, which checks `data:newerPageUrl` outside Blog1), an article, a label or search view, the call-to-action band and the footer. Also capture the Layout editor showing every section.
+8. **Rollback triggers.** Save failure, stamp mismatch, missing posts or navigation, duplicated gadgets, a new gadget missing from Layout or showing defaults over saved copy, a second or missing h1, a masthead, sidebar or footer regression, or lost Attribution: restore the saved theme and Layout settings, confirm the rendered identity and record the evidence. Content recovery is separate.
+
+Fixture screenshots are design references only. Automated evidence cannot prove Blogger save or import, where kept gadgets land, whether they use the theme's default markups, how saved gadget copy renders, the `no-items` class, Layout editor behavior or real content.
+
+---
+
+## Historical L1 status and native-checkpoint procedure (2026-10-01 Asia/Dhaka; superseded 2026-10-03)
+
+This section supersedes the present-tense status in the sections below, which remain dated history. Main is `ad5e5d9e3e17089ea39d3c62e065d829dd97f235`, the merge of PR #13; [post-merge run 36586048928](https://github.com/thefastcyberdefense/google-blogger/actions/runs/36586048928/job/109466535788) passed every stage with 450 unit/contract and 1,674 browser cases. "Current main is `ecb1d438...`" and the prospective PR #10 and PR #11 statements below are historical. L1 work is on `feat/fcd-l1-native-shell` in [draft PR #14](https://github.com/thefastcyberdefense/google-blogger/pull/14); its exact-head evidence lives in the PR and in the L1 checkpoint of docs/PROJECT-PLAN.md.
+
+**No verified import candidate exists.** The checked-in XML keeps its historical stamp until the US-006 transfer, and that transfer commit is not a candidate selection. The pinned artifact verifier still verifies only historical `9a6f484` and must not be described as validating L1 artifacts; repinning is separate scope. Any upload must use the downloaded and fingerprinted bytes of an explicitly selected accepted head, never a regenerated or hand-edited file.
+
+### L1 native-checkpoint procedure (a procedure, not an authorization)
+
+Each Blogger step below needs its own explicit owner approval. Agents make no automated requests to https://blogs.fastcyberdefense.com/, including read-only fetches; the owner makes every production observation in his own browser.
+
+1. **Inventory, input B1.** On the public homepage, run a read-only console snippet and share the output: the L1 contract's Appendix B snippet (widget id, type and parent section, plus a tag, id and class skeleton of `#header` and `#sidebar`), or at minimum `Array.from(document.querySelectorAll('.widget')).map(w => ({ id: w.id, type: w.className, section: w.closest('.section')?.id }))`. Alternatively open each extra gadget's Layout edit dialog without saving and copy its `widgetId=` value. Guessed ids such as `Attribution1` risk duplicate gadgets after upload.
+2. **Dispositions, input B2.** Confirm the gadget matrix in [DESIGN-SYSTEM.md](DESIGN-SYSTEM.md): Attribution and Report Abuse to the footer, Profile to a sidebar Contributors card, blog search removed at the checkpoint, and Header1, Blog1, Label1 and BlogArchive1 kept.
+3. **Prove on a disposable blog first (recommended R0/R1-early).** Reproduce the broken masthead there with the same four gadgets and the post-N2A artifact, then upload the selected L1 artifact before considering production.
+4. **Backups.** Export the current theme, back up content separately, and screenshot the Layout page with every section and gadget.
+5. **Upload and prompt observation.** Use Blogger's theme controls, never Settings > Import Content. Record any prompt about gadgets the new theme does not declare and the choice made. Delete a gadget only where its approved disposition says so.
+6. **Capture.** Save result and UTC time, the rendered `theme-build` stamp, where each kept gadget lands, the masthead, sidebar and footer at 390 and 1280 px in light and dark, and the Layout editor showing the header, sidebar and footer sections.
+7. **Rollback triggers.** Save failure, stamp mismatch, missing posts or navigation, duplicated gadgets, a masthead or sidebar regression, or lost Attribution: restore the saved theme and Layout settings, confirm the rendered identity and record the evidence. Content recovery is separate.
+
+Fixture screenshots are design references only. Automated evidence cannot prove Blogger save or import, where kept gadgets land, whether they use the theme's default markups, the `no-items` class, Layout editor behavior or real content.
+
+---
+
+## Historical status and bootstrap boundary (2026-09-27 Asia/Dhaka; superseded 2026-10-01)
 
 This section supersedes the dated preparation snapshot below while preserving its candidate tuples and historical procedures. [PR #10](https://github.com/thefastcyberdefense/google-blogger/pull/10) was merged on explicit approval. Current main is `ecb1d438e8b3227911dc76359b9e05f127867b27`; [post-merge run 35303993418](https://github.com/thefastcyberdefense/google-blogger/actions/runs/35303993418/job/105472311414) completed 2026-09-18 03:52:09 UTC with all stages successful, 211 unit/contract and 1434 browser passes, audit and XML consistency. This is source evidence, not native/import/human/release acceptance. CodeQL analysis also succeeded, not a guarantee of zero alerts.
 

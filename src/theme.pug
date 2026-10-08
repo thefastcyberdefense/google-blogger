@@ -1,51 +1,196 @@
 doctype html
 html&attributes(rootAttributes)
   head
-    meta(name='viewport' content='width=device-width, initial-scale=1')/
-    meta(name='theme-build' content=build)/
-    meta(name='color-scheme' content='light dark')/
+    meta(content='width=device-width, initial-scale=1' name='viewport')/
+    meta(content=build name='theme-build')/
+    meta(name='color-scheme' content='dark light')/
+    link(rel='alternate' type='application/rss+xml' expr:title='data:blog.title.escaped' expr:href='data:blog.canonicalHomepageUrl path "feeds/posts/default"')/
     title
       | <data:view.title.escaped/>
     b:include(data='blog' name='all-head-content')/
-    link(rel='alternate' type='application/atom+xml' expr:href='data:blog.canonicalHomepageUrl path "feeds/posts/default"' expr:title='data:blog.title.escaped')/
-    b:skin(version='0.0.0').
+    b:skin(version=templateVersion).
       <![CDATA[
       !{css}
       ]]>
     b:template-skin.
       <![CDATA[
-      body#layout .fcd-layout,body#layout .site-header,body#layout .site-footer{display:block;position:static}body#layout .skip-link,body#layout .js-control{display:none}
+      body#layout .hidden,
+      body#layout .invisible {
+        display: inherit;
+      }
+      body#layout .skip-link,
+      body#layout .reading-progress,
+      body#layout .drawer-backdrop,
+      body#layout .mobile-drawer,
+      body#layout .mobile-nav-drawer,
+      body#layout .search-modal,
+      body#layout .search-results-dropdown,
+      body#layout .toast-container {
+        display: none;
+      }
+      body#layout .header-outer,
+      body#layout .nav-container,
+      body#layout .intro-container,
+      body#layout .topics-container,
+      body#layout .main-content,
+      body#layout .cta-container,
+      body#layout .footer-container {
+        display: block;
+        position: relative;
+        width: 100%;
+        margin: 0 auto;
+      }
       ]]>
     b:defaultmarkups
       include defaultmarkups/common.pug
+      include defaultmarkups/adsense-blog.pug
+      include defaultmarkups/blog-featured-post.pug
+      include defaultmarkups/blog-featured-popular.pug
       include defaultmarkups/blog.pug
+      include defaultmarkups/header.pug
+      include defaultmarkups/blog-archive.pug
+      include defaultmarkups/blog-search.pug
+      include defaultmarkups/label.pug
+      include defaultmarkups/featured-post.pug
+      include defaultmarkups/popular-posts.pug
+      include defaultmarkups/page-list.pug
+      include defaultmarkups/profile.pug
+      include defaultmarkups/contact-form.pug
+      include defaultmarkups/attribution.pug
     include partials/head-meta.pug
-    script.
-      //<![CDATA[
-      try{var t=localStorage.getItem('fcd-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t;}catch(e){}
-      //]]>
   body
-    b:class(cond='data:view.isSingleItem' name='is-single')/
+    //- +fcdLogo for the masthead, hero, sidebar and drawer marks.
+    include partials/fcd-logo.pug
     b:class(cond='data:view.isHomepage and not data:newerPageUrl' name='is-home-lead')/
+    b:class(cond='data:view.isPost' name='is-post')/
+    b:class(cond='data:view.isPage' name='is-page')/
     a.skip-link(href='#content') Skip to content
-    include widgets/header.pug
-    main#content.container(tabindex='-1')
-      b:if(cond='not data:view.isSingleItem')
-        header.publication-heading
-          p.eyebrow Fast Cyber Defense Blog
-          h1
-            b:if(cond='data:view.isHomepage') Security knowledge. Practical defense.
-            b:if(cond='not data:view.isHomepage')
-              b:eval(expr='data:view.title')/
-          p.standfirst Research, threat insights, and guidance for stronger security.
+    b:if(cond='data:view.isPost')
+      div#reading-progress.reading-progress(aria-label='Reading progress' aria-valuemax='100' aria-valuemin='0' aria-valuenow='0' role='progressbar')
+        div.reading-progress-bar
+    div.header-outer(role='banner')
+      div.header-bar
+        include widgets/header.pug
+        div.nav-container
+          include widgets/linklist.pug
+    div.intro-container
+      include widgets/intro.pug
+    div.topics-container
       include widgets/label.pug
-      .fcd-layout
-        .publication-stream
-          include widgets/blog.pug
-        include widgets/sidebar.pug
-    include widgets/footer.pug
-    p#fcd-status.sr-only(role='status' aria-live='polite')
-    script.
-      //<![CDATA[
-      !{script}
-      //]]>
+    main#content.main-content(role='main')
+      include widgets/blog.pug
+      b:if(cond='not data:view.isError')
+        aside.desktop-sidebar(aria-label='Sidebar')
+          b:if(cond='data:view.isSingleItem')
+            div.sidebar-card.sidebar-search-card
+              div.sidebar-card-header
+                div.sidebar-header-status
+                  span.sidebar-status-dot
+                  h3.sidebar-card-title Search
+              form.sidebar-search-form(expr:action='data:blog.searchUrl' method='get' role='search')
+                div.sidebar-search-input-wrap
+                  svg.sidebar-search-icon(aria-hidden='true' height='16' viewBox='0 0 24 24' width='16')
+                    path(d='M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z' fill='currentColor')
+                  input.sidebar-search-input(aria-label='Search articles' autocomplete='off' name='q' placeholder='Search articles…' type='search')/
+                div.sidebar-search-results.search-results-dropdown(aria-live='polite' style='display:none;')
+          div.sidebar-card.sidebar-profile-card
+            div.sidebar-profile-header
+              +fcdLogo('sidebar-avatar fcd-mark', 48, 'fcd-logo-sidebar')
+              div.sidebar-profile-info
+                h3.sidebar-name
+                  b:eval(expr='data:blog.title')/
+                span.sidebar-tagline
+                  b:eval(expr='"Quick to Act, Strong to Protect."')/
+            div.sidebar-actions
+              a.sidebar-btn.sidebar-btn-primary(href='https://fastcyberdefense.com/' target='_blank' rel='noopener noreferrer')
+                svg.sidebar-btn-icon(aria-hidden='true' height='16' viewBox='0 0 24 24' width='16')
+                  path(d='M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z' fill='currentColor')
+                span Visit Fast Cyber Defense
+              a.sidebar-btn.sidebar-btn-secondary(expr:href='data:blog.canonicalHomepageUrl path "feeds/posts/default"' aria-label='Subscribe via RSS feed' title='Subscribe via RSS feed')
+                svg.sidebar-btn-icon(aria-hidden='true' height='16' viewBox='0 0 24 24' width='16')
+                  path(d='M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19 7.38 20 6.18 20C5 20 4 19 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93V10.1z' fill='currentColor')
+                span RSS Feed
+          div.sidebar-card.sidebar-recent-card
+            div.sidebar-card-header
+              h3.sidebar-card-title Recent Publications
+            div.sidebar-recent-list
+              b:if(cond='not data:view.isSingleItem and data:widgets.Blog.first.posts')
+                b:loop(values='data:widgets.Blog.first.posts' var='post' index='i')
+                  b:if(cond='data:i < 4')
+                    article.sidebar-recent-item
+                      a.sidebar-recent-link(expr:href='data:post.url')
+                        span.sidebar-recent-title
+                          b:eval(expr='data:post.title')/
+                        div.sidebar-recent-meta
+                          b:if(cond='data:post.labels')
+                            b:loop(values='data:post.labels' var='label' index='li')
+                              b:if(cond='data:li == 0')
+                                span.sidebar-recent-tag
+                                  b:eval(expr='data:label.name')/
+                          b:if(cond='data:post.date')
+                            time.sidebar-recent-date(expr:datetime='data:post.date.iso8601')
+                              b:eval(expr='data:post.date')/
+    div.cta-container
+      include widgets/cta.pug
+    footer.footer-container(role='contentinfo')
+      include widgets/footer.pug
+    div.drawer-backdrop(aria-hidden='true')
+    nav#mobile-drawer.mobile-drawer(aria-hidden='true' aria-label='Mobile Navigation' inert='true')
+      div.drawer-header
+        div.drawer-brand
+          +fcdLogo('drawer-avatar fcd-mark', 38, 'fcd-logo-drawer')
+          div.drawer-brand-text
+            div.drawer-title
+              b:eval(expr='data:blog.title')/
+            div.drawer-subtitle Quick to Act, Strong to Protect.
+        button.drawer-close(aria-label='Close navigation' type='button')
+          svg(aria-hidden='true' height='20' viewBox='0 0 24 24' width='20')
+            path(d='M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z')
+      div.drawer-section.drawer-search-wrap
+        form.drawer-search-form.search-form(expr:action='data:blog.searchUrl' method='get' role='search')
+          div.sidebar-search-input-wrap
+            svg.sidebar-search-icon(aria-hidden='true' height='16' viewBox='0 0 24 24' width='16')
+              path(d='M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z' fill='currentColor')
+            input.drawer-search-input(aria-label='Search articles' autocomplete='off' name='q' placeholder='Search articles…' type='search')/
+          div.drawer-search-results.search-results-dropdown(aria-live='polite' style='display:none;')
+      div.drawer-section.drawer-nav-section
+        div.drawer-section-title Navigation
+        ul.drawer-nav-list
+          li.drawer-nav-item
+            a.drawer-nav-link(expr:href='data:blog.homepageUrl path "search"')
+              span.drawer-nav-icon 📄
+              span.drawer-nav-text All Publications
+          li.drawer-nav-item
+            a.drawer-nav-link(expr:href='data:blog.canonicalHomepageUrl path "feeds/posts/default"')
+              span.drawer-nav-icon 📡
+              span.drawer-nav-text RSS Feed
+          li.drawer-nav-item
+            a.drawer-nav-link(href='https://fastcyberdefense.com/' target='_blank' rel='noopener noreferrer')
+              span.drawer-nav-icon 🛡️
+              span.drawer-nav-text Fast Cyber Defense
+      div.drawer-section.drawer-recent-card.sidebar-card.sidebar-recent-card
+        div.sidebar-card-header
+          h3.sidebar-card-title Recent Publications
+        div.sidebar-recent-list
+          b:if(cond='not data:view.isSingleItem and data:widgets.Blog.first.posts')
+            b:loop(values='data:widgets.Blog.first.posts' var='post' index='i')
+              b:if(cond='data:i < 4')
+                article.sidebar-recent-item
+                  a.sidebar-recent-link(expr:href='data:post.url')
+                    span.sidebar-recent-title
+                      b:eval(expr='data:post.title')/
+                    div.sidebar-recent-meta
+                      b:if(cond='data:post.labels')
+                        b:loop(values='data:post.labels' var='label' index='li')
+                          b:if(cond='data:li == 0')
+                            span.sidebar-recent-tag
+                              b:eval(expr='data:label.name')/
+                      b:if(cond='data:post.date')
+                        time.sidebar-recent-date(expr:datetime='data:post.date.iso8601')
+                          b:eval(expr='data:post.date')/
+    div#toast-container.toast-container(aria-live='polite')
+    if script
+      script.
+        //<![CDATA[
+        !{script}
+        //]]>

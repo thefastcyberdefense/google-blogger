@@ -1,0 +1,25 @@
+b:section(class='intro' id='intro' name='Intro' showaddelement='false')
+  b:widget(id='HTML1' locked='false' title='Intro' type='HTML' version='2' visible='true')
+    b:includable(id='main')
+      b:if(cond='data:content')
+        div.intro-content
+          b:eval(expr='data:content')/
+      b:if(cond='not data:content and data:view.isHomepage and not data:newerPageUrl')
+        div.hero-banner
+          div.hero-content-col
+            div.hero-meta-row
+              div.status-pill
+                span.status-beacon
+                span.status-label SECURITY RESEARCH &amp; NOTES
+            div.hero-title Security knowledge. Practical defense.
+            p.hero-standfirst Field notes, research and hands-on guidance from Fast Cyber Defense on penetration testing, cloud security, hardening and detection engineering.
+            div.hero-actions
+              a.hero-btn.hero-btn-primary(href='https://fastcyberdefense.com/' target='_blank' rel='noopener noreferrer')
+                svg(viewBox='0 0 24 24' width='16' height='16' aria-hidden='true')
+                  path(d='M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z' fill='currentColor')
+                span Explore Fast Cyber Defense
+              a.hero-btn.hero-btn-secondary(expr:href='data:blog.canonicalHomepageUrl path "search"')
+                span Browse all articles
+          div.hero-photo-col
+            //- FCD logo in place of a portrait; decorative, the title carries the meaning.
+            +fcdLogo('hero-portrait-img fcd-mark', 260, 'fcd-logo-hero')

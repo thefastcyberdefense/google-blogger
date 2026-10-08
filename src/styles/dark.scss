@@ -1,0 +1,1050 @@
+// ---------------------------------------------------------------------------
+// Flagship Cybersecurity Dark Theme Mode
+// Loaded last in main.scss to guarantee cascade precedence over component styles
+// ---------------------------------------------------------------------------
+
+@use 'tokens' as *;
+
+html[data-theme='dark'] {
+  color-scheme: dark;
+  background-color: oklch(19.71% 0.0414 269.7076);
+  color: oklch(92.88% 0.0126 255.5078);
+
+  body {
+    background-color: oklch(19.71% 0.0414 269.7076);
+    color: oklch(92.88% 0.0126 255.5078);
+  }
+
+  .header-outer {
+    background: oklch(19.71% 0.0414 269.7076 / 0.85);
+    border-bottom-color: oklch(33.51% 0.0331 260.912);
+  }
+
+  .site-title,
+  .site-title a,
+  .post-title,
+  .post-title a,
+  .post-author-mini-name,
+  .post-author-name,
+  .author-name,
+  .author-bio-name,
+  .drawer-nav-link,
+  .drawer-title,
+  .search-modal-title,
+  .empty-state-title,
+  .toc-link,
+  .hero-title,
+  .cta-title,
+  .footer-heading,
+  .hero-btn-tertiary {
+    color: oklch(92.88% 0.0126 255.5078);
+  }
+
+  .status-pill {
+    background: oklch(40.15% 0.0706 251.9121 / 0.25);
+    border-color: oklch(63.86% 0.1467 251.2451 / 0.4);
+    color: oklch(63.86% 0.1467 251.2451);
+  }
+
+  .status-label {
+    color: oklch(63.86% 0.1467 251.2451);
+  }
+
+  .status-beacon {
+    background-color: oklch(63.86% 0.1467 251.2451);
+    box-shadow: 0 0 8px oklch(63.86% 0.1467 251.2451);
+  }
+
+  .footer-status,
+  .footer-status span {
+    color: oklch(63.86% 0.1467 251.2451);
+  }
+
+  .newer-link,
+  .older-link,
+  .blog-pager-newer-link,
+  .blog-pager-older-link {
+    color: oklch(92.88% 0.0126 255.5078);
+    background-color: oklch(24.41% 0.0456 268.3692);
+    border-color: oklch(33.51% 0.0331 260.912);
+
+    &:hover {
+      background-color: oklch(33.51% 0.0331 260.912);
+      border-color: oklch(63.86% 0.1467 251.2451 / 0.5);
+      color: oklch(63.86% 0.1467 251.2451);
+    }
+  }
+
+  .site-tagline,
+  .post-date,
+  .post-meta-row,
+  .post-meta-sep,
+  .post-excerpt,
+  .post-summary,
+  .post-snippet,
+  .empty-state-desc,
+  .empty-state-text,
+  .toc-title,
+  .hero-standfirst,
+  .cta-desc,
+  .footer-container,
+  .footer-container a,
+  .comments-title {
+    color: oklch(71.37% 0.0192 261.3246) !important;
+  }
+
+
+  .post-card,
+  .cta-container .cta-box,
+  .author-bio-card,
+  .post-nav-item,
+  .post-hero-wrap,
+  .table-of-contents {
+    background-color: oklch(24.41% 0.0456 268.3692);
+    border-color: oklch(33.51% 0.0331 260.912);
+    box-shadow: none;
+  }
+
+  .post-body blockquote,
+  blockquote {
+    background-color: oklch(24.41% 0.0456 268.3692) !important;
+    border-left-color: oklch(63.86% 0.1467 251.2451) !important;
+    color: oklch(92.88% 0.0126 255.5078) !important;
+
+    strong {
+      color: oklch(92.88% 0.0126 255.5078) !important;
+    }
+  }
+
+  .lead {
+    color: oklch(92.88% 0.0126 255.5078) !important;
+  }
+
+  .post-thumbnail-link {
+    background-color: oklch(19.71% 0.0414 269.7076) !important;
+  }
+
+  .mobile-drawer,
+  .search-modal-container {
+    background-color: oklch(19.71% 0.0414 269.7076 / 0.96) !important;
+    border-color: oklch(33.51% 0.0331 260.912) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 16px 36px oklch(63.86% 0.1467 251.2451 / 0.5);
+  }
+
+  .sidebar-card {
+    background-color: oklch(24.41% 0.0456 268.3692);
+    border-color: oklch(33.51% 0.0331 260.912);
+    box-shadow: none;
+
+    &:hover {
+      border-color: oklch(63.86% 0.1467 251.2451 / 0.4);
+      box-shadow: none;
+    }
+  }
+
+  .sidebar-card-title,
+  .drawer-section-title,
+  .drawer-title {
+    color: oklch(92.88% 0.0126 255.5078);
+  }
+
+  .sidebar-recent-title,
+  .sidebar-recent-link {
+    color: oklch(92.88% 0.0126 255.5078);
+
+    &:hover {
+      color: oklch(63.86% 0.1467 251.2451) !important;
+    }
+  }
+
+  .sidebar-recent-item:hover .sidebar-recent-title {
+    color: oklch(63.86% 0.1467 251.2451);
+  }
+
+  .sidebar-recent-date,
+  .sidebar-recent-meta,
+  .drawer-subtitle,
+  .sidebar-tagline {
+    color: oklch(71.37% 0.0192 261.3246);
+  }
+
+  .sidebar-recent-tag {
+    color: oklch(85.03% 0.0656 228.1545) !important;
+    background-color: oklch(40.15% 0.0706 251.9121) !important;
+    border-color: oklch(40.15% 0.0706 251.9121) !important;
+  }
+
+  .sidebar-search-input,
+  .drawer-search-input {
+    background-color: oklch(19.71% 0.0414 269.7076) !important;
+    border-color: oklch(33.51% 0.0331 260.912) !important;
+    color: oklch(92.88% 0.0126 255.5078) !important;
+
+    &::placeholder {
+      color: oklch(71.37% 0.0192 261.3246) !important;
+    }
+
+    &:focus {
+      border-color: oklch(63.86% 0.1467 251.2451) !important;
+      box-shadow: 0 0 0 2px oklch(63.86% 0.1467 251.2451 / 0.3) !important;
+    }
+  }
+
+  .sidebar-search-results,
+  .drawer-search-results {
+    background-color: oklch(19.71% 0.0414 269.7076) !important;
+    border-color: oklch(33.51% 0.0331 260.912) !important;
+    box-shadow: 0 16px 36px oklch(63.86% 0.1467 251.2451 / 0.5) !important;
+  }
+
+  .drawer-nav-link,
+  .drawer-social-btn,
+  .drawer-close,
+  .share-btn {
+    background-color: oklch(24.41% 0.0456 268.3692) !important;
+    border-color: oklch(33.51% 0.0331 260.912) !important;
+    color: oklch(92.88% 0.0126 255.5078) !important;
+
+    &:hover {
+      background-color: oklch(33.51% 0.0331 260.912) !important;
+      border-color: oklch(63.86% 0.1467 251.2451 / 0.5) !important;
+      color: oklch(63.86% 0.1467 251.2451) !important;
+    }
+  }
+
+  .drawer-recent-card {
+    background-color: oklch(24.41% 0.0456 268.3692) !important;
+    border-color: oklch(33.51% 0.0331 260.912) !important;
+
+    .sidebar-card-header {
+      border-bottom-color: oklch(33.51% 0.0331 260.912) !important;
+    }
+
+    .sidebar-recent-item {
+      border-bottom-color: oklch(33.51% 0.0331 260.912) !important;
+    }
+
+    .sidebar-recent-title {
+      color: oklch(92.88% 0.0126 255.5078) !important;
+
+      &:hover {
+        color: oklch(63.86% 0.1467 251.2451) !important;
+      }
+    }
+  }
+
+  .search-result-item:hover,
+  .search-result-item.is-active {
+    background-color: oklch(24.41% 0.0456 268.3692) !important;
+  }
+
+  .search-result-title {
+    color: oklch(92.88% 0.0126 255.5078) !important;
+  }
+
+  .search-result-meta,
+  .search-result-date {
+    color: oklch(71.37% 0.0192 261.3246) !important;
+  }
+
+  .sidebar-cta-tag {
+    color: oklch(63.86% 0.1467 251.2451);
+  }
+
+  .sidebar-name,
+  .sidebar-cta-title,
+  .sidebar-status-label {
+    color: oklch(92.88% 0.0126 255.5078);
+  }
+
+  .sidebar-bio,
+  .sidebar-cta-desc,
+  .sidebar-status-text {
+    color: oklch(71.37% 0.0192 261.3246);
+  }
+
+  .sidebar-avatar {
+    border-color: oklch(33.51% 0.0331 260.912);
+  }
+
+  .sidebar-btn-secondary,
+  .sidebar-cta-btn {
+    background-color: oklch(24.41% 0.0456 268.3692);
+    border-color: oklch(33.51% 0.0331 260.912);
+    color: oklch(92.88% 0.0126 255.5078);
+
+    &:hover {
+      background-color: oklch(33.51% 0.0331 260.912);
+      border-color: oklch(63.86% 0.1467 251.2451 / 0.5);
+      color: oklch(63.86% 0.1467 251.2451);
+    }
+  }
+
+  .hero-btn.hero-btn-primary,
+  .sidebar-btn-primary,
+  .cta-btn-primary,
+  .cta-button,
+  .cta-btn {
+    background-color: oklch(63.86% 0.1467 251.2451) !important;
+    color: #ffffff !important;
+
+    &:hover {
+      background-color: oklch(50% 0.1467 251.2451) !important;
+      box-shadow: 0 4px 16px oklch(63.86% 0.1467 251.2451 / 0.4);
+      color: #ffffff !important;
+    }
+  }
+
+  .post-card:hover,
+  .cta-container .cta-box:hover,
+  .author-bio-card:hover,
+  .post-nav-item:hover {
+    border-color: oklch(63.86% 0.1467 251.2451 / 0.4);
+    box-shadow: none;
+  }
+
+  .post,
+  .post-row {
+    background-color: oklch(24.41% 0.0456 268.3692);
+    border-color: oklch(33.51% 0.0331 260.912);
+    box-shadow: 0 2px 8px oklch(63.86% 0.1467 251.2451 / 0.2);
+
+    &:hover {
+      border-color: oklch(63.86% 0.1467 251.2451 / 0.4);
+      box-shadow: none;
+    }
+  }
+
+  .nav-container,
+  .footer-container,
+  .pagination,
+  .blog-pager,
+  hr {
+    border-color: oklch(33.51% 0.0331 260.912);
+  }
+
+  .site-nav .nav-list {
+    background-color: oklch(19.71% 0.0414 269.7076);
+    border-color: oklch(33.51% 0.0331 260.912);
+  }
+
+  .topics-container {
+    background: oklch(24.41% 0.0456 268.3692);
+    border-color: oklch(33.51% 0.0331 260.912);
+  }
+
+  .site-nav .nav-link {
+    color: oklch(92.88% 0.0126 255.5078);
+
+    &:hover {
+      color: oklch(63.86% 0.1467 251.2451);
+      background-color: oklch(33.51% 0.0331 260.912);
+      border-color: oklch(63.86% 0.1467 251.2451 / 0.4);
+    }
+  }
+
+  .topic-pill {
+    background-color: oklch(24.41% 0.0456 268.3692) !important;
+    border-color: oklch(33.51% 0.0331 260.912) !important;
+    color: oklch(92.88% 0.0126 255.5078) !important;
+
+    &.is-active {
+      background-color: oklch(40.15% 0.0706 251.9121) !important;
+      border-color: oklch(63.86% 0.1467 251.2451) !important;
+      color: oklch(63.86% 0.1467 251.2451) !important;
+      font-weight: 600;
+    }
+
+    &:hover {
+      background-color: oklch(40.15% 0.0706 251.9121) !important;
+      border-color: oklch(63.86% 0.1467 251.2451 / 0.6) !important;
+      color: oklch(63.86% 0.1467 251.2451) !important;
+    }
+  }
+
+  .post-label,
+  .label-link {
+    background-color: oklch(40.15% 0.0706 251.9121) !important;
+    border-color: oklch(40.15% 0.0706 251.9121) !important;
+    color: oklch(85.03% 0.0656 228.1545) !important;
+    min-height: unset !important;
+    height: auto !important;
+    padding: 2px 8px !important;
+    border-radius: 4px !important;
+
+    &:hover {
+      background-color: oklch(29.54% 0.0649 265.7059) !important;
+      border-color: oklch(63.86% 0.1467 251.2451) !important;
+      color: oklch(92.88% 0.0126 255.5078) !important;
+    }
+  }
+
+  .code-block-header {
+    background: oklch(24.41% 0.0456 268.3692);
+    border-bottom-color: oklch(33.51% 0.0331 260.912);
+  }
+
+  .post-body > pre {
+    background: oklch(19.71% 0.0414 269.7076);
+    color: oklch(92.88% 0.0126 255.5078);
+  }
+
+  code {
+    background: oklch(24.41% 0.0456 268.3692);
+    color: oklch(63.86% 0.1467 251.2451);
+  }
+
+  pre code {
+    background: transparent;
+    color: inherit;
+  }
+
+
+
+  .footer-links-list a:hover,
+  .footer-back-to-top:hover,
+  .hero-btn-tertiary:hover {
+    color: oklch(63.86% 0.1467 251.2451);
+  }
+
+  .hero-btn-secondary,
+  .hero-btn-tertiary,
+  .cta-btn-secondary {
+    background-color: oklch(24.41% 0.0456 268.3692) !important;
+    border-color: oklch(33.51% 0.0331 260.912) !important;
+    color: oklch(92.88% 0.0126 255.5078) !important;
+
+    &:hover {
+      background-color: oklch(33.51% 0.0331 260.912) !important;
+      border-color: oklch(63.86% 0.1467 251.2451 / 0.5) !important;
+      color: oklch(63.86% 0.1467 251.2451) !important;
+    }
+  }
+
+  .topics-container {
+    background-color: oklch(24.41% 0.0456 268.3692) !important;
+    border-color: oklch(33.51% 0.0331 260.912) !important;
+  }
+
+  .cta-cyber-card {
+    background-color: oklch(24.41% 0.0456 268.3692);
+    border-color: oklch(33.51% 0.0331 260.912);
+  }
+
+  .drawer-toggle,
+  .search-toggle,
+  .theme-toggle {
+    color: oklch(92.88% 0.0126 255.5078);
+
+    &:hover {
+      background-color: oklch(33.51% 0.0331 260.912);
+      color: oklch(63.86% 0.1467 251.2451);
+    }
+  }
+
+  .header-profile-badge {
+    background-color: oklch(24.41% 0.0456 268.3692);
+    border-color: oklch(33.51% 0.0331 260.912);
+    color: oklch(92.88% 0.0126 255.5078);
+
+    &:hover {
+      border-color: oklch(63.86% 0.1467 251.2451);
+      background-color: oklch(33.51% 0.0331 260.912);
+      color: oklch(63.86% 0.1467 251.2451);
+    }
+  }
+
+  .header-brand:hover .site-title,
+  .header-brand:hover .site-tagline {
+    color: oklch(63.86% 0.1467 251.2451);
+  }
+
+  .hero-portrait-img {
+    border-color: oklch(33.51% 0.0331 260.912);
+
+    &:hover {
+      border-color: oklch(63.86% 0.1467 251.2451);
+      box-shadow: 0 8px 32px oklch(63.86% 0.1467 251.2451 / 0.5);
+    }
+  }
+
+  .cta-tag {
+    color: oklch(63.86% 0.1467 251.2451);
+  }
+
+  .cta-cyber-img {
+    border-color: oklch(33.51% 0.0331 260.912);
+
+    &:hover {
+      border-color: oklch(63.86% 0.1467 251.2451);
+    }
+  }
+
+  .cta-container .cta-box {
+    background-color: oklch(24.41% 0.0456 268.3692);
+    border-color: oklch(33.51% 0.0331 260.912);
+    border-top-color: oklch(63.86% 0.1467 251.2451);
+
+    .cta-desc,
+    p {
+      color: oklch(71.37% 0.0192 261.3246);
+    }
+
+    .cta-title {
+      color: oklch(92.88% 0.0126 255.5078);
+    }
+
+    .cta-btn-secondary {
+      background-color: transparent;
+      border-color: oklch(63.86% 0.1467 251.2451 / 0.4);
+      color: oklch(63.86% 0.1467 251.2451) !important;
+
+      &:hover {
+        background-color: oklch(40.15% 0.0706 251.9121);
+        border-color: oklch(63.86% 0.1467 251.2451);
+      }
+    }
+  }
+
+  .jump-link a {
+    color: oklch(63.86% 0.1467 251.2451);
+
+    &:hover {
+      color: oklch(85.03% 0.0656 228.1545);
+    }
+  }
+
+  .author-link-pill {
+    background-color: oklch(24.41% 0.0456 268.3692);
+    border-color: oklch(33.51% 0.0331 260.912);
+    color: oklch(63.86% 0.1467 251.2451);
+
+    &:hover {
+      background-color: oklch(40.15% 0.0706 251.9121);
+      border-color: oklch(63.86% 0.1467 251.2451 / 0.6);
+      color: oklch(85.03% 0.0656 228.1545);
+    }
+  }
+
+  .post-author-bio,
+  .author-bio-card {
+    background-color: oklch(24.41% 0.0456 268.3692);
+    border-color: oklch(33.51% 0.0331 260.912);
+  }
+
+  .author-avatar-fallback {
+    background-color: oklch(33.51% 0.0331 260.912);
+    border-color: oklch(63.86% 0.1467 251.2451);
+
+    .author-initials {
+      color: oklch(63.86% 0.1467 251.2451);
+    }
+  }
+
+  .author-name,
+  .author-name a {
+    color: oklch(92.88% 0.0126 255.5078);
+
+    &:hover {
+      color: oklch(63.86% 0.1467 251.2451);
+    }
+  }
+
+  .author-description {
+    color: oklch(71.37% 0.0192 261.3246);
+  }
+
+  .cta-box a,
+  .cta-desc a,
+  .footer a,
+  .footer-copyright a {
+    color: oklch(63.86% 0.1467 251.2451);
+  }
+
+  .comment-form,
+  #comments .comment,
+  .comments-list .comment,
+  .comment-thread .comment {
+    background-color: oklch(24.41% 0.0456 268.3692) !important;
+    border-color: oklch(33.51% 0.0331 260.912) !important;
+  }
+
+  .comment-form {
+    h4#comment-post-message {
+      color: oklch(92.88% 0.0126 255.5078);
+    }
+
+    iframe#comment-editor,
+    iframe.blogger-iframe-colorize {
+      border-color: oklch(33.51% 0.0331 260.912);
+      color-scheme: dark;
+      background: transparent !important;
+    }
+  }
+
+  .comment-body {
+    color: oklch(92.88% 0.0126 255.5078);
+  }
+
+  .comments-title,
+  .comment-form h4#comment-post-message,
+  .comment-author,
+  .comment-author a {
+    color: oklch(92.88% 0.0126 255.5078);
+  }
+
+  .comment-footer,
+  .comment-footer a,
+  .comment-meta,
+  .comment-tombstone,
+  .post-share-bar .share-label,
+  .author-label,
+  .post-nav-label,
+  .post-nav-direction {
+    color: oklch(71.37% 0.0192 261.3246);
+  }
+
+  .post-nav-item {
+    background-color: oklch(24.41% 0.0456 268.3692);
+    border-color: oklch(33.51% 0.0331 260.912);
+
+    &:hover {
+      border-color: oklch(63.86% 0.1467 251.2451 / 0.5);
+    }
+  }
+
+  .post-nav-title {
+    color: oklch(92.88% 0.0126 255.5078);
+  }
+
+  .listen-btn,
+  .listen-speed-btn {
+    background-color: oklch(24.41% 0.0456 268.3692);
+    border-color: oklch(33.51% 0.0331 260.912);
+    color: oklch(92.88% 0.0126 255.5078);
+
+    &:hover {
+      border-color: oklch(63.86% 0.1467 251.2451 / 0.5);
+      color: oklch(63.86% 0.1467 251.2451);
+    }
+  }
+
+  .table-of-contents {
+    background-color: oklch(19.71% 0.0414 269.7076) !important;
+    border-color: oklch(33.51% 0.0331 260.912) !important;
+    box-shadow: 0 4px 20px oklch(63.86% 0.1467 251.2451 / 0.2) !important;
+
+    &::before {
+      background: linear-gradient(90deg, oklch(63.86% 0.1467 251.2451), oklch(63.86% 0.1467 251.2451 / 0.2)) !important;
+    }
+
+    .toc-header {
+      border-bottom-color: oklch(33.51% 0.0331 260.912) !important;
+    }
+
+    .toc-title {
+      color: oklch(71.37% 0.0192 261.3246) !important;
+
+      .toc-icon {
+        color: oklch(63.86% 0.1467 251.2451) !important;
+      }
+    }
+
+    .toc-badge {
+      background: oklch(63.86% 0.1467 251.2451 / 0.15) !important;
+      color: oklch(63.86% 0.1467 251.2451) !important;
+    }
+
+    .toc-toggle {
+      border-color: oklch(33.51% 0.0331 260.912) !important;
+      color: oklch(71.37% 0.0192 261.3246) !important;
+
+      &:hover {
+        background: oklch(63.86% 0.1467 251.2451 / 0.15) !important;
+        border-color: oklch(63.86% 0.1467 251.2451) !important;
+        color: oklch(63.86% 0.1467 251.2451) !important;
+      }
+    }
+
+    .toc-link {
+      color: oklch(92.88% 0.0126 255.5078) !important;
+
+      .toc-num {
+        color: oklch(71.37% 0.0192 261.3246) !important;
+      }
+
+      &:hover {
+        color: oklch(97.43% 0.0101 228.8865) !important;
+        background: oklch(63.86% 0.1467 251.2451 / 0.12) !important;
+        border-left-color: oklch(63.86% 0.1467 251.2451) !important;
+
+        .toc-num {
+          color: oklch(63.86% 0.1467 251.2451) !important;
+        }
+      }
+
+      &.is-active {
+        color: oklch(97.43% 0.0101 228.8865) !important;
+        background: oklch(63.86% 0.1467 251.2451 / 0.15) !important;
+        border-left-color: oklch(63.86% 0.1467 251.2451) !important;
+
+        .toc-num {
+          color: oklch(63.86% 0.1467 251.2451) !important;
+        }
+      }
+    }
+  }
+
+  .heading-anchor {
+    color: oklch(71.37% 0.0192 261.3246) !important;
+
+    &:hover {
+      color: oklch(63.86% 0.1467 251.2451) !important;
+    }
+  }
+
+  .code-block-wrap {
+    background-color: oklch(19.71% 0.0414 269.7076) !important;
+    border-color: oklch(33.51% 0.0331 260.912) !important;
+
+    .code-block-header {
+      background: oklch(24.41% 0.0456 268.3692) !important;
+      border-bottom-color: oklch(33.51% 0.0331 260.912) !important;
+      color: oklch(71.37% 0.0192 261.3246) !important;
+    }
+
+    .code-copy-btn {
+      background: oklch(24.41% 0.0456 268.3692 / 0.85) !important;
+      border-color: oklch(33.51% 0.0331 260.912) !important;
+      color: oklch(71.37% 0.0192 261.3246) !important;
+
+      &:hover {
+        background: oklch(40.15% 0.0706 251.9121) !important;
+        color: #ffffff !important;
+        border-color: oklch(63.86% 0.1467 251.2451) !important;
+      }
+    }
+
+    pre {
+      margin: 0 !important;
+      background: transparent !important;
+      border: none !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+    }
+  }
+
+  pre {
+    background-color: oklch(19.71% 0.0414 269.7076) !important;
+    border-color: oklch(33.51% 0.0331 260.912) !important;
+    color: oklch(92.88% 0.0126 255.5078) !important;
+  }
+
+  code {
+    background-color: oklch(33.51% 0.0331 260.912 / 0.7) !important;
+    color: oklch(92.88% 0.0126 255.5078) !important;
+  }
+
+  .post-body pre code,
+  pre code {
+    background: transparent !important;
+    color: inherit !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+
+  .code-copy-btn {
+    background: oklch(24.41% 0.0456 268.3692 / 0.85) !important;
+    border-color: oklch(33.51% 0.0331 260.912) !important;
+    color: oklch(71.37% 0.0192 261.3246) !important;
+
+    &:hover {
+      background: oklch(40.15% 0.0706 251.9121) !important;
+      color: #ffffff !important;
+    }
+  }
+
+  // Prism Syntax Highlighting Tokens (Dark Mode)
+  .token.comment,
+  .token.prolog,
+  .token.doctype,
+  .token.cdata {
+    color: #8b949e !important;
+    font-style: italic !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    display: inline !important;
+  }
+
+  .token.punctuation {
+    color: #c9d1d9 !important;
+  }
+
+  .token.property,
+  .token.tag,
+  .token.boolean,
+  .token.number,
+  .token.constant,
+  .token.symbol,
+  .token.deleted {
+    color: #79c0ff !important;
+  }
+
+  .token.selector,
+  .token.attr-name,
+  .token.string,
+  .token.char,
+  .token.builtin,
+  .token.inserted {
+    color: #a5d6ff !important;
+  }
+
+  .token.operator,
+  .token.entity,
+  .token.url {
+    color: #d2a8ff !important;
+  }
+
+  .token.atrule,
+  .token.attr-value,
+  .token.keyword {
+    color: #ff7b72 !important;
+    font-weight: 600 !important;
+  }
+
+  .token.function,
+  .token.class-name {
+    color: #d2a8ff !important;
+    font-weight: 600 !important;
+  }
+
+  .token.regex,
+  .token.important,
+  .token.variable {
+    color: #ffa657 !important;
+  }
+
+  .mermaid-diagram-wrap {
+    background: oklch(19.71% 0.0414 269.7076) !important;
+    border-color: oklch(33.51% 0.0331 260.912) !important;
+
+    .mermaid-stage {
+      scrollbar-color: oklch(33.51% 0.0331 260.912) transparent;
+
+      &::-webkit-scrollbar-thumb {
+        background: oklch(33.51% 0.0331 260.912);
+
+        &:hover {
+          background: oklch(55.1% 0.0234 264.3637);
+        }
+      }
+    }
+
+    .mermaid-modern-toolbar {
+      background: transparent !important;
+      border-color: oklch(33.51% 0.0331 260.912 / 0.6) !important;
+      box-shadow: none !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+
+      &:hover {
+        background: oklch(19.71% 0.0414 269.7076 / 0.85) !important;
+        backdrop-filter: blur(8px) !important;
+        -webkit-backdrop-filter: blur(8px) !important;
+        box-shadow: 0 4px 12px oklch(63.86% 0.1467 251.2451 / 0.2) !important;
+      }
+
+      .mm-btn {
+        color: oklch(71.37% 0.0192 261.3246) !important;
+
+        &:hover:not(:disabled) {
+          background: oklch(63.86% 0.1467 251.2451 / 0.15) !important;
+          color: oklch(63.86% 0.1467 251.2451) !important;
+        }
+
+        &:disabled {
+          opacity: 0.25 !important;
+        }
+      }
+
+      .mm-level {
+        color: oklch(71.37% 0.0192 261.3246) !important;
+
+        &:hover {
+          color: oklch(63.86% 0.1467 251.2451) !important;
+        }
+      }
+
+      .mm-sep {
+        background: oklch(33.51% 0.0331 260.912) !important;
+      }
+    }
+
+    pre.mermaid {
+      color: oklch(92.88% 0.0126 255.5078) !important;
+    }
+
+    &.is-fallback {
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+    }
+
+    .mermaid-fallback-card {
+      background: oklch(19.71% 0.0414 269.7076) !important;
+      border-color: oklch(33.51% 0.0331 260.912) !important;
+
+      .mermaid-fallback-header {
+        background: oklch(24.41% 0.0456 268.3692) !important;
+        border-bottom-color: oklch(33.51% 0.0331 260.912) !important;
+      }
+
+      .mermaid-fallback-title {
+        color: oklch(92.88% 0.0126 255.5078) !important;
+
+        .mermaid-fallback-badge {
+          background: oklch(33.51% 0.0331 260.912) !important;
+          color: oklch(71.37% 0.0192 261.3246) !important;
+        }
+      }
+
+      .fallback-copy-btn {
+        background: oklch(19.71% 0.0414 269.7076) !important;
+        border-color: oklch(33.51% 0.0331 260.912) !important;
+        color: oklch(71.37% 0.0192 261.3246) !important;
+
+        &:hover {
+          background: oklch(40.15% 0.0706 251.9121) !important;
+          color: oklch(63.86% 0.1467 251.2451) !important;
+          border-color: oklch(63.86% 0.1467 251.2451) !important;
+        }
+
+        &.is-copied {
+          color: oklch(63.86% 0.1467 251.2451) !important;
+          border-color: oklch(63.86% 0.1467 251.2451) !important;
+        }
+      }
+
+      pre.mermaid-fallback-code {
+        color: oklch(92.88% 0.0126 255.5078) !important;
+      }
+    }
+  }
+
+  .table-container {
+    border-color: oklch(33.51% 0.0331 260.912) !important;
+
+    thead {
+      background: oklch(19.71% 0.0414 269.7076) !important;
+      border-bottom-color: oklch(33.51% 0.0331 260.912) !important;
+    }
+
+    th {
+      background: oklch(19.71% 0.0414 269.7076) !important;
+      color: oklch(92.88% 0.0126 255.5078) !important;
+      border-bottom: 2px solid oklch(33.51% 0.0331 260.912) !important;
+    }
+
+    td {
+      border-bottom-color: oklch(33.51% 0.0331 260.912) !important;
+      color: oklch(92.88% 0.0126 255.5078) !important;
+    }
+
+    tr:nth-child(even) td {
+      background: oklch(19.71% 0.0414 269.7076) !important;
+    }
+  }
+
+  .posts-filter-bar {
+    background-color: oklch(24.41% 0.0456 268.3692) !important;
+    border-color: oklch(33.51% 0.0331 260.912) !important;
+    box-shadow: 0 4px 16px oklch(63.86% 0.1467 251.2451 / 0.2) !important;
+
+    .filter-label {
+      color: oklch(92.88% 0.0126 255.5078) !important;
+    }
+
+    .filter-input {
+      background-color: oklch(19.71% 0.0414 269.7076) !important;
+      border-color: oklch(33.51% 0.0331 260.912) !important;
+      color: oklch(92.88% 0.0126 255.5078) !important;
+
+      &::placeholder {
+        color: oklch(71.37% 0.0192 261.3246) !important;
+      }
+
+      &:focus {
+        border-color: oklch(63.86% 0.1467 251.2451) !important;
+        box-shadow: 0 0 0 3px oklch(63.86% 0.1467 251.2451 / 0.2) !important;
+      }
+    }
+
+    .filter-select-wrap::after {
+      border-top-color: oklch(71.37% 0.0192 261.3246) !important;
+    }
+
+    .filter-select {
+      background-color: oklch(19.71% 0.0414 269.7076) !important;
+      border-color: oklch(33.51% 0.0331 260.912) !important;
+      color: oklch(92.88% 0.0126 255.5078) !important;
+
+      &:focus {
+        border-color: oklch(63.86% 0.1467 251.2451) !important;
+        box-shadow: 0 0 0 3px oklch(63.86% 0.1467 251.2451 / 0.2) !important;
+      }
+
+      option {
+        background-color: #171f36;
+        color: #e2e8f0;
+      }
+    }
+  }
+
+  .pagination {
+    border-top-color: oklch(33.51% 0.0331 260.912) !important;
+
+    .page-nav-btn {
+      border-color: oklch(63.86% 0.1467 251.2451) !important;
+      color: oklch(63.86% 0.1467 251.2451) !important;
+
+      &:hover:not(:disabled):not(.is-disabled) {
+        background: oklch(63.86% 0.1467 251.2451) !important;
+        color: #ffffff !important;
+      }
+
+      &:disabled,
+      &.is-disabled {
+        border-color: oklch(33.51% 0.0331 260.912) !important;
+        color: oklch(55.1% 0.0234 264.3637) !important;
+      }
+    }
+
+    .page-num-btn {
+      border-color: oklch(63.86% 0.1467 251.2451) !important;
+      color: oklch(63.86% 0.1467 251.2451) !important;
+
+      &:hover:not(.is-active):not(.page-ellipsis) {
+        background: oklch(63.86% 0.1467 251.2451 / 0.15) !important;
+        color: #ffffff !important;
+      }
+
+      &.is-active {
+        background: oklch(63.86% 0.1467 251.2451) !important;
+        border-color: oklch(63.86% 0.1467 251.2451) !important;
+        color: #ffffff !important;
+        box-shadow: 0 2px 10px oklch(63.86% 0.1467 251.2451 / 0.4) !important;
+      }
+
+      &.page-ellipsis {
+        color: oklch(71.37% 0.0192 261.3246) !important;
+      }
+    }
+  }
+}

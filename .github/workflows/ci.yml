@@ -11,8 +11,12 @@ concurrency:
   cancel-in-progress: true
 jobs:
   verify:
-    runs-on: ubuntu-latest
-    timeout-minutes: 25
+    # Pinned by owner decision (2026-10-02): ubuntu-latest moves to 26.04
+    # between 2026-10-19 and 2026-11-19. Adopt 26.04 only after a full green run.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -24,281 +28,154 @@ jobs:
           package-manager-cache: false
       - run: npm ci --ignore-scripts --no-audit --no-fund
       - run: npm run typecheck
-      - run: cp dist/theme.xml "$RUNNER_TEMP/checked-in-theme.xml"
-      - run: npm run build
+      # Lean gate (owner decision 2026-10-05, Ledger rebuild): the theme zip
+      # built here is the deliverable, so no generated XML is checked in.
+      - name: Build theme bound to the exact source commit
+        env:
+          THEME_SHA: ${{ env.SOURCE_SHA }}
+        run: npm run build
       - name: Report size evidence (only total XML capped)
         run: |
-          sha256sum dist/theme.xml
-          node -e "const fs=require('node:fs');const s=JSON.parse(fs.readFileSync('build-size.json'));if(s.xml.raw>500000)throw Error('Total theme exceeds 500KB');console.log('::notice title=Asset sizes (JS/CSS informational)::'+JSON.stringify(s));"
-      - run: npm run contract:check
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          import { gzipSync } from 'node:zlib';
+          const xml = fs.readFileSync('dist/theme.xml');
+          const size = { source: process.env.SOURCE_SHA, xml: { raw: xml.length, gzip: gzipSync(xml).length } };
+          if (size.xml.raw > 500000) throw new Error('Total theme exceeds 500KB');
+          console.log('::notice title=Theme size (only total XML capped)::' + JSON.stringify(size));
+          JS
+      # The N0 boundary self-test launches all three engines inside the namespace.
       - run: npx --no-install playwright install --with-deps chromium firefox webkit
-      # Preserve the established stage inventory and N0 privilege/environment gate.
-      - name: Run npm test -- --reporter=default --reporter=json --outputFile=unit-report.json
+      - name: Run npm test inside the no-egress namespace
         run: |
           bash tools/run-isolated-tests.sh self-test
-          node tools/finalize-browser-network.ts init "$RUNNER_TEMP/fcd-isolation-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT-browser-network" "$(git rev-parse HEAD)" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT"
-          bash tools/run-isolated-tests.sh run unit 300 npm test -- --reporter=default --reporter=json --outputFile=unit-report.json
+          # Test output stays plain log lines; the next step reports each failed
+          # assertion as one error annotation.
+          marker="fcd-unit-$(cat /proc/sys/kernel/random/uuid)"
+          echo "::stop-commands::$marker"
+          status=0
+          bash tools/run-isolated-tests.sh run unit 300 npm test -- --reporter=default --reporter=json --outputFile=unit-report.json || status=$?
+          echo "::$marker::"
+          exit "$status"
       - name: Report regression evidence
         if: ${{ always() }}
         run: |
           node --input-type=module <<'JS'
           import fs from 'node:fs';
-          import path from 'node:path';
-          import { validRecord } from './tools/finalize-browser-network.ts';
-          const escape=value=>String(value).replaceAll('%','%25').replaceAll('\r','%0D').replaceAll('\n','%0A');
-          const root=path.join(process.env.RUNNER_TEMP,`fcd-isolation-${process.env.GITHUB_RUN_ID}-${process.env.GITHUB_RUN_ATTEMPT}-browser-network`);
-          const preflight=`${root}-preflight.json`;
-          if(fs.existsSync(preflight)){
-            const stat=fs.lstatSync(preflight);
-            if(!stat.isFile()||stat.isSymbolicLink()||stat.size>131072)throw new Error('N2A_PREFLIGHT_BOUND');
-            const bytes=fs.readFileSync(preflight),p=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));
-            const manifest=JSON.parse(fs.readFileSync(path.join(root,'manifest.json'),'utf8'));
-            if(!Buffer.from(JSON.stringify(p)).equals(bytes)||p.kind!=='n2a-preflight'||['schema','policy','source','run','attempt'].some(k=>p[k]!==manifest[k])||p.run!==process.env.GITHUB_RUN_ID||p.attempt!==process.env.GITHUB_RUN_ATTEMPT||!Array.isArray(p.html)||p.html.length!==14||!Array.isArray(p.modules)||p.modules.length>64)throw new Error('N2A_PREFLIGHT_STAMP');
-            const report=(title,value)=>console.log(`::warning title=N2A measured ${title}::${escape(JSON.stringify(value))}`);
-            report('HTML',p.html);report('dynamic inventory',p.dynamic);
-            for(let i=0;i<p.modules.length;i+=16)report(`module page ${i/16}`,p.modules.slice(i,i+16));
-            report('capacity',p.capacity);
-          }
-          if(fs.existsSync('unit-report.json')){
-            const r=JSON.parse(fs.readFileSync('unit-report.json','utf8'));
-            console.log('::notice title=Unit totals::'+JSON.stringify({passed:r.numPassedTests,failed:r.numFailedTests,pending:r.numPendingTests}));
-            const n1=[],focused=[];
-            for(const s of r.testResults||[])for(const a of s.assertionResults||[])if(a.status==='failed'){
-              console.log('::error title=Regression::'+escape(a.fullName));
-              if(s.name.endsWith('/tests/unit/browser-network.test.ts')||s.name.endsWith('/tests/unit/browser-network-adoption.test.ts')){
-                const failure=(a.failureMessages||[]).join('\n');
-                n1.push({test:a.fullName,reason:failure.split('\n')[0]});
-                if(!failure.includes('N1_NAVIGATION_PHASE'))focused.push({test:a.fullName,reason:failure.slice(0,3000)});
-              }
-            }
-            if(n1.length){
-              // Keep bounded summaries and separate real per-engine traces.
-              // Diagnostics never change acceptance or the original failure.
-              console.log('::notice title=N1 assertions::'+escape(JSON.stringify(n1).slice(0,16000)));
-              for(const row of focused.slice(0,16))console.log('::notice title=N1 focused assertion::'+escape(JSON.stringify(row)));
-              for(const row of n1.filter(r=>r.reason.includes('N1_NAVIGATION_PHASE')).slice(0,3)){
-                const [navigation,lifetime]=row.reason.split('; lifetime=');
-                console.log('::notice title=N1 navigation::'+escape(JSON.stringify({test:row.test,reason:navigation}).slice(0,8000)));
-                if(lifetime)console.log('::notice title=N1 document lifetime::'+escape(JSON.stringify({test:row.test,reason:lifetime}).slice(0,8000)));
-              }
-              if(fs.existsSync(root))for(const name of fs.readdirSync(root).filter(n=>/^[0-9a-f-]{36}\.end\.json$/.test(n)).slice(0,32)){
-                const file=path.join(root,name),stat=fs.lstatSync(file);
-                if(!stat.isFile()||stat.isSymbolicLink()||stat.size>131072)continue;
-                const end=JSON.parse(fs.readFileSync(file,'utf8'));
-                if(validRecord(end)&&end.kind==='end'&&end.identity.stage==='unit'&&n1.some(a=>a.test===end.identity.title)){
-                  const detail={test:end.identity.title,errors:end.errors,setup:end.setup,closed:end.closed,documentsCount:end.documents.length,documents:end.documents.slice(0,16),requestsCount:end.requests.length,requests:end.requests.slice(0,16)};
-                  console.log('::notice title=N1 lifecycle diagnostic::'+escape(JSON.stringify(detail)));
-                }
+          const escape = (value) => String(value).replaceAll('%', '%25').replaceAll('\r', '%0D').replaceAll('\n', '%0A');
+          if (fs.existsSync('unit-report.json')) {
+            const r = JSON.parse(fs.readFileSync('unit-report.json', 'utf8'));
+            console.log('::notice title=Unit totals::' + JSON.stringify({ passed: r.numPassedTests, failed: r.numFailedTests, pending: r.numPendingTests }));
+            for (const s of r.testResults || []) {
+              const file = String(s.name).split('/').slice(-3).join('/');
+              if (s.status === 'failed' && !(s.assertionResults || []).length) console.log('::error title=Suite failure::' + escape(file + ': ' + String(s.message || '').split('\n')[0].slice(0, 400)));
+              for (const a of s.assertionResults || []) {
+                if (a.status !== 'failed') continue;
+                const reason = String((a.failureMessages || [])[0] || '').split('\n').slice(0, 3).join(' ').slice(0, 12000);
+                console.log('::error title=Regression::' + escape(a.fullName + ' :: ' + reason));
               }
             }
           }
           JS
-      - run: npm run preview -- --build-only
-      - name: Run npm run test:render
-        run: bash tools/run-isolated-tests.sh run render 1100 npm run test:render
-      - name: Report browser counts
+      - name: Run the Ledger V3 contract inside the no-egress namespace
+        run: |
+          marker="fcd-contract-$(cat /proc/sys/kernel/random/uuid)"
+          echo "::stop-commands::$marker"
+          set +e
+          bash tools/run-isolated-tests.sh run contract 120 npm run contract:check > contract.log 2>&1
+          status=$?
+          cat contract.log
+          echo "::$marker::"
+          exit "$status"
+      - name: Report contract evidence
         if: ${{ always() }}
         run: |
-          result=0
-          bash tools/run-isolated-tests.sh finalize || result=$?
-          node tools/finalize-browser-network.ts finalize "$RUNNER_TEMP/fcd-isolation-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT-browser-network" test-results/browser-network "$(git rev-parse HEAD)" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" || { n1=$?; if [ "$result" -eq 0 ]; then result=$n1; fi; }
-          if [ -f test-results/browser.json ]; then
-            node --input-type=module <<'JS' || { report=$?; if [ "$result" -eq 0 ]; then result=$report; fi; }
+          node --input-type=module <<'JS'
           import fs from 'node:fs';
-          // Extend the existing totals read only. Both finalizers have already
-          // enforced their unchanged gates; no report or attachment is rewritten.
-          const r=JSON.parse(fs.readFileSync('test-results/browser.json','utf8'));
-          const escape=value=>String(value).replaceAll('%','%25').replaceAll('\r','%0D').replaceAll('\n','%0A');
-          const notice=(title,value)=>console.log(`::notice title=${title}::${escape(JSON.stringify(value))}`);
-          notice('Browser totals',r.stats);
-          const groups=new Map(),failed=[];let visited=0,omitted=0,omittedFailures=0;
-          const bytes=value=>Buffer.byteLength(JSON.stringify(value)??'');
-          function visit(suites,depth=0,inherited=''){
-            if(depth>32){omitted++;return;}
-            for(const suite of suites||[]){
-              if(++visited>10000){omitted++;return;}
-              const file=String(suite.file||inherited).replaceAll('\\','/');
-              for(const spec of suite.specs||[])for(const test of spec.tests||[]){
-                if(++visited>10000){omitted++;return;}
-                const name=String(spec.file||file).replaceAll('\\','/').split('/').pop().slice(0,100);
-                let group=groups.get(name);
-                if(!group){if(groups.size>=32){omitted++;continue;}group={file:name,tests:0,testBytes:0,stdoutBytes:0,errorBytes:0,inlineJsonBase64Bytes:0,compactJsonBase64Bytes:0,unmeasuredAttachments:0};groups.set(name,group);}
-                group.tests++;group.testBytes+=bytes(test);
-                const results=test.results||[];
-                if(test.status!=='expected'||test.expectedStatus!=='passed'||results.length!==1||results[0]?.status!=='passed'||results[0]?.retry!==0){
-                  if(failed.length<32)failed.push({file:name,project:String(test.projectName).slice(0,100),title:String(spec.title).slice(0,200),status:test.status,codes:[...new Set(results.flatMap(x=>(x.errors||[]).flatMap(e=>String(e.message||'').match(/N[12][A-Z]?_[A-Z_]+/g)||[])))].sort()});else omittedFailures++;
-                }
-                for(const result of results){
-                  group.stdoutBytes+=bytes(result.stdout)+bytes(result.stderr);group.errorBytes+=bytes(result.error)+bytes(result.errors);
-                  for(const a of result.attachments||[])if(a.contentType==='application/json'&&typeof a.body==='string'){
-                    group.inlineJsonBase64Bytes+=Buffer.byteLength(a.body);
-                    if(a.body.length>1024*1024){group.unmeasuredAttachments++;continue;}
-                    try{const value=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(Buffer.from(a.body,'base64')));group.compactJsonBase64Bytes+=Buffer.from(JSON.stringify(value)).toString('base64').length;}catch{group.unmeasuredAttachments++;}
-                  }
-                }
-              }
-              visit(suite.suites,depth+1,file);
-            }
+          const escape = (value) => String(value).replaceAll('%', '%25').replaceAll('\r', '%0D').replaceAll('\n', '%0A');
+          if (fs.existsSync('contract.log')) {
+            const lines = fs.readFileSync('contract.log', 'utf8').split('\n');
+            const bad = lines.filter((l) => /fail|error|\u2717|\u2718|not ok|violation/i.test(l));
+            const tail = lines.slice(-40);
+            console.log('::notice title=Contract summary::' + escape([...bad.slice(0, 80), '--- tail ---', ...tail].join('\n').slice(0, 12000)));
           }
-          visit(r.suites);
-          notice('Browser diagnostic volume',{groups:[...groups.values()].sort((a,b)=>b.testBytes-a.testBytes),omitted});
-          notice('Browser failure inventory',{failed,omitted,omittedFailures});
           JS
-          fi
-          node --input-type=module <<'JS' || { report=$?; if [ "$result" -eq 0 ]; then result=$report; fi; }
-          import fs from 'node:fs';
-          import path from 'node:path';
-          import assert from 'node:assert/strict';
-          import { createHash } from 'node:crypto';
-          import { CASES, PROJECTS, validRecord, engineFor, validModulePath, RESPONSE_LIMITS } from './tools/finalize-browser-network.ts';
-          import { N1_FILE, TARGET_FILES, normalRenderFile } from './tests/helpers/browser-network-scope.ts';
-          const escape=value=>String(value).replaceAll('%','%25').replaceAll('\r','%0D').replaceAll('\n','%0A');
-          const notice=(title,value)=>console.log(`::notice title=${title}::${escape(JSON.stringify(value))}`);
-          const size=file=>{try{const s=fs.lstatSync(file);return s.isFile()&&!s.isSymbolicLink()?s.size:null;}catch{return null;}};
-          const root=path.join(process.env.RUNNER_TEMP,`fcd-isolation-${process.env.GITHUB_RUN_ID}-${process.env.GITHUB_RUN_ATTEMPT}-browser-network`);
-          const names=fs.existsSync(root)?fs.readdirSync(root):[];
-          const stagedSizes=names.slice(0,4100).map(n=>size(path.join(root,n))).filter(n=>n!==null);
-          const footprint={files:0,directories:0,bytes:0,maxFileBytes:0,symlinks:0,missingRoots:0,truncated:false};
-          const stack=[];
-          for(const p of ['dist/theme.xml','package-lock.json','build-size.json','unit-report.json','test-results','playwright-report']){
-            if(fs.existsSync(p))stack.push(p);else footprint.missingRoots++;
-          }
-          let entries=0;
-          while(stack.length){
-            if(++entries>10000){footprint.truncated=true;break;}
-            const p=stack.pop(),s=fs.lstatSync(p);
-            if(s.isSymbolicLink()){footprint.symlinks++;continue;}
-            if(s.isDirectory()){footprint.directories++;for(const n of fs.readdirSync(p))stack.push(path.join(p,n));}
-            else if(s.isFile()){footprint.files++;footprint.bytes+=s.size;footprint.maxFileBytes=Math.max(footprint.maxFileBytes,s.size);}
-          }
-          notice('Artifact input footprint',{...footprint,browserReportBytes:size('test-results/browser.json'),unitReportBytes:size('unit-report.json'),stagedN1:{files:names.length,measuredFiles:stagedSizes.length,bytes:stagedSizes.reduce((a,b)=>a+b,0),maxFileBytes:Math.max(0,...stagedSizes),discoveryBytes:size(path.join(root,'discovery.json')),resultsBytes:size(path.join(root,'results.json')),reporterError:size(path.join(root,'reporter-error.json'))!==null}});
-          const reportBytes=size('test-results/browser.json');
-          if(reportBytes!==null&&reportBytes<=80*1024*1024){
-            const report=JSON.parse(fs.readFileSync('test-results/browser.json','utf8'));
-            const blank=()=>({tests:0,passed:0,unexpected:0,skipped:0,flaky:0,retried:0});
-            const counts={n1:blank(),n2a:blank(),n0Only:blank()};
-            const groupFor=file=>{const canonical=normalRenderFile(file);return canonical===N1_FILE?'n1':TARGET_FILES.includes(canonical)?'n2a':'n0Only';};
-            const outcomeFor=test=>{
-              const results=test.results||[];
-              if(test.expectedStatus==='passed'&&test.status==='expected'&&results.length===1&&results[0].status==='passed'&&results[0].retry===0)return 'passed';
-              if(test.status==='flaky')return 'flaky';
-              if(test.status==='skipped'||test.expectedStatus==='skipped'||results.length===1&&results[0].status==='skipped')return 'skipped';
-              return 'unexpected';
-            };
-            const retried=test=>(test.results||[]).length>1||(test.results||[]).some(r=>r.retry>0);
-            // Data-only reporting controls, not extra browser cases or a new stage.
-            for(const [file,wanted] of [['network-isolation.spec.ts','n1'],[N1_FILE,'n1'],['tests\\render\\a11y.spec.ts','n2a'],['publication-acceptance.spec.ts','n2a'],['tests/render/foreign/network-isolation.spec.ts','n0Only'],['tests/render/foreign/a11y.spec.ts','n0Only']])assert.equal(groupFor(file),wanted,'N2A_DIAGNOSTIC_FILE_GROUP');
-            const passed={expectedStatus:'passed',status:'expected',results:[{status:'passed',retry:0}]};
-            assert.equal(outcomeFor(passed),'passed');assert.equal(retried(passed),false);
-            assert.equal(outcomeFor({...passed,results:[]}),'unexpected');
-            assert.equal(outcomeFor({...passed,results:[{status:'failed',retry:0}]}),'unexpected');
-            assert.equal(outcomeFor({...passed,expectedStatus:'failed'}),'unexpected');
-            const flaky={...passed,status:'flaky',results:[{status:'failed',retry:0},{status:'passed',retry:1}]};
-            assert.equal(outcomeFor(flaky),'flaky');assert.equal(retried(flaky),true);
-            assert.equal(outcomeFor({...passed,status:'skipped',results:[{status:'skipped',retry:0}]}),'skipped');
-            assert.equal(outcomeFor({...passed,results:[{status:'passed',retry:1}]}),'unexpected');
-            assert.equal(retried({...passed,results:[{status:'passed',retry:1}]}),true);
-            const failed=[];let visited=0,totalTests=0;
-            function visit(suites,depth=0,inherited=''){
-              if(depth>32)throw new Error('N1_DIAGNOSTIC_DEPTH');
-              for(const suite of suites||[]){
-                if(++visited>10000)throw new Error('N2A_DIAGNOSTIC_ENTRIES');
-                const file=suite.file||inherited;
-                for(const spec of suite.specs||[])for(const test of spec.tests||[]){
-                  if(++visited>10000||++totalTests>2000)throw new Error('N2A_DIAGNOSTIC_ENTRIES');
-                  const category=groupFor(spec.file||file),scoped=category==='n1';
-                  const count=counts[category],results=test.results||[],outcome=outcomeFor(test);count.tests++;count[outcome]++;
-                  if(retried(test))count.retried++;
-                  if(outcome==='unexpected'&&scoped&&PROJECTS.includes(test.projectName)&&CASES.includes(spec.title)){
-                    const codes=[...new Set(results.flatMap(r=>(r.errors||[]).flatMap(e=>(String(e.message||'').match(/N1_[A-Z_]+/g)||[]))))].sort();
-                    failed.push({project:test.projectName,title:spec.title,codes});
-                  }
-                }
-                visit(suite.suites,depth+1,file);
-              }
-            }
-            visit(report.suites);
-            const groups=[];
-            for(const row of failed){let group=groups.find(g=>g.title===row.title);if(!group){group={title:row.title,projects:[],codes:[]};groups.push(group);}group.projects.push(row.project);group.codes=[...new Set([...group.codes,...row.codes])].sort();}
-            const sum=values=>Object.fromEntries(Object.keys(blank()).map(key=>[key,values.reduce((n,v)=>n+v[key],0)]));
-            notice('Browser coverage reconciliation',{...counts,baseline:sum([counts.n2a,counts.n0Only]),total:sum(Object.values(counts)),failedN1:failed.length,groups});
-            const selected=new Map();
-            for(const row of failed){const key=engineFor(row.project)+'\0'+row.title;if(!selected.has(key)&&selected.size<6)selected.set(key,{...row,contexts:[]});}
-            for(const name of names.slice(0,4100))if(/^[0-9a-f-]{36}\.end\.json$/.test(name)){
-              const file=path.join(root,name),bytes=size(file);if(bytes===null||bytes>131072)continue;
-              const end=JSON.parse(fs.readFileSync(file,'utf8'));if(!validRecord(end)||end.kind!=='end'||end.identity.stage!=='render')continue;
-              const selectedOwner=selected.get(end.identity.engine+'\0'+end.identity.title);
-              if(selectedOwner&&selectedOwner.project===end.identity.project&&selectedOwner.contexts.length<5){
-                selectedOwner.contexts.push({id:end.id,expected:end.expectedErrors,errors:end.errors,setup:end.setup,closed:end.closed,outcome:end.outcome,documentsCount:end.documents.length,documents:end.documents.slice(0,16),requestsCount:end.requests.length,requests:end.requests.slice(0,16)});
-              }
-            }
-            for(const sample of selected.values())notice('N1 browser lifecycle sample',sample);
-            // The approved completion report must expose all three populations,
-            // not bury the 928 N2A cases inside the historical baseline count.
-            const expected={n1:240,n2a:928,n0Only:506};
-            const actual=Object.fromEntries(Object.keys(expected).map(name=>[name,counts[name]?.tests??null]));
-            notice('Browser coverage reporting contract',{expected,actual});
-            if(Object.keys(expected).some(name=>actual[name]!==expected[name]))throw new Error('N2A_OUTCOME_GROUPS '+JSON.stringify(actual));
-          }
-          // Keep the full summary file unchanged; publish its registered catalog
-          // in complete bounded pages rather than one truncated annotation.
-          const readOwned=file=>{
-            const length=size(file);
-            if(length===null||length<2||length>131072)throw new Error('N2A_CATALOG_DIAGNOSTIC_BOUND');
-            const bytes=fs.readFileSync(file),value=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));
-            if(bytes.length!==length||!Buffer.from(JSON.stringify(value)).equals(bytes))throw new Error('N2A_CATALOG_DIAGNOSTIC_JSON');
-            return value;
-          };
-          const summary=readOwned('test-results/browser-network/summary.json'),manifest=readOwned(path.join(root,'manifest.json'));
-          const stampKeys=['schema','policy','source','run','attempt'];
-          if(summary.kind!=='summary'||summary.schema!==2||summary.policy!=='n2a-v1'||!/^[0-9a-f]{40}$/.test(summary.source)||stampKeys.some(k=>summary[k]!==manifest[k])||summary.run!==process.env.GITHUB_RUN_ID||summary.attempt!==process.env.GITHUB_RUN_ATTEMPT||typeof summary.accepted!=='boolean'||!Array.isArray(summary.moduleCatalog)||summary.moduleCatalog.length>64)throw new Error('N2A_CATALOG_DIAGNOSTIC_STAMP');
-          const catalog=summary.moduleCatalog;
-          for(const row of catalog){
-            if(!row||typeof row!=='object'||Array.isArray(row)||Object.keys(row).sort().join(',')!=='bytes,id,kind,modulePath,sha256'||row.kind!=='mermaid'||typeof row.id!=='string'||!/^[a-z][a-z0-9-]{0,63}$/.test(row.id)||!Number.isSafeInteger(row.bytes)||row.bytes<1||row.bytes>RESPONSE_LIMITS.module||typeof row.sha256!=='string'||!/^[0-9a-f]{64}$/.test(row.sha256)||!validModulePath(row.modulePath))throw new Error('N2A_CATALOG_DIAGNOSTIC_ROW');
-          }
-          if(new Set(catalog.map(r=>r.id)).size!==catalog.length||new Set(catalog.map(r=>r.modulePath)).size!==catalog.length||summary.accepted&&catalog.length===0)throw new Error('N2A_CATALOG_DIAGNOSTIC_MEMBERSHIP');
-          const stamp=Object.fromEntries(stampKeys.map(k=>[k,summary[k]]));
-          const catalogSha256=createHash('sha256').update(JSON.stringify(catalog)).digest('hex');
-          const pages=Array.from({length:Math.ceil(catalog.length/8)},(_,page)=>({...stamp,accepted:summary.accepted,catalogSha256,page:page+1,pages:Math.ceil(catalog.length/8),entries:catalog.slice(page*8,page*8+8)}));
-          assert.deepEqual(pages.flatMap(p=>p.entries),catalog,'N2A_CATALOG_DIAGNOSTIC_COMPLETE');
-          const header={...stamp,accepted:summary.accepted,modules:catalog.length,moduleBytes:catalog.reduce((n,r)=>n+r.bytes,0),maxModuleBytes:Math.max(0,...catalog.map(r=>r.bytes)),pages:pages.length,catalogSha256};
-          for(const value of [header,...pages])if(Buffer.byteLength(JSON.stringify(value))>12000)throw new Error('N2A_CATALOG_DIAGNOSTIC_PAGE_BOUND');
-          // The runner retains ten annotations per type/step, each <=4096 characters.
-          // Existing notices exhausted that lane at catalog page one. Reserve this
-          // step's unused warning lane for the header and at most eight full pages.
-          if(pages.length+1>9)throw new Error('N2A_CATALOG_DIAGNOSTIC_COUNT');
-          for(const value of [header,...pages])if(Buffer.byteLength(JSON.stringify(value))>4000)throw new Error('N2A_CATALOG_DIAGNOSTIC_TRANSPORT_BOUND');
-          const catalogNotice=(title,value)=>console.log(`::warning title=${title}::${escape(JSON.stringify(value))}`);
-          catalogNotice('N2A registered catalog',header);
-          for(const page of pages)catalogNotice(`N2A registered catalog page ${page.page} of ${page.pages}`,page);
-          JS
-          exit "$result"
-      - run: npm audit --audit-level=moderate
-      - name: Reject stale generated XML except historical build stamp
+      - name: Finalize isolation evidence
+        if: ${{ always() }}
+        env:
+          FCD_REQUIRED_RUNS: unit contract
+        run: bash tools/run-isolated-tests.sh finalize
+      # Audit gate with evidence: totals and each finding become annotations,
+      # so a new advisory names its package and fix in the check run.
+      - name: Run npm audit (moderate and above)
         run: |
-          python3 - <<'PY'
-          import os
-          from pathlib import Path
-          import xml.etree.ElementTree as ET
-          def normalized(file):
-              root=ET.fromstring(Path(file).read_bytes());ns='{http://www.w3.org/1999/xhtml}'
-              stamps=[m for m in root.findall('.//'+ns+'meta') if m.get('name')=='theme-build']
-              assert len(stamps)==1
-              stamps[0].set('content','SOURCE_STAMP')
-              return ET.tostring(root)
-          assert normalized(Path(os.environ['RUNNER_TEMP'])/'checked-in-theme.xml')==normalized('dist/theme.xml'),'Regenerate checked-in XML from Actions output'
-          print('PASS: checked-in XML equals compiled source except historical build stamp')
-          PY
+          set +e
+          npm audit --audit-level=moderate --json > audit.json
+          status=$?
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          const escape = (value) => String(value).replaceAll('%', '%25').replaceAll('\r', '%0D').replaceAll('\n', '%0A');
+          let report = {};
+          try { report = JSON.parse(fs.readFileSync('audit.json', 'utf8')); } catch {}
+          console.log('::notice title=Audit totals::' + JSON.stringify(report.metadata?.vulnerabilities ?? {}));
+          for (const v of Object.values(report.vulnerabilities ?? {}).slice(0, 10)) {
+            const via = (v.via ?? []).map((x) => (typeof x === 'string' ? x : `${x.title} ${x.url} range ${x.range}`)).join('; ');
+            const fix = typeof v.fixAvailable === 'object' ? `${v.fixAvailable.name}@${v.fixAvailable.version}${v.fixAvailable.isSemVerMajor ? ' (major)' : ''}` : String(v.fixAvailable);
+            console.log('::error title=Audit ' + v.severity + '::' + escape(`${v.name} ${v.range} direct=${v.isDirect} via ${via} | nodes ${(v.nodes ?? []).slice(0, 3).join(', ')} | fix ${fix}`).slice(0, 4000));
+          }
+          JS
+          exit "$status"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: ${{ always() }}
         with:
-          name: fcd-evidence-${{ github.event.pull_request.head.sha || github.sha }}
+          name: fcd-evidence-${{ env.SOURCE_SHA }}
           path: |
             dist/theme.xml
             package-lock.json
-            build-size.json
             unit-report.json
             test-results/
-            playwright-report/
           if-no-files-found: error
           retention-days: 14
+      # Owner-requested downloadable copy of this run's compiled theme. It runs
+      # only after every gate above passed and uploads a zip holding only the
+      # XML; the notice and job summary record the XML's own SHA-256.
+      # Not a release candidate by itself.
+      - name: Stage theme XML artifact after every gate passed
+        id: theme
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, os, re
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          sha = os.environ['SOURCE_SHA']
+          assert re.fullmatch('[0-9a-f]{40}', sha), 'THEME_ARTIFACT_SOURCE'
+          raw = Path('dist/theme.xml').read_bytes()
+          assert 0 < len(raw) <= 500000, 'THEME_ARTIFACT_SIZE'
+          ns = '{http://www.w3.org/1999/xhtml}'
+          stamps = [m.get('content') or '' for m in ET.fromstring(raw).iter(ns + 'meta') if m.get('name') == 'theme-build']
+          assert len(stamps) == 1 and stamps[0].endswith('+' + sha), 'THEME_ARTIFACT_STAMP'
+          name = 'fcd-theme-' + sha + '.xml'
+          out = Path(os.environ['RUNNER_TEMP']) / 'fcd-theme'
+          out.mkdir()
+          (out / name).write_bytes(raw)
+          record = {'artifact': 'fcd-theme-' + sha, 'file': name, 'bytes': len(raw), 'sha256': hashlib.sha256(raw).hexdigest(), 'stamp': stamps[0], 'source': sha, 'run': os.environ['GITHUB_RUN_ID'], 'attempt': os.environ['GITHUB_RUN_ATTEMPT']}
+          print('::notice title=Theme XML artifact::' + json.dumps(record))
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+              print('path=' + str(out / name), file=f)
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as f:
+              print('### Theme XML artifact', file=f)
+              print('', file=f)
+              print('| Field | Value |', file=f)
+              print('| --- | --- |', file=f)
+              for key in ('artifact', 'file', 'bytes', 'sha256', 'stamp', 'source', 'run', 'attempt'):
+                  print('| ' + key + ' | `' + str(record[key]) + '` |', file=f)
+              print('', file=f)
+              print('Download the artifact zip from this run and extract the XML; the sha256 above is the XML file itself. Uploaded only because every gate in this run passed. It is not a release candidate until it is separately selected and approved.', file=f)
+          PY
+      - name: Upload theme XML as its own zip artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: fcd-theme-${{ env.SOURCE_SHA }}
+          path: ${{ steps.theme.outputs.path }}
+          if-no-files-found: error
+          retention-days: 90

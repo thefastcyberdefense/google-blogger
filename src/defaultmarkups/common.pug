@@ -1,4 +1,3 @@
-//- Adapted from Ledger 692a82463cb8d0869a6f5e7c946ecc757cacb7e2; see LICENSE.
 b:defaultmarkup(type='Common')
   b:includable(id='widgetTitle')
     b:if(cond='data:widget.title')
@@ -7,4 +6,9 @@ b:defaultmarkup(type='Common')
   b:includable(id='widget-title')
     b:include(name='widgetTitle')/
   b:includable(id='widgetNotAvailableInPreview')
-    b:include(name='super.widgetNotAvailableInPreview')/
+    b:if(cond='data:widget.type == "AdSense"')
+      div.vertical-ad-placeholder
+        span
+          b:message(name='messages.adsGoHere')/
+    b:if(cond='data:widget.type != "AdSense"')
+      b:include(name='super.widgetNotAvailableInPreview')/

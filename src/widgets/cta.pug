@@ -1,0 +1,17 @@
+b:section(class='cta' id='cta' name='Call to Action' showaddelement='false')
+  b:widget(id='HTML2' locked='false' title='Call to Action' type='HTML' version='2' visible='true')
+    b:includable(id='main')
+      b:if(cond='data:content')
+        aside.cta-box
+          b:eval(expr='data:content')/
+      b:if(cond='not data:content')
+        aside.cta-box
+          div.cta-content
+            div.cta-tag // SECURITY SERVICES
+            div.cta-title Need a security assessment or a second pair of eyes on your stack?
+            p.cta-desc Fast Cyber Defense helps teams with penetration testing, cloud security reviews and infrastructure hardening.
+          div.cta-actions
+            a.cta-btn.cta-btn-primary(href='https://fastcyberdefense.com/' target='_blank' rel='noopener noreferrer')
+              span Talk to Fast Cyber Defense ↗
+            a.cta-btn.cta-btn-secondary(expr:href='data:blog.canonicalHomepageUrl path "search"')
+              span Browse articles

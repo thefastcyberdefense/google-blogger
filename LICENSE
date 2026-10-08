@@ -2,6 +2,8 @@
 
 Original FCD-specific code and branding: Copyright (c) 2026 Fast Cyber Defense. All rights reserved. No general public reuse license is granted for FCD-specific code or identity in this initialization.
 
+FCD Blogger is the Fast Cyber Defense identity and branding edition of the Ledger Blogger Theme concept. Both projects belong to the same owner: Ledger Blogger Theme is the personal project of its copyright holder, Md Redwan Ahmed, and Fast Cyber Defense is his solely owned company.
+
 Ledger-derived portions are used with permission confirmed by the owner in the project request. Their original notice and license reference are preserved below; this repository does not silently relicense third-party code.
 
 Required Notice: Copyright (c) 2026 Md Redwan Ahmed.
@@ -10,6 +12,9 @@ Required Notice: This license covers the software code only. Md Redwan Ahmed's n
 Ledger source license: PolyForm Noncommercial License 1.0.0
 https://polyformproject.org/licenses/noncommercial/1.0.0
 
-Source provenance: https://github.com/redwan-cse/ledger-blogger-theme/tree/692a82463cb8d0869a6f5e7c946ecc757cacb7e2
+Source concept: Ledger Blogger Theme v1.7.0
+https://github.com/redwan-cse/ledger-blogger-theme/releases/tag/v1.7.0 (tag commit a3da05a8a70243c6ffc239b0e96e88260ed7b536)
+
+Initial import provenance (historical): https://github.com/redwan-cse/ledger-blogger-theme/tree/692a82463cb8d0869a6f5e7c946ecc757cacb7e2
 
 Dependencies retain their own licenses. The separately saved FCD Superpowers skill includes the Superpowers MIT license and Jesse Vincent attribution; no Superpowers plugin runtime is bundled in this theme.

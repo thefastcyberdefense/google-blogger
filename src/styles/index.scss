@@ -1,0 +1,518 @@
+// ---------------------------------------------------------------------------
+// Index Views & Post Cards — docs/PROJECT-PLAN.md §2.4, §2.5, §2.6
+// ---------------------------------------------------------------------------
+
+@use 'tokens' as *;
+
+// ---------------------------------------------------------------------------
+// Standard Post Card — Modern, elevated card with hover lift
+// ---------------------------------------------------------------------------
+
+.post,
+.post-row {
+  background: $surface;
+  border: 1px solid $rule;
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin-bottom: $space-4;
+  box-shadow: $shadow-sm;
+  transition: transform $motion-base $ease-out-quart, box-shadow $motion-base $ease-out-quart, border-color $motion-base $ease-out-quart;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: $shadow-md;
+    border-color: oklch(63.86% 0.1467 251.2451 / 0.35);
+  }
+}
+
+.post-card {
+  background: $surface;
+  border: 1px solid $rule;
+  border-radius: 12px;
+  padding: 14px 18px;
+  box-shadow: $shadow-sm;
+  transition: transform $motion-base $ease-out-quart, box-shadow $motion-base $ease-out-quart, border-color $motion-base $ease-out-quart;
+
+  &:hover {
+    transform: $card-hover-lift;
+    box-shadow: $shadow-md;
+    border-color: oklch(63.86% 0.1467 251.2451 / 0.25);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Modern Horizontal Post Card Layout
+// [Thumbnail with original ratio][Blog Title other info like before.]
+// ---------------------------------------------------------------------------
+
+.post-card-inner,
+.has-thumbnail {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  align-items: center;
+  gap: $space-4;
+
+  &.no-thumbnail {
+    grid-template-columns: 1fr;
+  }
+
+  @media (min-width: 1200px) {
+    grid-template-columns: 290px 1fr;
+    gap: 20px;
+  }
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: $space-3;
+  }
+}
+
+.post-card-inner.no-thumbnail,
+.no-thumbnail:not(.has-thumbnail) {
+  grid-template-columns: 1fr;
+}
+
+.post-thumbnail-link {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 0;
+  background: oklch(29.54% 0.0649 265.7059);
+  border: 1px solid $rule;
+  box-shadow: 0 2px 8px oklch(63.86% 0.1467 251.2451 / 0.1);
+
+  @media (max-width: 768px) {
+    max-width: 100%;
+  }
+}
+
+.post-thumbnail {
+  width: 100%;
+  height: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  display: block;
+  transition: transform $motion-moderate $ease-out-quart;
+
+  .post:hover & {
+    transform: scale(1.04);
+  }
+}
+
+.post-content-wrap {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 1 1 auto;
+  min-width: 0;
+
+  .post-title {
+    margin: 0 0 6px;
+    font-size: 1.0625rem;
+    line-height: 1.3;
+    font-weight: 700;
+  }
+
+  .post-header {
+    margin-bottom: 6px;
+  }
+
+  .post-excerpt {
+    margin: 0 0 8px;
+    color: $ink-muted;
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .post-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $space-3;
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+  }
+}
+
+.post-title {
+  font-family: $font-sans;
+  font-weight: 700;
+  font-size: 1.0625rem;
+  line-height: 1.3;
+  letter-spacing: -0.015em;
+  margin: 0 0 6px;
+
+  a {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: unset;
+    color: $ink;
+    text-decoration: none;
+    transition: color $motion-fast $ease-out-quart;
+
+    &:hover {
+      color: $accent;
+    }
+  }
+
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.post-header {
+  margin-bottom: 6px;
+}
+
+.post-meta-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 6px;
+  line-height: 1;
+}
+
+.post-author-mini {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1;
+
+  .post-author-mini-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid $rule;
+    flex-shrink: 0;
+    display: block;
+  }
+
+  .post-author-mini-name {
+    font-family: $font-sans;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: $ink;
+    line-height: 1;
+    display: inline-block;
+  }
+}
+
+.post-meta-sep {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: $ink-muted;
+  font-size: 0.8125rem;
+  line-height: 1;
+  user-select: none;
+  opacity: 0.6;
+}
+
+.post-date {
+  font-family: $font-mono;
+  color: $ink-muted;
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+}
+
+// Excerpt on standard post rows
+.post-excerpt {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  font-family: $font-sans;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  max-width: 68ch;
+  color: $ink-muted;
+  margin: 0 0 8px;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+.post-footer {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.jump-link {
+  a {
+    font-family: $font-mono;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: $accent;
+    text-decoration: none;
+    letter-spacing: 0.02em;
+    display: inline-flex;
+    align-items: center;
+    gap: $space-1;
+    transition: color $motion-fast $ease-out-quart, gap $motion-fast $ease-out-quart;
+
+    .jump-link-arrow {
+      display: inline-block;
+      transition: transform $motion-fast $ease-out-quart;
+    }
+
+    &:hover {
+      color: oklch(50% 0.1467 251.2451);
+
+      .jump-link-arrow {
+        transform: translateX(3px);
+      }
+    }
+  }
+}
+
+.post-labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.post-label,
+.label-link,
+a.label-link,
+.post-labels .label-link,
+.post-labels .post-label {
+  display: inline-flex;
+  align-items: center;
+  font-family: $font-mono;
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: $accent;
+  background: $accent-wash;
+  border: 1px solid oklch(63.86% 0.1467 251.2451 / 0.25);
+  border-radius: 4px;
+  padding: 2px 8px !important;
+  min-height: unset !important;
+  height: auto !important;
+  text-decoration: none;
+  line-height: 1.4;
+  transition: background-color $motion-fast $ease-out-quart, border-color $motion-fast $ease-out-quart, transform $motion-fast $ease-out-quart;
+
+  &:hover {
+    background-color: oklch(63.86% 0.1467 251.2451 / 0.15);
+    border-color: $accent;
+    transform: translateY(-1px);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Featured Post Card (Lead Post on Homepage Page 1)
+// ---------------------------------------------------------------------------
+
+body.is-home-lead .post:first-of-type {
+  grid-column: 1 / 9;
+
+  .post-title {
+    font-size: 1.0625rem;
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: -0.015em;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: 6px;
+  }
+
+  .post-excerpt {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    font-family: $font-sans;
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    color: $ink-muted;
+    margin: 0 0 8px;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Small Viewport Adjustments (<640px): Lead joins the list
+// ---------------------------------------------------------------------------
+
+@media (max-width: 639px) {
+  body.is-home-lead .post:first-of-type .post-excerpt {
+    display: none;
+  }
+
+  body.is-home-lead .post:first-of-type .post-title {
+    font-size: 1.25rem;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Homepage Auto-Filtered Catalog Bar (Screenshot 3)
+// ---------------------------------------------------------------------------
+
+.posts-filter-bar {
+  scroll-margin-top: 80px;
+  background: $surface;
+  border: 1px solid $rule;
+  border-radius: 12px;
+  padding: $space-4 $space-5;
+  margin-bottom: $space-6;
+  box-shadow: $shadow-sm;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: $space-4;
+
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    &.filter-search-group {
+      flex: 2 1 200px;
+    }
+
+    &.filter-year-group {
+      flex: 1 1 110px;
+    }
+
+    &.filter-month-group {
+      flex: 1 1 130px;
+    }
+
+    &.filter-category-group {
+      flex: 1.5 1 160px;
+    }
+  }
+
+  .filter-label {
+    font-family: $font-sans;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: $ink;
+    letter-spacing: -0.01em;
+  }
+
+  .filter-input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .filter-select-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+
+    &::after {
+      content: '';
+      position: absolute;
+      right: 14px;
+      pointer-events: none;
+      width: 0;
+      height: 0;
+      border-left: 4px solid transparent;
+      border-right: 4px solid transparent;
+      border-top: 5px solid $ink-muted;
+    }
+  }
+
+  .filter-icon {
+    position: absolute;
+    left: 12px;
+    width: 16px;
+    height: 16px;
+    color: $ink-muted;
+    pointer-events: none;
+  }
+
+  .filter-input {
+    width: 100%;
+    padding: 10px 14px 10px 36px;
+    border: 1px solid $rule;
+    border-radius: 20px;
+    background: transparent;
+    color: $ink;
+    font-family: $font-sans;
+    font-size: 0.875rem;
+    outline: none;
+    transition: border-color $motion-fast $ease-out-quart, box-shadow $motion-fast $ease-out-quart;
+
+    &::placeholder {
+      color: $ink-muted;
+      opacity: 0.8;
+    }
+
+    &:focus {
+      border-color: $accent;
+      box-shadow: 0 0 0 3px oklch(63.86% 0.1467 251.2451 / 0.15);
+    }
+  }
+
+  .filter-select {
+    width: 100%;
+    padding: 10px 32px 10px 14px;
+    border: 1px solid $rule;
+    border-radius: 20px;
+    background: $surface;
+    color: $ink;
+    font-family: $font-sans;
+    font-size: 0.875rem;
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    transition: border-color $motion-fast $ease-out-quart, box-shadow $motion-fast $ease-out-quart;
+
+    &:focus {
+      border-color: $accent;
+      box-shadow: 0 0 0 3px oklch(63.86% 0.1467 251.2451 / 0.15);
+    }
+  }
+
+  @media (max-width: 639px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: $space-3;
+    padding: $space-4;
+
+    .filter-group {
+      flex: none !important;
+      width: 100% !important;
+
+      &.filter-search-group,
+      &.filter-year-group,
+      &.filter-month-group,
+      &.filter-category-group {
+        flex: none !important;
+        width: 100% !important;
+      }
+    }
+  }
+}

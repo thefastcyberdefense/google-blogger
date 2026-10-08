@@ -1,12 +1,165 @@
-//- Shared presentation; preserve native dispatch and the existing eligible-post sequence.
+b:includable(id='postMeta' var='post')
+  //- JSON-LD emitted in head-meta.pug via data:widgets.Blog.first.posts.first;
+  //- this stub prevents the engine emitting a duplicate per-post script block.
+
 b:includable(id='post' var='post')
+  article.post(itemprop='blogPost' itemscope='itemscope' itemtype='http://schema.org/BlogPosting')
+    b:include(name='postMeta' data='post')/
+    b:if(cond='data:view.isSingleItem')
+      b:include(name='postTitle' data='post')/
+      b:include(name='postHeader' data='post')/
+      b:include(name='postBody' data='post')/
+      b:if(cond='data:view.isPost')
+        b:include(name='postShareBar' data='post')/
+      b:include(name='postFooter' data='post')/
+      b:if(cond='data:view.isPost')
+        b:include(name='postAuthorBio' data='post')/
+        b:include(name='postNav' data='post')/
+    b:if(cond='not data:view.isSingleItem')
+      div.post-card-inner(expr:class='data:post.featuredImage ? "post-card-inner has-thumbnail" : "post-card-inner no-thumbnail"')
+        b:if(cond='data:post.featuredImage')
+          b:with(value='resizeImage(data:post.featuredImage, 640, "16:9")' var='thumbUrl')
+            b:with(value='resizeImage(data:post.featuredImage, 384, "16:9")' var='thumbUrlSmall')
+              a.post-thumbnail-link(expr:href='data:post.url' tabindex='-1' aria-hidden='true')
+                b:if(cond='data:post.id == data:posts.first.id')
+                  img.post-thumbnail(expr:src='data:thumbUrl' expr:srcset='data:thumbUrlSmall + " 384w, " + data:thumbUrl + " 640w"' sizes='(max-width: 768px) 348px, 280px' width='640' height='360' fetchpriority='high' loading='eager' expr:alt='data:post.title' referrerpolicy='no-referrer')/
+                b:if(cond='data:post.id != data:posts.first.id')
+                  img.post-thumbnail(expr:src='data:thumbUrl' expr:srcset='data:thumbUrlSmall + " 384w, " + data:thumbUrl + " 640w"' sizes='(max-width: 768px) 348px, 280px' width='640' height='360' loading='lazy' decoding='async' expr:alt='data:post.title' referrerpolicy='no-referrer')/
+        div.post-content-wrap
+          b:include(name='postTitle' data='post')/
+          b:include(name='postHeader' data='post')/
+          b:include(name='postBodySnippet' data='post')/
+          b:include(name='postFooter' data='post')/
+
+b:includable(id='postTitle' var='post')
   b:if(cond='data:view.isSingleItem')
-    +fcdArticle({}, false)
+    h1.post-title(itemprop='name headline')
+      b:eval(expr='data:post.title')/
   b:if(cond='not data:view.isSingleItem')
-    b:with(value='data:view.isHomepage and not data:newerPageUrl' var='fcdInitialHome')
-      b:with(value='data:fcdInitialHome ? (data:post.id == data:posts.first.id ? "lead" : (data:post.id in (data:posts take 3 map (p => p.id)) ? "secondary" : "standard")) : "standard"' var='fcdEditorialRole')
-        +fcdCard({}, false)
-b:includable(id='fcdLabels' var='post')
-  +fcdLabels({}, false)
-b:includable(id='fcdByline' var='post')
-  +fcdByline({}, false, false)
+    h2.post-title(itemprop='name headline')
+      a(expr:href='data:post.url' itemprop='url')
+        b:eval(expr='data:post.title')/
+
+b:includable(id='postHeader' var='post')
+  header.post-header
+    div.post-meta-row
+      b:if(cond='data:post.author.name')
+        div.post-author-mini
+          b:if(cond='data:post.author.authorPhoto.image')
+            img.post-author-mini-avatar(expr:src='data:post.author.authorPhoto.image' expr:alt='data:post.author.name' width='24' height='24' loading='lazy')/
+          span.post-author-mini-name
+            b:eval(expr='data:post.author.name')/
+      b:if(cond='data:post.date')
+        span.post-meta-sep ·
+        time.post-date(expr:datetime='data:post.date.iso8601' itemprop='datePublished')
+          b:eval(expr='data:post.date')/
+      b:if(cond='data:view.isPost')
+        span.post-meta-sep.reading-time-sep(style='display:none;') ·
+        span.post-reading-time#reading-time-mount(style='display:none;')
+          svg.reading-time-icon(viewBox='0 0 24 24' width='13' height='13' aria-hidden='true')
+            circle(cx='12' cy='13' r='8' fill='none' stroke='currentColor' stroke-width='2')
+            path(d='M12 9v4l2.5 2.5M10 2h4M12 2v3' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round')
+          span.reading-time-text
+    b:if(cond='data:view.isPost')
+      div.post-listen-bar
+        button.listen-btn(type='button' data-action='listen-article' aria-label='Listen to this article')
+          svg.listen-icon-play(viewBox='0 0 24 24' width='12' height='12' aria-hidden='true')
+            path(d='M8 5v14l11-7z' fill='currentColor')
+          svg.listen-icon-pause(viewBox='0 0 24 24' width='12' height='12' aria-hidden='true' style='display:none;')
+            path(d='M6 19h4V5H6v14zm8-14v14h4V5h-4z' fill='currentColor')
+          span.listen-label Listen (Audio)
+        button.listen-speed-btn(type='button' data-action='audio-speed' aria-label='Playback speed: 1x' title='Change playback speed (0.5x to 1.5x)')
+          span.speed-label 1x
+        span.listen-status(aria-live='polite')
+
+b:includable(id='postBody' var='post')
+  .post-body(itemprop='articleBody')
+    b:eval(expr='data:post.body')/
+
+b:includable(id='postBodySnippet' var='post')
+  .post-excerpt(itemprop='description')
+    b:eval(expr='snippet(data:post.snippets.long, {length: 180})')/
+
+b:includable(id='postShareBar' var='post')
+  .post-share-bar.share-bar(role='toolbar' aria-label='Share this article')
+    span.share-label Share
+    button.share-btn.share-btn-copy(type='button' data-action='copy-link' aria-label='Copy link to clipboard')
+      svg(viewBox='0 0 24 24' width='16' height='16' aria-hidden='true')
+        path(d='M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z')
+      span Copy Link
+    a.share-btn.share-btn-twitter(expr:href='"https://twitter.com/intent/tweet" params {text: data:post.title, url: data:post.url.canonical}' target='_blank' rel='noopener noreferrer' aria-label='Share on X')
+      svg(viewBox='0 0 24 24' width='16' height='16' aria-hidden='true')
+        path(d='M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z')
+      span X
+    a.share-btn.share-btn-linkedin(expr:href='"https://www.linkedin.com/sharing/share-offsite/" params {url: data:post.url.canonical}' target='_blank' rel='noopener noreferrer' aria-label='Share on LinkedIn')
+      svg(viewBox='0 0 24 24' width='16' height='16' aria-hidden='true')
+        path(d='M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.2V10.9H6.46M7.83 6.5a1.64 1.64 0 0 0-1.66 1.65c0 .91.75 1.66 1.66 1.66.9 0 1.65-.75 1.65-1.66 0-.9-.75-1.65-1.65-1.65z')
+      span LinkedIn
+    a.share-btn.share-btn-facebook(expr:href='"https://www.facebook.com/sharer/sharer.php" params {u: data:post.url.canonical}' target='_blank' rel='noopener noreferrer' aria-label='Share on Facebook')
+      svg(viewBox='0 0 24 24' width='16' height='16' aria-hidden='true')
+        path(d='M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z')
+      span Facebook
+
+b:includable(id='postAuthorBio' var='post')
+  b:if(cond='data:post.author.name')
+    aside.post-author-bio.author-bio-card.author-bio(aria-label='About the author')
+      b:if(cond='data:post.author.authorPhoto.image')
+        .author-avatar-wrap
+          img.author-avatar(expr:src='data:post.author.authorPhoto.image' expr:alt='data:post.author.name ?: data:blog.title' loading='lazy' width='64' height='64')/
+      b:if(cond='not data:post.author.authorPhoto.image')
+        .author-avatar-wrap
+          //- Static text monogram, not another external photo fetch. See
+          //- article.scss .author-avatar-fallback / .author-initials.
+          div.author-avatar.author-avatar-fallback(role='img' expr:aria-label='data:post.author.name ?: data:blog.title')
+            span.author-initials FCD
+      .author-details
+        span.author-label Written by
+        h3.author-name
+          b:if(cond='data:post.author.profileUrl')
+            a(expr:href='data:post.author.profileUrl' rel='author')
+              b:eval(expr='data:post.author.name')/
+          b:if(cond='not data:post.author.profileUrl')
+            b:eval(expr='data:post.author.name')/
+        b:if(cond='data:post.author.aboutMe')
+          p.author-description
+            b:eval(expr='data:post.author.aboutMe')/
+        b:if(cond='not data:post.author.aboutMe')
+          p.author-description
+            b:eval(expr='data:blog.description ?: "Cybersecurity research, vulnerability analysis, and penetration testing publications."')/
+        div.author-follow-actions
+          a.author-follow-btn.author-follow-google(expr:href='"https://www.blogger.com/follow-blog.g" params {blogID: data:blog.blogId}' target='_blank' rel='noopener noreferrer' aria-label='Follow on Google Blogger' title='Follow on Google Blogger')
+            svg(viewBox='0 0 24 24' width='14' height='14' aria-hidden='true')
+              path(d='M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z' fill='currentColor')
+            span Follow on Google
+          a.author-follow-btn.author-follow-rss(expr:href='data:blog.homepageUrl path "feeds/posts/default"' target='_blank' rel='noopener noreferrer' aria-label='Subscribe via RSS' title='Subscribe via RSS')
+            svg(viewBox='0 0 24 24' width='14' height='14' aria-hidden='true')
+              path(d='M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19 7.38 20 6.18 20C5 20 4 19 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93V10.1z' fill='currentColor')
+            span RSS Feed
+
+b:includable(id='postNav' var='post')
+  b:if(cond='data:olderPageUrl or data:newerPageUrl')
+    nav.post-nav.post-navigation(aria-label='Post navigation')
+      b:if(cond='data:olderPageUrl')
+        a.post-nav-item.post-nav-prev(expr:href='data:olderPageUrl' rel='prev')
+          .post-nav-text
+            span.post-nav-direction ← Previous
+            span.post-nav-title
+              b:eval(expr='data:messages.olderPosts ?: "Older Post"')/
+      b:if(cond='data:newerPageUrl')
+        a.post-nav-item.post-nav-next(expr:href='data:newerPageUrl' rel='next')
+          .post-nav-text
+            span.post-nav-direction Next →
+            span.post-nav-title
+              b:eval(expr='data:messages.newerPosts ?: "Newer Post"')/
+
+b:includable(id='postFooter' var='post')
+  footer.post-footer
+    b:if(cond='data:post.labels')
+      .post-labels
+        b:loop(values='data:post.labels' var='label')
+          a.label-link.post-label(expr:href='data:label.url' rel='tag')
+            b:eval(expr='data:label.name')/
+    b:if(cond='not data:post.labels')
+      div
+    b:if(cond='not data:view.isSingleItem')
+      b:include(data='post' name='postFooterJumpLink')/

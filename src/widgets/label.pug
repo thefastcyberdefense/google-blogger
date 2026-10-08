@@ -1,9 +1,10 @@
-//- Label URLs remain native Blogger data, adapted from Ledger's Label1.
-b:section(id='topics' class='topics' name='Topics' showaddelement='false')
-  b:widget(id='Label1' type='Label' title='Topics' version='2' locked='false')
+b:section(class='topics' id='topics' name='Topics' showaddelement='false')
+  b:widget(id='Label1' locked='false' title='Topics' type='Label' version='2' visible='true')
     b:includable(id='main')
       b:if(cond='data:labels')
-        nav.topic-navigation(aria-label='Article topics')
-          b:loop(values='data:labels' var='label')
-            a.topic-pill(expr:href='data:label.url' rel='tag')
-              b:eval(expr='data:label.name')/
+        nav.topics-bar(aria-label='Topic Navigation')
+          ul.topics-list
+            b:loop(values='data:labels' var='label')
+              li.topic-item
+                a(expr:class='data:view.isLabelSearch and data:view.search.label == data:label.name ? "topic-pill is-active" : "topic-pill"' expr:href='data:label.url' rel='tag')
+                  b:eval(expr='data:label.name')/

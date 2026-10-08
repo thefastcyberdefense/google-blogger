@@ -24,6 +24,7 @@ ledger-port.yml workflow (bot commits do not trigger CI).
 | Fourth test-blog upload | done 2026-10-07 | build accb4d9; home light and dark all tweakcn; post: diagrams broke after a theme switch, light diagrams in Mermaid stock colours, dark callout bars all blue |
 | US-L10 diagrams and callouts | green in run 37659118930 at 26ca599 (red first in run 37656025228 at 272e026, 3 failing); fix 7cf48ae and 8744bdf; unit 58/58, contract 39/39, audit lows only | tests/fcd/diagrams.test.ts runs the built theme script over the static post view with a Mermaid stand-in; Blogger evidence pending |
 | Fifth upload, production | done 2026-10-08 by the owner, to blogs.fastcyberdefense.com (the production blog, docs/DEPLOYMENT.md) | build 26ca599, artifact fcd-theme-26ca5994c7eea4785971f4d9b3e7b096aed7f720 (sha256 026a885a2593dd82d8de1147664ab7fafcd4eafa77416c09bc8f07d9b93ae359); owner evidence pending (rendered theme-build stamp, post with diagrams and callouts in both themes, 390 and 1280 px, Layout); rollback triggers as in docs/DEPLOYMENT.md; main does not yet contain this build (PR #15 is a draft) |
+| US-L11 comment logo only on blog-author comments | red first in run 37738307296 at 9f0c203 (spoofed names "FCD", "Fast Cyber Defense", "Team FCD Support" got the logo); fix c39c2c3; awaiting CI on this commit | tests/fcd/comments.test.ts runs the built theme script over the static post view with five comments |
 | US-L6 cleanup and records | pending | remove port/, ledger-port.yml, staging-check.yml, excerpt step; CHANGELOG, AGENTS.md, PR body |
 
 ## US-L5 changes (main.ts, via port edits)
@@ -133,6 +134,14 @@ pairs, down to 2.9:1; every other text, the dark theme included, keeps AA.
   FCD-owned src/styles/fcd-callouts.scss restores the five bars in dark mode
   on 10% tints, with titles at 6.5:1 or more; light titles are deepened to
   AA on their tints, and the note title stays the primary (site-exact).
+
+## US-L11: comment logo (live blog, 2026-10-08)
+
+Ledger gave the company logo, and the alt text "Fast Cyber Defense", to any
+commenter whose display name contained "fcd" or "fast cyber defense", so
+anyone could appear as the company. A port edit to main.ts now requires
+Blogger's own .blog-author flag as well; other commenters keep their photo or
+an initials avatar.
 
 ## Dependency audit (2026-10-06)
 

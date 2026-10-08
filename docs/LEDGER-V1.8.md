@@ -13,6 +13,8 @@ carries its own identity and is never uploaded.
 | US-L12b theme-layer merge | merged by bot 645aaa2; build and typecheck green in run 37753170666, XML 361,456 bytes; every test outside the palette passed | three-way merge of the 9 src/ files upstream changed, into the FCD files at 6f48c7a; 8 clean, 1 conflict in theme.pug resolved |
 | US-L12c FCD palette and safe sources for the image preview and the back-to-top button | green in run 37754862719 at 336beb3 (fix ee43718, bot e036ee3); red first in run 37753170666 (palette, 5 cases) and run 37753995519 (preview: a javascript: link reached it) | unit 68/68, contract 39/39, audit lows only, CodeQL no new alerts, XML 361,800 bytes; artifact fcd-theme-336beb3762fee77d56b1a8b1bad69547d46204d3, sha256 21e4695a4cc3a4a278ef33c939a6042d518b0342202b1d70d037abcdf7567380 |
 | US-L12d cleanup and records | temporary merge tooling removed (d6998c2 workflow first, then port/merge.py, port/merge.json, port/merge-report.json); CI on the records commit | the theme XML differs from 336beb3 only in the build stamp |
+| US-L12e BlogPosting JSON-LD in the Blog widget | green in run 37808450659 at 0d84f91 (red first in run 37807273063 at b686170); owner upload pending | the owner's view-source of live build 48fa7fd showed article:published_time and article:author empty; unit 70/70, contract 39/39, XML 361,692 bytes |
+| Dependency: katex 0.18.5 override (GHSA-238p-pmpm-9mq7, low) | lockfile refreshed by bot 88d0c6c (temporary workflow, removed in 33b8084); npm audit 0 findings | katex 0.16.47 to 0.18.5 and its nested commander 8.3.0 to 15.0.0, nothing else |
 
 ## US-L12a
 
@@ -68,12 +70,44 @@ The v1.8.0 additions came in Ledger's own colours. FCD edits:
 The keyboard contract of the preview (focus to Close on open, Escape closes,
 focus returns to the image) passed as ported.
 
+## US-L12e
+
+The owner's view-source of live build 48fa7fd (2026-10-08) confirmed the
+build stamp and showed `article:published_time` and `article:author` empty:
+the head bound the post through data:widgets.Blog.first.posts.first, and
+Blogger leaves that empty in the head. The BlogPosting JSON-LD now lives in
+the Blog widget's postMeta includable (src/widgets/blog-post.pug), on post
+views only, where Blogger binds data:post (the byline reads the same date and
+author). The head reads no data:post values: the three article:* tags are
+dropped and the BreadcrumbList JSON-LD stays. The first red also flagged the
+data:post reads inside b:defaultmarkups, which sits in the head but only holds
+body includables; the check skips that block since the fix commit.
+
+The same view-source showed the blog's search description still reads
+"Security engineering notes, research & field observations by Md Redwan
+Ahmed...". That is a Blogger setting (Settings > Meta tags), not the theme.
+
+## Dependency: katex
+
+npm audit reported katex <0.18.2 (GHSA-238p-pmpm-9mq7, low) through mermaid
+11.17.2, the latest Mermaid release, which still depends on katex ^0.16.47;
+its only offered fix was a Mermaid downgrade to 10.8.0. package.json now
+overrides katex to 0.18.5. This changes the development tree only: the tests
+use a Mermaid stand-in, and readers load Mermaid's own prebuilt bundle from
+jsDelivr, which carries its own KaTeX until Mermaid updates it. Exposure on
+the blog stays negligible: diagrams are written by the blog's authors, Mermaid
+runs with securityLevel strict, and the issue needs an existing
+prototype-pollution bug plus attacker-written math.
+
 ## Open
 
 - Human keyboard and screen reader review of the image preview and the
   back-to-top button, and contrast of the preview controls over real
   images: no test measures them; owner review.
-- Owner upload of a PR #16 build and his rendered evidence: theme-build
-  stamp, a post with the image preview open, back-to-top, diagrams in both
-  themes at 390 and 1280 px, Layout, and the Rich Results Test on a post.
+- Owner upload of the PR #16 head build and his rendered evidence: the
+  BlogPosting JSON-LD in the post body with a real datePublished and author,
+  the Rich Results Test on a post, a post with the image preview open,
+  back-to-top after scrolling, the post at 390 px in both themes, and Layout.
+  Received for 48fa7fd: build stamp; home and post at desktop width in both
+  themes.
 - Ready for review and merge only on the owner's explicit approval.

@@ -20,13 +20,14 @@ import { fileURLToPath } from 'node:url';
 import { chromium, type Browser, type Page } from 'playwright';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { parseXml, renderTheme } from './blogger-static.ts';
+import { scripts } from './markup.ts';
 import { siteExact } from './site-exact.ts';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const xml = readFileSync(join(ROOT, 'dist/theme.xml'), 'utf8');
 const tree = parseXml(xml);
 const SKIN = xml.match(/<b:skin\b[^>]*>\s*<!\[CDATA\[([\s\S]*?)\]\]>\s*<\/b:skin>/)?.[1] ?? '';
-const THEME_SCRIPT = [...xml.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g)].map((m) => m[1] ?? '').find((s) => s.includes('mermaid-diagram-wrap')) ?? '';
+const THEME_SCRIPT = scripts(xml).map((s) => s.inner).find((s) => s.includes('mermaid-diagram-wrap')) ?? '';
 
 type Rgba = [number, number, number, number];
 

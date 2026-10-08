@@ -1,9 +1,16 @@
 // US-L12a: Ledger v1.8.0 (redwan-cse/ledger-blogger-theme f3647ef, 2026-10-06)
 // found the post JSON-LD description invalid: a b:eval that chains snippet()
 // over data:post.snippets.long with ?: fallbacks. The FCD head
-// (src/partials/head-meta.pug) carries the same line onto the live blog. The
+// (src/partials/head-meta.pug) carried the same line onto the live blog. The
 // description must be one of Blogger's plain data values instead: the post's
 // short snippet, else the view description, else the title.
+// US-L12e: on the live blog (build 48fa7fd, owner's view-source 2026-10-08)
+// the head's article:published_time and article:author read empty: the head
+// binds the post through data:widgets.Blog.first.posts.first, and Blogger
+// leaves that empty there. The BlogPosting JSON-LD therefore lives in the
+// Blog widget's postMeta includable, where Blogger binds data:post (the
+// byline shows the date and author), only on post views; the head reads no
+// data:post values at all.
 // The check reads the BlogPosting JSON-LD in the CI-built XML, resolves its
 // b:if branches for each case with the static renderer's condition
 // evaluator, stands in every data value by its name and parses the result.
@@ -63,6 +70,27 @@ const CASES = [
   { name: 'a post with only a search description', known: { 'data:post.snippets.short': false, 'data:view.description': true }, want: 'view.description' },
   { name: 'a post with neither', known: { 'data:post.snippets.short': false, 'data:view.description': false }, want: 'view.title' }
 ];
+
+const HEAD_START = xml.indexOf('<head>');
+const HEAD = HEAD_START < 0 ? '' : xml.slice(HEAD_START, xml.indexOf('</head>', HEAD_START));
+const POST_META = blocks(xml, '<b:includable', '</b:includable>', (open) => /\bid=(["'])postMeta\1/.test(open)).map((b) => b.inner);
+
+describe('Post structured data reads the post where Blogger binds it (US-L12e)', () => {
+  it('the head reads no data:post values', () => {
+    expect(HEAD.length, 'head').toBeGreaterThan(1000);
+    const uses = HEAD.match(/data:post\.[\w.]+/g) ?? [];
+    expect(uses, 'data:post in the head reads empty on live Blogger (48fa7fd: article:published_time and article:author)').toEqual([]);
+  });
+
+  it('the BlogPosting JSON-LD is in the Blog widget postMeta, on post views only', () => {
+    const withLd = POST_META.filter((inner) => inner.includes('"@type": "BlogPosting"'));
+    expect(withLd, `postMeta includables: ${POST_META.length}`).toHaveLength(1);
+    const inner = withLd[0] ?? '';
+    const guard = blocks(inner, '<b:if', '</b:if>', (open) => open.includes('data:view.isPost')).find((b) => b.inner.includes('"@type": "BlogPosting"'));
+    expect(guard, 'BlogPosting script inside a data:view.isPost guard').toBeDefined();
+    expect(HEAD.includes('"BlogPosting"'), 'BlogPosting left in the head').toBe(false);
+  });
+});
 
 describe('Post structured data (Ledger v1.8.0 f3647ef)', () => {
   it('ships exactly one BlogPosting JSON-LD block', () => {

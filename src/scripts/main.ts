@@ -2900,7 +2900,9 @@ export function initCommentInteractions(): void {
       const isBlogAuthor =
         Boolean(comment.querySelector('.blog-author'));
 
-      const isFCD = lowerName.includes('fast cyber defense') || lowerName.includes('fcd');
+      // FCD: the logo marks the blog's own comments only. Blogger flags them
+      // with .blog-author; a name a commenter types proves nothing (US-L11).
+      const isFCD = isBlogAuthor && (lowerName.includes('fast cyber defense') || lowerName.includes('fcd'));
       const src = img.getAttribute('src') || '';
 
       if (isFCD) {

@@ -55,7 +55,7 @@
    "path": "src/theme.pug",
    "status": "M",
    "conflicts": 1,
-   "outcome": "1 conflicts, 0 resolutions"
+   "outcome": "merged, 1 conflicts resolved"
   }
  ],
  "notInSrc": [

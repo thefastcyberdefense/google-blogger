@@ -1,6 +1,52 @@
 b:includable(id='postMeta' var='post')
-  //- JSON-LD emitted in head-meta.pug via data:widgets.Blog.first.posts.first;
-  //- this stub prevents the engine emitting a duplicate per-post script block.
+  //- US-L12e: the BlogPosting JSON-LD reads the post here, inside the Blog
+  //- widget, where Blogger binds data:post (the byline reads the same date and
+  //- author). The head cannot: on the live blog (build 48fa7fd) its
+  //- data:widgets.Blog.first.posts.first binding left article:published_time
+  //- and article:author empty. Overriding postMeta also keeps Blogger from
+  //- emitting its own per-post script block. Post views only.
+  b:if(cond='data:view.isPost')
+    script(type='application/ld+json').
+      {
+        "@context": "https://schema.org",
+        "@type": "BlogPosting",
+        "mainEntityOfPage": {
+          "@type": "WebPage",
+          "@id": "<data:view.url.canonical.jsonEscaped/>"
+        },
+        "headline": "<data:view.title.jsonEscaped/>",
+        <b:if cond='data:post.snippets.short'>
+        "description": "<data:post.snippets.short.jsonEscaped/>",
+        </b:if>
+        <b:if cond='not data:post.snippets.short and data:view.description'>
+        "description": "<data:view.description.jsonEscaped/>",
+        </b:if>
+        <b:if cond='not data:post.snippets.short and not data:view.description'>
+        "description": "<data:view.title.jsonEscaped/>",
+        </b:if>
+        "datePublished": "<data:post.date.iso8601.jsonEscaped/>"
+        <b:if cond='data:post.lastUpdated'>
+        , "dateModified": "<data:post.lastUpdated.iso8601.jsonEscaped/>"
+        </b:if>
+        <b:if cond='data:view.featuredImage'>
+        , "image": "<data:view.featuredImage.jsonEscaped/>"
+        </b:if>
+        , "author": {
+          "@type": "Person",
+          "name": "<data:post.author.name.jsonEscaped/>"
+          <b:if cond='data:post.author.profileUrl'>
+          , "url": "<data:post.author.profileUrl.jsonEscaped/>"
+          </b:if>
+          <b:if cond='data:post.author.authorPhoto.image'>
+          , "image": "<data:post.author.authorPhoto.image.jsonEscaped/>"
+          </b:if>
+        },
+        "publisher": {
+          "@type": "Organization",
+          "name": "<data:blog.title.jsonEscaped/>",
+          "url": "https://fastcyberdefense.com/"
+        }
+      }
 
 b:includable(id='post' var='post')
   article.post(itemprop='blogPost' itemscope='itemscope' itemtype='http://schema.org/BlogPosting')

@@ -21,7 +21,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { evaluate } from './blogger-static.ts';
-import { blocks } from './markup.ts';
+import { blocks, withoutBlocks } from './markup.ts';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const xml = readFileSync(join(ROOT, 'dist/theme.xml'), 'utf8');
@@ -72,7 +72,9 @@ const CASES = [
 ];
 
 const HEAD_START = xml.indexOf('<head>');
-const HEAD = HEAD_START < 0 ? '' : xml.slice(HEAD_START, xml.indexOf('</head>', HEAD_START));
+// The head as Blogger evaluates it: b:defaultmarkups sits in the head but only
+// holds includables the widgets render in the body.
+const HEAD = withoutBlocks(HEAD_START < 0 ? '' : xml.slice(HEAD_START, xml.indexOf('</head>', HEAD_START)), '<b:defaultmarkups', '</b:defaultmarkups>');
 const POST_META = blocks(xml, '<b:includable', '</b:includable>', (open) => /\bid=(["'])postMeta\1/.test(open)).map((b) => b.inner);
 
 describe('Post structured data reads the post where Blogger binds it (US-L12e)', () => {

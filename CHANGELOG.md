@@ -1,6 +1,17 @@
 # Changelog
 
-## Unreleased: Ledger v1.7.0 rebuild (draft PR #15)
+## Unreleased: Ledger v1.8.0 port (draft PR #16)
+
+- Ported the theme-layer changes of Ledger v1.8.0 (redwan-cse/ledger-blogger-theme 6701496, released 2026-10-08) from source; record in docs/LEDGER-V1.8.md.
+- Structured data (US-L12a): the BlogPosting JSON-LD description is the post's short snippet, else the view description, else the title, instead of a b:eval snippet() chain upstream found invalid (f3647ef). The live blog carries the old line until the next upload.
+- New from upstream (US-L12b): an image preview with zoom, pan and download for post images, a back-to-top button, the audio reader voice order, Mermaid label quoting and the ASCII-box pre-scan. Three-way merged into the FCD sources; one conflict in theme.pug kept FCD's removals.
+- FCD palette and safety (US-L12c): the preview and the back-to-top button use the tweakcn palette; the preview opens only http(s) sources (a javascript: link no longer reaches it) and its download fetch aborts after 8 s.
+- Not taken: upstream publishing scripts (Drive publisher, IndexNow and Bing submission, GitHub research sync, companion link resolver), Ledger's tests and golden XML, and its package changes.
+- Cleanup (US-L12d): removed the temporary merge tooling (ledger-merge.yml, port/merge.py, port/merge.json, port/merge-report.json).
+
+Human keyboard and screen reader review of the preview and the back-to-top button, and the owner's upload with rendered evidence, are pending. No merge or deployment is implied.
+
+## Unreleased: Ledger v1.7.0 rebuild (PR #15, merged to main as 2611961)
 
 - Rebuilt FCD Blogger on Ledger v1.7.0 (redwan-cse/ledger-blogger-theme at a3da05a8a70243c6ffc239b0e96e88260ed7b536), the owner's own theme that already runs natively, in place of the L1 shell of draft PR #14 (recorded in the next section, unmerged and superseded). Ledger's Blog1 dispatch, default markups, layout and features are kept; its personal identity, avatars and social links are replaced by Fast Cyber Defense.
 - Identity and palette: the company logo (fastcyberdefense.com icon0.svg, inlined, no request) and the fastcyberdefense.com tweakcn palette at the exact site colours (owner decision 2026-10-06; tests/fcd/site-exact.ts lists the only accepted pairs below AA), with Inter and Fira Code.
@@ -12,7 +23,7 @@
 - CI: typecheck, a build bound to the exact source commit, the FCD unit checks, Ledger's V3 contract inside the no-egress namespace, npm audit, and a theme XML zip per fully green run; no generated XML is checked in.
 - Cleanup (US-L6): removed the temporary port writer (port/apply.py, port/ledger.json, port/lockfile.json and ledger-port.yml), the temporary port review excerpt in ci.yml, and staging-check.yml, whose staging:check script no longer exists. The Ledger-derived files under src/ are ordinary FCD sources. The tests read the built XML through tests/fcd/markup.ts instead of the regular expressions CodeQL flagged as incomplete HTML sanitizers (9 high alerts, test code only).
 
-The owner uploaded builds 26ca599 and then d1fd459 to the production blog on 2026-10-08. His rendered evidence (theme-build stamp, post views in both themes at 390 and 1280 px, Layout) is pending, and main does not contain the build. No merge is implied.
+The owner uploaded builds 26ca599 and then d1fd459 to the production blog on 2026-10-08. PR #15 was merged to main as 2611961 on the owner's approval (post-merge run 37748639356 green); his rendered evidence for the main build is pending.
 
 ## Unreleased: L1 native shell and design v1 Layout gadgets
 

@@ -29,7 +29,7 @@ sources, edited directly.
 | Fifth upload, production | done 2026-10-08 by the owner, to blogs.fastcyberdefense.com (the production blog, docs/DEPLOYMENT.md) | build 26ca599, artifact fcd-theme-26ca5994c7eea4785971f4d9b3e7b096aed7f720 (sha256 026a885a2593dd82d8de1147664ab7fafcd4eafa77416c09bc8f07d9b93ae359); owner evidence pending (rendered theme-build stamp, post with diagrams and callouts in both themes, 390 and 1280 px, Layout); rollback triggers as in docs/DEPLOYMENT.md; main does not yet contain this build (PR #15 is a draft) |
 | US-L11 comment logo only on blog-author comments | green in run 37739466219 at d1fd459 (red first in run 37738307296 at 9f0c203: spoofed names "FCD", "Fast Cyber Defense", "Team FCD Support" got the logo); fix c39c2c3; unit 59/59, contract 39/39, audit lows only | tests/fcd/comments.test.ts runs the built theme script over the static post view with five comments; Blogger evidence pending |
 | Sixth upload, production | done 2026-10-08 by the owner, to blogs.fastcyberdefense.com | build d1fd459, artifact fcd-theme-d1fd45998a51589ef7e1dc44e634795a5f34f36b (sha256 8543f054dc80228a4865c18e66bdbe0657bce680ba1df74731ae6fc74723a52b), replaces 26ca599; owner evidence pending (rendered theme-build stamp 0.0.0+d1fd459..., post with diagrams and callouts in both themes, 390 and 1280 px, Layout, one of the owner's own comments); main does not yet contain this build (PR #15 is a draft) |
-| US-L6 cleanup and records | done on this commit, CI pending (approved 2026-10-08) | removed port/, ledger-port.yml, staging-check.yml (its staging:check script no longer exists) and the ci.yml port excerpt step; CHANGELOG, AGENTS.md, README, DEPLOYMENT.md current status and the PR #15 body updated; the theme XML must be unchanged apart from its stamp |
+| US-L6 cleanup and records | green in run 37746765904 at 1beaeb3 (unit 63/63, contract 39/39, audit lows only, XML 329,475 bytes as at d1fd459; CodeQL no new alerts); cleanup first green in run 37745211453 at a6682d8; owner approved ready for review 2026-10-08 | removed port/, ledger-port.yml, staging-check.yml (its staging:check script no longer exists) and the ci.yml port excerpt step; CHANGELOG, AGENTS.md, README, DEPLOYMENT.md current status and the PR #15 body updated; tests/fcd/markup.ts (e9be8a3, 1beaeb3) replaces the test regexes CodeQL flagged (9 high alerts, red since the tests landed) |
 
 ## US-L5 changes (main.ts, via port edits)
 
@@ -159,10 +159,21 @@ run. staging-check.yml called npm run staging:check, which the rebuilt
 package.json no longer defines. The ci.yml step that published the tail of
 main.ts as notices served only the port review.
 
+CodeQL (GitHub code scanning on the PR) had failed on every head since the
+palette and logo tests landed: 9 high alerts, all in tests/fcd, for the
+regular expressions that dropped comments and scripts from the built XML
+(incomplete multi-character sanitization) and read script bodies (a tag
+filter without upper case). The XML is our own build output, so nothing was
+exploitable, but the check stayed red. tests/fcd/markup.ts now scans for
+those blocks with indexOf, with the same result on the theme XML;
+tests/fcd/markup.test.ts pins that behaviour. The verify job was green
+throughout; the CodeQL check was missed in the earlier reports.
+
 Still open after US-L6: the owner's production evidence for d1fd459
 (docs/DEPLOYMENT.md), the cover image credit on the post (content, not
 theme), deleting relocated gadgets in Layout, and the katex low advisory.
-Merge, ready for review and any further upload need the owner's approval.
+The owner approved ready for review on 2026-10-08; merge and any further
+upload need his separate approval.
 
 ## Dependency audit (2026-10-06)
 

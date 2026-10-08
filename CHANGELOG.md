@@ -10,7 +10,7 @@
 - Comment logo (US-L11): only comments Blogger flags as by the blog author get the company logo; a commenter can no longer take it by putting "FCD" or "Fast Cyber Defense" in a display name.
 - Dependencies: source-map-js 1.2.2 and dompurify 3.4.16 inside the existing ranges. katex <0.18.2 (low, via mermaid 11) stays open below the moderate gate, as its only offered fix is a mermaid downgrade.
 - CI: typecheck, a build bound to the exact source commit, the FCD unit checks, Ledger's V3 contract inside the no-egress namespace, npm audit, and a theme XML zip per fully green run; no generated XML is checked in.
-- Cleanup (US-L6): removed the temporary port writer (port/apply.py, port/ledger.json, port/lockfile.json and ledger-port.yml), the temporary port review excerpt in ci.yml, and staging-check.yml, whose staging:check script no longer exists. The Ledger-derived files under src/ are ordinary FCD sources.
+- Cleanup (US-L6): removed the temporary port writer (port/apply.py, port/ledger.json, port/lockfile.json and ledger-port.yml), the temporary port review excerpt in ci.yml, and staging-check.yml, whose staging:check script no longer exists. The Ledger-derived files under src/ are ordinary FCD sources. The tests read the built XML through tests/fcd/markup.ts instead of the regular expressions CodeQL flagged as incomplete HTML sanitizers (9 high alerts, test code only).
 
 The owner uploaded builds 26ca599 and then d1fd459 to the production blog on 2026-10-08. His rendered evidence (theme-build stamp, post views in both themes at 390 and 1280 px, Layout) is pending, and main does not contain the build. No merge is implied.
 

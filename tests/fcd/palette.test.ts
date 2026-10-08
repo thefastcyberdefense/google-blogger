@@ -14,18 +14,19 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import { scripts, withoutBlocks, withoutComments, withoutScripts } from './markup.ts';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const xml = readFileSync(join(ROOT, 'dist/theme.xml'), 'utf8');
-const visible = xml.replace(/<!--[\s\S]*?-->/g, '');
+const visible = withoutComments(xml);
 const SKIN = xml.match(/<b:skin\b[^>]*>\s*<!\[CDATA\[([\s\S]*?)\]\]>\s*<\/b:skin>/)?.[1] ?? '';
-const SCRIPT_RE = /<script\b[^>]*>([\s\S]*?)<\/script>/g;
-const SCRIPT = [...visible.matchAll(SCRIPT_RE)].map((m) => m[1] ?? '').join('\n');
-const MARKUP = visible
-  .replace(/<b:skin\b[\s\S]*?<\/b:skin>/g, '')
-  .replace(/<b:template-skin\b[\s\S]*?<\/b:template-skin>/g, '')
-  .replace(SCRIPT_RE, '')
-  .replace(/<svg\b[^>]*\bfcd-mark\b[^>]*>[\s\S]*?<\/svg>/g, '');
+const SCRIPT = scripts(visible).map((s) => s.inner).join('\n');
+const MARKUP = withoutBlocks(
+  withoutScripts(withoutBlocks(withoutBlocks(visible, '<b:skin', '</b:skin>'), '<b:template-skin', '</b:template-skin>')),
+  '<svg',
+  '</svg>',
+  (open) => /\bfcd-mark\b/.test(open)
+);
 
 type Rgb = [number, number, number];
 interface Colour { literal: string; rgb: Rgb; alpha: number }

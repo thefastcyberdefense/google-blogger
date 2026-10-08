@@ -18,13 +18,13 @@ import { chromium, type Browser, type Page } from 'playwright';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { parseXml, renderTheme, type View } from './blogger-static.ts';
 import { SITE_EXACT, siteExact } from './site-exact.ts';
+import { scripts, withoutComments, withoutScripts } from './markup.ts';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const xml = readFileSync(join(ROOT, 'dist/theme.xml'), 'utf8');
-const visible = xml.replace(/<!--[\s\S]*?-->/g, '');
-const SCRIPT = /<script\b[^>]*>[\s\S]*?<\/script>/g;
-const script = (visible.match(SCRIPT) ?? []).join('\n');
-const markup = visible.replace(SCRIPT, '');
+const visible = withoutComments(xml);
+const script = scripts(visible).map((s) => visible.slice(s.start, s.end)).join('\n');
+const markup = withoutScripts(visible);
 const SKIN = xml.match(/<b:skin\b[^>]*>\s*<!\[CDATA\[([\s\S]*?)\]\]>\s*<\/b:skin>/)?.[1] ?? '';
 const ICON = readFileSync(join(ROOT, 'tests/fcd/icon0.svg'), 'utf8');
 

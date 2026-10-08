@@ -168,6 +168,7 @@
   {"paths": ["src/styles/states.scss"], "find": "oklch(85% 0.01 260)", "replace": "oklch(83.19% 0.0256 246.2533)", "count": "any"},
   {"paths": ["src/styles/article.scss"], "find": "oklch(99% 0.002 255", "replace": "oklch(97.43% 0.0101 228.8865", "count": "any"},
   {"paths": ["src/styles/article.scss"], "find": "oklch(96% 0.005 255)", "replace": "oklch(95.23% 0.0192 230.6952)", "count": "any"},
-  {"path": "src/styles/main.scss", "find": "@use 'dark';", "replace": "@use 'dark';\n// FCD overrides on the Ledger styles (US-L7), loaded last.\n@use 'fcd';\n// FCD callout colours (US-L10).\n@use 'fcd-callouts';"}
+  {"path": "src/styles/main.scss", "find": "@use 'dark';", "replace": "@use 'dark';\n// FCD overrides on the Ledger styles (US-L7), loaded last.\n@use 'fcd';\n// FCD callout colours (US-L10).\n@use 'fcd-callouts';"},
+  {"path": "src/scripts/main.ts", "find": "      const isFCD = lowerName.includes('fast cyber defense') || lowerName.includes('fcd');\n", "replace": "      // FCD: the logo marks the blog's own comments only. Blogger flags them\n      // with .blog-author; a name a commenter types proves nothing (US-L11).\n      const isFCD = isBlogAuthor && (lowerName.includes('fast cyber defense') || lowerName.includes('fcd'));\n"}
  ]
 }

@@ -102,6 +102,56 @@ export function initReadingProgress(): void {
 }
 
 // ---------------------------------------------------------------------------
+// Module 1b: Floating Action Button (Back to Top)
+// ---------------------------------------------------------------------------
+
+/**
+ * Initializes the floating action button (Back to Top).
+ * Shows button when viewport scrolls past 350px.
+ * Smoothly scrolls to top on click while respecting prefers-reduced-motion.
+ */
+export function initBackToTop(): void {
+  const btn = document.getElementById('back-to-top');
+  if (!btn) return;
+
+  let ticking = false;
+  const threshold = 350;
+
+  function update(): void {
+    const doc = document.documentElement;
+    const scrollTop = window.scrollY || doc.scrollTop || 0;
+    if (scrollTop > threshold) {
+      btn!.classList.add('is-visible');
+    } else {
+      btn!.classList.remove('is-visible');
+    }
+  }
+
+  function onScrollOrResize(): void {
+    if (!ticking) {
+      ticking = true;
+      window.requestAnimationFrame(() => {
+        update();
+        ticking = false;
+      });
+    }
+  }
+
+  btn.addEventListener('click', (e) => {
+    e.preventDefault();
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    window.scrollTo({
+      top: 0,
+      behavior: prefersReducedMotion ? 'auto' : 'smooth',
+    });
+  });
+
+  update();
+  window.addEventListener('scroll', onScrollOrResize, { passive: true });
+  window.addEventListener('resize', onScrollOrResize, { passive: true });
+}
+
+// ---------------------------------------------------------------------------
 // Module 2: Mobile Navigation Drawer
 // ---------------------------------------------------------------------------
 
@@ -980,6 +1030,80 @@ export function initArticleAudioReader(): void {
   let isPaused = false;
   let sentences: string[] = [];
   let currentSentenceIndex = 0;
+  let selectedVoice: SpeechSynthesisVoice | null = null;
+
+  // Curated list of high-clarity female / natural voices across Edge, Chrome, Safari, Firefox, and Windows
+  const PREFERRED_VOICE_KEYS = [
+    // Edge / Windows 11 Online Neural Voices (Pristine studio articulation)
+    'natural',
+    'neural',
+    'jenny',
+    'aria',
+    'sonia',
+    'libby',
+    'maisie',
+    'michelle',
+    'clara',
+    // Chrome / Android high-definition voices
+    'google us english',
+    'google uk english female',
+    // Safari / macOS / iOS crystal-clear voices
+    'samantha',
+    'ava',
+    'serena',
+    'victoria',
+    'karen',
+    'moira',
+    'fiona',
+    'tessa',
+    // Windows built-in clear female voice
+    'zira',
+  ];
+
+  const MALE_VOICE_REGEX = /\b(male|guy|david|mark|george|richard|james|brian|christopher|eric|alex|steffan|oliver)\b/i;
+
+  function pickBestClearVoice(): SpeechSynthesisVoice | null {
+    if (!('speechSynthesis' in window)) return null;
+    const voices = window.speechSynthesis.getVoices();
+    if (!voices || voices.length === 0) return null;
+
+    // Filter for English voices first for international clarity
+    const enVoices = voices.filter((v) => v.lang && v.lang.toLowerCase().startsWith('en'));
+    const pool = enVoices.length > 0 ? enVoices : voices;
+
+    // Tier 1: Look for explicit crystal-clear female / neural voice keys
+    for (const key of PREFERRED_VOICE_KEYS) {
+      const match = pool.find((v) => {
+        const lower = v.name.toLowerCase();
+        return lower.includes(key) && !MALE_VOICE_REGEX.test(lower);
+      });
+      if (match) return match;
+    }
+
+    // Tier 2: Any voice explicitly tagged female or not matching male indicators
+    const femaleFallback = pool.find((v) => {
+      const lower = v.name.toLowerCase();
+      return lower.includes('female') || !MALE_VOICE_REGEX.test(lower);
+    });
+    if (femaleFallback) return femaleFallback;
+
+    return pool[0] ?? null;
+  }
+
+  function updateVoice(): void {
+    const voice = pickBestClearVoice();
+    if (voice) {
+      selectedVoice = voice;
+    }
+  }
+
+  // Pre-fetch voices and register event listener for asynchronous browser voice loading
+  updateVoice();
+  if (typeof window.speechSynthesis.addEventListener === 'function') {
+    window.speechSynthesis.addEventListener('voiceschanged', updateVoice);
+  } else if ('onvoiceschanged' in window.speechSynthesis) {
+    window.speechSynthesis.onvoiceschanged = updateVoice;
+  }
 
   function updateSpeedButton(): void {
     if (speedLabel) {
@@ -1006,7 +1130,9 @@ export function initArticleAudioReader(): void {
 
   function getCleanArticleText(): string {
     const clone = postBody!.cloneNode(true) as HTMLElement;
-    clone.querySelectorAll('pre, code, script, style, .table-of-contents').forEach((el) => el.remove());
+    // Strip multiline code blocks, scripts, styles, TOC, svgs, and noscript
+    // Retain inline <code> so technical terms, flags, and CLI names are articulated in context
+    clone.querySelectorAll('pre, script, style, .table-of-contents, svg, noscript').forEach((el) => el.remove());
     const title = document.querySelector<HTMLElement>('.post-title')?.textContent || '';
     return `${title}. ${clone.textContent || ''}`.replace(/\s+/g, ' ').trim();
   }
@@ -1034,8 +1160,13 @@ export function initArticleAudioReader(): void {
 
     currentSentenceIndex = index;
     const utterance = new SpeechSynthesisUtterance(sentences[index]);
+    if (!selectedVoice) updateVoice();
+    if (selectedVoice) {
+      utterance.voice = selectedVoice;
+      utterance.lang = selectedVoice.lang || 'en-US';
+    }
     utterance.rate = playbackRate;
-    utterance.pitch = 1.0;
+    utterance.pitch = 1.02; // Pristine, slightly brighter pitch for crystalline articulation
 
     utterance.onend = () => {
       if (isPlaying && !isPaused) {
@@ -1362,6 +1493,7 @@ function init(): void {
     initPostHeroImage();
     initDateTimeLocalization();
     initCommentInteractions();
+    initImageLightbox();
   } else {
     hydrateCardThumbnails();
     initDateTimeLocalization();
@@ -1392,6 +1524,7 @@ function init(): void {
     initShareCopy();
     initBloggerFollowPopup();
     initCommentInteractions();
+    initBackToTop();
   }, 0);
 
   // Secondary phase: search, iframes, keyboard listeners
@@ -1406,14 +1539,15 @@ function init(): void {
     const isPost = document.body?.classList.contains('is-post') || Boolean(document.querySelector('.is-post'));
     if (isPost) {
       initReadingProgress();
+      initMermaidDiagrams();
       initCodeBlockEnhancements();
       initSyntaxHighlighting();
       initTableOfContents();
       initAlertCallouts();
       initReadingTime();
       initArticleAudioReader();
-      initMermaidDiagrams();
       enrichArticleImagesAlt();
+      initImageLightbox();
     } else {
       initHomepageCatalog();
     }
@@ -2031,6 +2165,455 @@ export function healAsciiHandshakeDiagram(rawCode: string): string {
 }
 
 /**
+ * Heals ASCII box diagrams (e.g. bordered with +---+ and |) into valid Mermaid flowcharts.
+ * Handles vertical numbered pipelines, staged lifecycles, and comparison/inversion diagrams.
+ */
+export function healAsciiBoxDiagram(code: string): string {
+  const isBox = /^\s*\+[-=+]+\+\s*$/m.test(code) && /^\s*\|/m.test(code);
+  if (!isBox) return code;
+
+  const lines = code.split(/\r?\n/);
+  let title = '';
+  const rawContentLines: string[] = [];
+  let inHeader = false;
+  let borderCount = 0;
+
+  for (let i = 0; i < lines.length; i++) {
+    const rawLine = lines[i] || '';
+    const trimmed = rawLine.trim();
+    if (/^\+[-=+]+\+$/.test(trimmed)) {
+      borderCount++;
+      if (borderCount === 1) {
+        inHeader = true;
+      } else if (borderCount === 2) {
+        inHeader = false;
+      }
+      continue;
+    }
+
+    // Capture text inside box without trimming leading/trailing whitespace
+    const boxMatch = trimmed.match(/^\|(.*)\|$/);
+    if (!boxMatch || boxMatch[1] === undefined) continue;
+    const text = boxMatch[1];
+
+    if (inHeader && !title) {
+      if (text.trim()) title = text.trim();
+    } else {
+      rawContentLines.push(text);
+    }
+  }
+
+  // Filter out leading/trailing whitespace lines
+  while (rawContentLines.length > 0 && !rawContentLines[0]?.trim()) {
+    rawContentLines.shift();
+  }
+  while (rawContentLines.length > 0 && !rawContentLines[rawContentLines.length - 1]?.trim()) {
+    rawContentLines.pop();
+  }
+
+  if (rawContentLines.length === 0) return code;
+
+  // Escape helper for Mermaid labels
+  const sanitize = (s: string): string => {
+    return s
+      .replace(/"/g, "'")
+      .replace(/<([^>]+)>/g, '&lt;$1&gt;')
+      .replace(/\s*[-=]+>\s*/g, ' ➔ ');
+  };
+
+  // ---------------------------------------------------------------------------
+  // Priority 0: Nested Sub-Boxes with Transition Connectors
+  // ---------------------------------------------------------------------------
+  const hasInnerBoxes = rawContentLines.some(l => /\+[-=+]+\+/.test(l));
+  if (hasInnerBoxes) {
+    const stages: string[][] = [];
+    const transitions: string[] = [];
+    let currentBoxLines: string[] = [];
+    let inInnerBox = false;
+    let currentTransitionLines: string[] = [];
+
+    for (const rawLine of rawContentLines) {
+      const trimmed = rawLine.trim();
+
+      // Check for inner box border
+      if (/\+[-=+]+\+/.test(trimmed)) {
+        if (!inInnerBox) {
+          // Opening an inner box
+          inInnerBox = true;
+          currentBoxLines = [];
+          if (stages.length > 0) {
+            transitions.push(currentTransitionLines.join(' ').trim());
+            currentTransitionLines = [];
+          }
+        } else {
+          // Closing an inner box
+          inInnerBox = false;
+          if (currentBoxLines.length > 0) {
+            stages.push([...currentBoxLines]);
+            currentBoxLines = [];
+          }
+        }
+        continue;
+      }
+
+      if (inInnerBox) {
+        // Content inside the inner box: strip outer box pipes and inner box pipes
+        const innerMatch = trimmed.match(/^\|?\s*\|(.*)\|\s*\|?$/) || trimmed.match(/^\|(.*)\|$/);
+        const text = innerMatch ? innerMatch[1]?.trim() : trimmed.replace(/^\|+|\|+$/g, '').trim();
+        if (text && !/^\+[-=+]+\+$/.test(text)) {
+          currentBoxLines.push(text);
+        }
+      } else {
+        // Transition between boxes: e.g. "Protected by Domain DPAPI" or "|" or "v"
+        const clean = trimmed.replace(/^\|+|\|+$/g, '').trim();
+        if (clean && !/^[vV|]+$/.test(clean)) {
+          currentTransitionLines.push(clean);
+        }
+      }
+    }
+
+    if (stages.length >= 2) {
+      const out: string[] = ['graph TD'];
+      const cleanTitle = (title || 'ARCHITECTURE FLOW').replace(/"/g, "'");
+      out.push(`    subgraph "${cleanTitle}"`);
+      out.push('        direction TB');
+
+      const nodeIds: string[] = [];
+      stages.forEach((stage, idx) => {
+        const header = sanitize(stage[0] || `Stage ${idx + 1}`);
+        const details = stage.slice(1).map(sanitize).join('<br/>');
+        const label = details ? `<b>${header}</b><br/>${details}` : header;
+        const id = `stage_${idx + 1}`;
+        nodeIds.push(id);
+        out.push(`        ${id}["${label}"]`);
+      });
+
+      for (let i = 0; i < stages.length - 1; i++) {
+        const trans = transitions[i]
+          ? `|"${sanitize(transitions[i]!).replace(/"/g, "'")}"|`
+          : '';
+        out.push(`        ${nodeIds[i]} -->${trans} ${nodeIds[i + 1]}`);
+      }
+      out.push('    end');
+      return out.join('\n');
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Priority 1: Process Execution Tree (PID 1240 ... | +---> PID 1582 ...)
+  // ---------------------------------------------------------------------------
+  const hasProcessFork = rawContentLines.some(l => /\+[-=]+>\s*PID/i.test(l) || /\|\s*\+[-=]+>/i.test(l));
+  if (hasProcessFork) {
+    const parentLines: string[] = [];
+    const childLines: string[] = [];
+    let seenFork = false;
+
+    for (const l of rawContentLines) {
+      const trimmed = l.trim();
+      if (!trimmed || trimmed === '|') continue;
+      if (/\+[-=]+>/.test(trimmed)) {
+        seenFork = true;
+        childLines.push(trimmed.replace(/^\+[-=]+>\s*/, ''));
+      } else if (seenFork) {
+        childLines.push(trimmed);
+      } else {
+        parentLines.push(trimmed);
+      }
+    }
+
+    if (parentLines.length > 0 && childLines.length > 0) {
+      const out: string[] = ['graph TD'];
+      const cleanTitle = (title || 'PROCESS EXECUTION TRACE').replace(/"/g, "'");
+      out.push(`    subgraph "${cleanTitle}"`);
+      out.push('        direction TB');
+
+      const parentText = parentLines.map(sanitize).join('<br/>');
+      const childText = childLines.map(sanitize).join('<br/>');
+
+      out.push(`        proc_parent["${parentText}"]`);
+      out.push(`        proc_child["${childText}"]`);
+      out.push('        proc_parent -->|Fork &amp; Execute Subprocess| proc_child');
+      out.push('    end');
+      return out.join('\n');
+    }
+  }
+
+  const contentLines = rawContentLines.map(l => l.trim()).filter(Boolean);
+
+  // ---------------------------------------------------------------------------
+  // Priority 2: Vertical Numbered Pipeline (1. ... or 1) ... with or without connectors)
+  // ---------------------------------------------------------------------------
+  const numberedLinesCount = contentLines.filter((l) => /^(?:(?:Step|Phase)\s+)?\d+[\.\):]\s+/i.test(l)).length;
+  const isNumberedPipeline =
+    numberedLinesCount >= 2 ||
+    (numberedLinesCount >= 1 && contentLines.some((l) => /^[|vV]$/.test(l)));
+
+  if (isNumberedPipeline) {
+    const steps: string[] = [];
+    let currentStep = '';
+    for (const l of contentLines) {
+      if (/^[|vV]$/.test(l)) continue;
+      const stepMatch = l.match(/^(?:(?:Step|Phase)\s+)?\d+[\.\):]\s+(.*)$/i);
+      if (stepMatch && stepMatch[1] !== undefined) {
+        if (currentStep) {
+          steps.push(currentStep);
+        }
+        currentStep = l;
+      } else if (currentStep) {
+        currentStep += ' ' + l;
+      } else {
+        steps.push(l);
+      }
+    }
+    if (currentStep) {
+      steps.push(currentStep);
+    }
+
+    if (steps.length >= 2) {
+      const out: string[] = ['graph TD'];
+      const cleanTitle = (title || 'PIPELINE').replace(/"/g, "'");
+      out.push(`    subgraph "${cleanTitle}"`);
+      out.push('        direction TB');
+      for (let i = 0; i < steps.length; i++) {
+        const stepText = sanitize(steps[i] || '');
+        out.push(`        step_${i + 1}["${stepText}"]`);
+      }
+      for (let i = 0; i < steps.length - 1; i++) {
+        out.push(`        step_${i + 1} --> step_${i + 2}`);
+      }
+      out.push('    end');
+      return out.join('\n');
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Priority 3: Staged flow with bracketed stages or colons ([1. Discovery] --> ...)
+  // ---------------------------------------------------------------------------
+  const isStageList =
+    contentLines.length >= 2 &&
+    contentLines.every(
+      (l) => /(?:\[[^\]]+\]|[\w\s\.\d]+:)\s*[-=]+>\s*.+/.test(l) || !l
+    );
+  if (isStageList) {
+    const out: string[] = ['graph TD'];
+    const cleanTitle = (title || 'WORKFLOW').replace(/"/g, "'");
+    out.push(`    subgraph "${cleanTitle}"`);
+    out.push('        direction TB');
+    const nodeIds: string[] = [];
+
+    contentLines.forEach((l, idx) => {
+      const arrowMatch = l.match(/^(?:\[([^\]]+)\]|([^:]+):)\s*[-=]+>\s*(.+)$/);
+      if (arrowMatch) {
+        const stage = sanitize(arrowMatch[1] || arrowMatch[2] || `Stage ${idx + 1}`);
+        const desc = sanitize(arrowMatch[3] || '');
+        const id = `node_${idx + 1}`;
+        nodeIds.push(id);
+        out.push(`        ${id}["<b>${stage}</b><br/>${desc}"]`);
+      }
+    });
+
+    for (let i = 0; i < nodeIds.length - 1; i++) {
+      out.push(`        ${nodeIds[i]} --> ${nodeIds[i + 1]}`);
+    }
+    out.push('    end');
+    return out.join('\n');
+  }
+
+  // ---------------------------------------------------------------------------
+  // Priority 4: Comparison / Inversion flow (Legitimate SAML: ... ---> ...)
+  // ---------------------------------------------------------------------------
+  const isComparison =
+    contentLines.length >= 2 &&
+    contentLines.every((l) => /:\s*.*[-=]+>/i.test(l) || !l);
+  if (isComparison) {
+    const out: string[] = ['graph TD'];
+    const cleanTitle = (title || 'COMPARISON').replace(/"/g, "'");
+    out.push(`    subgraph "${cleanTitle}"`);
+    out.push('        direction TB');
+
+    contentLines.forEach((l, idx) => {
+      const parts = l.split(/[-=]+>/);
+      if (parts.length === 2 && parts[0] !== undefined && parts[1] !== undefined) {
+        const left = parts[0].trim();
+        const right = parts[1].trim();
+        const idL = `c_${idx + 1}_a`;
+        const idR = `c_${idx + 1}_b`;
+        out.push(`        ${idL}["${sanitize(left)}"] --> ${idR}["${sanitize(right)}"]`);
+      }
+    });
+    out.push('    end');
+    return out.join('\n');
+  }
+
+  // ---------------------------------------------------------------------------
+  // Priority 5: Key-Value / Architectural Overview Card (Attack Vector: ...)
+  // ---------------------------------------------------------------------------
+  const isKeyValueList =
+    contentLines.length >= 2 &&
+    contentLines.every((l) => /^[^:]+:\s*.+$/.test(l) && !/[-=]+>/.test(l));
+  if (isKeyValueList) {
+    const out: string[] = ['graph TD'];
+    const cleanTitle = (title || 'OVERVIEW').replace(/"/g, "'");
+    out.push(`    subgraph "${cleanTitle}"`);
+    out.push('        direction TB');
+
+    const nodeIds: string[] = [];
+    contentLines.forEach((l, idx) => {
+      const colonIdx = l.indexOf(':');
+      const key = sanitize(l.slice(0, colonIdx).trim());
+      const val = sanitize(l.slice(colonIdx + 1).trim());
+      const id = `item_${idx + 1}`;
+      nodeIds.push(id);
+      out.push(`        ${id}["<b>${key}</b><br/>${val}"]`);
+    });
+
+    for (let i = 0; i < nodeIds.length - 1; i++) {
+      out.push(`        ${nodeIds[i]} --> ${nodeIds[i + 1]}`);
+    }
+    out.push('    end');
+    return out.join('\n');
+  }
+
+  // ---------------------------------------------------------------------------
+  // Priority 6: Horizontal Pipeline (Col 1 ---> Col 2 ---> Col 3)
+  // ---------------------------------------------------------------------------
+  const firstLine = rawContentLines[0] || '';
+  const arrowRegex = /[-=]{2,}>/g;
+  const arrowMatches: { start: number; end: number }[] = [];
+  let m: RegExpExecArray | null;
+  while ((m = arrowRegex.exec(firstLine)) !== null) {
+    arrowMatches.push({ start: m.index, end: m.index + m[0].length });
+  }
+
+  if (arrowMatches.length >= 1 && arrowMatches[0] !== undefined) {
+    // Determine column intervals based on arrow endpoints
+    const colIntervals: { start: number; end: number }[] = [];
+    colIntervals.push({ start: 0, end: arrowMatches[0].end });
+
+    for (let k = 0; k < arrowMatches.length - 1; k++) {
+      const curr = arrowMatches[k];
+      const next = arrowMatches[k + 1];
+      if (curr && next) {
+        colIntervals.push({ start: curr.end, end: next.end });
+      }
+    }
+    const lastArrow = arrowMatches[arrowMatches.length - 1];
+    if (lastArrow) {
+      colIntervals.push({ start: lastArrow.end, end: 9999 });
+    }
+
+    const columns: string[][] = colIntervals.map(() => []);
+
+    for (const l of rawContentLines) {
+      if (/^\s*[|vV\s]+\s*$/.test(l)) continue;
+      colIntervals.forEach((interval, colIdx) => {
+        const chunk = l.slice(interval.start, interval.end).trim();
+        const cleanChunk = chunk.replace(/[-=]{2,}>/g, '').trim();
+        if (cleanChunk && columns[colIdx]) {
+          columns[colIdx].push(cleanChunk);
+        }
+      });
+    }
+
+    const validCols = columns.filter(col => col.length > 0);
+    if (validCols.length >= 2) {
+      const out: string[] = ['graph LR'];
+      const cleanTitle = (title || 'SYSTEM PIPELINE').replace(/"/g, "'");
+      out.push(`    subgraph "${cleanTitle}"`);
+      out.push('        direction LR');
+
+      const nodeIds: string[] = [];
+      validCols.forEach((col, idx) => {
+        const header = sanitize(col[0] || `Node ${idx + 1}`);
+        const details = col.slice(1).map(sanitize).join('<br/>');
+        const label = details ? `<b>${header}</b><br/>${details}` : header;
+        const id = `node_${idx + 1}`;
+        nodeIds.push(id);
+        out.push(`        ${id}["${label}"]`);
+      });
+
+      for (let i = 0; i < nodeIds.length - 1; i++) {
+        out.push(`        ${nodeIds[i]} --> ${nodeIds[i + 1]}`);
+      }
+      out.push('    end');
+      return out.join('\n');
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Priority 7: Vertical Pipeline with connectors (| and v/V)
+  // ---------------------------------------------------------------------------
+  const hasVerticalConnectors = rawContentLines.some(l => /^\s*[vV]\s*$/.test(l));
+  if (hasVerticalConnectors) {
+    const stages: string[][] = [];
+    let currentStage: string[] = [];
+
+    for (const l of rawContentLines) {
+      const trimmed = l.trim();
+      if (/^[|vV\s]+$/.test(trimmed) && /[vV]/.test(trimmed)) {
+        if (currentStage.length > 0) {
+          stages.push([...currentStage]);
+          currentStage = [];
+        }
+        continue;
+      }
+      if (trimmed === '|' || !trimmed) continue;
+      currentStage.push(trimmed);
+    }
+    if (currentStage.length > 0) {
+      stages.push([...currentStage]);
+    }
+
+    if (stages.length >= 2) {
+      const out: string[] = ['graph TD'];
+      const cleanTitle = (title || 'EXECUTION CHAIN').replace(/"/g, "'");
+      out.push(`    subgraph "${cleanTitle}"`);
+      out.push('        direction TB');
+
+      const stageIds: string[] = [];
+      stages.forEach((stage, idx) => {
+        const header = sanitize(stage[0] || `Stage ${idx + 1}`);
+        const details = stage.slice(1).map(sanitize).join('<br/>');
+        const label = details ? `<b>${header}</b><br/>${details}` : header;
+        const id = `stage_${idx + 1}`;
+        stageIds.push(id);
+        out.push(`        ${id}["${label}"]`);
+      });
+
+      for (let i = 0; i < stageIds.length - 1; i++) {
+        out.push(`        ${stageIds[i]} --> ${stageIds[i + 1]}`);
+      }
+      out.push('    end');
+      return out.join('\n');
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Priority 8: General Titled Box / Sequential Fallback
+  // ---------------------------------------------------------------------------
+  if (contentLines.length >= 2 && title) {
+    const out: string[] = ['graph TD'];
+    const cleanTitle = title.replace(/"/g, "'");
+    out.push(`    subgraph "${cleanTitle}"`);
+    out.push('        direction TB');
+    const nodeIds: string[] = [];
+    contentLines.forEach((l, idx) => {
+      const cleanLine = sanitize(l.replace(/^[-*•]\s+/, ''));
+      const id = `item_${idx + 1}`;
+      nodeIds.push(id);
+      out.push(`        ${id}["${cleanLine}"]`);
+    });
+    for (let i = 0; i < nodeIds.length - 1; i++) {
+      out.push(`        ${nodeIds[i]} --> ${nodeIds[i + 1]}`);
+    }
+    out.push('    end');
+    return out.join('\n');
+  }
+
+  return code;
+}
+
+/**
  * Heals bare bracket nodes without IDs in flowcharts/graphs and strips stray vertical pipe spacer lines.
  * e.g. [Start Process] --> [End Process] => node_1["Start Process"] --> node_2["End Process"]
  */
@@ -2040,6 +2623,12 @@ export function healBareBracketNodes(code: string): string {
 
   // Strip lone pipe lines in flowcharts
   code = code.replace(/^\s*\|\s*$/gm, '');
+
+  // Heal parenthesized or bracketed arrow labels in flowcharts/graphs:
+  // e.g. ---(SMB NTLM Auth)---> or --(label)--> or -(label)-> or ===(label)===> or <---(label)--->
+  code = code.replace(/<[-=]+(?:\(([^)\n\r]+)\)|\[([^\]\n\r]+)\])[-=]*>/g, '<-->|"$1$2"|');
+  code = code.replace(/[-=]+(?:\(([^)\n\r]+)\)|\[([^\]\n\r]+)\])[-=]*>/g, '-->|"$1$2"|');
+  code = code.replace(/-\.-+(?:\(([^)\n\r]+)\)|\[([^\]\n\r]+)\])[-\.]*>/g, '-.->|"$1$2"|');
 
   let counter = 1;
   const labelToId = new Map<string, string>();
@@ -2057,10 +2646,17 @@ export function healBareBracketNodes(code: string): string {
     return `${indent}${id}["${label.trim()}"]`;
   });
 
-  // Replace bare bracket after arrow: e.g. "--> [End Process]" -> "--> node_2["End Process"]"
-  code = code.replace(/((?:-->|---\s*|==>\s*|-\.->\s*))\s*\[([^\]\n\r]+)\]/g, (_m, arrow, label) => {
+  // Replace bare bracket after arrow (with or without label):
+  // e.g. "--> [End Process]" -> "--> node_2["End Process"]"
+  // or "-->|"label"| [End Process]" -> "-->|"label"| node_2["End Process"]"
+  code = code.replace(/((?:<-->|-->|==>|-\.->|---\s*)\s*(?:\|[^|\n\r]+\|\s*)?|--\s*(?:"[^"]*"|'[^']*'|[^-\n\r>]+)\s*-->\s*)\s*\[([^\]\n\r]+)\]/g, (_m, arrow, label) => {
     const id = getIdForLabel(label);
-    return `${arrow} ${id}["${label.trim()}"]`;
+    return `${arrow.trimEnd()} ${id}["${label.trim()}"]`;
+  });
+
+  // Ensure unquoted pipe edge labels are quoted so parentheses/brackets inside them do not break Mermaid
+  code = code.replace(/((?:<-->|<==>|-->|==>|-\.->|---\s*)\s*)\|([^"|\n\r]+)\|/g, (_m, arrow, label) => {
+    return `${arrow}|"${label.trim().replace(/"/g, "'")}"|`;
   });
 
   return code;
@@ -2107,6 +2703,9 @@ export function cleanMermaidSyntax(rawCode: string): string {
     /^(participant\s+[\w\-]+\s+as\s+)([^"\n\r]+&[^"\n\r]+)$/gm,
     (_m, prefix, label) => `${prefix}"${label.trim()}"`
   );
+
+  // Heal ASCII box diagrams (+----+ and |) into flowchart
+  code = healAsciiBoxDiagram(code);
 
   // Heal ASCII handshake / ladder protocol diagrams into sequenceDiagram
   code = healAsciiHandshakeDiagram(code);
@@ -2160,6 +2759,13 @@ export function cleanMermaidSyntax(rawCode: string): string {
   // Because Mermaid's sequence diagram lexer treats ';' as a statement terminator even inside double quotes!
   const isSequence = getFirstDiagramHeader(code) === 'sequencediagram';
   if (isSequence) {
+    // Collapse multiline strings within double quotes across newlines (e.g. write("payload\n"))
+    for (let i = 0; i < 5; i++) {
+      const prev = code;
+      code = code.replace(/("[^"\n\r]*)\r?\n([^"\n\r]*")/g, '$1\\n$2');
+      if (prev === code) break;
+    }
+
     code = code
       .split('\n')
       .map((line) => {
@@ -2189,6 +2795,70 @@ export function cleanMermaidSyntax(rawCode: string): string {
  * Supports theme toggling by caching raw diagram source code.
  */
 export function initMermaidDiagrams(targetTheme?: 'dark' | 'default'): void {
+  // Pre-scan: Auto-promote code blocks containing Mermaid diagrams or ASCII box/handshake diagrams
+  const candidateBlocks = Array.from(
+    document.querySelectorAll<HTMLElement>(
+      '.post-body .code-block-wrap, .post-body pre:not(.mermaid)'
+    )
+  );
+
+  for (const block of candidateBlocks) {
+    if (!block.isConnected) continue;
+    if (block.classList.contains('mermaid-diagram-wrap') || block.querySelector('.mermaid')) continue;
+
+    // Check lang header or class if present
+    const langSpan = block.querySelector<HTMLElement>('.code-block-lang');
+    const codeEl = block.querySelector<HTMLElement>('code');
+    const lang = (langSpan?.textContent || codeEl?.className || '').trim().toLowerCase();
+
+    // Skip blocks that are explicitly identified as non-diagram code
+    const isExplicitNonDiagramCode =
+      lang.includes('python') ||
+      lang.includes('csharp') ||
+      lang.includes('ruby') ||
+      lang.includes('powershell') ||
+      lang.includes('sql') ||
+      lang.includes('bash') ||
+      lang.includes('shell') ||
+      lang.includes('json') ||
+      lang.includes('yaml') ||
+      lang.includes('html') ||
+      lang.includes('xml') ||
+      lang.includes('css') ||
+      lang.includes('javascript') ||
+      lang.includes('typescript') ||
+      lang.includes('rust') ||
+      lang.includes('golang') ||
+      lang.includes('diff');
+
+    if (isExplicitNonDiagramCode) continue;
+
+    const rawText = (codeEl?.textContent || block.textContent || '').trim();
+    if (!rawText) continue;
+
+    // Check if it's an ASCII box diagram, handshake diagram, or starts with a Mermaid diagram header
+    const hasAsciiBox = /^\s*\+[-=+]+\+\s*$/m.test(rawText) && /^\s*\|/m.test(rawText);
+    const hasAsciiHandshake = /^[A-Za-z0-9_\-\s]+\s*\|(?:---|\.\.\.|===)\s*\|/m.test(rawText);
+    const hasMermaidHeader = /^(?:graph|flowchart|sequenceDiagram|classDiagram|stateDiagram|erDiagram|gantt|pie|gitGraph)\b/im.test(rawText);
+
+    if (hasAsciiBox || hasAsciiHandshake || hasMermaidHeader) {
+      const healed = cleanMermaidSyntax(rawText);
+      const healedHeader = getFirstDiagramHeader(healed);
+      if (healedHeader && (healed !== rawText || hasMermaidHeader)) {
+        const wrap = document.createElement('div');
+        wrap.className = 'mermaid-diagram-wrap';
+        wrap.dataset['mermaidCode'] = healed;
+
+        const pre = document.createElement('pre');
+        pre.className = 'mermaid';
+        pre.textContent = healed;
+        wrap.appendChild(pre);
+
+        block.parentNode?.replaceChild(wrap, block);
+      }
+    }
+  }
+
   const wraps = document.querySelectorAll<HTMLElement>('.mermaid-diagram-wrap');
   const standaloneMermaids = document.querySelectorAll<HTMLElement>('.post-body pre.mermaid');
   if (wraps.length === 0 && standaloneMermaids.length === 0) return;
@@ -2339,7 +3009,46 @@ export function initMermaidDiagrams(targetTheme?: 'dark' | 'default'): void {
       wrap.classList.remove('is-fallback');
       if (!code) return;
 
+      // Demote accidental XML/HTML snippet wrappers to code-block-wrap
+      const isXmlSnippet = /^\s*(?:(?:graph|flowchart)\s+[A-Za-z0-9_-]+\s*\n)?\s*<(?:\?xml|[a-zA-Z0-9_\-:]+[\s>]|!DOCTYPE)/i.test(code);
+      if (isXmlSnippet) {
+        const cleanXml = code.replace(/^\s*(?:graph|flowchart)\s+[A-Za-z0-9_-]+\s*\n/i, '').trim();
+        const codeBlock = document.createElement('div');
+        codeBlock.className = 'code-block-wrap';
+        codeBlock.innerHTML = `
+  <div class="code-block-header">
+    <span class="code-block-lang">XML</span>
+    <button type="button" class="code-copy-btn" aria-label="Copy code to clipboard">
+      <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg><span>Copy</span>
+    </button>
+  </div>
+  <pre><code class="language-xml"></code></pre>`;
+        codeBlock.querySelector('code')!.textContent = cleanXml;
+        wrap.replaceWith(codeBlock);
+        return;
+      }
+
       const cleanCode = cleanMermaidSyntax(code);
+
+      // Demote unhealed ASCII box diagrams to code-block-wrap instead of crashing Mermaid
+      const hasUnhealedAsciiBox = /(?:^|\n)\s*\+[-=+]+\+\s*(?:\n|$)/.test(cleanCode);
+      if (hasUnhealedAsciiBox) {
+        const rawAscii = cleanCode.replace(/^\s*(?:graph|flowchart)\s+[A-Za-z0-9_-]+\s*\n/i, '').trim();
+        const codeBlock = document.createElement('div');
+        codeBlock.className = 'code-block-wrap';
+        codeBlock.innerHTML = `
+  <div class="code-block-header">
+    <span class="code-block-lang">ASCII</span>
+    <button type="button" class="code-copy-btn" aria-label="Copy code to clipboard">
+      <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg><span>Copy</span>
+    </button>
+  </div>
+  <pre><code class="language-plaintext"></code></pre>`;
+        codeBlock.querySelector('code')!.textContent = rawAscii;
+        wrap.replaceWith(codeBlock);
+        return;
+      }
+
       wrap.dataset['mermaidCode'] = cleanCode;
 
       // Cleanly prepare wrap structure with an inner scrolling stage:
@@ -2757,6 +3466,385 @@ export function enrichArticleImagesAlt(): void {
     } else {
       img.alt = `${articleTitle} - Figure ${figIndex++}`;
     }
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Module 14b: Article Image Lightbox & Zoom Preview
+// ---------------------------------------------------------------------------
+
+/**
+ * Initializes the accessible lightbox modal for single blog image preview & zoom.
+ * Allows readers to click thumbnail/hero diagrams or article images to inspect full-res details
+ * and smoothly close with Esc, click outside, or close button to continue reading.
+ */
+export function initImageLightbox(): void {
+  if (typeof document === 'undefined') return;
+
+  let dialog = document.getElementById('image-lightbox') as HTMLDialogElement | null;
+  if (!dialog) {
+    dialog = document.createElement('dialog');
+    dialog.id = 'image-lightbox';
+    dialog.className = 'image-lightbox';
+    dialog.setAttribute('aria-label', 'Image preview');
+    dialog.setAttribute('closedby', 'any');
+    dialog.innerHTML = `
+      <div class="image-lightbox-backdrop" data-action="close-lightbox" aria-hidden="true"></div>
+      <div class="image-lightbox-wrapper" role="document">
+        <div class="image-lightbox-header">
+          <div class="image-lightbox-title" id="lightbox-title">Image Preview</div>
+          <div class="image-lightbox-controls">
+            <button type="button" class="image-lightbox-btn image-lightbox-btn-download" data-action="download-image" aria-label="Download image" title="Download image">
+              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+            </button>
+            <button type="button" class="image-lightbox-btn image-lightbox-btn-zoom" data-action="toggle-zoom" aria-label="Toggle zoom" title="Toggle zoom (Fit / 100%)">
+              <svg class="zoom-in-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                <line x1="11" y1="8" x2="11" y2="14"></line>
+                <line x1="8" y1="11" x2="14" y2="11"></line>
+              </svg>
+              <svg class="zoom-out-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                <line x1="8" y1="11" x2="14" y2="11"></line>
+              </svg>
+            </button>
+            <button type="button" class="image-lightbox-btn image-lightbox-btn-close" data-action="close-lightbox" aria-label="Close preview (Esc)" title="Close (Esc)">
+              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="image-lightbox-stage">
+          <div class="image-lightbox-img-wrap">
+            <img class="image-lightbox-img" src="" alt="" loading="lazy"/>
+          </div>
+        </div>
+        <div class="image-lightbox-footer">
+          <div class="image-lightbox-caption"></div>
+          <div class="image-lightbox-hint">Drag or use arrow keys to pan • Click outside or press Esc to close</div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(dialog);
+  }
+
+  const img = dialog.querySelector<HTMLImageElement>('.image-lightbox-img');
+  const title = dialog.querySelector<HTMLElement>('#lightbox-title');
+  const caption = dialog.querySelector<HTMLElement>('.image-lightbox-caption');
+  const stage = dialog.querySelector<HTMLElement>('.image-lightbox-stage');
+  const zoomWrap = dialog.querySelector<HTMLElement>('.image-lightbox-img-wrap');
+  const zoomInIcon = dialog.querySelector<SVGElement>('.zoom-in-icon');
+  const zoomOutIcon = dialog.querySelector<SVGElement>('.zoom-out-icon');
+
+  let lastFocusedElement: HTMLElement | null = null;
+  let isDragging = false;
+  let startX = 0;
+  let startY = 0;
+  let scrollStartLeft = 0;
+  let scrollStartTop = 0;
+  let dragDistance = 0;
+
+  function setZoom(zoomed: boolean): void {
+    if (!zoomWrap || !stage) return;
+    if (zoomed) {
+      zoomWrap.classList.add('is-zoomed');
+      stage.classList.add('is-zoomed');
+      if (zoomInIcon) zoomInIcon.style.display = 'none';
+      if (zoomOutIcon) zoomOutIcon.style.display = 'inline-block';
+      requestAnimationFrame(() => {
+        stage.scrollLeft = Math.max(0, (stage.scrollWidth - stage.clientWidth) / 2);
+        stage.scrollTop = Math.max(0, (stage.scrollHeight - stage.clientHeight) / 2);
+      });
+    } else {
+      zoomWrap.classList.remove('is-zoomed');
+      stage.classList.remove('is-zoomed');
+      stage.scrollLeft = 0;
+      stage.scrollTop = 0;
+      if (zoomInIcon) zoomInIcon.style.display = 'inline-block';
+      if (zoomOutIcon) zoomOutIcon.style.display = 'none';
+    }
+  }
+
+  function toggleZoom(): void {
+    if (!zoomWrap) return;
+    setZoom(!zoomWrap.classList.contains('is-zoomed'));
+  }
+
+  async function downloadCurrentImage(): Promise<void> {
+    if (!img || !img.src) return;
+    const src = img.src;
+    try {
+      const filename = src.split('/').pop()?.split('?')[0] || 'article-image.png';
+      const cleanName = filename.includes('.') ? filename : `${filename}.png`;
+      const res = await fetch(src, { mode: 'cors' });
+      if (!res.ok) throw new Error('Fetch failed');
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = cleanName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
+      showToast('Image downloaded!');
+    } catch {
+      // Fallback for CORS-restricted hosts: direct anchor click
+      const a = document.createElement('a');
+      a.href = src;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      a.download = '';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+  }
+
+  function openLightbox(rawSrc: string, altText: string, triggerEl?: HTMLElement): void {
+    if (!dialog || !img || !rawSrc) return;
+
+    lastFocusedElement = triggerEl || (document.activeElement as HTMLElement);
+
+    let highResSrc = rawSrc;
+    try {
+      const parsedUrl = new URL(rawSrc, window.location.href);
+      if (parsedUrl.hostname === 'googleusercontent.com' || parsedUrl.hostname.endsWith('.googleusercontent.com')) {
+        highResSrc = rawSrc.replace(/=[swh]\d+[^/]*$/, '=s2560').replace(/\/s\d+(-c)?\//, '/s2560/');
+      }
+    } catch {
+      // Keep original src if URL parsing fails
+    }
+
+    img.src = highResSrc;
+    img.alt = altText || 'Image Preview';
+    if (title) title.textContent = altText || 'Image Preview';
+    if (caption) caption.textContent = altText || '';
+
+    setZoom(false);
+    document.body.classList.add('lightbox-open');
+
+    if (typeof dialog.showModal === 'function') {
+      dialog.showModal();
+    } else {
+      dialog.setAttribute('open', '');
+    }
+
+    const closeBtn = dialog.querySelector<HTMLButtonElement>('.image-lightbox-btn-close');
+    if (closeBtn) closeBtn.focus();
+  }
+
+  function closeLightbox(): void {
+    if (!dialog) return;
+
+    setZoom(false);
+    document.body.classList.remove('lightbox-open');
+
+    if (typeof dialog.close === 'function') {
+      dialog.close();
+    } else {
+      dialog.removeAttribute('open');
+    }
+
+    if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
+      lastFocusedElement.focus();
+    }
+  }
+
+  // Bind mouse drag-to-pan on stage
+  if (stage && !stage.dataset['dragBound']) {
+    stage.dataset['dragBound'] = 'true';
+
+    stage.addEventListener('mousedown', (e: MouseEvent) => {
+      if (e.button !== 0) return;
+      if (!stage.classList.contains('is-zoomed')) return;
+      isDragging = true;
+      dragDistance = 0;
+      startX = e.pageX;
+      startY = e.pageY;
+      scrollStartLeft = stage.scrollLeft;
+      scrollStartTop = stage.scrollTop;
+    });
+
+    window.addEventListener('mousemove', (e: MouseEvent) => {
+      if (!isDragging || !stage) return;
+      const dx = e.pageX - startX;
+      const dy = e.pageY - startY;
+      dragDistance += Math.abs(dx) + Math.abs(dy);
+      stage.scrollLeft = scrollStartLeft - dx;
+      stage.scrollTop = scrollStartTop - dy;
+    });
+
+    window.addEventListener('mouseup', () => {
+      if (!isDragging) return;
+      isDragging = false;
+    });
+  }
+
+  // Bind dialog click events once
+  if (!dialog.dataset['bound']) {
+    dialog.dataset['bound'] = 'true';
+
+    dialog.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      if (!target) return;
+
+      if (target.closest('[data-action="close-lightbox"]')) {
+        closeLightbox();
+        return;
+      }
+      if (target.closest('[data-action="download-image"]')) {
+        void downloadCurrentImage();
+        return;
+      }
+      if (target.closest('[data-action="toggle-zoom"]')) {
+        toggleZoom();
+        return;
+      }
+
+      // Preserve clicks on header controls and footer
+      if (target.closest('.image-lightbox-header') || target.closest('.image-lightbox-footer')) {
+        return;
+      }
+
+      // Clicking directly on the image toggles zoom (unless dragging to pan)
+      if (target === img) {
+        if (dragDistance > 6) {
+          dragDistance = 0;
+          return;
+        }
+        toggleZoom();
+        return;
+      }
+
+      // Clicking anywhere outside the image (background, stage, backdrop, padding) closes the lightbox
+      if (dragDistance > 6) {
+        dragDistance = 0;
+        return;
+      }
+      closeLightbox();
+    });
+
+    dialog.addEventListener('cancel', (e) => {
+      e.preventDefault();
+      closeLightbox();
+    });
+
+    dialog.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        closeLightbox();
+        return;
+      }
+      if (stage && stage.classList.contains('is-zoomed')) {
+        const step = 80;
+        if (e.key === 'ArrowLeft') {
+          stage.scrollLeft -= step;
+          e.preventDefault();
+        } else if (e.key === 'ArrowRight') {
+          stage.scrollLeft += step;
+          e.preventDefault();
+        } else if (e.key === 'ArrowUp') {
+          stage.scrollTop -= step;
+          e.preventDefault();
+        } else if (e.key === 'ArrowDown') {
+          stage.scrollTop += step;
+          e.preventDefault();
+        }
+      }
+    });
+  }
+
+  // 1. Post Hero Image & Wrap (Clean cover, no badge overlay)
+  const heroWraps = document.querySelectorAll<HTMLElement>('.post-hero-wrap');
+  heroWraps.forEach((wrap) => {
+    const heroImg = wrap.querySelector<HTMLImageElement>('img');
+    if (!heroImg) return;
+
+    wrap.querySelector('.post-hero-zoom-badge')?.remove();
+
+    wrap.setAttribute('tabindex', '0');
+    wrap.setAttribute('role', 'button');
+    wrap.setAttribute('aria-haspopup', 'dialog');
+    const heroAlt = heroImg.alt || document.querySelector('.post-title')?.textContent?.trim() || 'Article Hero';
+    wrap.setAttribute('aria-label', `Enlarge image: ${heroAlt}`);
+
+    const handleOpen = (e: Event) => {
+      e.preventDefault();
+      openLightbox(heroImg.currentSrc || heroImg.src, heroAlt, wrap);
+    };
+
+    wrap.addEventListener('click', handleOpen);
+    wrap.addEventListener('keydown', (e: KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        handleOpen(e);
+      }
+    });
+  });
+
+  // 2. Content Images inside .post-body
+  const contentImages = document.querySelectorAll<HTMLImageElement>(
+    '.post-body img:not(.post-author-mini-avatar):not(.author-avatar):not(.reading-time-icon):not(.post-hero-image)'
+  );
+  contentImages.forEach((cImg) => {
+    if (
+      cImg.closest('.post-author-bio') ||
+      cImg.closest('.post-header') ||
+      cImg.closest('.post-meta-row') ||
+      cImg.closest('.share-bar') ||
+      cImg.closest('.post-hero-wrap')
+    ) {
+      return;
+    }
+
+    cImg.setAttribute('tabindex', '0');
+    cImg.setAttribute('role', 'button');
+    cImg.setAttribute('aria-haspopup', 'dialog');
+    const imgAlt = cImg.alt || cImg.title || 'Article Image';
+    cImg.setAttribute('aria-label', `Enlarge image: ${imgAlt}`);
+
+    const handleImgOpen = (e: Event) => {
+      const parentLink = cImg.closest('a');
+      if (parentLink) {
+        const href = parentLink.getAttribute('href') || '';
+        let isImgLink = /\.(png|jpe?g|webp|gif|svg)(\?.*)?$/i.test(href);
+        if (!isImgLink && href) {
+          try {
+            const parsed = new URL(href, window.location.href);
+            const host = parsed.hostname;
+            if (host === 'googleusercontent.com' || host.endsWith('.googleusercontent.com') || host === 'cdn.jsdelivr.net') {
+              isImgLink = true;
+            }
+          } catch {
+            // Ignore URL parsing errors
+          }
+        }
+        if (isImgLink) {
+          e.preventDefault();
+          openLightbox(href || cImg.currentSrc || cImg.src, imgAlt, cImg);
+          return;
+        }
+        return;
+      }
+
+      e.preventDefault();
+      openLightbox(cImg.currentSrc || cImg.src, imgAlt, cImg);
+    };
+
+    cImg.addEventListener('click', handleImgOpen);
+    cImg.addEventListener('keydown', (e: KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        handleImgOpen(e);
+      }
+    });
   });
 }
 

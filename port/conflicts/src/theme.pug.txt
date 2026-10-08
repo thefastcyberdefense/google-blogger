@@ -1,0 +1,43 @@
+=== conflict 0 (line 193) ===
+--- context before
+                            span.sidebar-recent-tag
+                              b:eval(expr='data:label.name')/
+                      b:if(cond='data:post.date')
+                        time.sidebar-recent-date(expr:datetime='data:post.date.iso8601')
+                          b:eval(expr='data:post.date')/
+
+--- fcd
+--- v1.7.0
+        script.
+          (function(){try{var c=localStorage.getItem('ledger_recent_posts_v1');if(c){var el=document.currentScript.previousElementSibling;if(el)el.innerHTML=c;}}catch(e){}})();
+      div.drawer-section.drawer-social-section
+        div.drawer-section-title Connect
+        div.drawer-social-grid
+          a.drawer-social-btn(href='https://orcid.org/0009-0001-9419-4760' target='_blank' rel='noopener noreferrer' aria-label='ORCID')
+            span ORCID
+          a.drawer-social-btn(href='https://github.com/redwan-cse' target='_blank' rel='noopener noreferrer' aria-label='GitHub')
+            span GitHub
+          a.drawer-social-btn(href='https://linkedin.com/in/redwancse' target='_blank' rel='noopener noreferrer' aria-label='LinkedIn')
+            span LinkedIn
+--- v1.8.0
+        script.
+          (function(){try{var c=localStorage.getItem('ledger_recent_posts_v1');if(c){var el=document.currentScript.previousElementSibling;if(el)el.innerHTML=c;}}catch(e){}})();
+      div.drawer-section.drawer-social-section
+        div.drawer-section-title Connect
+        div.drawer-social-grid
+          a.drawer-social-btn(href='https://orcid.org/0009-0001-9419-4760' target='_blank' rel='noopener noreferrer' aria-label='ORCID')
+            span ORCID
+          a.drawer-social-btn(href='https://github.com/redwan-cse' target='_blank' rel='noopener noreferrer' aria-label='GitHub')
+            span GitHub
+          a.drawer-social-btn(href='https://linkedin.com/in/redwancse' target='_blank' rel='noopener noreferrer' aria-label='LinkedIn')
+            span LinkedIn
+    button#back-to-top.back-to-top(aria-label='Back to top' title='Back to top' type='button')
+      svg.back-to-top-icon(aria-hidden='true' fill='none' height='20' stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' stroke-width='2.5' viewBox='0 0 24 24' width='20')
+        line(x1='12' x2='12' y1='19' y2='5')
+        polyline(points='5 12 12 5 19 12')
+--- context after
+    div#toast-container.toast-container(aria-live='polite')
+    dialog#image-lightbox.image-lightbox(aria-label='Image preview' closedby='any')
+      div.image-lightbox-backdrop(data-action='close-lightbox' aria-hidden='true')
+      div.image-lightbox-wrapper(role='document')
+        div.image-lightbox-header

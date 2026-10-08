@@ -1,0 +1,79 @@
+{
+ "fcdBase": "6f48c7ab56db10bff4738138f07a2b035cb52598",
+ "upstreamBase": "a3da05a8a70243c6ffc239b0e96e88260ed7b536",
+ "upstreamTheirs": "6701496399519a2f6a9f2daec723c9216c68f702",
+ "files": [
+  {
+   "path": "src/partials/head-meta.pug",
+   "status": "M",
+   "conflicts": 0,
+   "outcome": "merged"
+  },
+  {
+   "path": "src/scripts/main.ts",
+   "status": "M",
+   "conflicts": 0,
+   "outcome": "merged"
+  },
+  {
+   "path": "src/styles/article.scss",
+   "status": "M",
+   "conflicts": 0,
+   "outcome": "merged"
+  },
+  {
+   "path": "src/styles/base.scss",
+   "status": "M",
+   "conflicts": 0,
+   "outcome": "merged"
+  },
+  {
+   "path": "src/styles/dark.scss",
+   "status": "M",
+   "conflicts": 0,
+   "outcome": "merged"
+  },
+  {
+   "path": "src/styles/layout.scss",
+   "status": "M",
+   "conflicts": 0,
+   "outcome": "merged"
+  },
+  {
+   "path": "src/styles/states.scss",
+   "status": "M",
+   "conflicts": 0,
+   "outcome": "merged"
+  },
+  {
+   "path": "src/styles/tokens.scss",
+   "status": "M",
+   "conflicts": 0,
+   "outcome": "merged"
+  },
+  {
+   "path": "src/theme.pug",
+   "status": "M",
+   "conflicts": 1,
+   "outcome": "1 conflicts, 0 resolutions"
+  }
+ ],
+ "notInSrc": [
+  "CHANGELOG.md",
+  "README.md",
+  "dist/theme.xml",
+  "package-lock.json",
+  "package.json",
+  "scripts/lib/companion-link-resolver.ts",
+  "scripts/lib/github-research-syncer.ts",
+  "scripts/lib/search-engine-indexer.ts",
+  "scripts/publish-from-drive.ts",
+  "scripts/submit-urls.ts",
+  "tests/contract/m3-scripts-adversarial.test.ts",
+  "tests/golden/theme.xml",
+  "tests/harness/companion-link-resolver.test.ts",
+  "tests/harness/github-research-syncer.test.ts",
+  "tests/harness/search-engine-indexer.test.ts"
+ ],
+ "failed": []
+}

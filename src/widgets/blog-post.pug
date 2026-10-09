@@ -1,9 +1,53 @@
 b:includable(id='postMeta' var='post')
-  //- JSON-LD emitted in head-meta.pug via data:widgets.Blog.first.posts.first;
-  //- this stub prevents the engine emitting a duplicate per-post script block.
+  //- US-L12e: the BlogPosting JSON-LD reads the post here, inside the Blog
+  //- widget, where Blogger binds data:post (the byline reads the same date and
+  //- author). The head cannot: on the live blog (build 48fa7fd) its
+  //- data:widgets.Blog.first.posts.first binding left article:published_time
+  //- and article:author empty. Overriding postMeta also keeps Blogger from
+  //- emitting its own per-post script block. Post views only.
+  //- US-L12f: no description. Blogger serves data:post.snippets.short
+  //- HTML-escaped, so .jsonEscaped escapes its entities again (live build
+  //- 4b4ccca read \u0026amp;), and Google's Article structured data does not
+  //- recommend one. Headline, dates, image and author carry the post.
+  b:if(cond='data:view.isPost')
+    script(type='application/ld+json').
+      {
+        "@context": "https://schema.org",
+        "@type": "BlogPosting",
+        "mainEntityOfPage": {
+          "@type": "WebPage",
+          "@id": "<data:view.url.canonical.jsonEscaped/>"
+        },
+        "headline": "<data:view.title.jsonEscaped/>",
+        "datePublished": "<data:post.date.iso8601.jsonEscaped/>"
+        <b:if cond='data:post.lastUpdated'>
+        , "dateModified": "<data:post.lastUpdated.iso8601.jsonEscaped/>"
+        </b:if>
+        <b:if cond='data:view.featuredImage'>
+        , "image": "<data:view.featuredImage.jsonEscaped/>"
+        </b:if>
+        , "author": {
+          "@type": "Person",
+          "name": "<data:post.author.name.jsonEscaped/>"
+          <b:if cond='data:post.author.profileUrl'>
+          , "url": "<data:post.author.profileUrl.jsonEscaped/>"
+          </b:if>
+          <b:if cond='data:post.author.authorPhoto.image'>
+          , "image": "<data:post.author.authorPhoto.image.jsonEscaped/>"
+          </b:if>
+        },
+        "publisher": {
+          "@type": "Organization",
+          "name": "<data:blog.title.jsonEscaped/>",
+          "url": "https://fastcyberdefense.com/"
+        }
+      }
 
 b:includable(id='post' var='post')
-  article.post(itemprop='blogPost' itemscope='itemscope' itemtype='http://schema.org/BlogPosting')
+  //- US-L12g: no microdata. The postMeta JSON-LD is the post's only
+  //- BlogPosting; the Rich Results Test on live build 0ab9602 also read this
+  //- markup as a second, incomplete one (no author or image).
+  article.post
     b:include(name='postMeta' data='post')/
     b:if(cond='data:view.isSingleItem')
       b:include(name='postTitle' data='post')/
@@ -33,11 +77,11 @@ b:includable(id='post' var='post')
 
 b:includable(id='postTitle' var='post')
   b:if(cond='data:view.isSingleItem')
-    h1.post-title(itemprop='name headline')
+    h1.post-title
       b:eval(expr='data:post.title')/
   b:if(cond='not data:view.isSingleItem')
-    h2.post-title(itemprop='name headline')
-      a(expr:href='data:post.url' itemprop='url')
+    h2.post-title
+      a(expr:href='data:post.url')
         b:eval(expr='data:post.title')/
 
 b:includable(id='postHeader' var='post')
@@ -51,7 +95,7 @@ b:includable(id='postHeader' var='post')
             b:eval(expr='data:post.author.name')/
       b:if(cond='data:post.date')
         span.post-meta-sep ·
-        time.post-date(expr:datetime='data:post.date.iso8601' itemprop='datePublished')
+        time.post-date(expr:datetime='data:post.date.iso8601')
           b:eval(expr='data:post.date')/
       b:if(cond='data:view.isPost')
         span.post-meta-sep.reading-time-sep(style='display:none;') ·
@@ -73,11 +117,11 @@ b:includable(id='postHeader' var='post')
         span.listen-status(aria-live='polite')
 
 b:includable(id='postBody' var='post')
-  .post-body(itemprop='articleBody')
+  .post-body
     b:eval(expr='data:post.body')/
 
 b:includable(id='postBodySnippet' var='post')
-  .post-excerpt(itemprop='description')
+  .post-excerpt
     b:eval(expr='snippet(data:post.snippets.long, {length: 180})')/
 
 b:includable(id='postShareBar' var='post')

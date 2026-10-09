@@ -1,6 +1,21 @@
 # Changelog
 
-## Unreleased: Ledger v1.7.0 rebuild (draft PR #15)
+## Unreleased: Ledger v1.8.0 port (draft PR #16)
+
+- Ported the theme-layer changes of Ledger v1.8.0 (redwan-cse/ledger-blogger-theme 6701496, released 2026-10-08) from source; record in docs/LEDGER-V1.8.md.
+- Structured data (US-L12a): the BlogPosting JSON-LD description is the post's short snippet, else the view description, else the title, instead of a b:eval snippet() chain upstream found invalid (f3647ef). Superseded by US-L12f.
+- New from upstream (US-L12b): an image preview with zoom, pan and download for post images, a back-to-top button, the audio reader voice order, Mermaid label quoting and the ASCII-box pre-scan. Three-way merged into the FCD sources; one conflict in theme.pug kept FCD's removals.
+- FCD palette and safety (US-L12c): the preview and the back-to-top button use the tweakcn palette; the preview opens only http(s) sources (a javascript: link no longer reaches it) and its download fetch aborts after 8 s.
+- Structured data where Blogger binds the post (US-L12e): live build 48fa7fd served empty article:published_time and article:author, because the head read the post through data:widgets.Blog.first.posts.first. The BlogPosting JSON-LD now sits in the Blog widget's postMeta (post views only) and the head reads no post data; the three article:* tags are dropped, BreadcrumbList stays.
+- No description in the BlogPosting JSON-LD (US-L12f): live build 4b4ccca read the description double-escaped (\u0026amp;), because Blogger serves the post snippet HTML-escaped and .jsonEscaped escapes it again, with no unescape operator. Google's Article structured data does not recommend description, so it is dropped; headline, datePublished, dateModified, image, author and publisher stay.
+- One BlogPosting per post (US-L12g): the Rich Results Test on live build 0ab9602 found a second BlogPosting, without author or image, read from the Ledger-base microdata on the post markup. The theme ships no microdata; the JSON-LD is the only BlogPosting, and classes and structure are unchanged.
+- Dependencies: package.json overrides katex to 0.18.5 for GHSA-238p-pmpm-9mq7 (low), since mermaid 11.17.2, the latest release, still asks for katex ^0.16.47. npm audit now reports 0 findings. The override changes the development tree only; readers load Mermaid's own bundle from jsDelivr, which carries its own KaTeX until Mermaid updates it.
+- Not taken: upstream publishing scripts (Drive publisher, IndexNow and Bing submission, GitHub research sync, companion link resolver), Ledger's tests and golden XML, and its package changes.
+- Cleanup (US-L12d): removed the temporary merge tooling (ledger-merge.yml, port/merge.py, port/merge.json, port/merge-report.json) and, after its one run, the temporary lockfile refresh workflow.
+
+The owner's view-source of live build 48fa7fd confirmed its build stamp, and his screenshots show the home page and the post at desktop width in both themes. His view-source of live build 4b4ccca confirmed the post-body JSON-LD with real dates and author (US-L12e) and showed the double-escaped description US-L12f removes. His Rich Results Test on live build 0ab9602 found the post's 2 Article items US-L12g reduces to 1. Human keyboard and screen reader review of the preview and the back-to-top button, and his evidence for the current build (build stamp, Rich Results Test with one Article item and no description, preview, back-to-top, 390 px, Layout), are pending. No merge or deployment is implied.
+
+## Unreleased: Ledger v1.7.0 rebuild (PR #15, merged to main as 2611961)
 
 - Rebuilt FCD Blogger on Ledger v1.7.0 (redwan-cse/ledger-blogger-theme at a3da05a8a70243c6ffc239b0e96e88260ed7b536), the owner's own theme that already runs natively, in place of the L1 shell of draft PR #14 (recorded in the next section, unmerged and superseded). Ledger's Blog1 dispatch, default markups, layout and features are kept; its personal identity, avatars and social links are replaced by Fast Cyber Defense.
 - Identity and palette: the company logo (fastcyberdefense.com icon0.svg, inlined, no request) and the fastcyberdefense.com tweakcn palette at the exact site colours (owner decision 2026-10-06; tests/fcd/site-exact.ts lists the only accepted pairs below AA), with Inter and Fira Code.
@@ -8,11 +23,11 @@
 - Native upload fixes (US-L7, US-L8): fixed sections show only the theme's own widget, the FCD mark keeps its size, dark surfaces and rules use the dark tokens, comment actions and the author badge use the primary.
 - Diagrams and callouts (US-L10): diagrams redraw from their kept source after a theme switch, Mermaid uses its base theme with the tweakcn colours in both modes, and the five callout types keep their own bars in dark mode with titles at AA or better.
 - Comment logo (US-L11): only comments Blogger flags as by the blog author get the company logo; a commenter can no longer take it by putting "FCD" or "Fast Cyber Defense" in a display name.
-- Dependencies: source-map-js 1.2.2 and dompurify 3.4.16 inside the existing ranges. katex <0.18.2 (low, via mermaid 11) stays open below the moderate gate, as its only offered fix is a mermaid downgrade.
+- Dependencies: source-map-js 1.2.2 and dompurify 3.4.16 inside the existing ranges. katex <0.18.2 (low, via mermaid 11) stayed open below the moderate gate, as its only offered fix was a mermaid downgrade; the v1.8.0 port closes it with a katex override.
 - CI: typecheck, a build bound to the exact source commit, the FCD unit checks, Ledger's V3 contract inside the no-egress namespace, npm audit, and a theme XML zip per fully green run; no generated XML is checked in.
 - Cleanup (US-L6): removed the temporary port writer (port/apply.py, port/ledger.json, port/lockfile.json and ledger-port.yml), the temporary port review excerpt in ci.yml, and staging-check.yml, whose staging:check script no longer exists. The Ledger-derived files under src/ are ordinary FCD sources. The tests read the built XML through tests/fcd/markup.ts instead of the regular expressions CodeQL flagged as incomplete HTML sanitizers (9 high alerts, test code only).
 
-The owner uploaded builds 26ca599 and then d1fd459 to the production blog on 2026-10-08. His rendered evidence (theme-build stamp, post views in both themes at 390 and 1280 px, Layout) is pending, and main does not contain the build. No merge is implied.
+The owner uploaded builds 26ca599 and then d1fd459 to the production blog on 2026-10-08. PR #15 was merged to main as 2611961 on the owner's approval (post-merge run 37748639356 green); his rendered evidence for the main build is pending.
 
 ## Unreleased: L1 native shell and design v1 Layout gadgets
 

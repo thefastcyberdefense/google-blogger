@@ -16,6 +16,12 @@
 // Google's Article structured data does not list description among its
 // recommended properties, so the BlogPosting carries none; the recommended
 // ones (headline, datePublished, dateModified, image, author) stay.
+// US-L12g: Google's Rich Results Test on the live post (build 0ab9602,
+// 2026-10-10) found two Article items: the JSON-LD and a second BlogPosting
+// from the microdata the Ledger base put on the post markup (itemscope on
+// article.post, itemprop on the title, date, body and excerpt), flagged for
+// missing author and image. Google does not document merging the two formats,
+// so the theme ships no microdata and the JSON-LD is the only BlogPosting.
 // The check reads the BlogPosting JSON-LD in the CI-built XML, resolves its
 // b:if branches for each case with the static renderer's condition
 // evaluator, stands in every data value by its name and parses the result.
@@ -122,4 +128,15 @@ describe('Post structured data (Ledger v1.8.0 f3647ef, US-L12f)', () => {
       expect(RECOMMENDED.filter((k) => !(k in parsed)), `missing recommended properties; JSON-LD: ${json.slice(0, 800)}`).toEqual([]);
     });
   }
+});
+
+describe('One BlogPosting per post: no microdata (US-L12g)', () => {
+  it('the theme XML carries no microdata attributes', () => {
+    const found: string[] = [];
+    const re = /\bitem(?:prop|scope|type|id|ref)\s*=/g;
+    for (let m = re.exec(xml); m; m = re.exec(xml)) {
+      found.push(xml.slice(Math.max(0, m.index - 60), m.index + 60).replace(/\s+/g, ' '));
+    }
+    expect(found, `${found.length} microdata attributes in the theme (live 0ab9602: a second, incomplete BlogPosting in the Rich Results Test)`).toEqual([]);
+  });
 });

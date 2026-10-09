@@ -13,7 +13,8 @@ carries its own identity and is never uploaded.
 | US-L12b theme-layer merge | merged by bot 645aaa2; build and typecheck green in run 37753170666, XML 361,456 bytes; every test outside the palette passed | three-way merge of the 9 src/ files upstream changed, into the FCD files at 6f48c7a; 8 clean, 1 conflict in theme.pug resolved |
 | US-L12c FCD palette and safe sources for the image preview and the back-to-top button | green in run 37754862719 at 336beb3 (fix ee43718, bot e036ee3); red first in run 37753170666 (palette, 5 cases) and run 37753995519 (preview: a javascript: link reached it) | unit 68/68, contract 39/39, audit lows only, CodeQL no new alerts, XML 361,800 bytes; artifact fcd-theme-336beb3762fee77d56b1a8b1bad69547d46204d3, sha256 21e4695a4cc3a4a278ef33c939a6042d518b0342202b1d70d037abcdf7567380 |
 | US-L12d cleanup and records | temporary merge tooling removed (d6998c2 workflow first, then port/merge.py, port/merge.json, port/merge-report.json); CI on the records commit | the theme XML differs from 336beb3 only in the build stamp |
-| US-L12e BlogPosting JSON-LD in the Blog widget | green in run 37808450659 at 0d84f91 (red first in run 37807273063 at b686170); owner upload pending | the owner's view-source of live build 48fa7fd showed article:published_time and article:author empty; unit 70/70, contract 39/39, XML 361,692 bytes |
+| US-L12e BlogPosting JSON-LD in the Blog widget | green in run 37808450659 at 0d84f91 (red first in run 37807273063 at b686170); verified on live build 4b4ccca by the owner's view-source | the owner's view-source of live build 48fa7fd showed article:published_time and article:author empty; unit 70/70, contract 39/39, XML 361,692 bytes |
+| US-L12f no description in the BlogPosting JSON-LD | green in run 37888432786 at 93578d4 (red first in run 37887919544 at 6eee04b: 67 passed, the 3 description cases found a description) | the owner's view-source of live build 4b4ccca showed the description double-escaped (\u0026amp;); unit 70/70, contract 39/39, XML 361,163 bytes |
 | Dependency: katex 0.18.5 override (GHSA-238p-pmpm-9mq7, low) | lockfile refreshed by bot 88d0c6c (temporary workflow, removed in 33b8084); npm audit 0 findings | katex 0.16.47 to 0.18.5 and its nested commander 8.3.0 to 15.0.0, nothing else |
 
 ## US-L12a
@@ -24,7 +25,7 @@ head-meta.pug (FCD-owned) carried the same line onto the live blog. The
 description is now the post's short snippet, else the view description,
 else the title. A static check cannot prove what Blogger serves; the owner's
 view of a rendered post (or Google's Rich Results Test) is the native
-evidence.
+evidence. Superseded by US-L12f: the BlogPosting carries no description.
 
 ## US-L12b merge
 
@@ -87,6 +88,22 @@ The same view-source showed the blog's search description still reads
 "Security engineering notes, research & field observations by Md Redwan
 Ahmed...". That is a Blogger setting (Settings > Meta tags), not the theme.
 
+## US-L12f
+
+The owner's view-source of live build 4b4ccca (2026-10-09) confirmed the
+build stamp, a head without article:* tags and only the BreadcrumbList
+JSON-LD, and the BlogPosting JSON-LD in the post body with a real
+datePublished, dateModified, image and author (US-L12e verified on Blogger).
+Its description read "Overview \u0026amp; Defensive Context ...": Blogger
+serves data:post.snippets.short HTML-escaped, so .jsonEscaped escapes the
+entity a second time, and Blogger has no operator that unescapes it. Google's
+Article structured data lists no required properties and does not recommend
+description (checked 2026-10-09), so the BlogPosting drops it: headline,
+datePublished, dateModified, image, author and publisher stay, and the check
+fails if any of the first five goes missing. The og:description and
+twitter:description meta tags are unchanged; they read Blogger's view
+description (the blog's search description unless a post sets its own).
+
 ## Dependency: katex
 
 npm audit reported katex <0.18.2 (GHSA-238p-pmpm-9mq7, low) through mermaid
@@ -109,5 +126,7 @@ prototype-pollution bug plus attacker-written math.
   the Rich Results Test on a post, a post with the image preview open,
   back-to-top after scrolling, the post at 390 px in both themes, and Layout.
   Received for 48fa7fd: build stamp; home and post at desktop width in both
-  themes.
+  themes. Received for 4b4ccca: build stamp, head and post-body JSON-LD.
+  Pending for the US-L12f build: the post JSON-LD without description and
+  the Rich Results Test.
 - Ready for review and merge only on the owner's explicit approval.

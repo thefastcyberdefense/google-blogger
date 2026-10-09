@@ -5,6 +5,10 @@ b:includable(id='postMeta' var='post')
   //- data:widgets.Blog.first.posts.first binding left article:published_time
   //- and article:author empty. Overriding postMeta also keeps Blogger from
   //- emitting its own per-post script block. Post views only.
+  //- US-L12f: no description. Blogger serves data:post.snippets.short
+  //- HTML-escaped, so .jsonEscaped escapes its entities again (live build
+  //- 4b4ccca read \u0026amp;), and Google's Article structured data does not
+  //- recommend one. Headline, dates, image and author carry the post.
   b:if(cond='data:view.isPost')
     script(type='application/ld+json').
       {
@@ -15,15 +19,6 @@ b:includable(id='postMeta' var='post')
           "@id": "<data:view.url.canonical.jsonEscaped/>"
         },
         "headline": "<data:view.title.jsonEscaped/>",
-        <b:if cond='data:post.snippets.short'>
-        "description": "<data:post.snippets.short.jsonEscaped/>",
-        </b:if>
-        <b:if cond='not data:post.snippets.short and data:view.description'>
-        "description": "<data:view.description.jsonEscaped/>",
-        </b:if>
-        <b:if cond='not data:post.snippets.short and not data:view.description'>
-        "description": "<data:view.title.jsonEscaped/>",
-        </b:if>
         "datePublished": "<data:post.date.iso8601.jsonEscaped/>"
         <b:if cond='data:post.lastUpdated'>
         , "dateModified": "<data:post.lastUpdated.iso8601.jsonEscaped/>"

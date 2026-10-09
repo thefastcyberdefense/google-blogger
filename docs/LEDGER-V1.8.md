@@ -15,6 +15,7 @@ carries its own identity and is never uploaded.
 | US-L12d cleanup and records | temporary merge tooling removed (d6998c2 workflow first, then port/merge.py, port/merge.json, port/merge-report.json); CI on the records commit | the theme XML differs from 336beb3 only in the build stamp |
 | US-L12e BlogPosting JSON-LD in the Blog widget | green in run 37808450659 at 0d84f91 (red first in run 37807273063 at b686170); verified on live build 4b4ccca by the owner's view-source | the owner's view-source of live build 48fa7fd showed article:published_time and article:author empty; unit 70/70, contract 39/39, XML 361,692 bytes |
 | US-L12f no description in the BlogPosting JSON-LD | green in run 37888432786 at 93578d4 (red first in run 37887919544 at 6eee04b: 67 passed, the 3 description cases found a description) | the owner's view-source of live build 4b4ccca showed the description double-escaped (\u0026amp;); unit 70/70, contract 39/39, XML 361,163 bytes |
+| US-L12g no microdata: one BlogPosting per post | green in run 37977383148 at fd031d5 (red first in run 37976794753 at d26fb5c: 9 microdata attributes, all from blog-post.pug) | the Rich Results Test on live build 0ab9602 found 2 Article items, the second from the microdata without author or image; unit 71/71, contract 39/39, XML 360,944 bytes |
 | Dependency: katex 0.18.5 override (GHSA-238p-pmpm-9mq7, low) | lockfile refreshed by bot 88d0c6c (temporary workflow, removed in 33b8084); npm audit 0 findings | katex 0.16.47 to 0.18.5 and its nested commander 8.3.0 to 15.0.0, nothing else |
 
 ## US-L12a
@@ -104,6 +105,22 @@ fails if any of the first five goes missing. The og:description and
 twitter:description meta tags are unchanged; they read Blogger's view
 description (the blog's search description unless a post sets its own).
 
+## US-L12g
+
+The owner's Rich Results Test on the live post (build 0ab9602, 2026-10-10)
+found 2 valid Article items for the one post: the BlogPosting JSON-LD, with
+no warnings, and a second BlogPosting read from the microdata the Ledger base
+put on the post markup (itemscope and itemtype on article.post, itemprop on
+the titles, the title link, the date, the body and the excerpt), with name
+and articleBody and flagged for missing author and image. Google recommends
+JSON-LD and does not document merging an item across formats, so the theme
+ships no microdata (itemprop, itemscope, itemtype, itemid, itemref) and the
+JSON-LD is the post's only BlogPosting. The red run counted exactly the 9
+attributes in blog-post.pug: the compiled script, the styles and the other
+widgets carry none, and no test or contract rule required them. The
+home page carries no Article markup and the test finds no items there, as
+designed.
+
 ## Dependency: katex
 
 npm audit reported katex <0.18.2 (GHSA-238p-pmpm-9mq7, low) through mermaid
@@ -127,6 +144,8 @@ prototype-pollution bug plus attacker-written math.
   back-to-top after scrolling, the post at 390 px in both themes, and Layout.
   Received for 48fa7fd: build stamp; home and post at desktop width in both
   themes. Received for 4b4ccca: build stamp, head and post-body JSON-LD.
-  Pending for the US-L12f build: the post JSON-LD without description and
-  the Rich Results Test.
+  Received for 0ab9602: the Rich Results Test on the post (2 valid Article
+  items, which US-L12g reduces to 1). Pending for the US-L12g build: the
+  build stamp, and the Rich Results Test showing one Article item whose
+  fields carry no description.
 - Ready for review and merge only on the owner's explicit approval.

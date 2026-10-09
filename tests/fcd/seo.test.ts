@@ -1,9 +1,7 @@
 // US-L12a: Ledger v1.8.0 (redwan-cse/ledger-blogger-theme f3647ef, 2026-10-06)
 // found the post JSON-LD description invalid: a b:eval that chains snippet()
 // over data:post.snippets.long with ?: fallbacks. The FCD head
-// (src/partials/head-meta.pug) carried the same line onto the live blog. The
-// description must be one of Blogger's plain data values instead: the post's
-// short snippet, else the view description, else the title.
+// (src/partials/head-meta.pug) carried the same line onto the live blog.
 // US-L12e: on the live blog (build 48fa7fd, owner's view-source 2026-10-08)
 // the head's article:published_time and article:author read empty: the head
 // binds the post through data:widgets.Blog.first.posts.first, and Blogger
@@ -11,6 +9,13 @@
 // Blog widget's postMeta includable, where Blogger binds data:post (the
 // byline shows the date and author), only on post views; the head reads no
 // data:post values at all.
+// US-L12f: on the live blog (build 4b4ccca, owner's view-source 2026-10-09)
+// the description read "Overview \u0026amp; Defensive Context ...": Blogger
+// serves data:post.snippets.short HTML-escaped, so .jsonEscaped escapes the
+// entity a second time, and Blogger has no operator that unescapes it.
+// Google's Article structured data does not list description among its
+// recommended properties, so the BlogPosting carries none; the recommended
+// ones (headline, datePublished, dateModified, image, author) stay.
 // The check reads the BlogPosting JSON-LD in the CI-built XML, resolves its
 // b:if branches for each case with the static renderer's condition
 // evaluator, stands in every data value by its name and parses the result.
@@ -66,10 +71,13 @@ const PRESENT: Record<string, boolean> = {
 };
 
 const CASES = [
-  { name: 'a post with a snippet', known: { 'data:post.snippets.short': true, 'data:view.description': true }, want: 'post.snippets.short' },
-  { name: 'a post with only a search description', known: { 'data:post.snippets.short': false, 'data:view.description': true }, want: 'view.description' },
-  { name: 'a post with neither', known: { 'data:post.snippets.short': false, 'data:view.description': false }, want: 'view.title' }
+  { name: 'a post with a snippet', known: { 'data:post.snippets.short': true, 'data:view.description': true } },
+  { name: 'a post with only a search description', known: { 'data:post.snippets.short': false, 'data:view.description': true } },
+  { name: 'a post with neither', known: { 'data:post.snippets.short': false, 'data:view.description': false } }
 ];
+
+// Google's recommended Article properties the post data can fill.
+const RECOMMENDED = ['headline', 'datePublished', 'dateModified', 'image', 'author'];
 
 const HEAD_START = xml.indexOf('<head>');
 // The head as Blogger evaluates it: b:defaultmarkups sits in the head but only
@@ -94,20 +102,24 @@ describe('Post structured data reads the post where Blogger binds it (US-L12e)',
   });
 });
 
-describe('Post structured data (Ledger v1.8.0 f3647ef)', () => {
+describe('Post structured data (Ledger v1.8.0 f3647ef, US-L12f)', () => {
   it('ships exactly one BlogPosting JSON-LD block', () => {
     expect(POSTINGS).toHaveLength(1);
   });
 
   for (const c of CASES) {
-    it(`describes ${c.name} with a plain Blogger value, not a b:eval chain`, () => {
+    it(`carries no description for ${c.name} and keeps the recommended properties`, () => {
       const json = resolve(POSTINGS[0] ?? '', { ...PRESENT, ...c.known });
       let parsed: Record<string, unknown> = {};
       expect(() => {
         parsed = JSON.parse(json) as Record<string, unknown>;
       }, `BlogPosting JSON-LD does not parse: ${json.slice(0, 800)}`).not.toThrow();
-      expect(json.split('"description"').length - 1, 'description keys').toBe(1);
-      expect(parsed['description'], `description source; JSON-LD: ${json.slice(0, 800)}`).toBe(c.want);
+      expect(
+        parsed['description'],
+        `description in the BlogPosting (live 4b4ccca: Blogger's HTML-escaped snippet read \\u0026amp; after .jsonEscaped); JSON-LD: ${json.slice(0, 800)}`
+      ).toBeUndefined();
+      expect(json.includes('"description"'), 'description key anywhere in the BlogPosting').toBe(false);
+      expect(RECOMMENDED.filter((k) => !(k in parsed)), `missing recommended properties; JSON-LD: ${json.slice(0, 800)}`).toEqual([]);
     });
   }
 });

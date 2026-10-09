@@ -44,7 +44,10 @@ b:includable(id='postMeta' var='post')
       }
 
 b:includable(id='post' var='post')
-  article.post(itemprop='blogPost' itemscope='itemscope' itemtype='http://schema.org/BlogPosting')
+  //- US-L12g: no microdata. The postMeta JSON-LD is the post's only
+  //- BlogPosting; the Rich Results Test on live build 0ab9602 also read this
+  //- markup as a second, incomplete one (no author or image).
+  article.post
     b:include(name='postMeta' data='post')/
     b:if(cond='data:view.isSingleItem')
       b:include(name='postTitle' data='post')/
@@ -74,11 +77,11 @@ b:includable(id='post' var='post')
 
 b:includable(id='postTitle' var='post')
   b:if(cond='data:view.isSingleItem')
-    h1.post-title(itemprop='name headline')
+    h1.post-title
       b:eval(expr='data:post.title')/
   b:if(cond='not data:view.isSingleItem')
-    h2.post-title(itemprop='name headline')
-      a(expr:href='data:post.url' itemprop='url')
+    h2.post-title
+      a(expr:href='data:post.url')
         b:eval(expr='data:post.title')/
 
 b:includable(id='postHeader' var='post')
@@ -92,7 +95,7 @@ b:includable(id='postHeader' var='post')
             b:eval(expr='data:post.author.name')/
       b:if(cond='data:post.date')
         span.post-meta-sep ·
-        time.post-date(expr:datetime='data:post.date.iso8601' itemprop='datePublished')
+        time.post-date(expr:datetime='data:post.date.iso8601')
           b:eval(expr='data:post.date')/
       b:if(cond='data:view.isPost')
         span.post-meta-sep.reading-time-sep(style='display:none;') ·
@@ -114,11 +117,11 @@ b:includable(id='postHeader' var='post')
         span.listen-status(aria-live='polite')
 
 b:includable(id='postBody' var='post')
-  .post-body(itemprop='articleBody')
+  .post-body
     b:eval(expr='data:post.body')/
 
 b:includable(id='postBodySnippet' var='post')
-  .post-excerpt(itemprop='description')
+  .post-excerpt
     b:eval(expr='snippet(data:post.snippets.long, {length: 180})')/
 
 b:includable(id='postShareBar' var='post')
